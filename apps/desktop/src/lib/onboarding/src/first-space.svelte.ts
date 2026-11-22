@@ -1,7 +1,7 @@
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeedSpace, markSeeded, wasSeeded } from '../../seeded/src/api'
 import { madeSpace } from '../../spaces/src/api'
-import { beginSetup } from './api'
+import { beginSetup, gate } from './api'
 import { joinPath } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'
 import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from '@orden/contracts'
@@ -11,7 +11,11 @@ import { type Space, workspace } from '../../workspace/src/api'
 class FirstSpace {
   private working = false
   async start(now: Moment) {
-    if (!startsFresh(now) || this.working || workspace.spaces.length) return
+    if (this.working) return
+    if (!startsFresh(now) || workspace.spaces.length) {
+      if (!now.restoring) gate.letGo()
+      return
+    }
     this.working = true
     try {
       const space = await madeSpace(WELCOME_SPACE, (made) => markSeedSpace(made.root))
@@ -21,6 +25,7 @@ class FirstSpace {
       if (note) await beginSetup(false)
     } finally {
       this.working = false
+      if (!gate.showing) gate.letGo()
     }
   }
   private async welcome(space: Space): Promise<string | null> {
