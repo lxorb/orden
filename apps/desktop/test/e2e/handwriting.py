@@ -25,7 +25,7 @@ CARET = """
 INK = "() => (JSON.parse(window.ordenApp.workspace.active?.doc || '{}').orden?.ink ?? []).length"
 ACTIVE = "window.ordenApp.workspace.active"
 def write_by_finger(page: Page) -> None:
-    box = page.locator(".canvas").first.bounding_box()
+    box = page.locator(".canvas:visible").first.bounding_box()
     if not box:
         wrong("no canvas to write on")
         return
@@ -67,7 +67,7 @@ def phone(browser: Browser, dark: bool, width: int, height: int) -> None:
     pen.click()
     page.evaluate(KEYS, 0)
     wait_for(page, f"{ACTIVE}?.kind === 'canvas'", "the handwriting canvas")
-    page.wait_for_selector(".canvas", timeout=15000)
+    page.wait_for_selector(".canvas:visible", timeout=15000)
     page.wait_for_timeout(600)
     path = page.evaluate(f"() => {ACTIVE}.path")
     say(f"[{tag}] the canvas: {path}")

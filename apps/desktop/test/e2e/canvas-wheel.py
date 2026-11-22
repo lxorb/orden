@@ -20,9 +20,9 @@ def opened(page: Page) -> dict:
         page.wait_for_timeout(700)
         if page.evaluate("() => window.ordenApp.workspace.active?.kind === 'canvas'"):
             break
-    page.wait_for_selector(".canvas", timeout=15000)
+    page.wait_for_selector(".canvas:visible", timeout=15000)
     page.wait_for_timeout(500)
-    box = [one for one in page.locator(".canvas").all() if one.is_visible()][0].bounding_box()
+    box = [one for one in page.locator(".canvas:visible").all() if one.is_visible()][0].bounding_box()
     assert box
     return box
 def camera(page: Page) -> dict:

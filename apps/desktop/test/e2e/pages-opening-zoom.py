@@ -12,7 +12,7 @@ SIZES = [
 ]
 SHEET = """
 () => {
-  const host = [...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length)
+  const host = [...document.querySelectorAll('.pages')].filter((one) => one.getClientRects().length > 0).find((one) => one.getClientRects().length)
   const sheet = host?.querySelector('.sheet')
   if (!host || !sheet) return null
   const h = host.getBoundingClientRect()
@@ -27,7 +27,7 @@ def opened(page: Page) -> None:
         page.wait_for_timeout(700)
         if page.evaluate("() => window.ordenApp.workspace.active?.kind === 'pages'"):
             break
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     page.wait_for_timeout(900)
 def sized(browser: Browser, name: str, width: int, height: int, agent: str | None) -> None:
     extra = {"user_agent": agent, "has_touch": True, "is_mobile": True} if agent else {}

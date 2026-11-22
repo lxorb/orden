@@ -54,7 +54,7 @@ async ({ path, data }) => {
 }
 """
 SHEETS = """
-() => [...document.querySelectorAll('.pages')]
+() => [...document.querySelectorAll('.pages')].filter((one) => one.getClientRects().length > 0)
   .filter((one) => one.checkVisibility())
   .flatMap((one) => [...one.querySelectorAll('.sheet')])
 """

@@ -25,11 +25,11 @@ PASTE = """(data) => {
   const file = new File([bytes], 'image.png', { type: 'image/png' })
   const carried = new DataTransfer()
   carried.items.add(file)
-  const plane = document.querySelector('.canvas')
+  const plane = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)
   plane.focus()
   plane.dispatchEvent(new ClipboardEvent('paste', { clipboardData: carried, bubbles: true, cancelable: true }))
 }"""
-PICTURES = """() => [...document.querySelectorAll('.canvas img.picture')].map((one) =>
+PICTURES = """() => [...document.querySelectorAll('.canvas img.picture')].filter((one) => one.getClientRects().length > 0).map((one) =>
   ({ loaded: one.complete && one.naturalWidth > 0, src: one.getAttribute('src') }))"""
 def wait(page: Page, script: str, what: str) -> object:
     for _ in range(PATIENCE * 4):
@@ -48,7 +48,7 @@ def board(page: Page, label: str) -> str:
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         path,
     )
-    wait(page, "() => !!document.querySelector('.canvas')", f"[{label}] the canvas")
+    wait(page, "() => !![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)", f"[{label}] the canvas")
     page.wait_for_timeout(600)
     return path
 def pasted(page: Page, label: str, path: str) -> None:
@@ -57,7 +57,7 @@ def pasted(page: Page, label: str, path: str) -> None:
         wait(page, f"() => ({PICTURES})().some((one) => one.loaded)", f"[{label}] the picture to load")
     except SystemExit:
         said = page.evaluate(PICTURES)
-        missing = page.evaluate("() => document.querySelectorAll('.canvas .missing').length")
+        missing = page.evaluate("() => [...document.querySelectorAll('.canvas .missing')].filter((one) => one.getClientRects().length > 0).length")
         wrong(f"[{label}] the pasted picture did not load: {said}, {missing} card(s) saying Nothing here")
         shot(page, f"{label}-pasted")
         return
@@ -83,7 +83,7 @@ def written_before(page: Page, label: str, signed: bool) -> None:
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         [path, json.dumps({"nodes": [card], "edges": []})],
     )
-    wait(page, "() => !!document.querySelector('.canvas [data-id=\"old\"]')", f"[{label}] the old card")
+    wait(page, "() => !![...document.querySelectorAll('.canvas [data-id=\"old\"]')].find((one) => one.getClientRects().length > 0)", f"[{label}] the old card")
     if signed:
         try:
             wait(page, f"() => ({PICTURES})().some((one) => one.loaded)", f"[{label}] the old card's picture")

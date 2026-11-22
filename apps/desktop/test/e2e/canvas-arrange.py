@@ -53,10 +53,10 @@ def opened(page: Page, label: str, tablet: bool = False) -> None:
             break
     else:
         raise SystemExit(f"[{label}] no canvas ever opened")
-    page.wait_for_selector(".canvas", timeout=15000)
+    page.wait_for_selector(".canvas:visible", timeout=15000)
     page.wait_for_timeout(400)
 def plane(page: Page) -> dict:
-    box = page.locator(".canvas").first.bounding_box()
+    box = page.locator(".canvas:visible").first.bounding_box()
     assert box
     return box
 def canvas_of(page: Page) -> dict:
@@ -73,10 +73,10 @@ def written(page: Page, holds: str, patience: int = 8000) -> None:
     except Exception:  # noqa: BLE001 - the check after this says what was missing
         pass
 def cursor_of(page: Page) -> str:
-    return page.evaluate("() => getComputedStyle(document.querySelector('.canvas')).cursor")
+    return page.evaluate("() => getComputedStyle([...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)).cursor")
 def tool(page: Page, key: str) -> None:
     page.keyboard.press("Escape")
-    page.locator(".canvas").first.click(position={"x": 30, "y": 30})
+    page.locator(".canvas:visible").first.click(position={"x": 30, "y": 30})
     page.keyboard.press(key)
     page.wait_for_timeout(120)
 def pen_stroke(
@@ -147,9 +147,9 @@ def check_cursors(page: Page) -> None:
     narrow = cursor_of(page)
     if "svg" not in narrow:
         fail(f"the eraser does not wear a drawn ring ({narrow})")
-    eraser = page.locator('.cluster button[aria-label="Erase"]').first
+    eraser = page.locator('.cluster:visible button[aria-label="Erase"]').first
     open_panel(page, eraser, 'button[aria-label="Erase everything drawn"]')
-    width = page.locator('.panel input[aria-label="Width"]').first
+    width = page.locator('.panel:visible input[aria-label="Width"]').first
     width.fill("40")
     width.dispatch_event("input")
     page.wait_for_timeout(250)
@@ -161,7 +161,7 @@ def check_cursors(page: Page) -> None:
     else:
         say("the eraser's ring is redrawn when the width dial moves")
     open_panel(page, eraser, 'button[aria-label="Erase everything drawn"]')
-    width = page.locator('.panel input[aria-label="Width"]').first
+    width = page.locator('.panel:visible input[aria-label="Width"]').first
     width.fill("10")
     width.dispatch_event("input")
     page.wait_for_timeout(150)
@@ -177,12 +177,12 @@ def check_pattern(page: Page) -> None:
             scale,
         )
         page.wait_for_timeout(250)
-        layers = page.locator(".canvas .dots").count()
+        layers = page.locator(".canvas:visible .dots").count()
         if layers < 1:
             fail(f"no pattern at all at a zoom of {scale}")
         else:
             steps = page.evaluate(
-                "() => [...document.querySelectorAll('.canvas .dots')]"
+                "() => [...document.querySelectorAll('.canvas .dots')].filter((one) => one.getClientRects().length > 0)"
                 ".map((one) => Math.round(parseFloat(getComputedStyle(one)"
                 ".getPropertyValue('--dot-step'))))"
             )
@@ -199,12 +199,12 @@ def check_pull(page: Page) -> None:
     say("--- what is drawn while it is dragged out ---")
     box = plane(page)
     for name, key, selector in (
-        ("arrow", "a", ".canvas svg.drawing path"),
-        ("elbow", "b", ".canvas svg.drawing path"),
-        ("diamond", "m", ".canvas svg.drawing path"),
-        ("rectangle", "r", ".canvas .band.pulling"),
-        ("card", "c", ".canvas .band.pulling"),
-        ("frame", "f", ".canvas .band.pulling"),
+        ("arrow", "a", ".canvas:visible svg.drawing path"),
+        ("elbow", "b", ".canvas:visible svg.drawing path"),
+        ("diamond", "m", ".canvas:visible svg.drawing path"),
+        ("rectangle", "r", ".canvas:visible .band.pulling"),
+        ("card", "c", ".canvas:visible .band.pulling"),
+        ("frame", "f", ".canvas:visible .band.pulling"),
     ):
         tool(page, key)
         page.mouse.move(box["x"] + 200, box["y"] + 200)
@@ -225,15 +225,15 @@ def check_pull(page: Page) -> None:
 def check_connector(page: Page) -> None:
     say("--- connectors ---")
     three_cards(page)
-    one = page.locator('.canvas .node[data-id="aa"]').first.bounding_box()
-    two = page.locator('.canvas .node[data-id="bb"]').first.bounding_box()
+    one = page.locator('.canvas:visible .node[data-id="aa"]').first.bounding_box()
+    two = page.locator('.canvas:visible .node[data-id="bb"]').first.bounding_box()
     assert one and two
     tool(page, "a")
     page.mouse.move(one["x"] + one["width"] / 2, one["y"] + one["height"] / 2)
     page.mouse.down()
     page.mouse.move(two["x"] + two["width"] / 2, two["y"] + two["height"] / 2, steps=12)
     page.wait_for_timeout(200)
-    if page.locator(".canvas .port.aiming").count() < 1:
+    if page.locator(".canvas:visible .port.aiming").count() < 1:
         fail("the anchor an arrow will attach to is not shown while it is dragged")
     else:
         say("the anchor an arrow will attach to is shown before it is let go")
@@ -265,22 +265,22 @@ def check_shape_text(page: Page) -> None:
         }"""
     )
     page.wait_for_timeout(600)
-    said = page.locator(".canvas .node.shape .card").first
+    said = page.locator(".canvas:visible .node.shape .card").first
     if said.count() < 1 or "Ready?" not in said.inner_text():
         fail("a shape does not show the words inside it")
     else:
         say("a shape shows the words inside it")
     shot(page, "canvas-shape-words")
     tool(page, "v")
-    empty = page.locator('.canvas .node[data-id="ee"]').first.bounding_box()
+    empty = page.locator('.canvas:visible .node[data-id="ee"]').first.bounding_box()
     assert empty
     page.mouse.click(empty["x"] + empty["width"] * 0.25, empty["y"] + empty["height"] - 2)
     page.wait_for_timeout(250)
-    if page.locator(".canvas .node.shape.picked").count() < 1:
+    if page.locator(".canvas:visible .node.shape.picked").count() < 1:
         fail("a press on a shape's own line does not pick it")
     page.keyboard.press("Enter")
     page.wait_for_timeout(400)
-    if page.locator(".canvas .node.shape .editor").count() < 1:
+    if page.locator(".canvas:visible .node.shape .editor").count() < 1:
         fail("Enter does not open the words inside a shape")
     else:
         say("Enter opens the words inside a shape")
@@ -290,10 +290,10 @@ def check_shape_text(page: Page) -> None:
 def check_more_menu(page: Page) -> None:
     say("--- the rest of what can be done ---")
     three_cards(page)
-    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.locator(".canvas:visible").first.click(position={"x": 20, "y": 20})
     page.keyboard.press("Control+a")
     page.wait_for_timeout(300)
-    more = page.locator('.over button[aria-label="More"]').first
+    more = page.locator('.over:visible button[aria-label="More"]').first
     if more.count() < 1:
         fail("the bar over what is picked offers no menu")
         return
@@ -319,8 +319,8 @@ def check_more_menu(page: Page) -> None:
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     page.keyboard.press("Escape")
-    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
-    page.locator(".canvas").first.click(position={"x": 60, "y": 60}, button="right")
+    page.locator(".canvas:visible").first.click(position={"x": 20, "y": 20})
+    page.locator(".canvas:visible").first.click(position={"x": 60, "y": 60}, button="right")
     page.wait_for_timeout(400)
     rows = menu_rows(page)
     if page.locator("[role=menu] [role=menuitem][disabled]").count():
@@ -345,7 +345,7 @@ def check_print(page: Page) -> None:
     say("--- printing ---")
     three_cards(page)
     page.evaluate("() => { window.__printed = null }")
-    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.locator(".canvas:visible").first.click(position={"x": 20, "y": 20})
     page.keyboard.press("Control+p")
     try:
         page.wait_for_function("() => !!window.__printed", timeout=30000)
@@ -362,13 +362,13 @@ def menu_rows(page: Page) -> list[str]:
     return [rows.nth(one).inner_text().strip() for one in range(rows.count())]
 PICKED_SPILL = """
 () => {
-  const plane = document.querySelector('.canvas').getBoundingClientRect()
-  const over = [...document.querySelectorAll('.over .bar, .over .panel')]
+  const plane = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0).getBoundingClientRect()
+  const over = [...document.querySelectorAll('.over .bar, .over .panel')].filter((one) => one.getClientRects().length > 0)
   const spill = over.map((one) => {
     const box = one.getBoundingClientRect()
     return Math.max(plane.left - box.left, box.right - plane.right, 0)
   })
-  const dots = [...document.querySelectorAll('.over .panel button')]
+  const dots = [...document.querySelectorAll('.over .panel button')].filter((one) => one.getClientRects().length > 0)
     .map((one) => one.getBoundingClientRect().width)
   return {
     spill: Math.round(Math.max(0, ...spill)),
@@ -392,9 +392,9 @@ def check_picked_inside(page: Page) -> None:
         page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         page.mouse.wheel(push, 0)
         page.wait_for_timeout(400)
-        page.locator(".canvas .node", has_text="edge").first.click()
+        page.locator(".canvas:visible .node", has_text="edge").first.click()
         page.wait_for_timeout(300)
-        page.locator('.over button[aria-label="Colour"]').first.click()
+        page.locator('.over:visible button[aria-label="Colour"]').first.click()
         page.wait_for_timeout(400)
         got = page.evaluate(PICKED_SPILL)
         if got["spill"] > 0:
@@ -422,7 +422,7 @@ def check_lasso_held(page: Page) -> None:
     page.wait_for_timeout(100)
     held = cursor_of(page)
     pressed = page.evaluate(
-        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+        "() => [...document.querySelectorAll('.cluster .bar button[aria-pressed=true]')].find((one) => one.getClientRects().length > 0)?.getAttribute('aria-label')"
     )
     page.mouse.move(x0 - 30, y0 - 30)
     page.mouse.down()
@@ -432,9 +432,9 @@ def check_lasso_held(page: Page) -> None:
     page.keyboard.up("q")
     page.wait_for_timeout(300)
     back = page.evaluate(
-        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+        "() => [...document.querySelectorAll('.cluster .bar button[aria-pressed=true]')].find((one) => one.getClientRects().length > 0)?.getAttribute('aria-label')"
     )
-    caught = page.evaluate("() => [...document.querySelectorAll('.over button')].length")
+    caught = page.evaluate("() => [...document.querySelectorAll('.over button')].filter((one) => one.getClientRects().length > 0).length")
     say(f"held: cursor {held}, in hand {pressed}; let go: in hand {back}, bar over the pick {caught}")
     if held != "crosshair" or pressed != "Lasso":
         fail(f"the lasso's key held did not put the lasso in hand ({pressed}, cursor {held})")
@@ -460,7 +460,7 @@ def check_broken_picture(page: Page) -> None:
         }"""
     )
     page.wait_for_timeout(900)
-    if page.locator(".canvas .node .missing").count() < 1:
+    if page.locator(".canvas:visible .node .missing").count() < 1:
         fail("a picture the space no longer holds shows no placeholder")
     else:
         say("a picture the space no longer holds shows a calm placeholder")
@@ -468,7 +468,7 @@ def check_broken_picture(page: Page) -> None:
 def fresh(page: Page) -> None:
     page.evaluate("() => window.ordenApp.workspace.createCanvas()")
     page.wait_for_timeout(800)
-    page.wait_for_selector(".canvas", timeout=15000)
+    page.wait_for_selector(".canvas:visible", timeout=15000)
 def three_cards(page: Page) -> None:
     fresh(page)
     page.evaluate(
@@ -492,7 +492,7 @@ def check_arranging(page: Page) -> None:
     three_cards(page)
     page.keyboard.press("Control+a")
     page.wait_for_timeout(300)
-    grouped = page.locator('.over button[aria-label="Group"]')
+    grouped = page.locator('.over:visible button[aria-label="Group"]')
     if grouped.count() < 1:
         fail("the bar over several things picked does not offer to group them")
     else:
@@ -504,7 +504,7 @@ def check_arranging(page: Page) -> None:
         else:
             say("several things picked were made one frame from the selection bar")
         shot(page, "canvas-grouped")
-        ungrouped = page.locator('.over button[aria-label="Ungroup"]')
+        ungrouped = page.locator('.over:visible button[aria-label="Ungroup"]')
         if ungrouped.count() < 1:
             fail("the bar over a frame does not offer to take it apart")
         else:
@@ -518,8 +518,8 @@ def check_arranging(page: Page) -> None:
             else:
                 say("a frame taken apart left everything it held where it was")
     three_cards(page)
-    page.locator(".canvas").first.click(position={"x": 30, "y": 30})
-    card = page.locator('.canvas .node[data-id="aa"]').first.bounding_box()
+    page.locator(".canvas:visible").first.click(position={"x": 30, "y": 30})
+    card = page.locator('.canvas:visible .node[data-id="aa"]').first.bounding_box()
     assert card
     page.keyboard.down("Alt")
     page.mouse.move(card["x"] + card["width"] / 2, card["y"] + card["height"] / 2)
@@ -542,12 +542,12 @@ def check_arranging(page: Page) -> None:
     else:
         say("one undo takes back both the copy and the drag")
     three_cards(page)
-    picked = page.locator('.canvas .node[data-id="bb"]').first.bounding_box()
+    picked = page.locator('.canvas:visible .node[data-id="bb"]').first.bounding_box()
     assert picked
     page.mouse.click(picked["x"] + picked["width"] / 2, picked["y"] + picked["height"] / 2)
     page.wait_for_timeout(250)
     was = next(one for one in canvas_of(page)["nodes"] if one["id"] == "bb")
-    handle = page.locator(".canvas .handle").nth(4).bounding_box()
+    handle = page.locator(".canvas:visible .handle").nth(4).bounding_box()
     if handle:
         page.keyboard.down("Shift")
         page.mouse.move(handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2)
@@ -580,7 +580,7 @@ def check_picture(page: Page) -> None:
     asked: list[str] = []
     page.on("filechooser", lambda chooser: asked.append(chooser.element.get_attribute("accept")))
     tool(page, "i")
-    page.locator(".canvas").first.click(position={"x": 400, "y": 300})
+    page.locator(".canvas:visible").first.click(position={"x": 400, "y": 300})
     page.wait_for_timeout(700)
     if not asked:
         fail("the picture tool never asked for a picture")
@@ -593,7 +593,7 @@ def check_picture(page: Page) -> None:
 def check_panel_shuts(page: Page) -> None:
     say("--- popovers ---")
     box = plane(page)
-    open_panel(page, page.locator(".cluster button.pen").first, 'input[aria-label="Opacity"]')
+    open_panel(page, page.locator(".cluster:visible button.pen").first, 'input[aria-label="Opacity"]')
     shot(page, "canvas-pen-panel")
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + 120)
     page.wait_for_timeout(300)
@@ -601,22 +601,22 @@ def check_panel_shuts(page: Page) -> None:
         fail("the pen panel does not shut when the plane is tapped")
     else:
         say("the pen panel shuts when the plane is tapped")
-    page.locator('.cluster button[aria-label="Add"]').first.click()
+    page.locator('.cluster:visible button[aria-label="Add"]').first.click()
     page.wait_for_timeout(200)
-    if page.locator('.panel button[aria-label="Picture"]').count() < 1:
+    if page.locator('.panel:visible button[aria-label="Picture"]').count() < 1:
         fail("the put-down grid has no Picture in it")
     else:
         say("the put-down grid offers a Note and a Picture as two things")
     shot(page, "canvas-put-grid")
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + 120)
     page.wait_for_timeout(300)
-    if page.locator(".panel").count() > 0:
+    if page.locator(".panel:visible").count() > 0:
         fail("the put-down grid does not shut when the plane is tapped")
     else:
         say("the put-down grid shuts when the plane is tapped")
 def check_bar_docks(page: Page) -> None:
     say("--- where the bar sits ---")
-    grip = page.locator('[aria-label="Move the bar"]').first
+    grip = page.locator('[aria-label="Move the bar"]:visible').first
     if grip.count() < 1:
         say("note: the bar shows no grip on this device, so there is nothing to drag")
         return
@@ -628,7 +628,7 @@ def check_bar_docks(page: Page) -> None:
         "bottom": (window["w"] / 2, window["h"] - 20),
     }
     for edge, (x, y) in corners.items():
-        here = page.locator('[aria-label="Move the bar"]').first.bounding_box()
+        here = page.locator('[aria-label="Move the bar"]:visible').first.bounding_box()
         assert here
         page.mouse.move(here["x"] + here["width"] / 2, here["y"] + here["height"] / 2)
         page.mouse.down()
@@ -645,12 +645,12 @@ def check_bar_docks(page: Page) -> None:
             fail(f"the bar let go by the {edge} edge went to {held}")
         else:
             say(f"the bar let go by the {edge} edge sprang to it")
-        standing = page.locator(".cluster.standing").count() > 0
+        standing = page.locator(".cluster.standing:visible").count() > 0
         if standing != (edge in ("left", "right")):
             fail(f"the bar at the {edge} edge is {'standing' if standing else 'lying'}")
         shot(page, f"canvas-bar-{edge}")
 def wipe(page: Page) -> None:
-    page.locator(".canvas").first.click(position={"x": 30, "y": 30})
+    page.locator(".canvas:visible").first.click(position={"x": 30, "y": 30})
     page.keyboard.press("Escape")
     page.keyboard.press("Control+a")
     page.keyboard.press("Delete")
@@ -730,8 +730,8 @@ def check_sharp_stroke(page: Page, cdp) -> None:
     else:
         say("a stroke that turns sharply landed whole")
 def check_pen_colours(page: Page, theme: str) -> None:
-    open_panel(page, page.locator(".cluster button.pen").first, 'input[aria-label="Opacity"]')
-    dot = page.locator('.panel button[aria-label="The ink of the page"]').first
+    open_panel(page, page.locator(".cluster:visible button.pen").first, 'input[aria-label="Opacity"]')
+    dot = page.locator('.panel:visible button[aria-label="The ink of the page"]').first
     if dot.count() < 1:
         fail("the pen's colours do not name the ink of the page")
     else:
@@ -805,7 +805,7 @@ def drive_tablet(browser) -> None:
             },
         )
         page.wait_for_timeout(200)
-        if page.locator(".canvas .rubbing").count() < 1:
+        if page.locator(".canvas:visible .rubbing").count() < 1:
             fail("the eraser shows no ring on a screen that has no cursor")
         else:
             say("the eraser draws its ring on the page, under the nib")
@@ -885,7 +885,7 @@ AS_PHONE = """
 """
 BAR_SEEN = """
 () => {
-  const row = document.querySelector('.cluster .scroller')
+  const row = [...document.querySelectorAll('.cluster .scroller')].find((one) => one.getClientRects().length > 0)
   const box = row.getBoundingClientRect()
   const seen = [...row.querySelectorAll('button')]
     .filter((one) => { const at = one.getBoundingClientRect(); return at.left >= box.left - 1 && at.right <= box.right + 1 })
@@ -894,8 +894,8 @@ BAR_SEEN = """
 }
 """
 ZOOM_ON_BAR = (
-    ".cluster button[aria-label='Zoom in'], .cluster button[aria-label='Zoom out'],"
-    " .cluster button[aria-label='Zoom'], .cluster button[aria-label='Show the whole canvas']"
+    ".cluster:visible button[aria-label='Zoom in'], .cluster:visible button[aria-label='Zoom out'],"
+    " .cluster:visible button[aria-label='Zoom'], .cluster:visible button[aria-label='Show the whole canvas']"
 )
 def drive_phone(browser, theme: str) -> None:
     say(f"=== phone, {theme} ===")
@@ -925,7 +925,7 @@ def drive_phone(browser, theme: str) -> None:
         if first["start"] or not first["end"]:
             fail(f"[phone/{theme}] the bar at its start fades the wrong ends ({first})")
         shot(page, f"canvas-phone-bar-{theme}")
-        page.evaluate("() => { const row = document.querySelector('.cluster .scroller'); row.scrollLeft = row.scrollWidth }")
+        page.evaluate("() => { const row = [...document.querySelectorAll('.cluster .scroller')].find((one) => one.getClientRects().length > 0); row.scrollLeft = row.scrollWidth }")
         page.wait_for_timeout(300)
         last = page.evaluate(BAR_SEEN)
         if not last["start"] or last["end"]:
@@ -937,7 +937,7 @@ def drive_phone(browser, theme: str) -> None:
         context.close()
 CARD_AT = """
 (words) => {
-  const card = [...document.querySelectorAll('.canvas .node')].find((one) => one.textContent.includes(words))
+  const card = [...document.querySelectorAll('.canvas .node')].filter((one) => one.getClientRects().length > 0).find((one) => one.textContent.includes(words))
   const box = card?.getBoundingClientRect()
   return box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : null
 }
@@ -945,7 +945,7 @@ CARD_AT = """
 TO_SCREEN = """
 (point) => {
   const camera = window.ordenApp.workspace.active.camera
-  const rect = document.querySelector('.canvas').getBoundingClientRect()
+  const rect = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0).getBoundingClientRect()
   const turn = camera.turn ?? 0
   const dx = (point.x - camera.x) * camera.scale
   const dy = (point.y - camera.y) * camera.scale
@@ -1060,14 +1060,14 @@ def drive_turning(browser) -> None:
         page.mouse.up()
         page.keyboard.up("q")
         page.wait_for_timeout(300)
-        if not page.evaluate("() => document.querySelectorAll('.over button').length"):
+        if not page.evaluate("() => [...document.querySelectorAll('.over button')].filter((one) => one.getClientRects().length > 0).length"):
             fail("the lasso in a turned view caught nothing of what was drawn under it")
         else:
             say("the lasso in a turned view catches what was drawn under it")
         shot(page, "canvas-turned-ink")
         page.keyboard.press("Escape")
         tool(page, "v")
-        page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+        page.locator(".canvas:visible").first.click(position={"x": 20, "y": 20})
         page.keyboard.press("Control+Alt+r")
         page.wait_for_timeout(300)
         if abs(page.evaluate(turn)) > 1e-6:

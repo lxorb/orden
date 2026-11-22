@@ -90,10 +90,10 @@ def opened(page: Page, label: str, device: str | None = None) -> None:
             break
     else:
         raise SystemExit(f"[{label}] no page note ever opened")
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     page.wait_for_timeout(400)
 def surface(page: Page) -> dict:
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     assert box
     return box
 def settled(page: Page) -> None:
@@ -200,8 +200,8 @@ def check_opens(page: Page, label: str) -> None:
     wanted = (box["width"] - 56) / 794
     if abs(scale - wanted) > 0.02:
         fail(f"[{label}] the view opened at {scale:.3f} rather than fitted ({wanted:.3f})")
-    if page.locator(".pages .sheet").count() != 1:
-        fail(f"[{label}] one page, {page.locator('.pages .sheet').count()} sheets drawn")
+    if page.locator(".pages:visible .sheet").count() != 1:
+        fail(f"[{label}] one page, {page.locator('.pages:visible .sheet').count()} sheets drawn")
     shot(page, f"{label}-one-page")
 def check_refits(page: Page, label: str) -> None:
     say("--- the paper stays across the pane ---")
@@ -281,9 +281,9 @@ def check_pen(page: Page, cdp, label: str) -> None:
     shot(page, f"{label}-a-stroke")
 def check_lasso(page: Page, cdp, label: str) -> None:
     say("--- the lasso, and what the bar offers ---")
-    if page.locator(".cluster .bar button[aria-label='Add']").count():
+    if page.locator(".cluster:visible .bar button[aria-label='Add']").count():
         fail(f"[{label}] a page note's bar offers Add, and nothing on paper answers to it")
-    if page.locator(".cluster .bar button[aria-label^='Zoom']").count():
+    if page.locator(".cluster:visible .bar button[aria-label^='Zoom']").count():
         fail(f"[{label}] a page note's bar still has its zoom buttons")
     tool(page, "d")
     box = surface(page)
@@ -319,16 +319,16 @@ def check_lasso(page: Page, cdp, label: str) -> None:
     else:
         say(f"[{label}] the lassoed ink moved by {tuple(round(v) for v in moved)}")
     shot(page, f"{label}-lasso-moved")
-    bar = page.evaluate("() => [...document.querySelectorAll('.over button')].map((b) => b.getAttribute('aria-label'))")
+    bar = page.evaluate("() => [...document.querySelectorAll('.over button')].filter((one) => one.getClientRects().length > 0).map((b) => b.getAttribute('aria-label'))")
     for wanted in ("Colour", "Duplicate", "Delete", "More"):
         if wanted not in bar:
             fail(f"[{label}] the bar over lassoed ink has no {wanted} ({bar})")
     shot(page, f"{label}-lasso-bar")
     picked = "() => window.ordenApp.pages.current.store.picked.slice()"
     if "Colour" in bar:
-        page.locator(".over button[aria-label='Colour']").first.click()
+        page.locator(".over:visible button[aria-label='Colour']").first.click()
         page.wait_for_timeout(300)
-        page.locator(".over button[aria-label='Colour 1']").first.click()
+        page.locator(".over:visible button[aria-label='Colour 1']").first.click()
         page.wait_for_timeout(300)
         colour = page.evaluate(
             "(id) => window.ordenApp.pages.current.store.canvas.ink.find((s) => s.id === id)?.color", drawn
@@ -337,18 +337,18 @@ def check_lasso(page: Page, cdp, label: str) -> None:
             fail(f"[{label}] Colour 1 on the bar left the lassoed ink {colour}")
     count = ink_count(page)
     if "Duplicate" in bar:
-        page.locator(".over button[aria-label='Duplicate']").first.click()
+        page.locator(".over:visible button[aria-label='Duplicate']").first.click()
         page.wait_for_timeout(300)
         if ink_count(page) != count + 1:
             fail(f"[{label}] Duplicate on the bar made {ink_count(page) - count} strokes, not one")
     if "Delete" in bar:
-        page.locator(".over button[aria-label='Delete']").first.click()
+        page.locator(".over:visible button[aria-label='Delete']").first.click()
         page.wait_for_timeout(300)
         if ink_count(page) != count or page.evaluate(picked):
             fail(f"[{label}] Delete on the bar did not take the copy away")
     say(f"[{label}] the bar over lassoed ink colours, copies and deletes it")
     page.evaluate("(id) => window.ordenApp.pages.current.store.pick(id)", drawn)
-    page.locator(".pages").first.focus()
+    page.locator(".pages:visible").first.focus()
     page.keyboard.press("Delete")
     page.wait_for_timeout(200)
     page.mouse.click(x0 + 300, y0 + 260, button="right")
@@ -404,7 +404,7 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     )
     page.keyboard.down("q")
     page.wait_for_timeout(100)
-    held = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
+    held = page.evaluate("() => getComputedStyle([...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length > 0)).cursor")
     page.mouse.move(x0 - 30, y0 - 30)
     page.mouse.down()
     for x, y in ((x0 + 300, y0 - 30), (x0 + 300, y0 + 70), (x0 - 30, y0 + 70), (x0 - 30, y0 - 30)):
@@ -414,13 +414,13 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     page.wait_for_timeout(300)
     picked = page.evaluate("() => window.ordenApp.pages.current.store.picked.slice()")
     back = page.evaluate(
-        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+        "() => [...document.querySelectorAll('.cluster .bar button[aria-pressed=true]')].find((one) => one.getClientRects().length > 0)?.getAttribute('aria-label')"
     )
     say(f"[{label}] held: in hand {back} again after, picked {len(picked)}")
     page.evaluate("() => { window.ordenApp.viewport.device = 'desktop' }")
     page.keyboard.down("q")
     page.wait_for_timeout(400)
-    mouse = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
+    mouse = page.evaluate("() => getComputedStyle([...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length > 0)).cursor")
     page.keyboard.up("q")
     page.evaluate("() => { window.ordenApp.viewport.device = 'tablet' }")
     page.wait_for_timeout(100)
@@ -431,7 +431,7 @@ def check_lasso_held(page: Page, cdp, label: str) -> None:
     if drawn not in picked:
         fail(f"[{label}] what the held lasso caught was not left caught ({picked})")
     shot(page, f"{label}-lasso-held")
-    page.locator(".pages").first.focus()
+    page.locator(".pages:visible").first.focus()
     page.keyboard.press("Delete")
     page.wait_for_timeout(200)
     tool(page, "v")
@@ -686,7 +686,7 @@ def check_papers(page: Page, label: str) -> None:
     say("--- the three papers ---")
     page.evaluate("async () => window.ordenApp.workspace.createPages(undefined, 'Papers.pages')")
     page.wait_for_timeout(900)
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     held = pages_of(page)
     if not held:
         fail(f"[{label}] no page note opened for the paper check")
@@ -823,7 +823,7 @@ def check_turn_while_drawing(page: Page, cdp, label: str) -> None:
         send("mouseMoved", x0 + n * 10, y0, 1)
         page.wait_for_timeout(8)
     page.evaluate(
-        "() => document.querySelector('.pages').dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true, cancelable: true }))"
+        "() => [...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length > 0).dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown', bubbles: true, cancelable: true }))"
     )
     page.wait_for_timeout(200)
     for n in range(8, 16):
@@ -951,7 +951,7 @@ def check_as_canvas(page: Page, label: str) -> None:
     )
     if drawn["ink"] != held["ink"]:
         fail(f"[{label}] as a canvas the ink is {drawn['ink']}, as pages it was {held['ink']}")
-    page.wait_for_selector(".canvas", timeout=10000)
+    page.wait_for_selector(".canvas:visible", timeout=10000)
     shot(page, f"{label}-as-a-canvas")
 def paper_bytes(sizes: list[tuple[float, float]]) -> str:
     import base64
@@ -1060,7 +1060,7 @@ def check_paper(page: Page, label: str) -> None:
     if beside != ["Lecture 4.pages"]:
         fail(f"[{label}] the import shows {beside} in the list rather than the page note alone")
     say(f"[{label}] the note the import made: {opened_note}")
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     page.wait_for_timeout(3500)
     held = pages_of(page)
     if len(held) != 2:

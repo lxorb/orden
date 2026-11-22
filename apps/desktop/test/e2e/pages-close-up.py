@@ -25,7 +25,7 @@ async ({ path, data }) => {
 """
 SHOWN = """
 () => {
-  const sheet = document.querySelector('.pages .sheet')
+  const sheet = [...document.querySelectorAll('.pages .sheet')].find((one) => one.getClientRects().length > 0)
   const close = sheet?.querySelector('canvas.close.there')
   const box = close?.getBoundingClientRect()
   return close && box

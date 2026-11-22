@@ -27,7 +27,7 @@ async ({ path, data }) => {
 """
 SPAN = """
 (text) => {
-  const span = [...document.querySelectorAll('.pages .sheet .words span')].find((one) => one.textContent.startsWith(text))
+  const span = [...document.querySelectorAll('.pages .sheet .words span')].filter((one) => one.getClientRects().length > 0).find((one) => one.textContent.startsWith(text))
   if (!span) return null
   const box = span.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
@@ -35,7 +35,7 @@ SPAN = """
 """
 CLOSE = """
 () => {
-  const close = document.querySelector('.pages .sheet canvas.close.there')
+  const close = [...document.querySelectorAll('.pages .sheet canvas.close.there')].find((one) => one.getClientRects().length > 0)
   const box = close?.getBoundingClientRect()
   return close && box ? { pixels: close.width, shown: box.width * devicePixelRatio } : null
 }
@@ -95,7 +95,7 @@ def opened(context) -> Page | None:
         return None
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
-    wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 60", "the page's words", 20)
+    wait_for(page, "[...document.querySelectorAll('.pages .sheet .words span')].filter((one) => one.getClientRects().length > 0).length >= 60", "the page's words", 20)
     page.evaluate(COPIED)
     return page
 def menu_rows(page: Page) -> list[str]:
@@ -201,7 +201,7 @@ def drive(browser: Browser) -> None:
         wrong("choosing words drew ink")
     shot(page, "words-chosen")
     page.evaluate("() => getSelection().removeAllRanges()")
-    page.locator(".pages").first.focus()
+    page.locator(".pages:visible").first.focus()
     page.keyboard.press(f"{MOD}+a")
     page.wait_for_timeout(200)
     whole = page.evaluate(
@@ -222,7 +222,7 @@ def drive(browser: Browser) -> None:
         say(f"dragged {beyond}px past the end of line 4: {chosen!r}")
         if "Line 4: the kestrel hangs above the field." not in chosen or "Line 5" in chosen:
             wrong(f"dragging past the end of a line of the PDF chose {chosen!r}")
-    page.locator(".pages").first.focus()
+    page.locator(".pages:visible").first.focus()
     page.keyboard.press("d")
     line = page.evaluate(SPAN, "Line 6:")
     across(page, line)
@@ -252,27 +252,27 @@ def drive(browser: Browser) -> None:
     page.evaluate("() => window.ordenApp.pages.current.store.clearPicked()")
     page.evaluate("() => window.ordenApp.pages.current.store.zoomTo(3)")
     page.wait_for_timeout(600)
-    page.locator(".pages").first.focus()
+    page.locator(".pages:visible").first.focus()
     page.keyboard.press(f"{MOD}+f")
-    wait_for(page, "!!document.querySelector('.pages .find input')", "the find bar", 10)
+    wait_for(page, "!![...document.querySelectorAll('.pages .find input')].find((one) => one.getClientRects().length > 0)", "the find bar", 10)
     page.keyboard.type("line 52:", delay=10)
     page.wait_for_timeout(400)
-    said = page.evaluate("() => document.querySelector('.pages .hits')?.textContent ?? ''")
+    said = page.evaluate("() => [...document.querySelectorAll('.pages .hits')].find((one) => one.getClientRects().length > 0)?.textContent ?? ''")
     say(f"the find list says {said[:80]!r}")
     if "field. Line 52" not in said:
         wrong(f"the find list runs one line of the PDF into the next: {said[:80]!r}")
     page.keyboard.press("Enter")
-    wait_for(page, "!!document.querySelector('.pages .sheet .hit.current')", "the found words marked", 10)
+    wait_for(page, "!![...document.querySelectorAll('.pages .sheet .hit.current')].find((one) => one.getClientRects().length > 0)", "the found words marked", 10)
     page.wait_for_timeout(400)
-    box = page.evaluate("() => { const b = document.querySelector('.pages .sheet .hit.current').getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } }")
-    count = page.evaluate("() => document.querySelector('.pages .find .count')?.textContent")
+    box = page.evaluate("() => { const b = [...document.querySelectorAll('.pages .sheet .hit.current')].find((one) => one.getClientRects().length > 0).getBoundingClientRect(); return { x: b.x, y: b.y, width: b.width, height: b.height } }")
+    count = page.evaluate("() => [...document.querySelectorAll('.pages .find .count')].find((one) => one.getClientRects().length > 0)?.textContent")
     say(f"found 'line 52:' ({count}) at {box}")
     if not (0 <= box["x"] and box["x"] + box["width"] <= 1100 and 0 <= box["y"] and box["y"] + box["height"] <= 800):
         wrong(f"the found words are off the screen: {box}")
     shot(page, "found")
     page.keyboard.press("Escape")
     page.wait_for_timeout(200)
-    if page.evaluate("() => !!document.querySelector('.pages .sheet .hit')"):
+    if page.evaluate("() => !![...document.querySelectorAll('.pages .sheet .hit')].find((one) => one.getClientRects().length > 0)"):
         wrong("the marks of a closed find stay on the page")
     for scale in (8, 16, 32):
         page.evaluate(ZOOM, [scale])

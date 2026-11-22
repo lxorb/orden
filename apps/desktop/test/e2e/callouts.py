@@ -87,11 +87,11 @@ def open_note(page: Page, starts: str) -> None:
         }""",
         starts,
     )
-    wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
+    wait_for(page, "window.orden && [...document.querySelectorAll('.cm-content')].find((one) => one.getClientRects().length > 0)", "the editor")
     page.wait_for_timeout(700)
 WRITTEN = """
 () => {
-  const lines = [...document.querySelectorAll('.cm-content .cm-line[data-callout]')]
+  const lines = [...document.querySelectorAll('.cm-content .cm-line[data-callout]')].filter((one) => one.getClientRects().length > 0)
   const seen = new Map()
   for (const line of lines) {
     const type = line.dataset.callout
@@ -109,7 +109,7 @@ WRITTEN = """
 """
 READ = """
 () => {
-  const found = [...document.querySelectorAll('.callout')]
+  const found = [...document.querySelectorAll('.callout')].filter((one) => one.getClientRects().length > 0)
   return found.map((one) => ({
     type: one.dataset.callout,
     look: [...one.classList].find((name) => name.startsWith('callout-') && name !== 'callout-title'),
@@ -127,7 +127,7 @@ def swept(page: Page) -> dict:
             found.setdefault(name, one)
         at = page.evaluate(
             """() => {
-              const box = document.querySelector('.cm-scroller')
+              const box = [...document.querySelectorAll('.cm-scroller')].find((one) => one.getClientRects().length > 0)
               const was = box.scrollTop
               box.scrollTop = was + box.clientHeight * 0.8
               return box.scrollTop
@@ -181,7 +181,7 @@ def drive(browser: Browser, scheme: str) -> None:
     )
     page.wait_for_timeout(400)
     dressed = page.evaluate(
-        "() => getComputedStyle(document.querySelector(\"[data-callout='recipe']\")).borderLeftColor"
+        "() => getComputedStyle([...document.querySelectorAll(\"[data-callout='recipe']\")].find((one) => one.getClientRects().length > 0)).borderLeftColor"
     )
     say(f"[{scheme}] a theme dresses it: {dressed}")
     if dressed != "rgb(194, 65, 12)":
@@ -225,14 +225,14 @@ def drive(browser: Browser, scheme: str) -> None:
     page.context.close()
 FOLDED = """
 () => ({
-  marks: document.querySelectorAll('.orden-folded').length,
-  shown: [...document.querySelectorAll('.cm-content .cm-line')]
+  marks: [...document.querySelectorAll('.orden-folded')].filter((one) => one.getClientRects().length > 0).length,
+  shown: [...document.querySelectorAll('.cm-content .cm-line')].filter((one) => one.getClientRects().length > 0)
     .map((line) => line.textContent.trim())
     .filter((text) => text.length),
 })
 """
 DISCLOSED = """
-() => [...document.querySelectorAll('.callout')].map((one) => ({
+() => [...document.querySelectorAll('.callout')].filter((one) => one.getClientRects().length > 0).map((one) => ({
   type: one.dataset.callout,
   tag: one.tagName.toLowerCase(),
   open: one.tagName.toLowerCase() === 'details' ? one.open : null,

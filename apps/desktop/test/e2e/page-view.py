@@ -68,13 +68,13 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(700)
         if page.evaluate("() => !!window.ordenApp.workspace.active?.path?.endsWith('.pages')"):
             break
-    wait_for(page, "!!document.querySelector('.pages')", "the page note")
+    wait_for(page, "!![...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length > 0)", "the page note")
     page.wait_for_timeout(600)
     pages = page.evaluate("() => window.ordenApp.workspace.active.path")
-    check(page, "page note", pages, ".pages", other)
+    check(page, "page note", pages, ".pages:visible", other)
     page.evaluate("() => window.ordenApp.pages.current?.store.fitAgain()")
     page.wait_for_timeout(300)
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     assert box
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     for _ in range(4):
@@ -95,9 +95,9 @@ def drive(browser: Browser) -> None:
     else:
         wrong(f"[page note] scrolled, not zoomed: left at {left}, back {back}, restarted {again}")
     page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
-    wait_for(page, "!!document.querySelector('.canvas')", "the canvas")
+    wait_for(page, "!![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)", "the canvas")
     page.wait_for_timeout(600)
     board = page.evaluate("() => window.ordenApp.workspace.active.path")
-    check(page, "canvas", board, ".canvas", other)
+    check(page, "canvas", board, ".canvas:visible", other)
     page.close()
 raise SystemExit(DRIVE.run(drive, "a page note and a canvas come back where they were left"))

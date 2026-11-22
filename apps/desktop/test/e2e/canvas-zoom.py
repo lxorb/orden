@@ -7,13 +7,13 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-ACTUAL = '.cluster button.actual'
+ACTUAL = '.cluster:visible button.actual'
 SCALE = "() => window.ordenApp.workspace.active?.camera?.scale ?? null"
 def reading(page: Page) -> str | None:
     found = page.locator(ACTUAL)
     return found.first.inner_text().strip() if found.count() else None
 def wheel_in(page: Page, times: int) -> None:
-    box = page.locator(".canvas").first.bounding_box()
+    box = page.locator(".canvas:visible").first.bounding_box()
     assert box
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     page.keyboard.down("Control")
@@ -34,7 +34,7 @@ def drive(browser: Browser) -> None:
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         [path, json.dumps({"nodes": [], "edges": []})],
     )
-    wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
+    wait_for(page, "!![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0) && !![...document.querySelectorAll('.cluster')].find((one) => one.getClientRects().length > 0)", "the canvas")
     page.wait_for_timeout(600)
     if abs((page.evaluate(SCALE) or 1) - 1) < 0.005 and reading(page) is not None:
         wrong(f"[100%] the bar reads the zoom at the actual size: {reading(page)}")
@@ -56,9 +56,9 @@ def drive(browser: Browser) -> None:
         "() => { const tab = window.ordenApp.workspace.active; tab.camera = { ...tab.camera, scale: 4 } }"
     )
     page.wait_for_timeout(300)
-    page.locator(".cluster button.pen").first.click()
+    page.locator(".cluster:visible button.pen").first.click()
     page.wait_for_timeout(200)
-    box = page.locator(".canvas").first.bounding_box()
+    box = page.locator(".canvas:visible").first.bounding_box()
     assert box
     x, y = box["x"] + box["width"] * 0.4, box["y"] + box["height"] * 0.4
     page.mouse.move(x, y)
@@ -111,16 +111,16 @@ PASTE = """(data) => {
   const carried = new DataTransfer()
   const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
   carried.items.add(new File([bytes], 'far picture.png', { type: 'image/png' }))
-  const plane = document.querySelector('.canvas')
+  const plane = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)
   plane.focus()
   plane.dispatchEvent(new ClipboardEvent('paste', { clipboardData: carried, bubbles: true, cancelable: true }))
 }"""
 FAR_LOOK = """() => ({
   scale: window.ordenApp.workspace.active.camera.scale,
   far: !!document.querySelector('canvas[data-far]'),
-  cards: document.querySelectorAll('.canvas .node').length,
-  words: [...document.querySelectorAll('.canvas .node')].map((one) => one.textContent.trim()).filter(Boolean),
-  pictures: [...document.querySelectorAll('.canvas .node img')].filter((one) => one.complete && one.naturalWidth > 0).length,
+  cards: [...document.querySelectorAll('.canvas .node')].filter((one) => one.getClientRects().length > 0).length,
+  words: [...document.querySelectorAll('.canvas .node')].filter((one) => one.getClientRects().length > 0).map((one) => one.textContent.trim()).filter(Boolean),
+  pictures: [...document.querySelectorAll('.canvas .node img')].filter((one) => one.getClientRects().length > 0).filter((one) => one.complete && one.naturalWidth > 0).length,
 })"""
 def drive_far(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
@@ -138,11 +138,11 @@ def drive_far(browser: Browser) -> None:
         " await ws.loadTree(); await ws.openEntry(`${root}/Far.canvas`, { activate: true }) }",
         [root, json.dumps({"nodes": nodes, "edges": []})],
     )
-    wait_for(page, "!!document.querySelector('.canvas .node')", "the board")
+    wait_for(page, "!![...document.querySelectorAll('.canvas .node')].find((one) => one.getClientRects().length > 0)", "the board")
     page.evaluate(PASTE, png(400, 300))
     wait_for(
         page,
-        "[...document.querySelectorAll('.canvas img.picture')].some((one) => one.complete && one.naturalWidth > 0)",
+        "[...document.querySelectorAll('.canvas img.picture')].filter((one) => one.getClientRects().length > 0).some((one) => one.complete && one.naturalWidth > 0)",
         "the pasted picture",
     )
     for scale in (0.3, 0.15, 0.06):

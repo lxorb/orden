@@ -90,7 +90,7 @@ def crosses(source: Page, label: str, other: Page, there: str) -> None:
     else:
         say(f"a card put down on the {label}'s pages is on the {there}'s")
 def held_and_gone_to(owner: Page, guest: Page) -> None:
-    box = owner.locator(".pages").first.bounding_box()
+    box = owner.locator(".pages:visible").first.bounding_box()
     if not box:
         failed("the owner's pages are not on screen")
         return

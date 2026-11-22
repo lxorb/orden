@@ -5,7 +5,7 @@ from harness import Drive
 DRIVE = Drive(__file__)
 say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 def shown(page: Page, selector: str) -> bool:
-    return bool(page.evaluate("(selector) => !!document.querySelector(selector)", selector))
+    return bool(page.evaluate("(selector) => [...document.querySelectorAll(selector)].some((one) => one.getClientRects().length > 0)", selector))
 def gone(page: Page, selector: str, what: str) -> bool:
     try:
         DRIVE.wait_for(page, f"!document.querySelector({selector!r})", what, 5)
@@ -75,7 +75,7 @@ FLOATING = (".cluster", ".over", ".orden-bubble", "[role=listbox]", ".canvas [da
 def press_past(page: Page, area: str, popup: str) -> None:
     clear = page.evaluate(
         """([area, avoid, spots]) => {
-          const box = document.querySelector(area)?.getBoundingClientRect()
+          const box = [...document.querySelectorAll(area)].find((one) => one.getClientRects().length > 0)?.getBoundingClientRect()
           if (!box) return null
           const rects = avoid.flatMap((one) => [...document.querySelectorAll(one)])
             .map((one) => one.getBoundingClientRect())
@@ -149,13 +149,13 @@ def drive(browser: Browser) -> None:
         "async () => { const ws = window.ordenApp.workspace;"
         " await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }"
     )
-    DRIVE.wait_for(page, "!!document.querySelector('.cluster button.swatch')", "the canvas bar")
-    swatch = page.locator(".cluster button.swatch").first
+    DRIVE.wait_for(page, "!![...document.querySelectorAll('.cluster button.swatch')].find((one) => one.getClientRects().length > 0)", "the canvas bar")
+    swatch = page.locator(".cluster:visible button.swatch").first
     check(page, "the canvas colours", lambda: swatch.click(), ".cluster .panel", ".canvas")
-    put = page.locator('.cluster button[aria-label="Add"]').first
+    put = page.locator('.cluster:visible button[aria-label="Add"]').first
     if put.count():
         check(page, "the canvas's things to add", lambda: put.click(), ".cluster .panel", ".canvas")
-    plane = page.locator(".canvas").first.bounding_box()
+    plane = page.locator(".canvas:visible").first.bounding_box()
     if plane:
         page.mouse.dblclick(plane["x"] + plane["width"] * 0.55, plane["y"] + plane["height"] * 0.45)
         page.wait_for_timeout(400)
@@ -163,7 +163,7 @@ def drive(browser: Browser) -> None:
         page.keyboard.press("Escape")
         page.wait_for_timeout(400)
     scrolled = page.evaluate(
-        "() => { const it = document.querySelector('.canvas'); it.scrollTo(40, 40);"
+        "() => { const it = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0); it.scrollTo(40, 40);"
         " const at = [it.scrollLeft, it.scrollTop]; it.scrollTo(0, 0); return at }"
     )
     if scrolled != [0, 0]:
@@ -171,7 +171,7 @@ def drive(browser: Browser) -> None:
     picked = page.locator('.over button[aria-label="Colour"]').first
     def pick_and_open() -> None:
         if not shown(page, ".over"):
-            page.locator(".canvas [data-id]").first.click()
+            page.locator(".canvas:visible [data-id]").first.click()
             page.wait_for_timeout(300)
         picked.click()
     if picked.count() and picked.is_visible():

@@ -26,7 +26,7 @@ async ({ path, data }) => {
 }
 """
 HITS = """
-() => [...document.querySelectorAll('.pages .sheet .hit')].map((one) => {
+() => [...document.querySelectorAll('.pages .sheet .hit')].filter((one) => one.getClientRects().length > 0).map((one) => {
   const box = one.getBoundingClientRect()
   return { current: one.classList.contains('current'), x: box.x, y: box.y, width: box.width, height: box.height }
 })
@@ -71,10 +71,10 @@ def opened(context) -> Page | None:
         return None
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
-    wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 4", "the page's words", 20)
+    wait_for(page, "[...document.querySelectorAll('.pages .sheet .words span')].filter((one) => one.getClientRects().length > 0).length >= 4", "the page's words", 20)
     return page
 def typed(page: Page, term: str) -> None:
-    field = page.locator(".pages .find input")
+    field = page.locator(".pages:visible .find input")
     field.fill(term)
     page.wait_for_timeout(400)
 def drive(browser: Browser) -> None:
@@ -82,11 +82,11 @@ def drive(browser: Browser) -> None:
     page = opened(context)
     if not page:
         return
-    page.locator(".pages").first.click(position={"x": 20, "y": 20})
+    page.locator(".pages:visible").first.click(position={"x": 20, "y": 20})
     page.keyboard.press(f"{MOD}+f")
-    page.wait_for_selector(".pages .find input", timeout=5000)
+    page.wait_for_selector(".pages:visible .find input", timeout=5000)
     typed(page, "example")
-    count = page.locator(".pages .find .count").inner_text()
+    count = page.locator(".pages:visible .find .count").inner_text()
     hits = page.evaluate(HITS)
     say(f"'example': the bar counts {count!r}, the page shows {len(hits)} marks")
     if count != "1/2":
@@ -102,7 +102,7 @@ def drive(browser: Browser) -> None:
         wrong(f"the current hit 'exam-' / 'ple' should mark two pieces, {len(current)} are marked")
     shot(page, "broken-word-found")
     typed(page, "exam")
-    count = page.locator(".pages .find .count").inner_text()
+    count = page.locator(".pages:visible .find .count").inner_text()
     left = [one for one in page.evaluate(HITS) if one["current"]]
     say(f"'exam' after picking a hit: the bar counts {count!r}, {len(left)} marks shown as current")
     if left:

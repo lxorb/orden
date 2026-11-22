@@ -65,7 +65,7 @@ LISTED = """
 """
 DARK_ON_SHEET = """
 (number) => {
-  const sheet = [...document.querySelectorAll('.sheet')].find(
+  const sheet = [...document.querySelectorAll('.sheet')].filter((one) => one.getClientRects().length > 0).find(
     (one) => one.querySelector('.number')?.textContent === String(number),
   )?.querySelector('canvas')
   const context = sheet?.getContext('2d', { willReadFrequently: true })
@@ -79,7 +79,7 @@ DARK_ON_SHEET = """
 }
 """
 def drawn(page: Page, label: str, pages: int) -> None:
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     DRIVE.waited(page, f"window.ordenApp.pages.current?.store.count === {pages}", f"[{label}] the page note")
     dark: list[int] = []
     for number in range(1, pages + 1):
@@ -147,7 +147,7 @@ def opened_in_place(page: Page) -> str | None:
     return page.evaluate("() => window.ordenApp.workspace.active.path")
 def stroke(page: Page, cdp) -> None:
     page.keyboard.press("Escape")
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     assert box
     page.mouse.click(box["x"] + 30, box["y"] + 30)
     page.keyboard.press("d")
@@ -220,7 +220,7 @@ def exported(page: Page) -> None:
     drawn(page, "exported", 2)
     inked = page.evaluate(
         """() => {
-          const sheet = document.querySelector('.sheet canvas')
+          const sheet = [...document.querySelectorAll('.sheet canvas')].find((one) => one.getClientRects().length > 0)
           const context = sheet?.getContext('2d', { willReadFrequently: true })
           if (!sheet || !context) return -1
           const band = Math.floor(sheet.height * 0.04)

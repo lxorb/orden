@@ -43,7 +43,7 @@ async (text) => {
 """
 WATCH = """
 () => {
-  const host = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length)
+  const host = [...document.querySelectorAll('.canvas')].filter((one) => one.getClientRects().length > 0).find((one) => one.getClientRects().length)
   const probe = { frames: [], changed: 0, tasks: [] }
   window.__pan = probe
   new MutationObserver((list) => { probe.changed += list.length }).observe(host, { subtree: true, childList: true, attributes: true, characterData: true })
@@ -78,7 +78,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "a space")
     page.evaluate(SEED, json.dumps(board()))
     page.wait_for_timeout(1500)
-    host = [one for one in page.locator(".canvas").all() if one.is_visible()][0]
+    host = [one for one in page.locator(".canvas:visible").all() if one.is_visible()][0]
     box = host.bounding_box()
     assert box
     page.keyboard.press("Escape")

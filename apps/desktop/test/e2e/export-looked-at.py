@@ -89,8 +89,8 @@ def canvas_pictures(browser: Browser) -> None:
     page.evaluate(
         "async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Plane.canvas') }"
     )
-    page.wait_for_selector(".canvas")
-    box = page.locator(".canvas").bounding_box()
+    page.wait_for_selector(".canvas:visible")
+    box = page.locator(".canvas:visible").bounding_box()
     x, y = box["x"] + 300, box["y"] + 200
     page.keyboard.press("d")
     page.mouse.move(x, y)
@@ -139,8 +139,8 @@ def page_note_at_once(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 860})
     DRIVE.open(page)
     page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createPages(ws.activeSpace.root) }")
-    page.wait_for_selector(".pages, .canvas")
-    box = page.locator(".pages, .canvas").first.bounding_box()
+    page.wait_for_selector(".pages:visible, .canvas:visible")
+    box = page.locator(".pages:visible, .canvas:visible").first.bounding_box()
     x, y = box["x"] + box["width"] / 2, box["y"] + 250
     page.keyboard.press("d")
     page.mouse.move(x - 150, y)

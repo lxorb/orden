@@ -5,7 +5,7 @@ from playwright.sync_api import Browser
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 DISK = "async (p) => JSON.parse(await window.ordenApp.workspace.noteText(p))"
-CARDS = "document.querySelectorAll('.canvas .node').length === 3"
+CARDS = "[...document.querySelectorAll('.canvas .node')].filter((one) => one.getClientRects().length > 0).length === 3"
 WRITE = """async ([name, text]) => {
   const ws = window.ordenApp.workspace
   const path = `${ws.activeSpace.root.replace(/\\/+$/, '')}/${name}`
@@ -15,7 +15,7 @@ WRITE = """async ([name, text]) => {
   return path
 }"""
 def card(page, id):
-    return page.locator(f'.canvas .node[data-id="{id}"]').first
+    return page.locator(f'.canvas:visible .node[data-id="{id}"]').first
 def drive(browser: Browser) -> None:
     context = DRIVE.context(browser, viewport={"width": 1200, "height": 800})
     a = context.new_page()

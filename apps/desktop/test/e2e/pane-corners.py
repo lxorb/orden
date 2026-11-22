@@ -63,7 +63,7 @@ def page_note(page: Page) -> None:
             break
     else:
         wrong("no page note ever opened")
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     wait_for(page, "!!document.querySelector('footer[data-region=\"status\"] .page')", "the counter")
 def right_open(page: Page) -> None:
     page.evaluate(

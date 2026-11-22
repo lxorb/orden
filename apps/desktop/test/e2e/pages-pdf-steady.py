@@ -38,7 +38,7 @@ WATCH = """
     for (const task of list.getEntries()) probe.tasks.push([task.startTime, task.duration])
   }).observe({ type: 'longtask' })
   const look = (at) => {
-    const sheets = [...document.querySelectorAll('.pages .sheet')].filter((one) => {
+    const sheets = [...document.querySelectorAll('.pages .sheet')].filter((one) => one.getClientRects().length > 0).filter((one) => {
       const box = one.getBoundingClientRect()
       return box.bottom > 0 && box.top < innerHeight && box.right > 0 && box.left < innerWidth
     })
@@ -70,7 +70,7 @@ SINCE = """
 """
 DRAWN = """
 () => {
-  const sheets = [...document.querySelectorAll('.pages .sheet')]
+  const sheets = [...document.querySelectorAll('.pages .sheet')].filter((one) => one.getClientRects().length > 0)
   return sheets.length === 2 && sheets.every((one) => one.querySelector('canvas.there')?.width > 1)
 }
 """
@@ -105,7 +105,7 @@ def dark_share(png: bytes, box: dict, scale: float) -> float:
     dark = sum(1 for r, g, b in pixels if r < 24 and g < 24 and b < 24)
     return dark / max(1, len(pixels))
 def blackness(page, frames: list[tuple[bytes, dict]], label: str) -> None:
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     if not box:
         wrong(f"{label}: no page note to look at")
         return
@@ -161,7 +161,7 @@ def drive(browser: Browser) -> None:
     shot(page, "opened")
     cdp = context.new_cdp_session(page)
     frames = Frames(cdp) if cdp else None
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     assert box
     page.keyboard.press("Escape")
     page.mouse.click(box["x"] + 30, box["y"] + 30)
@@ -179,7 +179,7 @@ def drive(browser: Browser) -> None:
             "Input.dispatchMouseEvent",
             {"type": what, "x": x, "y": y, "button": "left", "buttons": held, "clickCount": 1, "pointerType": "pen", "force": 0.6},
         )
-    sheet = page.locator(".pages .sheet").first.bounding_box()
+    sheet = page.locator(".pages:visible .sheet").first.bounding_box()
     assert sheet
     before = page.evaluate("() => window.ordenApp.pages.current.store.canvas.ink.length")
     from_edit = page.evaluate("() => performance.now()")

@@ -72,7 +72,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.ordenApp.pages.current?.store.count === 6", "the page note")
     page.evaluate("() => { window.ordenApp.workspace.panel = 'outline' }")
     page.evaluate("() => window.ordenApp.workspace.split('row')")
-    wait_for(page, "document.querySelectorAll('.pages').length === 2", "the page note in two panes")
+    wait_for(page, "[...document.querySelectorAll('.pages')].filter((one) => one.getClientRects().length > 0).length === 2", "the page note in two panes")
     page.evaluate("(path) => window.ordenApp.workspace.openEntry(path, { activate: true })", f"{root}/Heads.md")
     page.wait_for_timeout(800)
     state = page.evaluate(STATE)
@@ -80,7 +80,7 @@ def drive(browser: Browser) -> None:
         wrong(f"[note] beside a page note, the note in front does not fill the Outline and the bar: {state}")
     else:
         say(f"ok   [note] the note in front fills the Outline and the bar: {state}")
-    page.locator(".pages").first.click(position={"x": 200, "y": 300})
+    page.locator(".pages:visible").first.click(position={"x": 200, "y": 300})
     if DRIVE.waited(page, f"(() => {{ const seen = ({STATE})(); return seen.navigator && seen.counter === '1 / 6' }})()", "the page note left in front to fill the Outline and the bar", patience=10):
         say(f"ok   [pages] the page note left in front fills them again: {page.evaluate(STATE)}")
     else:

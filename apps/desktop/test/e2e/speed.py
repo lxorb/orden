@@ -732,8 +732,8 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
     lane.profile("canvas opened", opened.pop("loaf"))
     if not opened.get("ms"):
         return {}
-    page.wait_for_selector(".canvas", state="visible", timeout=90000)
-    box = page.locator(".canvas").first.bounding_box()
+    page.wait_for_selector(".canvas:visible", state="visible", timeout=90000)
+    box = page.locator(".canvas:visible").first.bounding_box()
     if not box:
         return {"canvas-open": opened["ms"]}
     filling = fill_in(lane, page)
@@ -786,7 +786,7 @@ async (path) => {
   await ws.openCanvas(path)
   for (let spin = 0; spin < 900; spin++) {
     await window.__painted()
-    if (document.querySelector('.canvas')) break
+    if ([...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)) break
   }
   const painted = await window.__painted()
   return { ms: painted - started, loaf: window.__marks.loaf.filter((one) => one.ms >= 50) }

@@ -33,7 +33,7 @@ async (text) => {
 """
 LOOK = """
 () => {
-  const host = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length)
+  const host = [...document.querySelectorAll('.canvas')].filter((one) => one.getClientRects().length > 0).find((one) => one.getClientRects().length)
   const rect = host?.querySelector('.node.group .frame rect')
   const plane = host?.querySelector('.plane')
   if (!rect || !plane) return null
@@ -49,7 +49,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "a space")
     page.evaluate(SEED, json.dumps(BOARD))
     page.wait_for_timeout(1500)
-    box = [one for one in page.locator(".canvas").all() if one.is_visible()][0].bounding_box()
+    box = [one for one in page.locator(".canvas:visible").all() if one.is_visible()][0].bounding_box()
     assert box
     page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
     seen = []

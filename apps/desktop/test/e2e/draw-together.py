@@ -87,7 +87,7 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
         )
         raise
     page.evaluate(f"async () => {{ await window.ordenApp.workspace.openCanvas('/{SPACE}/{name}') }}")
-    wait_for(page, "() => !!document.querySelector('canvas.ink.settled')", f"[{label}] the plane")
+    wait_for(page, "() => !![...document.querySelectorAll('canvas.ink.settled')].find((one) => one.getClientRects().length > 0)", f"[{label}] the plane")
     wait_for(
         page,
         f"() => window.ordenApp.rooms.carries({json.dumps(note_id)})",
@@ -96,7 +96,7 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
 def plane(page: Page) -> dict:
     return page.evaluate(
         """() => {
-            const host = document.querySelector('div.canvas')
+            const host = [...document.querySelectorAll('div.canvas')].find((one) => one.getClientRects().length > 0)
             const box = host.getBoundingClientRect()
             return { x: box.left, y: box.top, width: box.width, height: box.height }
         }"""
@@ -122,13 +122,13 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
         " tab.camera = { x: 40000, y: 0, scale: 0.5 } }"
     )
     try:
-        DRIVE.wait_for(page, "!!document.querySelector('svg.hands .held')", f"[{label}] the hand held at the edge", 10)
+        DRIVE.wait_for(page, "!![...document.querySelectorAll('svg.hands .held')].find((one) => one.getClientRects().length > 0)", f"[{label}] the hand held at the edge", 10)
     except SystemExit:
         pass
     held = page.evaluate(
         """() => {
-            const one = document.querySelector('svg.hands .held')
-            const surface = document.querySelector('div.canvas')?.getBoundingClientRect()
+            const one = [...document.querySelectorAll('svg.hands .held')].find((one) => one.getClientRects().length > 0)
+            const surface = [...document.querySelectorAll('div.canvas')].find((one) => one.getClientRects().length > 0)?.getBoundingClientRect()
             if (!one || !surface) return null
             const box = one.getBoundingClientRect()
             return {
@@ -136,12 +136,12 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
                 inside: box.left >= surface.left && box.right <= surface.right
                     && box.top >= surface.top && box.bottom <= surface.bottom,
                 left: box.left - surface.left,
-                dot: !!document.querySelector('svg.hands > circle'),
+                dot: !![...document.querySelectorAll('svg.hands > circle')].find((one) => one.getClientRects().length > 0),
             }
         }"""
     )
     say(f"[{label}] looking far to the right of the other hand: {json.dumps(held)}")
-    page.locator("div.canvas").first.screenshot(path=str(SHOTS / f"held-at-edge-{label}.png"))
+    page.locator("div.canvas:visible").first.screenshot(path=str(SHOTS / f"held-at-edge-{label}.png"))
     if not held:
         failures.append(f"[{label}] a hand off the screen was not held at its edge")
     else:
@@ -154,11 +154,11 @@ def held_at_edge(page: Page, failures: list[str], label: str) -> None:
         if held["dot"]:
             failures.append(f"[{label}] a hand held at the edge was drawn where it is as well")
     if held:
-        page.locator("svg.hands .held path").first.click(force=True)
+        page.locator("svg.hands:visible .held path").first.click(force=True)
         try:
             DRIVE.wait_for(
                 page,
-                "!document.querySelector('svg.hands .held') && !!document.querySelector('svg.hands > circle')",
+                "![...document.querySelectorAll('svg.hands .held')].find((one) => one.getClientRects().length > 0) && !![...document.querySelectorAll('svg.hands > circle')].find((one) => one.getClientRects().length > 0)",
                 f"[{label}] the camera to go to the hand",
                 10,
             )
@@ -226,8 +226,8 @@ def watches(page: Page, at: tuple[float, float]) -> None:
     page.evaluate(
         """([sx, sy]) => {
             window.__inked = null
-            const host = document.querySelector('div.canvas')
-            const layer = document.querySelector('canvas.ink.settled')
+            const host = [...document.querySelectorAll('div.canvas')].find((one) => one.getClientRects().length > 0)
+            const layer = [...document.querySelectorAll('canvas.ink.settled')].find((one) => one.getClientRects().length > 0)
             const context = layer.getContext('2d', { willReadFrequently: true })
 
             const look = () => {
@@ -289,7 +289,7 @@ def main() -> int:
         if abs(box["x"] - other["x"]) > 1 or abs(box["y"] - other["y"]) > 1:
             failures.append("the two planes are not on screen in the same place")
         down, move, up, session = pen(one)
-        one.click("div.canvas", position={"x": 40, "y": 40})
+        one.click("div.canvas:visible", position={"x": 40, "y": 40})
         one.keyboard.press("d")
         one.wait_for_timeout(150)
         crossings: list[float] = []
@@ -324,12 +324,12 @@ def main() -> int:
         for point in live[1:]:
             move(*point)
         try:
-            DRIVE.wait_for(two, "!!document.querySelector('svg.hands path')", "the stroke on the other device", 10)
+            DRIVE.wait_for(two, "!![...document.querySelectorAll('svg.hands path')].find((one) => one.getClientRects().length > 0)", "the stroke on the other device", 10)
         except SystemExit:
             pass
         drawing = two.evaluate(
             """() => {
-                const layer = document.querySelector('svg.hands')
+                const layer = [...document.querySelectorAll('svg.hands')].find((one) => one.getClientRects().length > 0)
                 return {
                     stroke: !!layer?.querySelector('path'),
                     hand: !!layer?.querySelector('circle'),
@@ -338,7 +338,7 @@ def main() -> int:
             }"""
         )
         say(f"the other browser is showing {json.dumps(drawing)}")
-        two.locator("div.canvas").first.screenshot(path=str(SHOTS / "remote-stroke.png"))
+        two.locator("div.canvas:visible").first.screenshot(path=str(SHOTS / "remote-stroke.png"))
         if not drawing["stroke"]:
             failures.append("the stroke being drawn was not shown on the other device")
         if not drawing["hand"]:
@@ -347,10 +347,10 @@ def main() -> int:
             failures.append("the other device's hand carried no name")
         up(*live[-1])
         two.wait_for_timeout(1900)
-        two.locator("div.canvas").first.screenshot(path=str(SHOTS / "remote-pointer.png"))
+        two.locator("div.canvas:visible").first.screenshot(path=str(SHOTS / "remote-pointer.png"))
         two.locator(".strip").first.screenshot(path=str(SHOTS / "plane-presence.png"))
         still_named = two.evaluate(
-            "() => document.querySelector('svg.hands text')?.textContent ?? null"
+            "() => [...document.querySelectorAll('svg.hands text')].find((one) => one.getClientRects().length > 0)?.textContent ?? null"
         )
         if not still_named:
             failures.append("the other device's name went once its hand stopped")
@@ -364,7 +364,7 @@ def main() -> int:
         two.wait_for_timeout(300)
         say(f"the photographs are in {SHOTS}")
         second, moving, lifting, other_session = pen(two)
-        two.click("div.canvas", position={"x": 40, "y": 40})
+        two.click("div.canvas:visible", position={"x": 40, "y": 40})
         two.keyboard.press("d")
         two.wait_for_timeout(150)
         mine = wave(box, 120, 80)
@@ -460,7 +460,7 @@ def main() -> int:
             )
             if held != count:
                 failures.append(f"{name} came back with {held} strokes rather than {count}")
-            joining.locator("div.canvas").first.screenshot(
+            joining.locator("div.canvas:visible").first.screenshot(
                 path=str(SHOTS / f"plane-{count}.png")
             )
     if failures:

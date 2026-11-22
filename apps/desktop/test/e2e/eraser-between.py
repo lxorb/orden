@@ -18,8 +18,8 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
         "async ([maker, name]) => { const ws = window.ordenApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
         [maker, f"{kind}-{maker}"],
     )
-    page.wait_for_selector(".canvas, .pages")
-    box = page.locator(".canvas, .pages").first.bounding_box()
+    page.wait_for_selector(".canvas:visible, .pages:visible")
+    box = page.locator(".canvas:visible, .pages:visible").first.bounding_box()
     x, y = box["x"] + (300 if maker == "createCanvas" else box["width"] / 2 - 100), box["y"] + 200
     page.keyboard.press("d")
     page.mouse.move(x, y)
@@ -55,8 +55,8 @@ def pass_over(page: Page, kind: str, maker: str = "createCanvas") -> None:
 def scrolled_under(page: Page) -> None:
     say("a page scrolled under a held eraser cuts nothing it did not touch")
     page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createPages(ws.activeSpace.root, 'scrolled') }")
-    page.wait_for_selector(".pages, .canvas")
-    box = page.locator(".pages, .canvas").first.bounding_box()
+    page.wait_for_selector(".pages:visible, .canvas:visible")
+    box = page.locator(".pages:visible, .canvas:visible").first.bounding_box()
     x, y = box["x"] + box["width"] / 2, box["y"] + 200
     page.keyboard.press("d")
     page.mouse.move(x - 100, y + 200)
@@ -81,8 +81,8 @@ def whole_stroke(page: Page, maker: str) -> None:
         "async ([maker, name]) => { const ws = window.ordenApp.workspace; await ws[maker](ws.activeSpace.root, name) }",
         [maker, f"whole-{maker}"],
     )
-    page.wait_for_selector(".canvas, .pages")
-    box = page.locator(".canvas, .pages").first.bounding_box()
+    page.wait_for_selector(".canvas:visible, .pages:visible")
+    box = page.locator(".canvas:visible, .pages:visible").first.bounding_box()
     x, y = box["x"] + (300 if maker == "createCanvas" else box["width"] / 2 - 100), box["y"] + 200
     page.keyboard.press("d")
     page.mouse.move(x, y)

@@ -128,9 +128,9 @@ def drive(browser: Browser) -> None:
         " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
         [f"{root}/Board.canvas", json.dumps({"nodes": [card], "edges": []})],
     )
-    wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
+    wait_for(page, "!![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0) && !![...document.querySelectorAll('.cluster')].find((one) => one.getClientRects().length > 0)", "the canvas")
     page.wait_for_timeout(500)
-    box = page.locator(".canvas").first.bounding_box()
+    box = page.locator(".canvas:visible").first.bounding_box()
     assert box
     checked(page, "canvas", CANVAS_CAMERA, box["x"] + box["width"] / 3, box["y"] + box["height"] / 3)
     lost(page, "canvas", CANVAS_CAMERA, box["x"] + box["width"] / 3, box["y"] + box["height"] / 3, "right")
@@ -145,7 +145,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.ordenApp.pages.current?.store.count === 1", "the page note")
     page.evaluate("() => window.ordenApp.pages.current.store.zoomTo(2)")
     page.wait_for_timeout(500)
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     assert box
     checked(page, "page note", PAGES_CAMERA, box["x"] + box["width"] / 2, box["y"] + box["height"] / 3)
     lost(page, "page note", PAGES_CAMERA, box["x"] + box["width"] / 2, box["y"] + box["height"] / 3, "right")

@@ -161,10 +161,10 @@ def exported(page: Page, row: str) -> bytes:
     return asked.value.path().read_bytes()
 def opened_with_ink(page: Page, name: str, paper: str) -> None:
     page.evaluate(IMPORT, {"base64": paper, "name": name})
-    page.wait_for_selector(".pages", timeout=15000)
-    wait_for(page, "document.querySelectorAll('.pages canvas').length > 0", "the sheets")
+    page.wait_for_selector(".pages:visible", timeout=15000)
+    wait_for(page, "[...document.querySelectorAll('.pages canvas')].filter((one) => one.getClientRects().length > 0).length > 0", "the sheets")
     page.wait_for_timeout(1000)
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     page.keyboard.press("d")
     x, y = box["x"] + box["width"] / 2, box["y"] + 150
     page.mouse.move(x - 50, y)

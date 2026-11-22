@@ -5,11 +5,11 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 BAR = """
 () => {
-  const bar = document.querySelector('.pages > .orden-scrollbar')
+  const bar = [...document.querySelectorAll('.pages > .orden-scrollbar')].find((one) => one.getClientRects().length > 0)
   const thumb = bar?.querySelector('.orden-scrollbar-thumb')
   if (!bar || !thumb) return null
   const box = thumb.getBoundingClientRect()
-  return { needed: bar.classList.contains('is-needed'), lit: bar.classList.contains('is-lit'), top: box.top, height: box.height, x: box.x + box.width / 2, width: box.width, bars: document.querySelectorAll('.pages .orden-scrollbar').length }
+  return { needed: bar.classList.contains('is-needed'), lit: bar.classList.contains('is-lit'), top: box.top, height: box.height, x: box.x + box.width / 2, width: box.width, bars: [...document.querySelectorAll('.pages .orden-scrollbar')].filter((one) => one.getClientRects().length > 0).length }
 }
 """
 CAMERA_Y = "() => window.ordenApp.pages.current.store.camera.y"
@@ -20,9 +20,9 @@ def opened(page: Page) -> dict:
         page.wait_for_timeout(700)
         if page.evaluate("() => !!window.ordenApp.workspace.active?.path?.endsWith('.pages')"):
             break
-    page.wait_for_selector(".pages", timeout=15000)
+    page.wait_for_selector(".pages:visible", timeout=15000)
     page.wait_for_timeout(500)
-    box = page.locator(".pages").first.bounding_box()
+    box = page.locator(".pages:visible").first.bounding_box()
     assert box
     return box
 def scheme(browser: Browser, colour: str) -> None:

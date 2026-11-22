@@ -75,7 +75,7 @@ PASTE = """
   const data = new DataTransfer()
   data.items.add(new File([bytes], name, { type: 'image/png' }))
 
-  const target = document.querySelector(selector)
+  const target = [...document.querySelectorAll(selector)].find((one) => one.getClientRects().length > 0)
   if (!target) return false
 
   target.focus()
@@ -93,7 +93,7 @@ DROP = """
   const data = new DataTransfer()
   data.items.add(new File([bytes], name, { type: 'image/png' }))
 
-  const plane = document.querySelector(selector)
+  const plane = [...document.querySelectorAll(selector)].find((one) => one.getClientRects().length > 0)
   if (!plane) return false
 
   const box = plane.getBoundingClientRect()
@@ -350,12 +350,12 @@ def drive(browser: Browser) -> None:
         wrong("no canvas ever opened")
         page.context.close()
         return
-    page.wait_for_selector(".canvas", timeout=15000)
+    page.wait_for_selector(".canvas:visible", timeout=15000)
     page.evaluate(DROP, [DROPPED, "dropped.png", ".canvas"])
     page.wait_for_timeout(1600)
     plane = page.evaluate(
         """() => {
-          const found = document.querySelector('.canvas img.picture')
+          const found = [...document.querySelectorAll('.canvas img.picture')].find((one) => one.getClientRects().length > 0)
           if (!found) return null
           return {
             src: new URL(found.src).pathname,
@@ -373,7 +373,7 @@ def drive(browser: Browser) -> None:
             wrong(f"the plane asks for {plane['src']}, not the asset store")
         if not plane["complete"] or plane["width"] < 1:
             wrong(f"the picture on the plane did not draw: {plane}")
-    if page.evaluate("() => document.querySelectorAll('.canvas .missing').length"):
+    if page.evaluate("() => [...document.querySelectorAll('.canvas .missing')].filter((one) => one.getClientRects().length > 0).length"):
         wrong("the plane says there is nothing there")
     page.context.close()
 def finger(browser: Browser) -> None:

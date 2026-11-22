@@ -4,7 +4,7 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-BUTTON = '.cluster button[aria-label="Text"]'
+BUTTON = '.cluster:visible button[aria-label="Text"]'
 FILE = """() => JSON.parse(window.ordenApp.workspace.active.doc)"""
 def typed(page: Page, label: str, surface: str, settle: str) -> None:
     button = page.locator(BUTTON).first
@@ -38,7 +38,7 @@ def typed(page: Page, label: str, surface: str, settle: str) -> None:
         wrong(f"[{label}] the words are drawn on a card: {look}")
     else:
         say(f"ok   [{label}] no card round the words")
-    which = page.evaluate("() => document.querySelector('.cluster button[aria-pressed=\"true\"]')?.getAttribute('aria-label')")
+    which = page.evaluate("() => [...document.querySelectorAll('.cluster button[aria-pressed=\"true\"]')].find((one) => one.getClientRects().length > 0)?.getAttribute('aria-label')")
     if which == "Text":
         wrong(f"[{label}] the Text tool is still in hand after the words")
     shot(page, f"{label}-written")
@@ -46,15 +46,15 @@ def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1280, "height": 820})
     DRIVE.open(page)
     page.evaluate("async () => { const ws = window.ordenApp.workspace; await ws.createCanvas(ws.activeSpace.root, 'Board.canvas') }")
-    wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
+    wait_for(page, "!![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0) && !![...document.querySelectorAll('.cluster')].find((one) => one.getClientRects().length > 0)", "the canvas")
     page.wait_for_timeout(600)
-    typed(page, "canvas", ".canvas", "() => null")
-    box = page.locator(".canvas").first.bounding_box()
+    typed(page, "canvas", ".canvas:visible", "() => null")
+    box = page.locator(".canvas:visible").first.bounding_box()
     assert box
     page.mouse.click(box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.8)
     page.keyboard.press("w")
     page.wait_for_timeout(200)
-    which = page.evaluate("() => document.querySelector('.cluster button[aria-pressed=\"true\"]')?.getAttribute('aria-label')")
+    which = page.evaluate("() => [...document.querySelectorAll('.cluster button[aria-pressed=\"true\"]')].find((one) => one.getClientRects().length > 0)?.getAttribute('aria-label')")
     if which != "Text":
         wrong(f"[canvas] W did not take up the Text tool: {which}")
     else:
@@ -65,8 +65,8 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(700)
         if page.evaluate("() => !!window.ordenApp.workspace.active?.path?.endsWith('.pages')"):
             break
-    wait_for(page, "!!document.querySelector('.pages .cluster')", "the page note")
+    wait_for(page, "!![...document.querySelectorAll('.pages .cluster')].find((one) => one.getClientRects().length > 0)", "the page note")
     page.wait_for_timeout(600)
-    typed(page, "page note", ".pages", "() => window.ordenApp.pages.current?.store.part()")
+    typed(page, "page note", ".pages:visible", "() => window.ordenApp.pages.current?.store.part()")
     page.close()
 raise SystemExit(DRIVE.run(drive, "words are typed straight onto a canvas and a page note"))

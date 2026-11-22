@@ -44,7 +44,7 @@ AT = """
 () => {
   const store = window.ordenApp.pages.current.store
   const page = store.pages[0]
-  const host = document.querySelector('.pages').getBoundingClientRect()
+  const host = [...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length > 0).getBoundingClientRect()
   const c = store.camera
   return [host.left + host.width / 2 + (page.x + 60 - c.x) * c.scale, host.top + host.height / 2 + (page.y + 240 - c.y) * c.scale]
 }
@@ -93,7 +93,7 @@ def drive(browser: Browser) -> None:
     page.evaluate(INK)
     page.wait_for_timeout(300)
     cdp = context.new_cdp_session(page)
-    page.locator(".pages").first.focus()
+    page.locator(".pages:visible").first.focus()
     page.keyboard.press("e")
     before = page.evaluate(INKED)
     x, y = page.evaluate(AT)

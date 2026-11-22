@@ -31,7 +31,7 @@ async ({ path, data }) => {
 """
 SCROLL = """
 async ([frames, step]) => {
-  const host = document.querySelector('.pages')
+  const host = [...document.querySelectorAll('.pages')].find((one) => one.getClientRects().length > 0)
   const box = host.getBoundingClientRect()
   const store = window.ordenApp.pages.current.store
   const from = store.camera.y
@@ -113,7 +113,7 @@ def drive(browser: Browser) -> None:
     page.evaluate("(path) => window.ordenApp.workspace.openPdf(path, 1)", pdf)
     wait_for(page, f"window.ordenApp.pages.current?.store.count === {PAGES}", "the page note", 60)
     if not os.environ.get("ORDEN_SCROLL_BEFORE"):
-        wait_for(page, "document.querySelectorAll('.pages .sheet .words span').length >= 60", "the first page's words", 30)
+        wait_for(page, "[...document.querySelectorAll('.pages .sheet .words span')].filter((one) => one.getClientRects().length > 0).length >= 60", "the first page's words", 30)
     page.wait_for_timeout(1500)
     cdp = context.new_cdp_session(page)
     if cdp:

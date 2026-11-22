@@ -416,7 +416,7 @@ def papers(browser, out: Path) -> None:
         "(path) => window.ordenApp.workspace.openPdf(path, 1)",
         f"{root}/Kestrel study.pdf",
     )
-    page.wait_for_selector(".pages", timeout=20000)
+    page.wait_for_selector(".pages:visible", timeout=20000)
     page.wait_for_timeout(2500)
     searching(page)
     page.wait_for_timeout(400)

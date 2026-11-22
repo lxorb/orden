@@ -77,9 +77,9 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "window.ordenApp.workspace.spaces.length > 0", "a space")
     path = page.evaluate(SEED, json.dumps(VAULT, indent="\t") + "\n")
-    wait_for(page, "() => !!document.querySelector('.canvas')", "the canvas")
+    wait_for(page, "() => !![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)", "the canvas")
     page.wait_for_timeout(600)
-    box = page.locator(".canvas").bounding_box()
+    box = page.locator(".canvas:visible").bounding_box()
     if not box:
         raise SystemExit("the plane is not on screen")
     page.mouse.dblclick(box["x"] + box["width"] * 0.7, box["y"] + box["height"] * 0.7)

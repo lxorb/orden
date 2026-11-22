@@ -6,7 +6,7 @@ say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 CARDS = "(() => { try { return JSON.parse(window.ordenApp.workspace.active.doc).orden.shapes.length } catch { return -1 } })()"
 TAPS = """
 (count) => {
-  const host = document.querySelector('.canvas')
+  const host = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)
   const box = host.getBoundingClientRect()
   const at = { clientX: box.left + box.width - 40, clientY: box.top + box.height - 40, bubbles: true }
   for (let detail = 1; detail <= count; detail++) {
@@ -30,8 +30,8 @@ def drive(browser: Any) -> None:
     DRIVE.open(page)
     page.evaluate("() => window.ordenApp.workspace.createCanvas()")
     wait_for(page, "!!window.ordenApp.workspace.active?.path?.endsWith('.canvas')", "a canvas")
-    page.wait_for_selector(".canvas", timeout=15000)
-    box = page.locator(".canvas").first.bounding_box()
+    page.wait_for_selector(".canvas:visible", timeout=15000)
+    box = page.locator(".canvas:visible").first.bounding_box()
     page.mouse.click(box["x"] + 40, box["y"] + box["height"] / 2)
     shape(page, box["x"] + box["width"] / 3, box["y"] + box["height"] / 3)
     shape(page, box["x"] + 2 * box["width"] / 3, box["y"] + box["height"] / 3)

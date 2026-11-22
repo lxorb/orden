@@ -29,13 +29,13 @@ PASTE = """(pictures) => {
     const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0))
     carried.items.add(new File([bytes], `picture ${at}.png`, { type: 'image/png' }))
   })
-  const plane = document.querySelector('.canvas')
+  const plane = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)
   plane.focus()
   plane.dispatchEvent(new ClipboardEvent('paste', { clipboardData: carried, bubbles: true, cancelable: true }))
 }"""
-LOADED = "[...document.querySelectorAll('.canvas img.picture')].filter((one) => one.complete && one.naturalWidth > 0).length"
+LOADED = "[...document.querySelectorAll('.canvas img.picture')].filter((one) => one.getClientRects().length > 0).filter((one) => one.complete && one.naturalWidth > 0).length"
 OVERLAPS = """() => {
-  const boxes = [...document.querySelectorAll('.canvas img.picture')].map((one) => one.getBoundingClientRect())
+  const boxes = [...document.querySelectorAll('.canvas img.picture')].filter((one) => one.getClientRects().length > 0).map((one) => one.getBoundingClientRect())
   const over = []
   boxes.forEach((one, at) => boxes.slice(at + 1).forEach((other) => {
     const x = Math.min(one.right, other.right) - Math.max(one.left, other.left)
@@ -51,7 +51,7 @@ def drive(browser: Browser) -> None:
     DRIVE.open(page)
     wait_for(page, "typeof window.ordenApp.tasks === 'function'", "the app's handles")
     page.evaluate(WRITE, ["Pictures.canvas", json.dumps({"nodes": [], "edges": []})])
-    wait_for(page, "!!document.querySelector('.canvas')", "the canvas")
+    wait_for(page, "!![...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0)", "the canvas")
     page.wait_for_timeout(600)
     page.evaluate(PASTE, PICTURES)
     try:

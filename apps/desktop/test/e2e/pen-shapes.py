@@ -57,10 +57,10 @@ def opened(page: Page, label: str, tablet: bool = False) -> None:
             break
     else:
         raise SystemExit(f"[{label}] no canvas ever opened")
-    page.wait_for_selector(".canvas", timeout=15000)
+    page.wait_for_selector(".canvas:visible", timeout=15000)
     page.wait_for_timeout(400)
 def plane(page: Page) -> dict:
-    box = page.locator(".canvas").first.bounding_box()
+    box = page.locator(".canvas:visible").first.bounding_box()
     assert box
     return box
 def ink_of(page: Page) -> list[dict]:
@@ -87,13 +87,13 @@ def profile_of(page: Page) -> str:
     return said.split("//")[0].strip()
 def tool(page: Page, key: str) -> None:
     page.keyboard.press("Escape")
-    page.locator(".canvas").first.click(position={"x": 30, "y": 30})
+    page.locator(".canvas:visible").first.click(position={"x": 30, "y": 30})
     page.keyboard.press(key)
     page.wait_for_timeout(120)
 ERASE_ALL = 'button[aria-label="Erase everything drawn"]'
 def wipe(page: Page) -> None:
     page.keyboard.press("Escape")
-    eraser = page.locator('.cluster button[aria-label="Erase"]').first
+    eraser = page.locator('.cluster:visible button[aria-label="Erase"]').first
     for _try in range(3):
         if page.locator(ERASE_ALL).count() > 0:
             break
@@ -183,7 +183,7 @@ def hover(page: Page, cdp, points: list[tuple[float, float]], buttons: int = 0) 
         page.wait_for_timeout(16)
 RAW = """
 ([kind, points, over]) => {
-  const host = document.querySelector('.canvas');
+  const host = [...document.querySelectorAll('.canvas')].find((one) => one.getClientRects().length > 0);
   const rect = host.getBoundingClientRect();
 
   for (const [at, point] of points.entries()) {

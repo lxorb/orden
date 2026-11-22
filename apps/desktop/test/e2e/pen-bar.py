@@ -95,7 +95,7 @@ def opened(page: Page, label: str, device: str) -> None:
     page.wait_for_selector('[aria-label="Move the bar"]', timeout=15000)
     page.wait_for_timeout(400)
 def pen_at(page: Page, index: int):
-    return page.locator(".cluster button.pen").nth(index)
+    return page.locator(".cluster:visible button.pen").nth(index)
 def kept_pens(page: Page) -> list[str]:
     return page.evaluate(
         "() => JSON.parse(localStorage.getItem('orden:pens')).pens.map((one) => one.tool)"
@@ -228,7 +228,7 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
             say(f"[{label}] the stroke landed at {drawn[0]['opacity']} of its colour")
         page.wait_for_timeout(200)
         shot(page, f"pen-stroke-faint-{device}-{theme}")
-        eraser = page.locator('.cluster button[aria-label="Erase"]')
+        eraser = page.locator('.cluster:visible button[aria-label="Erase"]')
         eraser.click()
         page.wait_for_timeout(200)
         eraser.click()
@@ -236,7 +236,7 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         page.wait_for_timeout(300)
         shot(page, f"eraser-settings-{device}-{theme}")
         page.keyboard.press("Escape")
-        page.locator(".canvas").first.click(position={"x": 40, "y": 40})
+        page.locator(".canvas:visible").first.click(position={"x": 40, "y": 40})
         page.locator('[aria-label="Move the bar"]').click()
         page.wait_for_selector('button[aria-label="The pens"]', timeout=5000)
         page.wait_for_timeout(350)
