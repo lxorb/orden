@@ -75,7 +75,7 @@ export function flowScene(stage: Stage, you: () => Pointer, draw: Draw): LoopSce
       if (!palette) overlays.escape()
     }
     if ((to === 5) !== tabOverview.open) toggleTabOverview()
-    if ((to === 7) !== right) {
+    if (__AI__ && (to === 7) !== right) {
       right = to === 7
       if (right) workspace.showPanel('ask')
       else workspace.closeRight()
@@ -114,6 +114,7 @@ export function flowScene(stage: Stage, you: () => Pointer, draw: Draw): LoopSce
       checklist = await opened(path)
       ride = await opened(`${ROOT}/${RIDE_DATA}`)
       workspace.activate(stage.canvas.id)
+      if (!__AI__) return
       const { chat } = await chatStore()
       if (!ai.providers.length) {
         const added = ai.add('compatible')
@@ -171,10 +172,14 @@ export function flowScene(stage: Stage, you: () => Pointer, draw: Draw): LoopSce
         { at: T.picked - PAUSE, to: () => boxOf('[role="option"][aria-selected="true"]'), press: true },
         { at: T.overview - PAUSE, to: tabs, press: true },
         { at: T.board - PAUSE, to: () => boxOf('button.window[aria-label="Board"]'), press: true },
-        { at: T.ask - PAUSE, to: right, press: true },
-        { at: T.asked + 900, to: rest },
-        { at: T.shut - 1400, to: rest },
-        { at: T.shut - PAUSE, to: right, press: true },
+        ...(__AI__
+          ? [
+              { at: T.ask - PAUSE, to: right, press: true },
+              { at: T.asked + 900, to: rest },
+              { at: T.shut - 1400, to: rest },
+              { at: T.shut - PAUSE, to: right, press: true },
+            ]
+          : []),
         ...(phone() ? [] : [{ at: T.home - PAUSE, to: left, press: true }]),
         { at: T.home + 1500, to: rest },
       ]

@@ -74,104 +74,106 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
   let browsed = ''
   const script = scriptOf(location.origin + PAGE, location.origin + ROUTES)
   return {
-    ai: {
-      period: ASK,
-      still: 0.8,
-      ready: async () => {
-        const { chat } = await chatStore()
-        if (!ai.providers.length) {
-          const added = ai.add('compatible')
-          ai.update(added.id, { baseUrl: 'https://ai.orden.so', model: 'assistant' })
-        }
-        if (stage.page) {
-          workspace.activate(stage.page.id)
-          await pause(200)
-          document.querySelector<HTMLButtonElement>('.card .rows .orden-button:not(.is-quiet)')?.click()
-        }
-        workspace.showPanel('ask')
-        await pause(300)
-        chat.newThread()
-        asking = chat
-        const thread = chat.thread
-        if (thread) thread.title = 'Weekend routes'
-        if (!phone() || !thread) return
-        thread.turns = turnsAt(0.05, script)
-        chat.touched(thread)
-        workspace.openChat(thread.id, 'Weekend routes')
-      },
-      tick: (phase) => {
-        const thread = asking?.thread
-        if (!asking || !thread) return
-        const turns = turnsAt(phase, script)
-        const key = JSON.stringify(
-          turns.map((one) =>
-            one.parts.map((part) =>
-              part.kind === 'tool' ? part.state : part.kind === 'text' ? part.text.length : part.kind,
-            ),
-          ),
-        )
-        if (key !== told) {
-          told = key
-          thread.turns = turns
-          asking.touched(thread)
-        }
-        const busy = working(phase)
-        if (asking.running.length > 0 !== busy) asking.running = busy ? [thread.id] : []
-        follow(phase, ASK, [
-          { at: 0, to: rest },
-          { at: 0.02, to: () => boxOf('.chat [contenteditable="true"], [contenteditable="true"]'), press: true },
-          { at: 0.05, to: rest },
-        ])
-        const page = stage.page
-        if (!page || phone()) return
-        const worn = busy ? { [page.id]: { agent: 'Assistant', colour: TEAM[2][scheme()], stopped: false } } : {}
-        if (JSON.stringify(agentMarks.on) !== JSON.stringify(worn)) agentMarks.on = worn
-        const where = location.origin + (browsing(phase) === 'routes' ? ROUTES : PAGE)
-        const frame = document.querySelector<HTMLIFrameElement>('iframe')
-        if (frame && where !== browsed) {
-          browsed = where
-          frame.src = where
-        }
-        const inner = frame?.contentWindow
-        const view = frame?.contentDocument
-        const box = frame?.getBoundingClientRect()
-        const inside =
-          (selector: string, index = 0) =>
-          () => {
-            const found = view?.querySelectorAll(selector)[index]
-            if (!found || !box) return null
-            const at = found.getBoundingClientRect()
-            return { x: box.left + at.left + at.width / 2, y: box.top + at.top + at.height / 2 }
-          }
-        const root = view?.documentElement ?? null
-        if (inner && root) {
-          const tall = Math.max(0, root.scrollHeight - inner.innerHeight)
-          const down =
-            browsing(phase) === 'routes'
-              ? tall * (phase < 0.04 ? 1 : smooth(clamp((phase - 0.36) / 0.08)))
-              : tall * smooth(clamp((phase - 0.16) / 0.1))
-          if (Math.abs(inner.scrollY - down) > 1) inner.scrollTo(0, down)
-        }
-        follow(
-          phase,
-          ASK,
-          [
-            { at: 0, to: () => null },
-            { at: 0.12, to: () => (box ? { x: box.left + box.width * 0.5, y: box.top + box.height * 0.3 } : null) },
-            { at: 0.22, to: inside('a.go') },
-            { at: 0.3, to: inside('a.go'), press: true },
-            { at: 0.36, to: () => (box ? { x: box.left + box.width * 0.5, y: box.top + box.height * 0.4 } : null) },
-            { at: 0.44, to: inside('section div', 0) },
-            { at: 0.5, to: inside('section div', 1) },
-            { at: 0.56, to: inside('section div', 2) },
-            { at: 0.62, to: inside('section div', 2), press: true },
-            { at: 0.74, to: () => (box ? { x: box.right - 40, y: box.top + box.height * 0.5 } : null) },
-            { at: 0.9, to: () => null },
-          ],
-          assistant(),
-        )
-      },
-    },
+    ai: !__AI__
+      ? undefined
+      : {
+          period: ASK,
+          still: 0.8,
+          ready: async () => {
+            const { chat } = await chatStore()
+            if (!ai.providers.length) {
+              const added = ai.add('compatible')
+              ai.update(added.id, { baseUrl: 'https://ai.orden.so', model: 'assistant' })
+            }
+            if (stage.page) {
+              workspace.activate(stage.page.id)
+              await pause(200)
+              document.querySelector<HTMLButtonElement>('.card .rows .orden-button:not(.is-quiet)')?.click()
+            }
+            workspace.showPanel('ask')
+            await pause(300)
+            chat.newThread()
+            asking = chat
+            const thread = chat.thread
+            if (thread) thread.title = 'Weekend routes'
+            if (!phone() || !thread) return
+            thread.turns = turnsAt(0.05, script)
+            chat.touched(thread)
+            workspace.openChat(thread.id, 'Weekend routes')
+          },
+          tick: (phase) => {
+            const thread = asking?.thread
+            if (!asking || !thread) return
+            const turns = turnsAt(phase, script)
+            const key = JSON.stringify(
+              turns.map((one) =>
+                one.parts.map((part) =>
+                  part.kind === 'tool' ? part.state : part.kind === 'text' ? part.text.length : part.kind,
+                ),
+              ),
+            )
+            if (key !== told) {
+              told = key
+              thread.turns = turns
+              asking.touched(thread)
+            }
+            const busy = working(phase)
+            if (asking.running.length > 0 !== busy) asking.running = busy ? [thread.id] : []
+            follow(phase, ASK, [
+              { at: 0, to: rest },
+              { at: 0.02, to: () => boxOf('.chat [contenteditable="true"], [contenteditable="true"]'), press: true },
+              { at: 0.05, to: rest },
+            ])
+            const page = stage.page
+            if (!page || phone()) return
+            const worn = busy ? { [page.id]: { agent: 'Assistant', colour: TEAM[2][scheme()], stopped: false } } : {}
+            if (JSON.stringify(agentMarks.on) !== JSON.stringify(worn)) agentMarks.on = worn
+            const where = location.origin + (browsing(phase) === 'routes' ? ROUTES : PAGE)
+            const frame = document.querySelector<HTMLIFrameElement>('iframe')
+            if (frame && where !== browsed) {
+              browsed = where
+              frame.src = where
+            }
+            const inner = frame?.contentWindow
+            const view = frame?.contentDocument
+            const box = frame?.getBoundingClientRect()
+            const inside =
+              (selector: string, index = 0) =>
+              () => {
+                const found = view?.querySelectorAll(selector)[index]
+                if (!found || !box) return null
+                const at = found.getBoundingClientRect()
+                return { x: box.left + at.left + at.width / 2, y: box.top + at.top + at.height / 2 }
+              }
+            const root = view?.documentElement ?? null
+            if (inner && root) {
+              const tall = Math.max(0, root.scrollHeight - inner.innerHeight)
+              const down =
+                browsing(phase) === 'routes'
+                  ? tall * (phase < 0.04 ? 1 : smooth(clamp((phase - 0.36) / 0.08)))
+                  : tall * smooth(clamp((phase - 0.16) / 0.1))
+              if (Math.abs(inner.scrollY - down) > 1) inner.scrollTo(0, down)
+            }
+            follow(
+              phase,
+              ASK,
+              [
+                { at: 0, to: () => null },
+                { at: 0.12, to: () => (box ? { x: box.left + box.width * 0.5, y: box.top + box.height * 0.3 } : null) },
+                { at: 0.22, to: inside('a.go') },
+                { at: 0.3, to: inside('a.go'), press: true },
+                { at: 0.36, to: () => (box ? { x: box.left + box.width * 0.5, y: box.top + box.height * 0.4 } : null) },
+                { at: 0.44, to: inside('section div', 0) },
+                { at: 0.5, to: inside('section div', 1) },
+                { at: 0.56, to: inside('section div', 2) },
+                { at: 0.62, to: inside('section div', 2), press: true },
+                { at: 0.74, to: () => (box ? { x: box.right - 40, y: box.top + box.height * 0.5 } : null) },
+                { at: 0.9, to: () => null },
+              ],
+              assistant(),
+            )
+          },
+        },
     pages: {
       period: 22000,
       still: 0.8,
