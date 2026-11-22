@@ -58,6 +58,7 @@ const SCOPED: [Scope | null, string][] = [
   ['chats.read', 'list_chats read_chat search_chats'],
   ['chats.write', 'draft_message post_message react'],
   ['agents', 'run_agent agent_result'],
+  ['time', 'time_tracker time_blocks time_activities time_summary time_health time_files time_settings'],
 ]
 const VERBS: Record<string, Verb> = {
   open: { takes: ['path'], byLink: 'quiet', run: openNote },
