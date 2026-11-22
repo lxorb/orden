@@ -24,6 +24,28 @@ describe('what opens a menu', () => {
     expect(menu.open).toBe(false)
   })
 })
+describe('which menu is showing (#2481)', () => {
+  const row = (label: string) => ({ label, run: () => undefined })
+  test('a submenu is still the menu it came from, a new menu is another, and a closed one is none', () => {
+    const first = menu.show(press(), [row('Copy')])
+    expect(first).toBeGreaterThan(0)
+    expect(menu.show(press(), [row('Left to right')], { sub: true })).toBe(first)
+    expect(menu.which).toBe(first)
+    const second = menu.show(press(), [row('Paste')])
+    expect(second).not.toBe(first)
+    menu.hide()
+    expect(menu.which).toBe(0)
+    expect(menu.show(press(), [row('One')], { sub: true })).not.toBe(second)
+    expect(menu.show(press(), [])).toBe(0)
+  })
+  test('opened by keys it lights its first row that can be chosen, opened by a pointer none', () => {
+    const rows = [{ ...row('Cut'), disabled: true }, row('Copy'), row('Paste')]
+    menu.show(press(), rows, { keepFocus: true, keys: true })
+    expect([menu.keys, menu.lit]).toEqual([true, 1])
+    menu.show(press(), rows, { keepFocus: true, keys: false })
+    expect([menu.keys, menu.lit]).toEqual([false, -1])
+  })
+})
 describe('a menu held by a signal', () => {
   test('closes when the signal goes, but a later menu stays', () => {
     const lock = new AbortController()

@@ -53,6 +53,7 @@ vi.spyOn(workspace, 'openEntry').mockImplementation((path) => Promise.resolve(vo
 vi.spyOn(menu, 'show').mockImplementation((event, rows) => {
   event.preventDefault()
   menus.push(rows.flatMap((row) => (row ? [row.label] : [])))
+  return menus.length
 })
 workspace.spaces = [{ root: ROOT, name: 'Work' } as never]
 Object.defineProperty(workspace, 'activeSpace', { configurable: true, get: () => ({ root: ROOT }) })

@@ -10,6 +10,7 @@ interface MenuItemAsked {
   kind: 'command' | 'check' | 'radio' | 'separator' | 'submenu'
   enabled: boolean
   checked: boolean
+  does: Does | null
   items: MenuItemAsked[]
 }
 export interface MenuAsked {
@@ -19,6 +20,8 @@ export interface MenuAsked {
   y: number
   zoom: number
   link: string | null
+  image: string | null
+  keys: boolean
   items: MenuItemAsked[]
 }
 export interface DialogAsked {
@@ -52,6 +55,8 @@ export interface SelectAsked {
 }
 const SHOWN_HERE = ['menu', 'dialog', 'permission', 'select'] as const
 const KINDS = ['command', 'check', 'radio', 'separator', 'submenu'] as const
+const DOES = ['open-link', 'open-image'] as const
+type Does = (typeof DOES)[number]
 const DIALOGS = ['alert', 'confirm', 'prompt', 'beforeunload'] as const
 const number = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
 const text = (value: unknown): string | null => (isString(value) ? value : null)
@@ -67,6 +72,7 @@ function readItem(said: unknown): MenuItemAsked | null {
     kind,
     enabled: said.enabled === true,
     checked: said.checked === true,
+    does: DOES.find((one) => one === said.does) ?? null,
     items: Array.isArray(said.items) ? said.items.flatMap((one) => readItem(one) ?? []) : [],
   }
 }
@@ -81,6 +87,8 @@ export function readMenu(said: unknown): MenuAsked | null {
     y,
     zoom: number(said.zoom) ?? 1,
     link: filled(said.link),
+    image: filled(said.image),
+    keys: said.keys === true,
     items: said.items.flatMap((one) => readItem(one) ?? []),
   }
 }
@@ -140,7 +148,7 @@ export function onScreen(tab: string, at: Rect, zoom: number): Rect | null {
   return { x: pane.x + at.x * zoom, y: pane.y + at.y * zoom, width: at.width * zoom, height: at.height * zoom }
 }
 export interface OwnRows {
-  openLink: (url: string) => void
+  open: (url: string) => void
 }
 export function menuRows(asked: MenuAsked, pick: (command: number) => void, own: OwnRows): MenuEntry[] {
   const rows = (items: readonly MenuItemAsked[]): MenuEntry[] =>
@@ -154,22 +162,21 @@ export function menuRows(asked: MenuAsked, pick: (command: number) => void, own:
           more: () => Promise.resolve(rows(one.items)),
         }
       }
+      const opens = one.does === 'open-link' ? asked.link : one.does === 'open-image' ? asked.image : null
       return {
         label: one.label,
-        disabled: !one.enabled,
+        disabled: !one.enabled || (one.does !== null && opens === null),
         ...(one.kind === 'command' ? {} : { checked: one.checked }),
-        run: () => pick(one.command),
+        run: () => (opens === null ? pick(one.command) : own.open(opens)),
       }
     })
-  const link = asked.link
-  const mine: MenuEntry[] = link ? [{ label: 'Open link in new tab', run: () => own.openLink(link) }, DIVIDER] : []
-  return [...mine, ...rows(asked.items)]
+  return rows(asked.items)
 }
 class Asked {
   dialogs = $state<DialogAsked[]>([])
   permissions = $state<PermissionAsked[]>([])
   select = $state<SelectAsked | null>(null)
-  private menuOpen: { tab: string; id: number; rows: MenuEntry[] } | null = null
+  private menuOpen: { tab: string; id: number; which: number } | null = null
   private watching = false
   dialogOf(tab: string): DialogAsked | null {
     return this.dialogs.find((one) => one.tab === tab) ?? null
@@ -188,14 +195,14 @@ class Asked {
     }
     this.closeMenu()
     const { workspace } = await import('../../workspace/src/api')
-    const done = { tab: asked.tab, id: asked.id, rows: [] as MenuEntry[] }
+    const done = { tab: asked.tab, id: asked.id, which: -1 }
     const pick = (command: number | null) => {
       if (this.menuOpen !== done) return
       this.menuOpen = null
       void this.menuPicked(asked.tab, asked.id, command)
     }
-    done.rows = menuRows(asked, pick, {
-      openLink: (url) => {
+    const rows = menuRows(asked, pick, {
+      open: (url) => {
         pick(null)
         workspace.openPage(url, 'behind', asked.tab)
       },
@@ -212,9 +219,9 @@ class Asked {
       preventDefault: () => undefined,
       stopPropagation: () => undefined,
     } as unknown as MouseEvent
-    menu.show(shown, done.rows)
+    done.which = menu.show(shown, rows, { keys: asked.keys })
     void takeKeyboard()
-    if (!menu.open) pick(null)
+    if (!done.which) pick(null)
   }
   private closeMenu() {
     const open = this.menuOpen
@@ -227,16 +234,15 @@ class Asked {
     this.watching = true
     $effect.root(() => {
       $effect(() => {
-        const open = menu.open
-        const items = menu.items
+        const which = menu.which
         const mine = this.menuOpen
-        if (mine && (!open || items !== mine.rows)) queueMicrotask(() => this.dropMenu(mine))
+        if (mine && which !== mine.which) queueMicrotask(() => this.dropMenu(mine))
       })
     })
   }
-  private dropMenu(mine: { tab: string; id: number; rows: MenuEntry[] }) {
+  private dropMenu(mine: { tab: string; id: number; which: number }) {
     if (this.menuOpen !== mine) return
-    if (menu.open && menu.items === mine.rows) return
+    if (mine.which < 0 || menu.which === mine.which) return
     this.menuOpen = null
     void this.menuPicked(mine.tab, mine.id, null)
   }

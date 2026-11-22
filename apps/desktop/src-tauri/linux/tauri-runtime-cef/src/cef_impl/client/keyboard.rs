@@ -26,6 +26,9 @@ wrap_keyboard_handler! {
       _is_keyboard_shortcut: Option<&mut ::std::os::raw::c_int>,
     ) -> ::std::os::raw::c_int {
       let browser = _browser.as_deref();
+      if let (Some(event), Some(browser)) = (event, browser) {
+        crate::menu::heard_key(browser.identifier(), event);
+      }
       if let (Some(label), Some(event), Some(browser)) = (self.label.as_deref(), event, browser)
         && browser.is_popup() == 0
         && crate::keys::pressed(label, event)

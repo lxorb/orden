@@ -26,14 +26,24 @@ describe('a page’s context menu', () => {
     y: 20,
     zoom: 1.2,
     link: 'https://example.com/next',
-    image: null,
-    media: 'none',
+    image: 'https://example.com/a.png',
+    media: 'image',
     selection: '',
     editable: false,
+    keys: true,
     misspelled: null,
     suggestions: [],
     items: [
-      { command: 100, label: 'Back', kind: 'command', enabled: true, checked: false },
+      { command: 98, label: 'Open link in new tab', kind: 'command', enabled: true, checked: false, does: 'open-link' },
+      {
+        command: 99,
+        label: 'Open image in new tab',
+        kind: 'command',
+        enabled: true,
+        checked: false,
+        does: 'open-image',
+      },
+      { command: 100, label: 'Copy image', kind: 'command', enabled: true, checked: false },
       { command: -1, label: '', kind: 'separator', enabled: true, checked: false },
       { command: 101, label: 'Spell check', kind: 'check', enabled: false, checked: true },
       {
@@ -47,32 +57,48 @@ describe('a page’s context menu', () => {
     ],
   }
   test('is read whole, and nothing that is not one', () => {
-    expect(readMenu(said)?.items.map((one) => one.kind)).toEqual(['command', 'separator', 'check', 'submenu'])
+    expect(readMenu(said)?.items.map((one) => one.kind)).toEqual([
+      'command',
+      'command',
+      'command',
+      'separator',
+      'check',
+      'submenu',
+    ])
+    expect(readMenu(said)?.items.map((one) => one.does)).toEqual(['open-link', 'open-image', null, null, null, null])
+    expect([readMenu(said)?.keys, readMenu({ ...said, keys: undefined })?.keys]).toEqual([true, false])
     expect(readMenu({ ...said, id: 'x' })).toBeNull()
     expect(readMenu({ ...said, items: [{ command: 1, kind: 'dance' }] })?.items).toEqual([])
   })
-  test('shows its rows as Orden’s, with Orden’s own first, and a row picks its command', async () => {
+  test('shows its rows as Orden’s in Chromium’s order: a new tab opens in Orden, any other row picks its command', async () => {
     const menu = readMenu(said)
     if (!menu) throw new Error('no menu')
     const picked: number[] = []
     const opened: string[] = []
-    const rows = menuRows(menu, (one) => picked.push(one), { openLink: (url) => opened.push(url) })
+    const rows = menuRows(menu, (one) => picked.push(one), { open: (url) => opened.push(url) })
     expect(rows.map((one) => (one === DIVIDER ? '-' : one.label))).toEqual([
       'Open link in new tab',
-      '-',
-      'Back',
+      'Open image in new tab',
+      'Copy image',
       '-',
       'Spell check',
       'Writing direction',
     ])
-    const [own, , back, , check, sub] = rows
-    if (!own || !back || !check || !sub) throw new Error('rows missing')
-    own.run()
-    back.run()
-    expect([opened, picked]).toEqual([['https://example.com/next'], [100]])
+    const [link, image, copy, , check, sub] = rows
+    if (!link || !image || !copy || !check || !sub) throw new Error('rows missing')
+    link.run()
+    image.run()
+    copy.run()
+    expect([opened, picked]).toEqual([['https://example.com/next', 'https://example.com/a.png'], [100]])
     expect([check.disabled, check.checked]).toEqual([true, true])
     const inner = await sub.more?.()
     expect(inner?.map((one) => (one === DIVIDER ? '-' : [one.label, one.checked]))).toEqual([['Left to right', true]])
+  })
+  test('a new-tab row with nothing to open stays off', () => {
+    const menu = readMenu({ ...said, link: null, image: null })
+    if (!menu) throw new Error('no menu')
+    const rows = menuRows(menu, () => undefined, { open: () => undefined })
+    expect(rows.slice(0, 2).map((one) => one !== DIVIDER && one.disabled)).toEqual([true, true])
   })
   test('with no page placed to show it over is dismissed at once', async () => {
     const menu = readMenu({ ...said, tab: 'nowhere' })

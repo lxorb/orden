@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       drives:
-        description: The parity drives to run, by name (look, motion, pointer, keys, turn, explorer, ink, capture, session, scroll).
-        default: look motion pointer keys ink capture session scroll
+        description: The parity drives to run, by name (look, motion, pointer, keys, menu, turn, explorer, ink, capture, session, scroll).
+        default: look motion pointer keys menu ink capture session scroll
 
 concurrency:
   group: web-parity-${{ github.ref }}
@@ -38,7 +38,7 @@ jobs:
     env:
       IDENTIFIER: so.orden.Orden.probe.parity
       ROLLING: 'true'
-      DRIVES: ${{ inputs.drives || 'look motion pointer keys ink capture session scroll' }}
+      DRIVES: ${{ inputs.drives || 'look motion pointer keys menu ink capture session scroll' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
@@ -71,7 +71,7 @@ jobs:
         run: |
           case "$RUNNER_OS" in
             Linux)
-              sudo apt-get install -y xvfb dbus-x11 openbox xdotool at-spi2-core
+              sudo apt-get install -y xvfb dbus-x11 openbox xdotool xclip at-spi2-core
               sandbox="$(dirname "$EXE")/chrome-sandbox"
               if [ -f "$sandbox" ]; then
                 sudo chown root:root "$sandbox"
@@ -111,6 +111,11 @@ jobs:
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'keys') && hashFiles('scripts/parity-keys-drive.py') != '' }}
         timeout-minutes: 20
         run: bash scripts/parity-run.sh scripts/parity-keys-drive.py
+
+      - name: Menu
+        if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'menu') && hashFiles('scripts/parity-menu-drive.py') != '' }}
+        timeout-minutes: 15
+        run: bash scripts/parity-run.sh scripts/parity-menu-drive.py
 
       - name: Capture
         if: ${{ !cancelled() && env.EXE != '' && contains(env.DRIVES, 'capture') && hashFiles('scripts/parity-capture-drive.py') != '' }}

@@ -2,7 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import ContextMenu from '../../src/lib/context-menu/src/ContextMenu.svelte'
 import { fieldEntries, showFieldMenu } from '../../src/lib/context-menu/src/field-menu'
-import { menu, type MenuItem, textFieldOf } from '../../src/lib/ui-kit/src/api'
+import { menu, type MenuItem, POINTING, textFieldOf } from '../../src/lib/ui-kit/src/api'
 
 Element.prototype.animate = () =>
   ({
@@ -41,12 +41,15 @@ afterEach(() => {
   shown = undefined
   field.remove()
   host.remove()
+  document.documentElement.removeAttribute(POINTING)
 })
 function rows(entries = fieldEntries(field)): MenuItem[] {
   return entries.filter((one): one is MenuItem => one !== null)
 }
-function open() {
+function open(by: 'pointer' | 'keys' = 'pointer') {
   shown = mount(ContextMenu, { target: host })
+  if (by === 'pointer') document.documentElement.setAttribute(POINTING, '')
+  else document.documentElement.removeAttribute(POINTING)
   showFieldMenu(new MouseEvent('contextmenu', { clientX: 10, clientY: 10 }), field)
   flushSync()
 }
@@ -136,6 +139,16 @@ describe('the field keeps the keyboard', () => {
     expect(document.querySelector('.lit')?.textContent).toContain('Select all')
     expect(document.activeElement).toBe(field)
     expect([field.selectionStart, field.selectionEnd]).toEqual([0, 5])
+  })
+  test('opened by a pointer it lights nothing, opened by keys it lights its first row (#2481)', () => {
+    open()
+    expect(document.querySelector('.lit')).toBeNull()
+    menu.hide()
+    flushSync()
+    open('keys')
+    expect(document.querySelector('.lit')?.textContent).toContain('Cut')
+    press('Enter')
+    expect(commands).toContain('cut')
   })
   test('Enter chooses the lit row and goes no further', () => {
     let reached = false

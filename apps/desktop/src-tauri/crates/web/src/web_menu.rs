@@ -10,6 +10,8 @@ pub struct Item {
     pub enabled: bool,
     pub checked: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub does: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub items: Option<Vec<Item>>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -23,6 +25,8 @@ pub struct Said {
     pub media: String,
     pub selection: String,
     pub editable: bool,
+    #[serde(default)]
+    pub keys: bool,
     pub misspelled: Option<String>,
     pub suggestions: Vec<String>,
     pub items: Vec<Item>,
@@ -83,9 +87,10 @@ mod tests {
         let said = serde_json::json!({
             "id": 7, "x": 10.5, "y": 20.0, "zoom": 1.2,
             "link": "https://a.example/", "image": null, "media": "none",
-            "selection": "words", "editable": false, "misspelled": null, "suggestions": [],
+            "selection": "words", "editable": false, "keys": true, "misspelled": null, "suggestions": [],
             "items": [
                 { "command": 113, "label": "Copy", "kind": "command", "enabled": true, "checked": false },
+                { "command": 50100, "label": "Open link in new tab", "kind": "command", "enabled": true, "checked": false, "does": "open-link" },
                 { "command": 0, "label": "", "kind": "separator", "enabled": true, "checked": false },
                 { "command": 200, "label": "More", "kind": "submenu", "enabled": true, "checked": false,
                   "items": [{ "command": 201, "label": "One", "kind": "radio", "enabled": true, "checked": true }] }
@@ -109,6 +114,7 @@ mod tests {
             "media",
             "selection",
             "editable",
+            "keys",
             "misspelled",
             "suggestions",
             "items",
