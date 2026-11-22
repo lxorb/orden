@@ -1,16 +1,21 @@
 <script lang="ts">
   import { stillness } from '../../platform/src/api'
-  import { animate } from './animate'
+  import { animate, MOVES } from './animate'
   import { glyph, LOOKS, type Mood } from './faces'
 
-  const { mood, size = 40, label }: { mood: Mood; size?: number; label?: string } = $props()
+  const {
+    mood,
+    size = 40,
+    label,
+    endless = false,
+  }: { mood: Mood; size?: number; label?: string; endless?: boolean } = $props()
   const look = $derived(LOOKS[mood])
   let face = $derived(LOOKS[mood].rest)
   const PROPS = { zzz: 'zzz', dots: '...', question: '?', note: '♪', sparkle: '✧', wave: 'ﾉ', sweat: '' } as const
 
   $effect(() => {
     if (stillness()) return
-    return animate(look, (one) => (face = one))
+    return animate(look, (one) => (face = one), Math.random, endless ? Infinity : MOVES)
   })
 </script>
 
@@ -20,6 +25,7 @@
   aria-label={label}
   aria-hidden={label ? undefined : 'true'}
   style:font-size="{size}px"
+  style:--loops={endless ? 'infinite' : 1}
 >
   <span class="glyph" data-motion={look.motion} aria-hidden="true">{glyph(face)}</span>
   {#if face.prop}
@@ -47,16 +53,16 @@
     transform-origin: 50% 80%;
   }
   [data-motion='bob'] {
-    animation: bob 3.2s var(--ease-in-out) infinite;
+    animation: bob 3.2s var(--ease-in-out) var(--loops);
   }
   [data-motion='tilt'] {
-    animation: tilt 4.4s var(--ease-in-out) infinite;
+    animation: tilt 4.4s var(--ease-in-out) var(--loops);
   }
   [data-motion='wobble'] {
-    animation: wobble 1.8s var(--ease-in-out) infinite;
+    animation: wobble 1.8s var(--ease-in-out) var(--loops);
   }
   [data-motion='pulse'] {
-    animation: pulse 1.6s var(--ease-in-out) infinite;
+    animation: pulse 1.6s var(--ease-in-out) var(--loops);
   }
   .prop {
     position: absolute;
@@ -70,7 +76,7 @@
   }
   .zzz > span {
     font-size: calc(0.7em + var(--at) * 0.2em);
-    animation: rise 2.7s var(--ease-out) calc(var(--at) * 0.45s) infinite both;
+    animation: rise 2.7s var(--ease-out) calc(var(--at) * 0.45s) var(--loops) both;
   }
   .dots {
     top: auto;
@@ -78,13 +84,13 @@
     right: -0.75em;
   }
   .dots > span {
-    animation: dot 1.4s var(--ease-in-out) calc(var(--at) * 0.2s) infinite both;
+    animation: dot 1.4s var(--ease-in-out) calc(var(--at) * 0.2s) var(--loops) both;
   }
   .question > span {
-    animation: bob 2.6s var(--ease-in-out) infinite;
+    animation: bob 2.6s var(--ease-in-out) var(--loops);
   }
   .note > span {
-    animation: rise 2.4s var(--ease-out) infinite both;
+    animation: rise 2.4s var(--ease-out) var(--loops) both;
   }
   .sparkle > span {
     color: var(--text-strong);
@@ -97,7 +103,7 @@
   }
   .wave > span {
     transform-origin: 20% 90%;
-    animation: wave 2.4s var(--ease-in-out) infinite;
+    animation: wave 2.4s var(--ease-in-out) var(--loops);
   }
   .sweat {
     top: 0.18em;
@@ -110,7 +116,7 @@
     background: var(--accent);
     opacity: 0.85;
     transform: rotate(45deg);
-    animation: slide 2.8s var(--ease-in-out) infinite;
+    animation: slide 2.8s var(--ease-in-out) var(--loops);
   }
   @keyframes bob {
     50% {

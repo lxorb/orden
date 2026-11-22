@@ -12,7 +12,10 @@ MOVING = """() => document.getAnimations()
     const endless = one.effect.getComputedTiming().endTime === Infinity
     return `${one.animationName || one.transitionProperty || one.id || 'an animation'} on ${where}${endless ? ', without end' : ''}`
   })"""
+FRAMES = """() => { if (window.__frames === undefined) { const was = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = (fn) => was((at) => { window.__frames++; fn(at) }) } window.__frames = 0; return true }"""
 def still(page: Page, where: str) -> None:
+    page.evaluate(FRAMES)
     endless = [one for one in page.evaluate(MOVING) if one.endswith("without end")]
     say(f"{where}, as it opens, endless: {endless}")
     if endless:
@@ -22,6 +25,12 @@ def still(page: Page, where: str) -> None:
     say(f"{where}, {SETTLED // 1000} s on: {moving}")
     if moving:
         wrong(f"{where} still moves while it waits: {moving}")
+    page.evaluate("() => { window.__frames = 0 }")
+    page.wait_for_timeout(1000)
+    frames = page.evaluate("() => window.__frames")
+    say(f"{where}, frames asked in a second: {frames}")
+    if frames:
+        wrong(f"{where} asks for {frames} animation frames a second while it waits")
 def drive(browser: Browser) -> None:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 800})
     DRIVE.open(page)
@@ -36,4 +45,9 @@ def drive(browser: Browser) -> None:
     DRIVE.shot(page, "setup")
     still(page, "the setup screen")
     DRIVE.shot(page, "setup-settled")
+    page.evaluate("() => { window.ordenApp.setup.showing = false }")
+    page.evaluate("() => window.ordenApp.workspace.showPanel('tasks')")
+    wait_for(page, "!!document.querySelector('.mascot')", "the mascot on the empty todos")
+    DRIVE.shot(page, "empty-todos")
+    still(page, "the empty todo list with its mascot")
 raise SystemExit(DRIVE.run(drive, "nothing moves on a screen that waits"))

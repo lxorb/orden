@@ -78,7 +78,7 @@
     height: 13px;
     vertical-align: -2px;
     background: #dde2ea;
-    animation: blink 1s steps(1) infinite;
+    animation: blink 1s steps(1) 6;
   }
   @keyframes blink {
     50% {

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { animate, IDLE } from './animate'
+import { animate, IDLE, MOVES } from './animate'
 import { glyph, LOOKS, type Face } from './faces'
 
 beforeEach(() => vi.useFakeTimers())
 afterEach(() => vi.useRealTimers())
 
-function watch(random: () => number) {
+function watch(random: () => number, moves?: number) {
   const seen: string[] = []
-  const stop = animate(LOOKS.happy, (face: Face) => seen.push(glyph(face)), random)
+  const stop = animate(LOOKS.happy, (face: Face) => seen.push(glyph(face)), random, moves)
   return { seen, stop }
 }
 
@@ -44,5 +44,20 @@ describe('the animation', () => {
     stop()
     vi.advanceTimersByTime(60_000)
     expect(seen).toHaveLength(1)
+  })
+  test('rests for good after a few moves, so nothing keeps moving while nobody does anything', () => {
+    const { seen } = watch(() => 0)
+    vi.advanceTimersByTime(60_000)
+    const moved = seen.length
+    expect(moved).toBe(1 + MOVES * 2)
+    vi.advanceTimersByTime(600_000)
+    expect(seen).toHaveLength(moved)
+    expect(seen.at(-1)).toBe('( ͡° ͜ʖ ͡°)')
+  })
+  test('keeps moving when asked to, as while the AI thinks', () => {
+    const { seen, stop } = watch(() => 0, Infinity)
+    vi.advanceTimersByTime(600_000)
+    expect(seen.length).toBeGreaterThan(1 + MOVES * 2)
+    stop()
   })
 })

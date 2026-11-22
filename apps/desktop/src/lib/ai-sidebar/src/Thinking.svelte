@@ -2,7 +2,7 @@
   import { Mascot } from '../../mascot/src/api'
 </script>
 
-<div class="thinking" aria-hidden="true"><Mascot mood="thinking" size={24} /></div>
+<div class="thinking" aria-hidden="true"><Mascot mood="thinking" size={24} endless /></div>
 
 <style>
   .thinking {

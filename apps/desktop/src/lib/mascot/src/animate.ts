@@ -1,12 +1,21 @@
 import { changed, type Face, type Look } from './faces'
 
 export const IDLE = { least: 1800, most: 5000 } as const
-export function animate(look: Look, show: (face: Face) => void, random: () => number = Math.random): () => void {
+export const MOVES = 3
+export function animate(
+  look: Look,
+  show: (face: Face) => void,
+  random: () => number = Math.random,
+  moves: number = MOVES,
+): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined
+  let left = moves
   const later = (ms: number, then: () => void) => {
     timer = setTimeout(then, ms)
   }
-  const idle = () => later(IDLE.least + random() * (IDLE.most - IDLE.least), move)
+  const idle = () => {
+    if (left-- > 0) later(IDLE.least + random() * (IDLE.most - IDLE.least), move)
+  }
   const move = () => {
     const frames = look.moves[Math.min(look.moves.length - 1, Math.floor(random() * look.moves.length))]
     if (!frames) return

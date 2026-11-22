@@ -20,7 +20,6 @@
     display: block;
     border-radius: 12px;
     background: var(--surface-3);
-    animation: wait 1.2s ease-in-out infinite alternate;
   }
   .tile {
     width: 88px;
@@ -35,15 +34,5 @@
   .field {
     width: min(360px, 80vw);
     height: 50px;
-  }
-  @keyframes wait {
-    to {
-      opacity: 0.55;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    i {
-      animation: none;
-    }
   }
 </style>
