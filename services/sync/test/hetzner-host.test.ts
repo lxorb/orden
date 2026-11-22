@@ -109,15 +109,19 @@ describe('a Hetzner machine', () => {
     })
     expect(made()).toEqual(['nbg1'])
   })
-  test('a chosen type and place is what is made, and no other place is tried', async () => {
-    env.db.prepare("update machines set size = 'cax31', region = 'hel1' where id = ?").run(ID)
+  test('a type and place chosen before is let go of: the CX43 in Nuremberg is made', async () => {
+    env.db
+      .prepare("update machines set size = 'cax31', region = 'hel1', spec = '{}', price_month = 15.46 where id = ?")
+      .run(ID)
     await host().start(ID, 'machine', BOOT)
-    expect(cloud.servers).toMatchObject([{ type: 'cax31', location: 'hel1' }])
-    expect(row()).toMatchObject({ size: 'cax31', region: 'hel1', price_month: 15.46 })
-    cloud.servers.length = 0
-    cloud.available = ['nbg1', 'fsn1']
-    await expect(host().start(ID, 'machine', BOOT)).rejects.toThrow(/no cax31 to be had in hel1/)
-    expect(cloud.servers).toEqual([])
+    expect(cloud.asked).not.toContain('GET /server_types?name=cax31')
+    expect(cloud.servers).toMatchObject([{ type: 'cx43', location: 'nbg1' }])
+    expect(row()).toMatchObject({
+      size: 'cx43',
+      region: 'nbg1',
+      spec: JSON.stringify({ cores: 8, memory: 16, disk: 160 }),
+      price_month: 14.27,
+    })
   })
   test('an old machine that chose nothing is the CX43 it always was', async () => {
     await host().start(ID, 'machine', BOOT)
@@ -229,58 +233,6 @@ describe('a Hetzner machine', () => {
     cloud.linkStatus = 401
     await expect(host().link(ID)).rejects.toThrow('ordend answered 401')
     expect(cloud.asked).toHaveLength(1)
-  })
-  test('a resize shuts the server down, changes its type, starts it and prices it anew', async () => {
-    const machine = host()
-    await machine.start(ID, 'machine', BOOT)
-    const server = cloud.servers[0]
-    if (server) server.status = 'running'
-    vi.setSystemTime(Date.UTC(2026, 10, 11))
-    env.db.prepare('update machines set priced_at = ? where id = ?').run(Date.UTC(2026, 10, 1), ID)
-    cloud.asked.length = 0
-    const steps: boolean[] = []
-    for (let step = 0; step < 8 && !steps.at(-1); step++) {
-      steps.push(await machine.resize(ID, 'cx53', false))
-    }
-    expect(steps.at(-1)).toBe(true)
-    const id = String(server?.id)
-    expect(cloud.asked.filter((one) => one.startsWith('POST'))).toEqual([
-      `POST /servers/${id}/actions/shutdown`,
-      `POST /servers/${id}/actions/change_type`,
-      `POST /servers/${id}/actions/change_type`,
-      `POST /servers/${id}/actions/poweron`,
-    ])
-    expect(server).toMatchObject({ type: 'cx53', status: 'running' })
-    expect(row()).toMatchObject({
-      size: 'cx53',
-      spec: JSON.stringify({ cores: 16, memory: 32, disk: 320 }),
-      price_month: 27.95,
-      priced_at: Date.UTC(2026, 10, 11),
-      spent: 5.95,
-    })
-    expect(env.db.prepare("select detail from machine_events where machine = ? and kind = 'resize'").all(ID)).toEqual([
-      { detail: 'cx53' },
-    ])
-  })
-  test('a server that will not shut down is powered off once told to be hard', async () => {
-    const machine = host()
-    await machine.start(ID, 'machine', BOOT)
-    const server = cloud.servers[0]
-    if (server) server.status = 'running'
-    cloud.stubborn = true
-    expect(await machine.resize(ID, 'cx53', false)).toBe(false)
-    expect(server?.status).toBe('running')
-    expect(await machine.resize(ID, 'cx53', true)).toBe(false)
-    expect(server?.status).toBe('off')
-    expect(cloud.asked.at(-1)).toBe(`POST /servers/${String(server?.id)}/actions/poweroff`)
-  })
-  test('Hetzner refuses a smaller disk, and the error says so', async () => {
-    const machine = host()
-    await machine.start(ID, 'machine', BOOT)
-    const server = cloud.servers[0]
-    if (server) server.status = 'off'
-    await expect(machine.resize(ID, 'cx23', false)).rejects.toMatchObject({ code: 'invalid_input' })
-    expect(server?.type).toBe('cx43')
   })
   test('a reboot power-cycles its server', async () => {
     const machine = host()

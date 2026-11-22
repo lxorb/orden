@@ -24,7 +24,6 @@ export type EventKind =
   | 'reboot'
   | 'host'
   | 'server'
-  | 'resize'
 export type Named = string & { readonly named: unique symbol }
 export type Detail =
   | 'idle'
@@ -52,7 +51,7 @@ export type Detail =
   | number
   | null
 export type Failure = string & { readonly failure: unique symbol }
-export type Step = 'start' | 'link' | 'restore' | 'backup' | 'snapshot' | 'stop' | 'resize'
+export type Step = 'start' | 'link' | 'restore' | 'backup' | 'snapshot' | 'stop'
 const SAID_LIMIT = 160
 export function failureOf(step: Step, error: unknown): Failure {
   const named = error instanceof Error ? error : null

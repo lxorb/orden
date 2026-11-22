@@ -3,13 +3,12 @@ import { readBody, askHub, newId, now, type Env, type Variables } from '../../..
 import { reachedItem, reachedSpace } from '../../../sync-server-engine/src/api'
 import { askMachine } from './ask'
 import { audit } from './audit'
-import { mayCost, spentOn } from './budget'
+import { spentOn } from './budget'
 import { NOT_FOUND } from './door'
 import { whyNotWake } from './gate'
 import { mayMakeSession, mayStart } from './limits'
 import { ALLOWANCE, type HostKind, resetAt } from '@orden/online'
 import { usedOf } from './meter'
-import { offersOf } from './offers'
 import { MOST_SESSIONS, type Refusal, type SessionNow } from '@orden/online/wire'
 import { allowed, serviceOf } from './service'
 
@@ -88,8 +87,7 @@ function specOf(machine: MachineRow) {
 }
 function serverOf(machine: MachineRow, at: number) {
   const spec = specOf(machine)
-  const made = machine.server_id !== null
-  if (!spec || (!made && machine.host !== 'hetzner')) return null
+  if (!spec || machine.server_id === null) return null
   return {
     type: machine.size,
     location: machine.region,
@@ -99,8 +97,8 @@ function serverOf(machine: MachineRow, at: number) {
     price: machine.price_month,
     hourly: machine.price_hour,
     currency: machine.price_currency,
-    made,
-    spent: made ? spentOn(machine, at) : null,
+    made: true,
+    spent: spentOn(machine, at),
   }
 }
 const refused = (error: Refusal) => ({ error })
@@ -126,60 +124,6 @@ online.get('/machine', async (context) => {
     used: await usedOf(context.env, user.id, at),
     limit: ALLOWANCE,
     resetAt: resetAt(at),
-  })
-})
-online.get('/types', async (context) => {
-  const offers = await offersOf(context.env, now())
-  return offers ? context.json(offers) : context.json({ error: NOT_FOUND }, 404)
-})
-online.post('/machine/type', async (context) => {
-  const env = context.env
-  const user = context.get('user')
-  const at = now()
-  const body = await readBody(context)
-  const name = body.text('type', 40)
-  const location = body.text('location', 40)
-  if (body.problem || !name) return context.json({ error: 'type' }, 400)
-  if (!(await allowed(env, user.id))) return context.json(refused('list'), 403)
-  const offers = await offersOf(env, at)
-  if (!offers) return context.json({ error: NOT_FOUND }, 404)
-  const machine = await ensureMachine(env, user.id)
-  if (machine.host !== 'hetzner') return context.json({ error: 'host' }, 409)
-  const made = machine.server_id !== null
-  const place = made ? machine.region : location
-  const offer = offers.types.find((one) => one.name === name)
-  const price = offer?.prices.find((one) => one.location === place)
-  if (!offer || !price) return context.json({ error: 'type' }, 400)
-  if (machine.state === 'starting' || machine.state === 'stopping') {
-    return context.json({ error: 'busy' }, 409)
-  }
-  const spec = JSON.stringify({ cores: offer.cores, memory: offer.memoryGb, disk: offer.diskGb })
-  if (!made) {
-    await env.DB.prepare(
-      `update machines set size = ?2, region = ?3, spec = ?4, price_month = ?5, price_hour = ?6,
-         price_currency = ?7 where id = ?1`,
-    )
-      .bind(machine.id, name, place, spec, price.monthly, price.hourly, offers.currency)
-      .run()
-    return context.json({ state: machine.state })
-  }
-  const had = specOf(machine)
-  if (had && offer.diskGb < had.disk) return context.json({ error: 'disk' }, 409)
-  const current = offers.types.find((one) => one.name === machine.size)
-  if (current && current.arch !== offer.arch) return context.json({ error: 'arch' }, 409)
-  if (name === machine.size) return context.json({ state: machine.state })
-  const more = price.monthly - (machine.price_month ?? 0)
-  const { ceiling } = await serviceOf(env)
-  if (more > 0 && !(await mayCost(env, ceiling, at, more, offers.currency))) {
-    return context.json(refused('budget'), 409)
-  }
-  const answer = await askMachine(env, machine.id, 'resize', {
-    ...asked(machine),
-    'x-orden-type': name,
-    'x-orden-who': user.id,
-  })
-  return context.json({
-    state: answer ? (await answer.json<{ state: string }>()).state : machine.state,
   })
 })
 online.post('/machine/start', async (context) => {
