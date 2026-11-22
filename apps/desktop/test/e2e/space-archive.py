@@ -4,7 +4,6 @@ from harness import Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
-HINTS_SEEN = "try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -68,7 +67,6 @@ def drive(browser: Browser) -> None:
     context = browser.new_context(
         viewport={"width": 1280, "height": 820}, color_scheme="light", reduced_motion="reduce"
     )
-    context.add_init_script(HINTS_SEEN)
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)

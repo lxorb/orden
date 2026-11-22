@@ -36,8 +36,7 @@ def wait_for(page: Page, script: str, what: str, patience: int = PATIENCE, arg=N
     raise SystemExit(f"gave up waiting for {what}")
 def signed_in(browser: Browser, token: str, label: str) -> Page:
     context = browser.new_context(viewport={"width": 1280, "height": 820})
-    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)});"
-                            " try { localStorage.setItem('orden:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}")
+    context.add_init_script(f"localStorage.setItem('orden:session', {json.dumps(token)});")
     page = context.new_page()
     page.set_default_timeout(30000)
     page.on("pageerror", lambda error: say(f"[{label}] page error: {error}"))

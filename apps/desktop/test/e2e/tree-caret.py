@@ -6,7 +6,6 @@ from settling import LANDED
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 PATIENCE = 40
-HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 SEED = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -62,7 +61,6 @@ def turned(page: Page, at: tuple[float, float], what: str) -> None:
 def desk(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
-    page.add_init_script(HINTS)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     try:
         DRIVE.open(page)
@@ -107,7 +105,6 @@ def thumb(browser: Browser) -> None:
         " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36",
     )
     page = context.new_page()
-    page.add_init_script(HINTS)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     try:
         DRIVE.open(page)
@@ -140,7 +137,6 @@ SEARCHED = "() => window.ordenApp.search.text"
 def tags(browser: Browser) -> None:
     context = browser.new_context(viewport={"width": 1180, "height": 760})
     page = context.new_page()
-    page.add_init_script(HINTS)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     try:
         DRIVE.open(page)

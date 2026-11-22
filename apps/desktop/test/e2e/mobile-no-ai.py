@@ -8,7 +8,6 @@ ANDROID = (
     "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
-HINTS = "try { localStorage.setItem('orden:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 RIGHT_TABS = """
 async () => {
   const ws = window.ordenApp.workspace
@@ -39,7 +38,6 @@ def palette_rows(page: Page, word: str) -> list[str]:
 def one(browser: Browser, device: str) -> None:
     context = context_for(browser, device)
     page = context.new_page()
-    page.add_init_script(HINTS)
     page.on("pageerror", lambda error: wrong(f"[{device}] page error: {error}"))
     try:
         DRIVE.open(page)
