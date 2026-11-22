@@ -127,29 +127,41 @@ describe('the loops the home page shows', () => {
 describe('the pool of live displays', () => {
   const HEIGHT = 900
   const at = (top: number, tall = 600) => ({ top, bottom: top + tall })
-  test('runs at most the given number, those nearest the middle of the screen', () => {
+  test('loads up to the given number, nearest the screen first, reaching two screens ahead', () => {
     const spans = [at(-2400), at(-1200), at(150), at(1000), at(2200), at(3400)]
-    expect(poolOf(spans, HEIGHT, 2)).toEqual({ live: [2, 3], playing: [2] })
-    expect(poolOf(spans, HEIGHT, 1).live).toEqual([2])
+    expect(poolOf(spans, HEIGHT, 4)).toEqual({ live: [2, 3, 1, 4], playing: [2] })
+    expect(poolOf(spans, HEIGHT, 2).live).toEqual([2, 3])
     expect(poolOf(spans, HEIGHT, 0)).toEqual({ live: [], playing: [] })
   })
-  test('plays only what is on screen and keeps the next one warm a little ahead', () => {
-    const { live, playing } = poolOf([at(-1300), at(400), at(1300)], HEIGHT, 2)
-    expect(live).toEqual([1, 2])
-    expect(playing).toEqual([1])
+  test('starts the displays below well before they come into view', () => {
+    expect(poolOf([at(0), at(2400)], HEIGHT, 4).live).toEqual([0, 1])
+    expect(poolOf([at(0), at(2800)], HEIGHT, 4).live).toEqual([0])
+  })
+  test('keeps what it has loaded warm a while after it scrolls past, and lets it go far away', () => {
+    const spans = [at(-2600), at(200)]
+    expect(poolOf(spans, HEIGHT, 4).live).toEqual([1])
+    expect(poolOf(spans, HEIGHT, 4, [0, 1]).live).toEqual([1, 0])
+    expect(poolOf([at(-4000), at(200)], HEIGHT, 4, [0, 1]).live).toEqual([1])
+    expect(poolOf(spans, HEIGHT, 1, [0, 1]).live).toEqual([1])
   })
   test('lets everything far off the screen rest as a poster', () => {
-    expect(poolOf([at(-5000), at(5000)], HEIGHT, 2).live).toEqual([])
-    expect(poolOf([at(200, 0)], HEIGHT, 2).live).toEqual([])
+    expect(poolOf([at(-5000), at(5000)], HEIGHT, 4).live).toEqual([])
+    expect(poolOf([at(200, 0)], HEIGHT, 4).live).toEqual([])
   })
-  test('never runs more than asked at any point of a long page', () => {
+  test('never runs more than asked and plays only what is on screen, at any point of a long page', () => {
     const spans = Array.from({ length: 9 }, (_, index) => at(index * 1100))
+    let held: number[] = []
     for (let scrolled = -500; scrolled < 9000; scrolled += 53) {
       const moved = spans.map(({ top, bottom }) => ({ top: top - scrolled, bottom: bottom - scrolled }))
-      const { live, playing } = poolOf(moved, HEIGHT, 2)
-      expect(live.length, String(scrolled)).toBeLessThanOrEqual(2)
+      const { live, playing } = poolOf(moved, HEIGHT, 3, held)
+      expect(live.length, String(scrolled)).toBeLessThanOrEqual(3)
       expect(playing.length, String(scrolled)).toBeGreaterThan(0)
-      for (const index of playing) expect(live).toContain(index)
+      for (const index of playing) {
+        expect(live).toContain(index)
+        const span = moved[index]
+        expect(span && span.bottom > 0 && span.top < HEIGHT).toBe(true)
+      }
+      held = live
     }
   })
 })
