@@ -48,6 +48,7 @@ const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { counted } = await import('../test/counted')
 const Pane = (await import('./Pane.svelte')).default
 const PaneTree = (await import('./PaneTree.svelte')).default
+const { recentLog } = await import('../../platform/src/api')
 let target: HTMLElement
 let shown: ReturnType<typeof mount> | null = null
 beforeEach(() => {
@@ -283,6 +284,7 @@ test('a surface that fails as it is taken down leaves the pane rebuilt, showing 
   })
   expect(target.querySelector('.counted')).toBeNull()
   expect(said).toHaveBeenCalled()
+  expect(recentLog().some((line) => line.includes(' error pane failed: '))).toBe(true)
   for (const [id, words] of [
     [one, 'The first note.'],
     [two, 'The second note.'],
@@ -307,6 +309,9 @@ test('a pane that fails again as it is rebuilt offers a reload instead of rebuil
     expect(target.querySelector('[role="alert"] button')?.textContent).toBe('Reload')
   })
   expect(failing.mock.calls.length).toBeLessThan(10)
+  const logged = recentLog().filter((line) => line.includes(' error pane failed: Error: a pane failed as it was drawn'))
+  expect(logged.length).toBeGreaterThan(0)
+  expect(logged.at(-1)).toMatch(/\n\s+at /)
   failing.mockRestore()
   said.mockRestore()
 })
