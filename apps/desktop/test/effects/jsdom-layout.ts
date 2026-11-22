@@ -7,6 +7,29 @@ class NoLayout {
 }
 globalThis.ResizeObserver = NoLayout
 if (typeof Element.prototype.getAnimations !== 'function') Element.prototype.getAnimations = () => []
+const PLAIN = /[-\w\u0080-\uffff]/
+function cssEscape(value: string): string {
+  let out = ''
+  for (let at = 0; at < value.length; at++) {
+    const one = value.charAt(at)
+    const code = value.charCodeAt(at)
+    const digit = code >= 48 && code <= 57
+    if (code === 0) out += '\ufffd'
+    else if (code <= 31 || code === 127 || (digit && (at === 0 || (at === 1 && value.startsWith('-')))))
+      out += `\\${code.toString(16)} `
+    else if (one === '-' && value.length === 1) out += '\\-'
+    else out += PLAIN.test(one) ? one : `\\${one}`
+  }
+  return out
+}
+const held = (globalThis as { CSS?: Partial<typeof CSS> }).CSS
+if (typeof held?.escape !== 'function') {
+  Object.defineProperty(globalThis, 'CSS', {
+    value: { supports: () => false, ...held, escape: cssEscape },
+    configurable: true,
+    writable: true,
+  })
+}
 function letGoOfFocusIn(node: Node) {
   const held = document.activeElement
   if (held instanceof HTMLElement && held !== document.body && node.contains(held)) held.blur()

@@ -13,9 +13,6 @@ Element.prototype.animate = () =>
     finished: Promise.resolve(),
     onfinish: null,
   }) as unknown as Animation
-if (typeof globalThis.CSS === 'undefined') {
-  vi.stubGlobal('CSS', { escape: (text: string) => text })
-}
 const { numbers } = await import('../../src/lib/tab-strip/src/numbers.svelte')
 const { replay } = await import('../../src/lib/ui-kit/src/api')
 const { workspace } = await import('../../src/lib/workspace/src/api')
