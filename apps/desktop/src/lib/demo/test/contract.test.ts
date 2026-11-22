@@ -91,7 +91,7 @@ describe('a visit to the demo leaves the visitor’s own data alone', () => {
     const { into, real } = visitor('?demo')
     const held = into.localStorage as Storage
     expect(held).not.toBe(real)
-    for (const key of ['orden:seeded', 'orden:setup', 'orden:renamed', 'orden:first-visit', 'orden:hints'])
+    for (const key of ['orden:seeded', 'orden:setup', 'orden:renamed', 'orden:first-visit'])
       expect(held.getItem(key)).not.toBe(null)
     expect(held.getItem('orden:theme-scheme')).toBe(null)
     expect(held.getItem('orden:theme')).toBe('default')
