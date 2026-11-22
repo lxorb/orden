@@ -7,6 +7,7 @@ import {
   chatsEnding,
   providePort,
   surfaceLoad,
+  syncStore,
   tabKindLoaded,
   WELCOME_PATH,
   webPages,
@@ -1277,7 +1278,10 @@ class Workspace {
     return tab
   }
   openShared(item: { id: string; name: string; path: string }, text: string) {
-    const existing = this.documents.find((one) => one.shared === item.id)
+    const kept = syncStore()
+    const existing = this.documents.find(
+      (one) => one.shared === item.id || (one.path !== null && kept?.idOf(one.path) === item.id),
+    )
     if (existing) {
       this.showTab(existing)
       return
@@ -1555,7 +1559,7 @@ class Workspace {
     const path = this.spelled(asked)
     this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
-  private showTab(note: NoteDoc | null, how: OpenHow = {}): Tab | null {
+  showTab(note: NoteDoc | null, how: OpenHow = {}): Tab | null {
     if (!note) return null
     const tab = this.tabHere((one) => one.note === note) ?? this.viewHere(note, how)
     if (!how.preview) this.keep(tab.id)
@@ -1883,6 +1887,8 @@ class Workspace {
     return tab
   }
   async openEntry(path: string, options: OpenHow = {}) {
+    const guest = this.documents.some((one) => one.shared !== null && one.path === null)
+    if (guest && (await (await import('./shared-twins')).boundAgain(this, path, options))) return
     const opener = openerFor(path, (one) => links.urlOf(one) !== null)
     switch (opener) {
       case null:
