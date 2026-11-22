@@ -128,7 +128,7 @@ describe('a wheel told from a touchpad', () => {
     const free = new FreeScroll()
     expect(free.notched(at(3, 0, { deltaMode: 1 }))).toBe(true)
     expect(free.notched(at(100, 1000))).toBe(true)
-    expect(free.notched(at(-120, 1050))).toBe(true)
+    expect(free.notched(at(-100, 1050))).toBe(true)
     expect(free.notched(at(53, 2000))).toBe(true)
   })
   test('fine pixel deltas, or any sideways movement, are a touchpad', () => {
@@ -151,5 +151,28 @@ describe('a wheel told from a touchpad', () => {
     const panning = new FreeScroll()
     panning.pan(0, 4, 995)
     expect(panning.notched(at(100, 1000))).toBe(false)
+  })
+})
+describe('a touchpad that sends a wheel step now and then', () => {
+  const at = (deltaY: number, timeStamp: number) => ({ deltaX: 0, deltaY, timeStamp })
+  test('turns back into a touchpad at its first fine step, and says so once', () => {
+    const free = new FreeScroll()
+    expect(free.notched(at(100, 0))).toBe(true)
+    expect(free.flipped).toBe(false)
+    expect(free.notched(at(16.67, 12))).toBe(false)
+    expect(free.flipped).toBe(true)
+    expect(free.notched(at(100, 24))).toBe(false)
+    expect(free.flipped).toBe(false)
+  })
+  test('a wheel spun fast, whole notches together, stays a wheel', () => {
+    const free = new FreeScroll()
+    expect(free.notched(at(100, 0))).toBe(true)
+    expect(free.notched(at(200, 20))).toBe(true)
+    expect(free.notched(at(100, 40))).toBe(true)
+  })
+  test('steps of a size that is no multiple of the first are a touchpad', () => {
+    const free = new FreeScroll()
+    expect(free.notched(at(60, 0))).toBe(true)
+    expect(free.notched(at(90, 16))).toBe(false)
   })
 })

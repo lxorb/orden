@@ -20,6 +20,7 @@
   import CanvasPicked from './CanvasPicked.svelte'
   import CanvasFar from './CanvasFar.svelte'
   import {
+    type Camera,
     ctrlWheelZoom,
     graphPoint,
     heldGestures,
@@ -117,13 +118,18 @@
   let finding = $state(false)
   let askedFind = $state(0)
   const camera = $derived(store.camera)
+  let wheelFrom: Camera | null = null
   const STILL_AFTER = 180
   let moving = $state(false)
+  let raised = 0
   const looked = $derived(`${String(camera.x)} ${String(camera.y)} ${String(camera.scale)}`)
   $effect(() => {
     if (!looked) return
+    if (!moving) raised = untrack(() => camera.scale)
     moving = true
-    const stopping = setTimeout(() => (moving = false), STILL_AFTER)
+    const stopping = setTimeout(() => {
+      if (camera.scale !== raised) moving = false
+    }, STILL_AFTER)
     return () => clearTimeout(stopping)
   })
   const unit = $derived(1 / camera.scale)
@@ -960,7 +966,11 @@
     const rect = element.getBoundingClientRect()
     const held = event.ctrlKey || event.metaKey
     if (held && pinching()) return
-    if (held || freeScroll.notched(event)) {
+    const notched = !held && freeScroll.notched(event)
+    if (notched && !wheelFrom) wheelFrom = camera
+    if (freeScroll.flipped && wheelFrom) store.camera = wheelFrom
+    if (!notched) wheelFrom = null
+    if (held || notched) {
       store.camera = zoomed(
         camera,
         width,

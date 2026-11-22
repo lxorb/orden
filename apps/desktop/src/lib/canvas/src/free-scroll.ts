@@ -44,17 +44,24 @@ export class FreeScroll {
     this.lastRaw = now
   }
   private notchedRun = false
+  private notchSize = 0
   private lastKind = -Infinity
+  flipped = false
   notched(event: Wheeled): boolean {
     const now = event.timeStamp
     const fresh = now - this.lastKind > PAUSE
     this.lastKind = now
-    const notch =
+    const size = Math.abs(event.deltaY)
+    const step =
       !this.touching &&
       now - this.lastRaw >= FRESH &&
       !event.deltaX &&
-      (event.deltaMode === 1 || (Number.isInteger(event.deltaY) && Math.abs(event.deltaY) >= NOTCHED))
-    this.notchedRun = fresh ? notch : this.notchedRun && notch
+      (event.deltaMode === 1 || (Number.isInteger(event.deltaY) && size >= NOTCHED))
+    const was = this.notchedRun
+    if (fresh) this.notchSize = step ? size : 0
+    const same = event.deltaMode === 1 || (this.notchSize > 0 && size % this.notchSize === 0)
+    this.notchedRun = step && same && (fresh || was)
+    this.flipped = was && !fresh && !this.notchedRun
     return this.notchedRun
   }
   wheel(event: Wheeled): Vector {
