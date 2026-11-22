@@ -100,6 +100,16 @@ describe('the board', () => {
     expect(movedColumns(['a', 'b', 'c'], 'c', 0)).toEqual(['c', 'a', 'b'])
     expect(movedColumns(['a', 'b', 'c'], 'a', 9)).toEqual(['b', 'c', 'a'])
   })
+  test('a new label column comes just before No label, which stays last, unless the column was moved', () => {
+    const columns = columnsOf(
+      [todo({ id: 'a', labels: ['home'] }), todo({ id: 'b', labels: ['work'] }), todo({ id: 'c' })],
+      'label',
+      TODAY,
+    )
+    expect(orderedColumns(columns, ['home', '']).map((one) => one.key)).toEqual(['home', 'work', ''])
+    expect(orderedColumns(columns, ['', 'home']).map((one) => one.key)).toEqual(['work', '', 'home'])
+    expect(orderedColumns(columns, ['home', '', 'work']).map((one) => one.key)).toEqual(['home', '', 'work'])
+  })
   test('is synced between two devices of one user and is never a todo', async () => {
     const server = new MemoryTodoServer()
     const store = () => {

@@ -254,3 +254,16 @@ describe('a carried todo', () => {
     expect(todos.todo(a.id)?.labels).toEqual(['work'])
   })
 })
+describe('a label made after the columns were arranged', () => {
+  test('gets its column just before No label, which stays last', async () => {
+    const mine = prefix()
+    const { shown } = shownOf(mine)
+    await made(mine, 'Water the plants', ['home'])
+    await made(mine, 'Read a book', ['books'])
+    await made(mine, 'Loose end')
+    await shown.moveColumn('home', 0)
+    expect(shown.columns.map((one) => one.name)).toEqual(['home', 'books', 'No label'])
+    await made(mine, 'Write the report', ['work'])
+    expect(shown.columns.map((one) => one.name)).toEqual(['home', 'books', 'work', 'No label'])
+  })
+})

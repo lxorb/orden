@@ -107,9 +107,11 @@ export function columnsOf(todos: readonly Todo[], grouping: Grouping, today: str
   }))
 }
 export function orderedColumns(columns: readonly Column[], saved: readonly string[]): Column[] {
+  const none = saved.indexOf(NONE)
   const at = (column: Column) => {
     const index = saved.indexOf(column.key)
-    return index === -1 ? saved.length : index
+    if (index !== -1) return index
+    return column.key !== NONE && none !== -1 ? none - 0.5 : saved.length
   }
   return columns
     .map((column, index) => ({ column, index }))
