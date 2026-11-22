@@ -64,7 +64,6 @@ interface Held {
   mobileSeen?: boolean
   quietMarks?: boolean
   silent?: boolean
-  developer?: boolean
   undatedInToday?: boolean
   canvasTurns?: boolean
   canvasTurnSnaps?: boolean
@@ -303,32 +302,6 @@ describe('the tasks with no start date in Today', () => {
       expect('undatedInToday' in back).toBe(false)
       expect(localStorage.getItem('orden:modes')).not.toContain('undated')
     }
-  })
-})
-describe('Developer mode', () => {
-  test('is unasked at first, which keeps the terminals', () => {
-    expect(modes.developer).toBeNull()
-    expect(modes.coder).toBe(true)
-  })
-  test('a first no writes the way Notion does, and is remembered', async () => {
-    modes.setDeveloper(false)
-    expect(modes.coder).toBe(false)
-    expect(modes.quietMarks).toBe(true)
-    const again = await restarted()
-    expect(again.developer).toBe(false)
-    expect(again.quietMarks).toBe(true)
-  })
-  test('a first yes keeps the marks under the caret, as Obsidian does', () => {
-    modes.setDeveloper(true)
-    expect(modes.coder).toBe(true)
-    expect(modes.quietMarks).toBe(false)
-  })
-  test('after the first answer, leaves the marks to their own switch', () => {
-    modes.setDeveloper(false)
-    modes.toggleQuietMarks()
-    modes.setDeveloper(true)
-    modes.setDeveloper(false)
-    expect(modes.quietMarks).toBe(false)
   })
 })
 describe('the pointing hand', () => {
@@ -571,7 +544,6 @@ describe('taking over what the account holds', () => {
     [{ quietMarks: true }, 'quietMarks', true],
     [{ silent: true }, 'silent', true],
     [{ canvasTurns: true }, 'canvasTurns', true],
-    [{ developer: false }, 'coder', false],
     [{ attachments: 'named' }, 'attachments', 'named'],
     [{ attachments: 'vault' }, 'attachments', 'space'],
     [{ undatedInToday: false, silent: true }, 'silent', true],
@@ -988,24 +960,24 @@ describe('another account in the same window (#2344)', () => {
     await signedIn('alice')
     line.offline = true
     modes.toggleHardBreaks()
-    modes.setDeveloper(true)
+    modes.toggleSilent()
     await new Promise((resolve) => setTimeout(resolve, 0))
     line.offline = false
     await signedIn('bob')
     expect(modes.hardBreaks).toBe(false)
-    expect(modes.developer).toBeNull()
-    modes.setDeveloper(false)
+    expect(modes.silent).toBe(false)
+    modes.setCanvasTurns(false)
     await modes.adopt('bob')
-    expect(server.bob).toMatchObject({ developer: false })
+    expect(server.bob).toMatchObject({ canvasTurns: false })
     line.offline = true
     await signedIn('alice')
     expect(modes.hardBreaks).toBe(true)
-    expect(modes.developer).toBe(true)
+    expect(modes.silent).toBe(true)
     line.offline = false
     await modes.adopt('alice')
-    expect(server.alice).toEqual({ hardBreaks: true, developer: true })
+    expect(server.alice).toEqual({ hardBreaks: true, silent: true })
     expect(modes.hardBreaks).toBe(true)
-    expect(modes.developer).toBe(true)
+    expect(modes.silent).toBe(true)
     done()
   })
 })

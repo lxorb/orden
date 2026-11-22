@@ -139,3 +139,35 @@ describe('the first-launch setup', () => {
     ])
   })
 })
+describe('the answer to whether one writes code', () => {
+  async function answering() {
+    vi.resetModules()
+    const [{ settleCoding }, { modes }, { hiddenKinds }] = await Promise.all([
+      import('./setup-state.svelte'),
+      import('../../modes/src/api'),
+      import('../../gates/src/api'),
+    ])
+    return { settleCoding, modes, hiddenKinds }
+  }
+  test('no turns the terminals off in the note types, and writes the way Notion does', async () => {
+    const { settleCoding, modes, hiddenKinds } = await answering()
+    await settleCoding(false, true)
+    expect(hiddenKinds.hidden).toEqual(['terminal', 'remote', 'online'])
+    expect(modes.quietMarks).toBe(true)
+  })
+  test('yes keeps them, and the marks under the caret as Obsidian does', async () => {
+    const { settleCoding, modes, hiddenKinds } = await answering()
+    await settleCoding(true, true)
+    expect(hiddenKinds.hidden).toEqual([])
+    expect(modes.quietMarks).toBe(false)
+  })
+  test('changed afterwards, turns the terminals over and leaves the marks to their own switch', async () => {
+    const { settleCoding, modes, hiddenKinds } = await answering()
+    await settleCoding(true, true)
+    await settleCoding(false, false)
+    expect(hiddenKinds.hidden).toEqual(['terminal', 'remote', 'online'])
+    expect(modes.quietMarks).toBe(false)
+    await settleCoding(true, false)
+    expect(hiddenKinds.hidden).toEqual([])
+  })
+})

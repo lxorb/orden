@@ -143,7 +143,7 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
       ? named.filter((one) => one.kind === 'switch' && one.get()).map((one) => one.member)
       : (first as { get(): unknown }).get()
   return {
-    about: first.hint,
+    about: first.hint ?? first.label,
     ...(schema.enum ? { choices: schema.enum } : {}),
     read,
     write: (value) => {

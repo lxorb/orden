@@ -52,7 +52,7 @@
         onchange={(on: boolean) => void extensions.enable(one.id, on)}
       />
     {:else}
-      <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>Remove</button>
+      <button class="orden-chip is-danger" onclick={() => void extensions.remove(one.id)}>Remove</button>
     {/if}
   </div>
   {#if one.cannotRun !== null}
@@ -77,9 +77,9 @@
       {/if}
       <div class="rows">
         {#if one.options}
-          <button class="orden-chip is-quiet" onclick={() => void options(one.id)}> Options </button>
+          <button class="orden-chip" onclick={() => void options(one.id)}> Options </button>
         {/if}
-        <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}> Remove </button>
+        <button class="orden-chip is-danger" onclick={() => void extensions.remove(one.id)}> Remove </button>
       </div>
     </div>
   {/if}
@@ -182,9 +182,6 @@
   .rows {
     display: flex;
     gap: var(--space-2);
-  }
-  .danger {
-    color: var(--danger);
   }
   .cannot {
     padding: 0 0 var(--space-2) calc(var(--icon-lg) + var(--space-2));

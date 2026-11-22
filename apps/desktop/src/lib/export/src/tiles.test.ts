@@ -1,12 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import { PANDOC_FORMATS } from '../../export-formats/src/formats'
 import { type ExportKind, offeredBy } from '../../export-formats/src/offer'
-import { commandFor, SETUP, shelved } from './tiles'
+import { commandFor, shelved } from './tiles'
 
 const KINDS: ExportKind[] = ['note', 'canvas', 'pages', 'file']
 const choicesFor = (kind: ExportKind, pandoc: boolean) => [
   ...offeredBy(kind).map((id) => ({ id: `export-${id}`, label: id, run: () => undefined })),
-  ...(kind === 'note' ? [{ id: SETUP, label: SETUP, run: () => undefined }] : []),
   ...(pandoc && kind === 'note'
     ? PANDOC_FORMATS.map((one) => ({ id: `export-${one.id}`, label: one.id, run: () => undefined }))
     : []),
@@ -21,7 +20,7 @@ describe('the export picker', () => {
             shelf.tiles.flatMap((tile) => [commandFor(tile, false), commandFor(tile, true)]),
           ),
         )
-        const wanted = choices.map((one) => one.id).filter((id) => id !== SETUP)
+        const wanted = choices.map((one) => one.id)
         expect([...reached].sort(), `${kind}${pandoc ? ' with pandoc' : ''}`).toEqual([...wanted].sort())
       }
     }

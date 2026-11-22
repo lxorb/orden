@@ -89,7 +89,7 @@
   <span class="name">Email</span>
   <span class="orden-field is-value is-read">{account.user?.email}</span>
   {#if !adding}
-    <button class="orden-chip is-quiet" aria-label="Change email" onclick={() => start('primary')}>Change</button>
+    <button class="orden-chip" aria-label="Change email" onclick={() => start('primary')}>Change</button>
   {/if}
 </div>
 <div class="orden-setting setting">
@@ -97,11 +97,11 @@
   {#if second}
     <span class="orden-field is-value is-read">{second}</span>
     {#if !adding}
-      <button class="orden-chip is-quiet" disabled={busy} onclick={() => void promote()}>Make primary</button>
-      <button class="orden-chip is-quiet" disabled={busy} onclick={() => void remove()}>Remove</button>
+      <button class="orden-chip" disabled={busy} onclick={() => void promote()}>Make primary</button>
+      <button class="orden-chip is-danger" disabled={busy} onclick={() => void remove()}>Remove</button>
     {/if}
   {:else if !adding}
-    <button class="orden-chip is-quiet" aria-label="Add a second email" onclick={() => start('second')}>Add</button>
+    <button class="orden-chip" aria-label="Add a second email" onclick={() => start('second')}>Add</button>
   {/if}
 </div>
 
@@ -162,7 +162,7 @@
       {/if}
     {/if}
     <div class="orden-setting setting">
-      <button type="button" class="orden-chip is-quiet" onclick={() => (adding = null)}>Cancel</button>
+      <button type="button" class="orden-chip" onclick={() => (adding = null)}>Cancel</button>
       <button type="submit" class="orden-chip" disabled={busy || !address.trim() || (sent && !code.trim())}>
         {sent ? 'Confirm' : 'Send code'}
       </button>

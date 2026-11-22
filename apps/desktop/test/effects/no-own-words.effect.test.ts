@@ -34,7 +34,7 @@ test('the menu over a misspelled word offers no dictionary to add it to', () => 
   view.destroy()
 })
 test('Spelling in Settings keeps no list of words of its own', () => {
-  settings.section = 'spelling'
+  settings.section = 'editor'
   settings.listing = false
   shown = mount(SettingsPanel, { target: document.body })
   flushSync()

@@ -2,12 +2,12 @@
   import { exportCommands } from './commands'
   import { Sheet, Switch } from '../../ui-controls/src/api'
   import { picker } from './picker.svelte'
-  import { commandFor, SETUP, shelved, type Tile } from './tiles'
+  import { commandFor, shelved, type Tile } from './tiles'
+  import PdfSheet from './PdfSheet.svelte'
 
   const choices = $derived(picker.open ? exportCommands() : [])
   const shelves = $derived(shelved(choices, picker.last.id || null))
   const tiles = $derived(shelves.flatMap((one) => one.tiles))
-  const setup = $derived(choices.find((one) => one.id === SETUP) ?? null)
   let chosenId = $derived(picker.open ? picker.last.id || null : null)
   const chosen = $derived(
     tiles.find((one) => one.id === chosenId && !one.disabled) ?? tiles.find((one) => !one.disabled) ?? null,
@@ -21,10 +21,6 @@
     picker.keep(tile.id, optioned)
     picker.close()
     command.run()
-  }
-  function setUp() {
-    picker.close()
-    setup?.run()
   }
 </script>
 
@@ -66,12 +62,11 @@
   {/if}
 
   {#snippet foot()}
-    {#if setup}
-      <button class="orden-button is-quiet" onclick={setUp}>{setup.label}</button>
-    {/if}
     <button class="orden-button go" disabled={!chosen} onclick={() => go(chosen)}> Export </button>
   {/snippet}
 </Sheet>
+
+<PdfSheet />
 
 <style>
   .shelf {

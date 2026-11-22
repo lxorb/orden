@@ -13,7 +13,6 @@ export const browserFields = (): SettingField[] => [
     key: 'general.searchEngine',
     open: true,
     label: 'Search engine',
-    hint: 'Where words typed into a web tab’s address bar are searched.',
     options: [
       ...enginesFor(navigator.language).map((one) => ({ value: one.id, label: one.name })),
       { value: CUSTOM, label: 'Custom' },

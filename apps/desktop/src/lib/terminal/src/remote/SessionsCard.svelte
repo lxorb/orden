@@ -54,7 +54,7 @@
             <button class="orden-chip" onclick={() => held.open(row)}>Open</button>
             <button class="orden-chip" onclick={() => void rename(row)}>Rename</button>
           {/if}
-          <button class="orden-chip" onclick={() => void end(row)}>End</button>
+          <button class="orden-chip is-danger" onclick={() => void end(row)}>End</button>
         </div>
       </div>
     {/each}
@@ -64,7 +64,7 @@
       <p class="hint">
         {idle === 1 ? 'A session has' : `${idle} sessions have`} been idle for a week or more.
       </p>
-      <button class="orden-chip" onclick={() => void endIdle()}>End idle</button>
+      <button class="orden-chip is-danger" onclick={() => void endIdle()}>End idle</button>
     </div>
   {/if}
 {/if}

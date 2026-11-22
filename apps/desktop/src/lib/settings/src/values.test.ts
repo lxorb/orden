@@ -89,19 +89,20 @@ describe('Settings > Account', () => {
   test('asks when a status clears only while there is one', () => {
     expect(markup).toMatch(/\{#if status\}\s*<div class="orden-setting setting">[\s\S]*?Clear after/)
   })
-  test('changes and removes a picture with the same kind of button', () => {
-    const picture = markup.slice(markup.indexOf('>Picture<'), markup.indexOf('>Pronouns<'))
+  test('changes a picture with a chip and removes it with a danger chip', () => {
+    const picture = markup.slice(markup.indexOf('class="profile"'), markup.indexOf('>Pronouns<'))
     const kinds = new Set([...picture.matchAll(/<button\s+class="([^"]+)"/g)].map((hit) => hit[1]))
-    expect([...kinds]).toEqual(['orden-chip'])
+    expect([...kinds]).toEqual(['orden-chip', 'orden-chip is-danger'])
   })
 })
 const SHARED = /\b(orden-chip|orden-button|orden-action|orden-glyph|orden-tag|orden-row|orden-setting)\b/
 const OWN: Record<string, RegExp> = {
   'ui-controls/src/Swatches.svelte': /class="swatch/,
   'settings/src/SettingsPanel.svelte': /class="(thumb|key|link)"/,
+  'settings/src/AskSettings.svelte': /class="(row|link)"/,
   '*': /role="(radio|tab)"/,
   'web-tab/src/ExtensionRows.svelte': /class="name"/,
-  'terminal/src/remote/RemotePane.svelte': /class="(open|link)"/,
+  'terminal/src/remote/RemotePane.svelte': /class="open"/,
   'pass-ui/src/SettingsImport.svelte': /class="source"/,
 }
 function buttons(source: string): string[] {

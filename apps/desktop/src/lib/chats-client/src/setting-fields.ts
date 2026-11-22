@@ -44,7 +44,6 @@ export function chatsFields(): SettingField[] {
           {
             kind: 'select',
             label: 'Starts',
-            hint: 'When the hours chats may notify you begin.',
             options: hourOptions,
             get: () => String(hours.from),
             set: (value) => hush.setHours({ ...hours, from: Number(value) }),
@@ -52,7 +51,6 @@ export function chatsFields(): SettingField[] {
           {
             kind: 'select',
             label: 'Ends',
-            hint: 'When the hours chats may notify you end.',
             options: hourOptions,
             get: () => String(hours.to),
             set: (value) => hush.setHours({ ...hours, to: Number(value) }),
@@ -71,7 +69,6 @@ export function chatsFields(): SettingField[] {
     {
       kind: 'switch',
       label: 'Sound',
-      hint: 'Notifications make a sound.',
       words: ['chat', 'notification', 'audio', 'ping'],
       initial: false,
       get: () => hush.sound,

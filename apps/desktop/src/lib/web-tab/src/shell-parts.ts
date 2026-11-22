@@ -17,17 +17,17 @@ registerTabKind('web', () => import('./tab-kind').then((one) => one.webTabKind))
 registerCommandRows('web', () => import('./command-rows').then((one) => one.webRows))
 registerCommand('web.history', () => import('./history-open').then((one) => one.openHistory))
 registerSettingFields({
-  section: 'general',
+  section: 'browser',
   group: 'Browser',
   load: () => import('./setting-fields.svelte').then((one) => one.browserFields),
 })
 registerSettingFields({
-  section: 'general',
-  group: 'Tabs',
+  section: 'browser',
+  group: 'Performance',
   load: () => import('./setting-fields.svelte').then((one) => one.tabFields),
 })
 registerSettingsPart({
-  section: 'general',
+  section: 'browser',
   title: 'Extensions',
   card: true,
   shown: () => isDesktop,

@@ -163,14 +163,14 @@ test('an address nobody keeps is a row of its own, and choosing it keeps it', as
   expect(own).toMatchObject({ hostname: 'box', user: 'me', port: 2222, name: 'me@box:2222' })
   expect(readSpec(tab.doc)?.shell).toBe(`ssh:${own?.id ?? ''}`)
 })
-test('with no hosts at all, the one row is the way to Settings, Remote', async () => {
+test('with no hosts at all, the one row is the way to Settings, Terminal', async () => {
   config = []
   kept = { own: [], about: {}, order: [], groups: [] }
   const shown = vi.spyOn(settings, 'show').mockImplementation(() => undefined)
   await opened()
   expect(names()).toEqual(['Add host'])
   rows()[0]?.click()
-  expect(shown).toHaveBeenCalledWith('remote')
+  expect(shown).toHaveBeenCalledWith('terminal')
   expect(hostPicker.open).toBe(false)
   shown.mockRestore()
 })

@@ -44,10 +44,6 @@
       {:else if page.at === 'server' && view}
         <ServerDetail {view} onback={back} onedit={() => (page = { at: 'form', id: view.id })} />
       {:else}
-        <p class="hint">
-          Tools from outside MCP servers that Orden's AI can use in chat. Each tool asks first, runs freely or stays
-          off, as you choose.
-        </p>
         <div class="card">
           {#each mcp.list as one (one.id)}
             <div

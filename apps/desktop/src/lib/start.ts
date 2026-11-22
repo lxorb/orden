@@ -21,7 +21,7 @@ import { warmDoors } from './features'
 import { recovery } from './history/src/api'
 import { record } from './sync-mirror/src/api'
 import { settings } from './settings/src/api'
-import { hiddenKinds } from './gates/src/api'
+import { forgetDeveloper, hiddenKinds } from './gates/src/api'
 import { gate } from './onboarding/src/api'
 import { shortcuts, toolbar } from './shortcuts/src/api'
 import { theme } from './theme/src/api'
@@ -71,6 +71,7 @@ export function start(): () => void {
   toolbar.restore()
   pull.restore()
   hiddenKinds.restore()
+  forgetDeveloper()
   connectors.restore()
   choices.restore()
   gate.restore()

@@ -83,9 +83,7 @@
       {:else if plan.state === 'missing'}
         <span class="hint">Not installed</span>
         <button class="orden-chip" onclick={() => void openExternal(INSTALL[kind])}> Install </button>
-        <button class="orden-chip is-quiet" onclick={() => void plans.check({ id: provider.id, kind })}>
-          Check again
-        </button>
+        <button class="orden-chip" onclick={() => void plans.check({ id: provider.id, kind })}> Check again </button>
       {:else if plan.state === 'in'}
         <span class="hint" title={plan.account ?? ''}>
           {plan.plan === 'API key' ? 'API key' : plan.plan ? `${plan.plan} plan` : 'Signed in'}
@@ -107,7 +105,7 @@
     <div class="row">
       {#if plans.chatgpt}
         <span class="hint">{plans.chatgpt.email ?? 'Signed in'}</span>
-        <button class="orden-chip is-quiet" onclick={() => void signOutOfChatgpt()}> Sign out </button>
+        <button class="orden-chip is-danger" onclick={() => void signOutOfChatgpt()}> Sign out </button>
       {:else if plans.chatgpt === null}
         {#if signingIn}<span class="hint">Asking…</span>
         {:else if vault.seen[provider.id]}<span class="hint">{vault.seen[provider.id]}</span>{/if}
@@ -127,7 +125,7 @@
   {#if limitWords(kind, limit)}
     <div class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
       <span class="name hint">{limitWords(kind, limit)}</span>
-      <button class="orden-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}> Manage usage </button>
+      <button class="orden-chip" onclick={() => void openExternal(USAGE_OF[kind])}> Manage usage </button>
     </div>
   {/if}
 {/snippet}

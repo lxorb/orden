@@ -990,6 +990,9 @@ select option {
     color: var(--danger);
   }
 }
+.orden-action.is-danger {
+  color: var(--danger);
+}
 [data-touch] .orden-action {
   min-height: var(--touch-row);
   font-size: var(--touch-text);
@@ -1018,6 +1021,18 @@ select option {
 }
 .orden-chip:active:not(:disabled) {
   background: var(--accent-soft);
+}
+.orden-chip.is-danger {
+  color: var(--danger);
+}
+@media (hover: hover) {
+  .orden-chip.is-danger:hover:not(:disabled) {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}
+.orden-chip.is-danger:active:not(:disabled) {
+  background: var(--danger-soft);
 }
 .orden-chip.is-quiet {
   border-color: transparent;
@@ -1198,6 +1213,20 @@ textarea.orden-field.is-value {
   white-space: nowrap;
   user-select: text;
   -webkit-user-select: text;
+}
+.orden-field.is-value.is-plain {
+  border-color: transparent;
+  background: none;
+  color: var(--muted-strong);
+  text-align: end;
+}
+.orden-field.is-value.is-plain:hover {
+  border-color: transparent;
+}
+.orden-field.is-value.is-plain:focus {
+  border-color: var(--line-strong);
+  color: var(--text-strong);
+  text-align: start;
 }
 .orden-setting > .orden-field.is-value {
   flex: none;

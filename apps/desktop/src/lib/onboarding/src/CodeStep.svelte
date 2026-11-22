@@ -2,7 +2,7 @@
   import type { Coding } from './flow'
   import Card from './Card.svelte'
   import Screen from './Screen.svelte'
-  import { settleMarkdown, setup } from './setup-state.svelte'
+  import { settleCoding, settleMarkdown, setup } from './setup-state.svelte'
 
   const PROMPT = '~/orden'
   const TYPED = 'git pull'
@@ -10,8 +10,7 @@
   let picked = $state<Coding>(setup.answers.code)
   async function done() {
     if (picked === null) return
-    const { modes } = await import('../../modes/src/api')
-    modes.setDeveloper(picked === 'yes')
+    await settleCoding(picked === 'yes', setup.answers.code === null)
     await settleMarkdown(setup.answers.notes)
     setup.answer({ code: picked })
     setup.next('code')

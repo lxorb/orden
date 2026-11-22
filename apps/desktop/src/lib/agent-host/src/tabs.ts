@@ -192,17 +192,22 @@ const SECTIONS: readonly SettingsSectionId[] = [
   'general',
   'editor',
   'shortcuts',
-  'spelling',
-  'markdown',
   'appearance',
+  'browser',
   'ai',
   'agents',
+  'terminal',
   'sync',
-  'export',
 ]
+const MOVED: Readonly<Record<string, SettingsSectionId>> = {
+  spelling: 'editor',
+  markdown: 'editor',
+  remote: 'terminal',
+  online: 'terminal',
+}
 function showSettings(call: Call): AgentAnswer {
   const asked = maybe(call, 'section') ?? 'general'
-  const section = SECTIONS.find((one) => one === asked)
+  const section = SECTIONS.find((one) => one === (MOVED[asked] ?? asked))
   if (!section) throw new Refused('bad_arguments', `section is one of ${SECTIONS.join(', ')}`)
   view.showSettings(call, section)
   return done({ settings: section })

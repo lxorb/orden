@@ -22,18 +22,11 @@ export function places(): Place[] {
       label: 'When the same note was written twice',
       text: ['Keep both copies', 'Let the newest win', 'Ask me each time'],
     },
-    {
-      section: 'sync',
-      label: 'History on the account',
-      text: ['Keep versions', 'A month', 'A year'],
-    },
     { section: 'sync', label: 'What synced', text: [] },
     { section: 'sync', label: 'Go back', text: ['This space, as it was'] },
     ...[{ section: 'space' as const, label: 'Agent instructions', text: ['AGENTS.md'] }],
     { section: 'appearance', label: 'Themes', text: ['Browse', 'Install'] },
-    { section: 'editor', label: 'Reset to defaults', text: [] },
     { section: 'shortcuts', label: 'Vim keys', text: ['vim'] },
-    { section: 'markdown', label: 'Reset to defaults', text: [] },
   ]
   if (isDesktop) {
     all.push({
@@ -41,7 +34,7 @@ export function places(): Place[] {
       label: 'Reload themes and custom CSS',
       text: ['Custom'],
     })
-    all.push({ section: 'general', label: 'Default browser', text: ['Make default'] })
+    all.push({ section: 'browser', label: 'Default browser', text: ['Make default'] })
   }
   for (const part of settingsPartsIn()) {
     if (!part.shown()) continue

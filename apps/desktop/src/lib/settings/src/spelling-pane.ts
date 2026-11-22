@@ -10,7 +10,7 @@ import {
   tellEngine,
   toggled,
 } from '../../spelling/src/api'
-import type { Field, Group, Pane } from './fields'
+import type { Field, Group } from './fields'
 
 function dictionaryGroups(view: EditorView | undefined): Group[] {
   if (!choosable) return []
@@ -24,7 +24,6 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
         member: one.id,
         label: one.name,
         words: ['dictionary', 'language', 'spellcheck', one.id],
-        hint: 'Words are checked against this dictionary as well as every other one that is on.',
         initial: one.id === first,
         locked: () => {
           const now = inForceNow(modes.spellLanguages)
@@ -41,34 +40,22 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
     },
   ]
 }
-export function spellingPane(view: EditorView | undefined): Pane {
-  return {
-    id: 'spelling',
-    label: 'Spelling',
-    groups: [
-      {
-        title: 'Checking',
-        ...(choosable
-          ? {}
-          : {
-              caption: {
-                text: 'Words are checked in the languages your system or browser is set to.',
-              },
-            }),
-        fields: [
-          {
-            kind: 'switch',
-            key: 'spelling.check',
-            label: 'Check spelling',
-            words: ['spellcheck', 'spell check', 'typos'],
-            hint: 'Underlines misspelled words as you write.',
-            initial: DEFAULTS.spellcheck,
-            get: () => modes.spellcheck,
-            set: () => modes.toggleSpellcheck(view),
-          },
-        ],
-      },
-      ...dictionaryGroups(view),
-    ],
-  }
+export function spellingGroups(view: EditorView | undefined): Group[] {
+  return [
+    {
+      title: 'Spelling',
+      fields: [
+        {
+          kind: 'switch',
+          key: 'spelling.check',
+          label: 'Check spelling',
+          words: ['spellcheck', 'spell check', 'typos'],
+          initial: DEFAULTS.spellcheck,
+          get: () => modes.spellcheck,
+          set: () => modes.toggleSpellcheck(view),
+        },
+      ],
+    },
+    ...dictionaryGroups(view),
+  ]
 }

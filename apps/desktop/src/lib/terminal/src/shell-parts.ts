@@ -5,20 +5,23 @@ import { partView } from '../../ui-kit/src/api'
 
 registerPaletteKind('hosts', () => import('./palette-hosts').then((one) => one.hosts))
 registerSettingFields({
-  section: 'general',
+  section: 'terminal',
   group: 'Terminal',
   load: () => import('./setting-fields').then((one) => one.terminalFields),
 })
 registerSettingsPart({
-  section: 'remote',
+  section: 'terminal',
   card: false,
-  shown: () => true,
+  order: 1,
+  shown: () => isDesktop,
   places: () => (isDesktop ? [{ label: 'Add host', text: ['SSH', 'ssh config', 'Remote', 'Open config'] }] : []),
   load: async () => partView((await import('./remote/RemotePane.svelte')).default, () => ({})),
 })
 registerSettingsPart({
-  section: 'online',
+  section: 'terminal',
+  title: 'Online terminal',
   card: false,
+  order: 2,
   shown: () => true,
   places: () =>
     account.user ? [{ label: 'Online terminal', text: ['Machine', 'Start', 'Stop', 'Hours', 'CPU'] }] : [],

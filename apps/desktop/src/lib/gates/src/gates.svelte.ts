@@ -1,5 +1,4 @@
 import { account } from '../../accounts/src/api'
-import { modes } from '../../modes/src/api'
 import { heardElsewhere, isDesktop, stored, stringList } from '../../platform/src/api'
 import { viewport } from '../../ui-kit/src/api'
 
@@ -22,8 +21,8 @@ export function kindsHere(): KindName[] {
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken && chatsOn()) here.push('chat')
   if (__AI__ && web) here.push('ai')
-  if (isDesktop && modes.coder) here.push('terminal', 'remote')
-  if (modes.coder) here.push('online')
+  if (isDesktop) here.push('terminal', 'remote')
+  here.push('online')
   if (isDesktop && explorerOn()) here.push('explorer')
   if (passOn()) here.push('pass')
   if (web) here.push('web')

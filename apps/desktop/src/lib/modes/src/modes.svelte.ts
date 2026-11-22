@@ -95,7 +95,6 @@ interface Saved {
   focus: boolean
   quietMarks: boolean
   silent: boolean
-  developer?: boolean
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -223,7 +222,6 @@ class Modes {
   focus = $state(DEFAULTS.focus)
   quietMarks = $state(DEFAULTS.quietMarks)
   silent = $state(DEFAULTS.silent)
-  developer = $state<boolean | null>(null)
   typewriter = $state(DEFAULTS.typewriter)
   punctuation = $state(DEFAULTS.punctuation)
   numbers = $state(DEFAULTS.numbers)
@@ -278,7 +276,6 @@ class Modes {
         }
       }
       if (saved.reading === true) this.readOnly = true
-      this.developer = typeof saved.developer === 'boolean' ? saved.developer : null
       this.codeTheme = text(saved.codeTheme, DEFAULTS.codeTheme)
       this.zoom = measure(saved.zoom, DEFAULTS.zoom)
       this.width = measure(saved.width, DEFAULTS.width)
@@ -442,16 +439,6 @@ class Modes {
     this.persist()
     this.share({ silent: this.silent })
   }
-  get coder(): boolean {
-    return this.developer !== false
-  }
-  setDeveloper(on: boolean) {
-    const first = this.developer === null
-    this.developer = on
-    if (first && this.quietMarks === on) this.toggleQuietMarks()
-    this.persist()
-    this.share({ developer: on })
-  }
   toggleHand() {
     this.hand = !this.hand
     this.applyHand()
@@ -610,7 +597,6 @@ class Modes {
       then: (on) => this.each(undefined, (one) => setQuietMarks(one, on)),
     },
     silent: { read: flag, start: DEFAULTS.silent },
-    developer: { read: flag, start: null },
     hardBreaks: { read: flag, start: DEFAULTS.hardBreaks, then: setHardBreaks },
     linkFormat: {
       read: (value) => (isLinkFormat(value) ? value : undefined),
@@ -750,7 +736,6 @@ class Modes {
       focus: this.focus,
       quietMarks: this.quietMarks,
       silent: this.silent,
-      ...(this.developer === null ? {} : { developer: this.developer }),
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,

@@ -41,16 +41,20 @@
           <span class="title">{rowName(item.name, item.kind !== 'note')}</span>
           <small><Facts parts={meta(item)} /></small>
         </div>
-        <button class="quiet" disabled={trash.busy || !trash.restorable(item)} onclick={() => void trash.restore(item)}>
+        <button
+          class="orden-chip"
+          disabled={trash.busy || !trash.restorable(item)}
+          onclick={() => void trash.restore(item)}
+        >
           Restore
         </button>
-        <button class="quiet danger" disabled={trash.busy} onclick={() => void trash.purge(item)}> Delete now </button>
+        <button class="orden-chip is-danger" disabled={trash.busy} onclick={() => void trash.purge(item)}>
+          Delete now
+        </button>
       </div>
     {/each}
   </div>
 {/snippet}
-
-<p class="hint">Deleted notes and spaces wait here for 14 days, then they are gone for good.</p>
 
 {#if trash.error}
   <p class="hint bad">{trash.error}</p>
@@ -63,7 +67,7 @@
   </div>
 {:else if trash.items.length}
   <div class="top">
-    <button class="quiet danger" disabled={trash.busy} onclick={() => void trash.empty()}> Empty </button>
+    <button class="orden-chip is-danger" disabled={trash.busy} onclick={() => void trash.empty()}> Empty </button>
   </div>
 
   {#if spaces.length}
@@ -134,26 +138,6 @@
   .name small {
     font-size: var(--text-xs);
     color: var(--muted);
-  }
-  button.quiet {
-    flex: none;
-    padding: 9px 0 9px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: none;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    color: var(--muted);
-    cursor: default;
-  }
-  @media (hover: hover) {
-    button.quiet:hover:not(:disabled) {
-      color: var(--text);
-    }
-    button.quiet.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
   }
   .found {
     display: flex;

@@ -1,13 +1,14 @@
 <script lang="ts">
   import { portOf, type SettingsSectionId } from '@orden/contracts'
-  import { Cross } from '../../ui-kit/src/api'
   import { dur, slide } from '../../platform/src/api'
   import { answerOf, apply, brief, type Answer, type Change, type Offer } from './ask-settings'
 
   const {
+    said,
     offers,
     ongo,
   }: {
+    said: string
     offers: () => Offer[]
     ongo: (section: SettingsSectionId, label: string) => void
   } = $props()
@@ -19,11 +20,14 @@
   let unready = $state(false)
   let settled = $state<Record<string, 'changed' | 'skipped'>>({})
   let session = 0
-  const busied = $derived(asked !== '' || answer !== null || trouble !== null || unready || busy)
-  async function ask() {
-    const said = asked.trim()
+  const wanted = $derived(said.trim())
+  $effect(() => {
+    if (wanted !== asked) clear()
+  })
+  export async function ask() {
     const port = portOf('settings.ask')
-    if (!said || busy || !port.ok) return
+    if (!wanted || busy || !port.ok) return
+    asked = wanted
     const all = offers()
     const mine = ++session
     busy = true
@@ -32,7 +36,7 @@
     answer = null
     settled = {}
     try {
-      const reply = await port.value.ask(brief(all), said)
+      const reply = await port.value.ask(brief(all), wanted)
       if (mine !== session) return
       if (reply === null) unready = true
       else answer = readable(reply, all)
@@ -64,35 +68,15 @@
     trouble = null
     unready = false
   }
-  function onKey(event: KeyboardEvent) {
-    if (event.isComposing) return
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      void ask()
-    } else if (event.key === 'Escape' && busied) {
-      event.preventDefault()
-      event.stopPropagation()
-      clear()
-    }
-  }
 </script>
 
 <div class="asker">
-  <label class="orden-field field">
-    <svg class="orden-field-mark spark" viewBox="0 0 13 13"><path d={SPARK} /></svg>
-    <input
-      bind:value={asked}
-      placeholder="Ask where a setting is, or to change one"
-      aria-label="Ask about settings"
-      spellcheck="false"
-      onkeydown={onKey}
-    />
-    {#if busied}
-      <button class="drop" title="Clear" aria-label="Clear" onclick={clear}>
-        <Cross small />
-      </button>
-    {/if}
-  </label>
+  {#if wanted}
+    <button class="orden-setting setting ask" disabled={busy} onclick={() => void ask()}>
+      <svg class="spark" viewBox="0 0 13 13" aria-hidden="true"><path d={SPARK} /></svg>
+      <span class="name">Ask AI “{wanted}”</span>
+    </button>
+  {/if}
 
   {#if busy}
     <p class="note" transition:slide={{ duration: dur(140) }}>Looking</p>
@@ -135,34 +119,19 @@
 
 <style>
   .asker {
-    flex: none;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    max-width: var(--screen-pair);
-    margin-bottom: var(--space-4);
+  }
+  .ask {
+    color: var(--accent);
   }
   .spark {
+    flex: none;
+    width: var(--icon-md);
+    height: var(--icon-md);
     fill: currentColor;
     stroke: none;
-  }
-  .drop {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: none;
-    color: var(--muted);
-    cursor: default;
-  }
-  .drop :global(svg) {
-    width: 8px;
-    height: 8px;
-    stroke-width: 1.4;
   }
   .note {
     margin: 0;

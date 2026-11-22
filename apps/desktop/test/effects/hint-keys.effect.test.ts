@@ -7,7 +7,7 @@ import { settings } from '../../src/lib/settings/src/api'
 providePort('settings.window', settings)
 Element.prototype.animate = () => ({ finished: Promise.resolve() }) as unknown as Animation
 test('the `i` turns nothing, and no switch holds anything the keyboard can reach', () => {
-  settings.section = 'markdown'
+  settings.section = 'editor'
   mount(SettingsPanel, { target: document.body })
   flushSync()
   const hint = document.querySelector('button[aria-label^="Turns straight quotes"]')

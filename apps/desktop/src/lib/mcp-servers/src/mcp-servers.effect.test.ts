@@ -163,9 +163,9 @@ afterEach(async () => {
   document.body.replaceChildren()
 })
 describe('the MCP servers settings', () => {
-  test('list each server with its state and say first that these are outside tools for Orden’s AI', async () => {
+  test('list each server with its state and no caption above them', async () => {
     await shown(McpServers, {})
-    expect(target.querySelector('.hint')?.textContent).toMatch(/^\s*Tools from outside MCP servers that Orden's AI/)
+    expect(target.querySelector('.hint')).toBeNull()
     expect(target.textContent).toContain('Files')
     expect(target.textContent).toContain('Connected, 2 tools')
     expect(back.listened).toBe('orden://mcp')

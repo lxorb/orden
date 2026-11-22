@@ -9,12 +9,11 @@ vi.mock('../../spelling/src/api', async (original) => ({
 }))
 vi.stubGlobal('localStorage', memoryStorage())
 const { modes } = await import('../../modes/src/api')
-const { spellingPane } = await import('./spelling-pane')
+const { spellingGroups } = await import('./spelling-pane')
 const { inForceNow } = await import('../../spelling/src/api')
-const { resetPane } = await import('./preferences')
 const row = (name: string) => {
-  const found = spellingPane(undefined)
-    .groups.flatMap((group) => group.fields)
+  const found = spellingGroups(undefined)
+    .flatMap((group) => group.fields)
     .find((one) => one.label === name)
   if (found?.kind !== 'switch') throw new Error(`no ${name}`)
   return found
@@ -41,8 +40,8 @@ describe('the dictionaries on Orden’s own Chromium', () => {
   test('keep the last one on, since a checker with no language is the switch above', () => {
     row('Deutsch').set(true)
     for (const one of inForceNow(modes.spellLanguages).filter((id) => id !== 'de-DE')) {
-      const name = spellingPane(undefined)
-        .groups.flatMap((group) => group.fields)
+      const name = spellingGroups(undefined)
+        .flatMap((group) => group.fields)
         .find((field) => field.words?.includes(one))?.label
       if (name) row(name).set(false)
     }
@@ -57,19 +56,5 @@ describe('the dictionaries on Orden’s own Chromium', () => {
     expect(held.spellLanguages).toEqual(modes.spellLanguages)
     expect(held.spellLanguages).toContain('sv-SE')
     expect('spellLanguage' in held).toBe(false)
-  })
-  test('go back to the reader’s own language alone on a reset, whatever was on before', () => {
-    const first = inForceNow(modes.spellLanguages)[0] ?? ''
-    const before = first === 'de-DE' ? 'Français' : 'Deutsch'
-    row(before).set(true)
-    const own = spellingPane(undefined)
-      .groups.flatMap((group) => group.fields)
-      .find((one) => one.kind === 'switch' && one.member === first)
-    if (own?.kind !== 'switch') throw new Error('no own dictionary')
-    own.set(false)
-    expect(inForceNow(modes.spellLanguages)).not.toContain(first)
-    resetPane(spellingPane(undefined))
-    expect(inForceNow(modes.spellLanguages)).toEqual([first])
-    expect(told.lists.at(-1)).toEqual([first])
   })
 })

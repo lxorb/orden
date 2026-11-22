@@ -124,7 +124,7 @@
             {#if file}
               <button class="orden-chip" onclick={() => void open(file)}>Open</button>
             {/if}
-            <button class="orden-chip" onclick={() => void end(row)}>End</button>
+            <button class="orden-chip is-danger" onclick={() => void end(row)}>End</button>
           </div>
         </div>
       {/each}

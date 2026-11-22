@@ -39,15 +39,15 @@ describe('the rows', () => {
     unregister()
     expect(appCommands().some((one) => one.id === 'web-reload')).toBe(false)
   })
-  test('the palette folds the export formats into one row but keeps the page setup', async () => {
+  test('the palette folds the export formats into one row', async () => {
     const unregister = registerCommandRows('export', () =>
-      Promise.resolve(() => [row('export-pdf', 'Export as PDF'), row('page-setup', 'Page setup')]),
+      Promise.resolve(() => [row('export-pdf', 'Export as PDF'), row('export-docx', 'Export as Word')]),
     )
     await commandRowsLoaded()
     const ids = (rows: { id: string }[]) => rows.map((one) => one.id)
-    expect(ids(appCommands())).toEqual(expect.arrayContaining(['export-pdf', 'page-setup']))
-    expect(ids(paletteCommands())).toContain('page-setup')
+    expect(ids(appCommands())).toEqual(expect.arrayContaining(['export-pdf', 'export-docx']))
     expect(ids(paletteCommands())).not.toContain('export-pdf')
+    expect(ids(paletteCommands())).not.toContain('export-docx')
     unregister()
   })
   test('a recorded block joins the blocks and the slash rows', async () => {

@@ -26,7 +26,7 @@ providePort('terminal.making', {
   },
   online: () => Promise.resolve(),
 })
-const { kindLines, newKinds } = await import('./new-kinds')
+const { kindLines, newKinds, offeredKinds } = await import('./new-kinds')
 const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, PASS_WORD } = await import('../../gates/src/api')
 hiddenKinds.hidden = [EXPERIMENTAL_WORD, EXPLORER_WORD, PASS_WORD]
 const terminalKind = () => newKinds().find((one) => one.kind === 'terminal')
@@ -46,18 +46,18 @@ describe('a terminal, as a kind a new tab can be', () => {
       ['explorer', 'pass'],
     ])
   })
-  test('is left out, with Remote and Online, for somebody who does not write code, the explorer staying', async () => {
-    const { modes } = await import('../../modes/src/api')
-    modes.developer = false
+  test('is left out, with Remote and Online, once Note types turns them off, the explorer staying', () => {
+    const was = hiddenKinds.hidden
+    hiddenKinds.hidden = [...was, 'terminal', 'remote', 'online']
     try {
-      expect(kindLines(newKinds()).map((line) => line.map((one) => one.kind))).toEqual([
+      expect(kindLines(offeredKinds()).map((line) => line.map((one) => one.kind))).toEqual([
         ['note', 'canvas', 'pages'],
         ['ai'],
         ['web', 'private'],
         ['explorer', 'pass'],
       ])
     } finally {
-      modes.developer = null
+      hiddenKinds.hidden = was
     }
   })
   test('on R, its own letter', () => {

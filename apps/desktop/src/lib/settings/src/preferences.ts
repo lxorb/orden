@@ -1,13 +1,13 @@
 import type { EditorView } from '@orden/editor'
-import { resetFields } from './reset-fields'
 import { generalPane } from './general-pane'
 import { editorPane } from './editor-pane'
-import { spellingPane } from './spelling-pane'
+import { spellingGroups } from './spelling-pane'
 import { kindsPane } from './kinds-pane'
-import { markdownPane } from './markdown-pane'
+import { markdownGroups } from './markdown-pane'
 import { appearancePane } from './appearance-pane'
-import { exportPane } from './export-pane'
 import { experimentalPane } from './experimental-pane'
+import { browserPane } from './browser-pane'
+import { terminalPane } from './terminal-pane'
 import type { Field, Pane } from './fields'
 import { changed } from '../../usage/src/api'
 
@@ -40,22 +40,14 @@ function tallied(field: Field): Field {
 }
 export function declaredPanes(view?: EditorView): Pane[] {
   const moment = new Date()
+  const editor = editorPane(view, moment)
   return [
     generalPane(),
-    editorPane(view, moment),
-    spellingPane(view),
+    { ...editor, groups: [...editor.groups, ...markdownGroups(view), ...spellingGroups(view)] },
     kindsPane(),
-    markdownPane(view),
     appearancePane(),
+    browserPane(),
+    terminalPane(),
     experimentalPane(),
-    exportPane(),
   ]
-}
-export function resettable(pane: Pane): boolean {
-  return pane.groups.every((group) =>
-    group.fields.every((field) => field.kind === 'value' || field.initial !== undefined),
-  )
-}
-export function resetPane(pane: Pane) {
-  resetFields(pane.groups.flatMap((group) => group.fields))
 }

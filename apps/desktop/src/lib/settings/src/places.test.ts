@@ -5,9 +5,9 @@ vi.stubGlobal('localStorage', (await import('../../../../test/disk')).memoryStor
 const { places } = await import('./places')
 const { sectionGroups } = await import('./sections')
 describe('the places settings search can land on', () => {
-  test('are only in sections the window shows, signed out and outside coder mode', () => {
+  test('are only in sections the window shows, signed out', () => {
     const stop = registerSettingsPart({
-      section: 'remote',
+      section: 'terminal',
       card: true,
       shown: () => true,
       places: () => [{ label: 'Add host', text: ['SSH'] }],

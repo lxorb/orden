@@ -1,6 +1,6 @@
 import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
 import { chosenOn, gated, hiddenKinds, KINDS_KEY, type KindName, kindsHere, shownOf } from './gates.svelte'
-import { forget, isString, keepJson } from '../../platform/src/api'
+import { forget, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const OWED_KEY = 'orden:kinds-owed'
 let owed: AccountOwed | null = null
@@ -42,6 +42,25 @@ export function setWord(word: string, on: boolean) {
   settle()
   share()
 }
+const CODING: readonly KindName[] = ['terminal', 'remote', 'online']
+const MODES_KEY = 'orden:modes'
+export function setCoding(on: boolean) {
+  const hidden = hiddenKinds.hidden
+  const next = on
+    ? hidden.filter((one) => !CODING.some((kind) => kind === one))
+    : [...hidden, ...CODING.filter((kind) => !hidden.includes(kind))]
+  if (next.length === hidden.length) return
+  hiddenKinds.hidden = next
+  settle()
+  share()
+}
+export function forgetDeveloper() {
+  const kept = stored(MODES_KEY)
+  if (!isRecord(kept) || !('developer' in kept)) return
+  const { developer, ...rest } = kept
+  keepJson(MODES_KEY, rest)
+  if (developer === false) setCoding(false)
+}
 export function receive(remote: AccountSettings) {
   owing().follows()
   const theirs = remote.hiddenKinds
@@ -51,12 +70,16 @@ export function receive(remote: AccountSettings) {
   }
   if (theirs === undefined) {
     if (hiddenKinds.hidden.length) share()
-    return
+  } else {
+    const taken = hiddenOf(theirs)
+    if (taken.join('\0') !== hiddenKinds.hidden.join('\0')) {
+      hiddenKinds.hidden = taken
+      settle()
+    }
   }
-  const taken = hiddenOf(theirs)
-  if (taken.join('\0') === hiddenKinds.hidden.join('\0')) return
-  hiddenKinds.hidden = taken
-  settle()
+  if (remote.developer !== false) return
+  setCoding(false)
+  owing().send({ developer: true })
 }
 function settle() {
   const hidden = hiddenKinds.hidden

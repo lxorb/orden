@@ -7,7 +7,7 @@ export interface SettingOption {
 }
 export interface SettingCommon {
   label: string
-  hint: string
+  hint?: string
   words?: string[]
   key?: string
   member?: string

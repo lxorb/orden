@@ -14,7 +14,6 @@ import type { IconNode } from 'lucide'
 import type { MenuItem } from '../../ui-kit/src/api'
 import { PANDOC_FORMATS, EXPORT_FORMATS } from '../../export-formats/src/api'
 
-export const SETUP = 'page-setup'
 type Shelf = 'documents' | 'text' | 'web' | 'pictures' | 'other'
 const SHELVES: readonly { id: Shelf; label: string }[] = [
   { id: 'documents', label: 'Documents' },
@@ -84,7 +83,7 @@ export function shelved(choices: readonly Choice[], first: string | null = null)
     tiles: [] as Tile[],
   }))
   for (const choice of choices) {
-    if (choice.id === SETUP || FOLDED.has(choice.id) || !choice.id.startsWith('export-')) continue
+    if (FOLDED.has(choice.id) || !choice.id.startsWith('export-')) continue
     const id = choice.id.slice('export-'.length)
     const kind = KINDS[id]
     const option = kind?.option

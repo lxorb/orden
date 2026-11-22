@@ -543,6 +543,7 @@ describe('the sentence behind a setting', () => {
       'lib/agents/src/settings/Words.svelte',
       'lib/ai-sidebar/src/AiPane.svelte',
       'lib/ai-sidebar/src/DoWithAiCard.svelte',
+      'lib/export/src/PdfSheet.svelte',
       'lib/settings/src/SettingsPanel.svelte',
       'lib/settings/src/SyncPane.svelte',
     ])

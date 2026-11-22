@@ -118,7 +118,7 @@
         </div>
 
         {#if remote.file}
-          <button class="link" onclick={() => void openConfig()}>Open config</button>
+          <button class="orden-action" onclick={() => void openConfig()}>Open config</button>
         {/if}
       {/if}
 
@@ -199,21 +199,5 @@
   }
   .row.landing {
     box-shadow: inset 0 2px 0 var(--accent);
-  }
-  .link {
-    align-self: flex-start;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--accent);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-  @media (hover: hover) {
-    .link:hover {
-      color: var(--accent-hover);
-    }
   }
 </style>

@@ -6,6 +6,7 @@ import { shortcuts, SHORTCUTS } from '../../shortcuts/src/api'
 import { showCombination } from '../../ui-kit/src/api'
 import { themeDeclarations } from './appearance-pane'
 import { relockField } from './general-pane'
+import { exportFields } from './export-fields'
 import type { Field } from './fields'
 
 function shortcutKey(id: string): string {
@@ -17,7 +18,6 @@ function shortcutFields(): Field[] {
       kind: 'switch',
       key: 'shortcuts.vim',
       label: 'Vim keys',
-      hint: 'Moves and edits in notes with Vim’s keys.',
       initial: false,
       get: () => modes.vim,
       set: (on) => modes.setVimKeys(on),
@@ -44,7 +44,7 @@ function shortcutFields(): Field[] {
 export async function declarations(view?: EditorView): Promise<Field[]> {
   await registered()
   const rows = declaredPanes(view).flatMap((pane) => pane.groups.flatMap((group) => group.fields))
-  const all = [...rows, ...(await themeDeclarations()), ...shortcutFields(), relockField()]
+  const all = [...rows, ...(await themeDeclarations()), ...shortcutFields(), relockField(), ...exportFields()]
   const seen = new Set<string>()
   return all.filter((one) => {
     if (!one.key) return false

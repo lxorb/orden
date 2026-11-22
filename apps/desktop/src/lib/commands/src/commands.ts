@@ -53,7 +53,7 @@ import {
 } from '@orden/editor'
 import { account } from '../../accounts/src/api'
 import { busy, prompt, viewport, type MenuItem, DIVIDER, fullscreen } from '../../ui-kit/src/api'
-import { turnedOff, basesOn, type KindName, passOn, timeOn } from '../../gates/src/api'
+import { turnedOff, basesOn, hiddenKinds, type KindName, passOn, timeOn } from '../../gates/src/api'
 import { composerCommands } from './composer-commands'
 import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
@@ -99,7 +99,6 @@ async function openSnippets() {
 }
 export function paletteCommands(view?: EditorView): Command[] {
   const folded = new Set(commandRows('export', view).map((one) => one.id))
-  folded.delete('page-setup')
   return appCommands(view).filter((one) => !folded.has(one.id))
 }
 const entry = (id: string, view?: EditorView) => () =>
@@ -543,13 +542,13 @@ export function appCommands(view?: EditorView): Command[] {
           },
           { id: 'new-website', label: 'Open a website', run: () => workspace.openWebsite() },
         ]),
-    ...(isDesktop && modes.coder
-      ? [
-          commanded('new-terminal', 'New terminal', 'terminal.new', { ownWindow: true }),
-          commanded('new-remote', 'Remote', 'terminal.remote', { ownWindow: true }),
-        ]
+    ...(hiddenKinds.offers('terminal')
+      ? [commanded('new-terminal', 'New terminal', 'terminal.new', { ownWindow: true })]
       : []),
-    ...(!modes.coder
+    ...(hiddenKinds.offers('remote')
+      ? [commanded('new-remote', 'Remote', 'terminal.remote', { ownWindow: true })]
+      : []),
+    ...(!hiddenKinds.offers('online')
       ? []
       : [
           commanded('new-online-terminal', 'New online terminal', 'terminal.online', {

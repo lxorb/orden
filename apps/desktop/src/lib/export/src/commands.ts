@@ -1,5 +1,5 @@
 import { choices } from '../../modes/src/api'
-import { type CommandExtension, settingsWindow } from '@orden/contracts'
+import type { CommandExtension } from '@orden/contracts'
 import {
   EXPORT_FORMATS,
   type Exportable,
@@ -16,6 +16,7 @@ import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 import { picturesWrittenOut } from '../../link-index/src/api'
 import { frontShut, openOut, openTarget, renderOptions } from './context'
+import { pdfAsk } from './pdf-ask.svelte'
 import { picker } from './picker.svelte'
 
 type Row = CommandExtension
@@ -51,7 +52,8 @@ export function exportCommands(): Row[] {
     const m = await import('../../files-out/src/api')
     await m.saveCopy(path, name())
   }
-  const run = (id: ExportId) => () =>
+  const run = (id: ExportId) => async () => {
+    if (id === 'pdf' && kind === 'note' && !(await pdfAsk.ask())) return
     busy.start(
       'Exporting',
       async () => {
@@ -62,6 +64,7 @@ export function exportCommands(): Row[] {
       },
       `export-${id}`,
     )
+  }
   const offered = offeredBy(kind)
   const nothing = offered.length === 0
   const asNote = kind === 'note' || nothing
@@ -72,13 +75,6 @@ export function exportCommands(): Row[] {
     disabled: nothing,
     run: run(id),
   }))
-  if (asNote) {
-    commands.push({
-      id: 'page-setup',
-      label: 'Page setup for export',
-      run: () => settingsWindow().show('export'),
-    })
-  }
   if (!choices.pandoc || !asNote) return shut(commands)
   for (const format of PANDOC_FORMATS) {
     commands.push({
@@ -100,7 +96,7 @@ export function exportCommands(): Row[] {
   return shut(commands)
 }
 export function exportPicker(): Row[] {
-  const formats = exportCommands().filter((one) => one.id !== 'page-setup')
+  const formats = exportCommands()
   return [
     {
       id: 'export',

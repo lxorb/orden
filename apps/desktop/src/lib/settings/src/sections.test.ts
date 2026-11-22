@@ -21,7 +21,7 @@ describe('the Mobile section', () => {
   test('is not offered on a laptop whose account has never been on a phone', () => {
     expect(listed()).not.toContain('mobile')
     expect(listed()).toContain('shortcuts')
-    expect(listed()).toContain('spelling')
+    expect(listed()).toContain('editor')
   })
   test('is offered on a phone and on a tablet', () => {
     viewport.device = 'phone'

@@ -13,21 +13,25 @@ import {
 } from '../../gates/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import { isDesktop, isMobile } from '../../platform/src/api'
-import type { Field, Group, Pane } from './fields'
+import type { Field, Pane } from './fields'
 
-async function turnExperimental(on: boolean): Promise<void> {
-  if (!on) {
-    setWord(EXPERIMENTAL_WORD, false)
+const FEATURE_WORDS = [CHATS_WORD, EXPLORER_WORD, PASS_WORD, TIME_WORD, BASES_WORD]
+const EXPERIMENTAL_WORDS = ['experimental', 'beta', 'preview', 'labs', 'unstable', 'early', 'flags']
+async function turnFeature(word: string, on: boolean): Promise<void> {
+  if (!on || experimentalOn()) {
+    setWord(word, on)
     return
   }
-  if (experimentalOn()) return
   const sure = await prompt.confirm({
     title: 'Turn on experimental features?',
     detail: 'You will 100% experience bugs. Only go on if you know what you are doing.',
     confirmLabel: 'Turn on',
     danger: true,
   })
-  if (sure) setWord(EXPERIMENTAL_WORD, true)
+  if (!sure) return
+  for (const stale of FEATURE_WORDS) if (stale !== word) setWord(stale, false)
+  setWord(EXPERIMENTAL_WORD, true)
+  setWord(word, true)
 }
 interface Feature {
   key: string
@@ -37,24 +41,20 @@ interface Feature {
   words: string[]
   more?: () => Field[]
 }
-function featureGroup(one: Feature): Group {
-  return {
-    title: one.label,
-    fields: [
-      {
-        kind: 'switch',
-        key: `experimental.${one.key}`,
-        label: one.label,
-        hint: one.hint,
-        words: ['experimental', ...one.words],
-        initial: false,
-        locked: () => !experimentalOn(),
-        get: () => hiddenKinds.hidden.includes(one.word),
-        set: (on) => setWord(one.word, on),
-      },
-      ...(one.more?.() ?? []),
-    ],
-  }
+function featureFields(one: Feature): Field[] {
+  return [
+    {
+      kind: 'switch',
+      key: `experimental.${one.key}`,
+      label: one.label,
+      hint: one.hint,
+      words: [...EXPERIMENTAL_WORDS, ...one.words],
+      initial: false,
+      get: () => experimentalOn() && hiddenKinds.hidden.includes(one.word),
+      set: (on) => void turnFeature(one.word, on),
+    },
+    ...(one.more?.() ?? []),
+  ]
 }
 function chatFields(): Field[] {
   if (!chatsOn()) return []
@@ -109,23 +109,6 @@ export function experimentalPane(): Pane {
   return {
     id: 'experimental',
     label: 'Experimental',
-    groups: [
-      {
-        title: 'Experimental',
-        fields: [
-          {
-            kind: 'switch',
-            key: 'experimental.enabled',
-            label: 'Enable experimental features',
-            hint: 'Lets you turn on the features below, which are still being built.',
-            words: ['experimental', 'beta', 'preview', 'labs', 'unstable', 'early'],
-            initial: false,
-            get: () => experimentalOn(),
-            set: (on) => void turnExperimental(on),
-          },
-        ],
-      },
-      ...features().map(featureGroup),
-    ],
+    groups: [{ title: '', fields: features().flatMap(featureFields) }],
   }
 }
