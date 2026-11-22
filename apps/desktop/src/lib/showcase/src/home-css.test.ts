@@ -41,4 +41,10 @@ describe('the home page styles', () => {
       /@media \(max-width: 719\.98px\) \{[\s\S]*\.coda \.orden-button\.is-big \{\s*width: min\(340px, 100%\);/,
     )
   })
+  test('give each display a screen of exactly the demo window shape, so poster and live frame line up', () => {
+    expect(HOME).toMatch(/\.display \{[^}]*box-sizing: content-box;[^}]*aspect-ratio: 1280 \/ 800;/)
+    expect(HOME).toMatch(
+      /@media \(max-width: 719\.98px\) \{[\s\S]*padding: 10px;\s*aspect-ratio: 390 \/ 844;[\s\S]*\.screen \{\s*inset: 10px;/,
+    )
+  })
 })
