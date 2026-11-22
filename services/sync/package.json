@@ -10,7 +10,7 @@
     "migrate:local": "wrangler d1 migrations apply nib --local",
     "migrate:remote": "wrangler d1 migrations apply nib --remote",
     "test": "vitest run",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit && node ../../scripts/blog-css.ts --check"
   },
   "dependencies": {
     "@cloudflare/sandbox": "1.0.0",

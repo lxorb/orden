@@ -128,11 +128,20 @@ export const MATH_FONTS: Readonly<Record<string, string>> = ${JSON.stringify(fon
 `
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const checking = process.argv.includes('--check')
+  const stale: string[] = []
   for (const [target, written] of [
     [STYLE_TARGET, blogStyle()],
     [MATH_TARGET, blogMath()],
   ] as const) {
+    if (checking) {
+      if (readFileSync(target, 'utf8') !== written) stale.push(target)
+      continue
+    }
     writeFileSync(target, written)
     console.log(`wrote ${target} (${(written.length / 1024).toFixed(1)}kB)`)
+  }
+  if (stale.length) {
+    throw new Error(`${stale.join(' and ')} no longer match the themes or page.css: run \`pnpm blog:css\` and commit`)
   }
 }
