@@ -27,7 +27,7 @@ import {
   syncStatus,
   windowRect,
 } from './answers'
-import { type AgentScope as Scope, portOf, runAgentVerb } from '@orden/contracts'
+import { type AgentScope as Scope, needPort, portOf, runAgentVerb } from '@orden/contracts'
 import { said as wordsOf, type Road, type Said, yes } from './args'
 import { type AgentAnswer, type Caller, holds, READER, refusal } from './caller'
 
@@ -57,7 +57,7 @@ const SCOPED: [Scope | null, string][] = [
   ['files', 'explorer_tabs'],
   ['chats.read', 'list_chats read_chat search_chats'],
   ['chats.write', 'draft_message post_message react'],
-  ['agents', 'run_agent agent_result'],
+  ...(__AI__ ? ([['agents', 'run_agent agent_result']] satisfies [Scope, string][]) : []),
   ['time', 'time_tracker time_blocks time_activities time_summary time_health time_files time_settings'],
 ]
 const VERBS: Record<string, Verb> = {
@@ -68,14 +68,14 @@ const VERBS: Record<string, Verb> = {
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
   'tasks.list': {
     takes: ['filter'],
-    run: (args) => asReader('list_tasks', unheard(spaceless(args), 'tasks.list', ['filter', 'view'])),
+    run: async (args) => reader().listTasks(unheard(spaceless(args), 'tasks.list', ['filter', 'view'])),
   },
   'tasks.add': { takes: ['text'], byLink: 'back', run: addTask },
   'tasks.done': {
     takes: ['at'],
-    run: (args) => asReader('update_task', { ...spaceless(args), done: !yes(args, 'undo') }),
+    run: async (args) => reader().updateTask({ ...spaceless(args), done: !yes(args, 'undo') }),
   },
-  'base.query': { takes: ['path'], run: (args) => asReader('query_base', args) },
+  'base.query': { takes: ['path'], run: async (args) => reader().queryBase(args) },
   'files.list': { run: listFiles },
   'files.read': { takes: ['path'], run: readFile },
   'commands.list': { run: listCommands },
@@ -183,19 +183,15 @@ async function agentVerb(
   if (answer.status === 'ok') return { ok: true, value: answer.result }
   return { ok: false, error: answer.status === 'error' ? answer.message : answer.summary }
 }
-async function asReader(name: string, args: Said): Promise<unknown> {
-  const answer = await runAgentVerb(name, args, READER)
-  if (answer.status === 'ok') return answer.result
-  throw new Error(answer.status === 'error' ? answer.message : answer.summary)
-}
+const reader = () => needPort('tasks.reader')
 function unheard(args: Said, verb: string, names: readonly string[]): Said {
   const found = names.find((name) => name in args)
   if (found !== undefined) throw new Error(`${verb} takes no ${found}`)
   return args
 }
-function addTask(args: Said, road: Road): Promise<unknown> {
-  if (road !== 'link') return asReader('add_task', unheard(spaceless(args), 'tasks.add', ['note', 'under']))
-  return asReader('add_task', { text: args.text })
+async function addTask(args: Said, road: Road): Promise<unknown> {
+  if (road !== 'link') return reader().addTask(unheard(spaceless(args), 'tasks.add', ['note', 'under']))
+  return reader().addTask({ text: args.text })
 }
 function spaceless(args: Said): Said {
   return Object.fromEntries(Object.entries(args).filter(([name]) => name !== 'space'))

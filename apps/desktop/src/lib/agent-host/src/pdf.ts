@@ -1,6 +1,6 @@
 import { shownPath } from '@orden/markdown/shown'
 import { isPdfTarget } from '@orden/markdown/links'
-import { readable } from './guarded'
+import { readable } from '../../reader-verbs/src/api'
 import type { AgentAnswer } from '../../automation/src/api'
 import {
   COLOURS,

@@ -1,6 +1,6 @@
 import { shownPath } from '@orden/markdown/shown'
 import type { AgentAnswer } from '../../automation/src/api'
-import { readable as guarded } from './guarded'
+import { readable as guarded } from '../../reader-verbs/src/api'
 import { type Canvas, readCanvas as parse, writeCanvas } from '@orden/markdown/canvas'
 import { merged, stamped } from '@orden/markdown/canvas-merge'
 import { canWriteAt } from '../../sharing/src/api'

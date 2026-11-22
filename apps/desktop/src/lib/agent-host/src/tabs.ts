@@ -9,7 +9,7 @@ import {
   type SettingsSectionId,
 } from '@orden/contracts'
 import { documentOf } from '@orden/editor'
-import { readable, seen } from './guarded'
+import { readable, seen } from '../../reader-verbs/src/api'
 import { noteBehind, protection } from '../../protect/src/api'
 import { folderOf, nameOf, relativeTo, within } from '../../platform/src/api'
 import { isOnlineTab } from '../../online-terms/src/api'

@@ -1,5 +1,5 @@
 import type { AgentAnswer } from '../../automation/src/api'
-import { seen } from './guarded'
+import { seen } from '../../reader-verbs/src/api'
 import type { Hit } from '@orden/scan/search/match'
 import { parseQuery } from '@orden/scan/search/query'
 import { searchSpace } from '../../search/src/api'

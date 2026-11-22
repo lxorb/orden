@@ -298,6 +298,7 @@ export {
   type StopAskingPort,
   type StopReason,
 } from './quitting'
+export type { ReaderPorts, ReaderSaid, TasksReaderPort } from './reader'
 export type { SettingsAskPort, SettingsPorts, SettingsWindowPort } from './settings'
 export type { SharingPorts, SharingSpacesPort } from './sharing'
 export { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, type Paper, PAPER_SIZES } from './page'

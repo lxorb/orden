@@ -1,5 +1,5 @@
 import { protection } from '../../protect/src/api'
-import { Refused } from '../../agent-verbs/src/api'
+import { Refused } from './refused'
 
 function refused(shown: string): Refused {
   return new Refused(

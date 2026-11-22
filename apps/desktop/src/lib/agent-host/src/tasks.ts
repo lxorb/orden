@@ -1,23 +1,17 @@
 import { shownPath, stemOf } from '@orden/markdown/shown'
-import type { Base, Context, Row } from '@orden/bases'
-import { linkContext } from '@orden/bases/links'
-import { readable, seen } from './guarded'
+import type { Base, Row } from '@orden/bases'
 import {
-  AgentError,
   clockOf,
   editedBase,
   filledTemplate,
   noteName,
-  queryBase as queried,
-  readBase,
   rowPlace,
   rowWords,
   withProperties,
   writeBase,
 } from '@orden/bases/agent'
 import type { AgentAnswer } from '../../automation/src/api'
-import { onDisk as there, folderOf, nameOf, invoke } from '../../platform/src/api'
-import { reachedByOthersIn } from '../../sharing/src/api'
+import { onDisk as there, folderOf, nameOf } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { DocError } from '../../agent-docs/src/api'
@@ -25,9 +19,7 @@ import {
   asked,
   stopWatch,
   type Call,
-  count,
   done,
-  flag,
   maybe,
   need,
   writerOf,
@@ -41,155 +33,39 @@ import {
   writableAt,
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
-import { guardedAt } from './guard'
-import { isPriority, type Priority, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+import { readable, readerBases, readerTodos } from '../../reader-verbs/src/api'
 import { at, made, noteOf } from './notes'
 import { notes } from './docs'
 
-async function rowsStore() {
-  const { rows } = await import('../../rows/src/api')
-  for (let waited = 0; !rows.ready && waited < 8000; waited += 100) {
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
-  return rows
-}
-function refused(error: unknown): never {
-  if (error instanceof AgentError) throw new Refused(error.code, error.message)
-  throw error
-}
-async function contextOf(): Promise<Context> {
-  const { account } = await import('../../accounts/src/api')
-  return { ...clockOf(new Date()), ...(account.name ? { me: account.name } : {}) }
-}
-function sourceOf(places: readonly Place[]): string | null {
-  const shared = places.filter((place) => reachedByOthersIn(place.space.root))
-  return shared.length ? `shared space ${shared.map((one) => one.space.name).join(', ')}` : null
-}
-async function baseAt(
-  call: Call,
-  name = 'path',
-): Promise<{ place: Place; relative: string; text: string; base: Base }> {
+type Refusing = (error: unknown) => never
+async function baseAt(call: Call, name = 'path') {
   const place = placeOf(call)
-  const relative = judgedForWriting(need(call, name))
-  if (!/\.base$/i.test(relative)) throw new Refused('bad_arguments', `${relative} is not a .base file`)
-  readable(onDisk(place, relative), relative)
-  const text = await invoke<string>('read_note', { path: onDisk(place, relative) }).catch(() => null)
-  if (text === null) throw new Refused('no_such_file', `there is no ${relative} in ${place.space.name}`)
-  try {
-    return { place, relative, text, base: readBase(text) }
-  } catch (error) {
-    const at = /line (\d+), column (\d+)/.exec(String(error))
-    const where = at ? ` at line ${at[1] ?? ''}, column ${at[2] ?? ''}` : ''
-    throw new Refused('bad_arguments', `${relative} does not read as a base${where}`)
-  }
-}
-async function baseToAnswer(call: Call, name = 'path') {
-  const found = await baseAt(call, name)
-  const base = guardedAt(found.base, onDisk(found.place, found.relative))
-  if (!base) throw new Refused('bad_arguments', `${found.relative} could take too long to answer`)
-  return { ...found, base }
-}
-function todoOut(todo: Todo) {
-  return {
-    id: todo.id,
-    title: todo.title,
-    done: todo.done,
-    labels: todo.labels,
-    start: todo.start,
-    deadline: todo.deadline,
-    priority: todo.priority,
-    ...(todo.description ? { description: todo.description } : {}),
-    ...(todo.repeat ? { repeat: todo.repeat } : {}),
-    ...(todo.subtasks.length ? { subtasks: todo.subtasks } : {}),
-  }
+  return (await readerBases()).baseAt(place, need(call, name))
 }
 function reachTodos(call: Call): void {
   if (!reachesSpace(call, null))
     throw new Refused('not_granted', 'todos are reached only by agents that reach every space')
 }
-function textsOf(value: unknown): string[] | undefined {
-  if (!Array.isArray(value)) return undefined
-  return value.filter((one): one is string => typeof one === 'string')
-}
-function dayArg(call: Call, name: string): string | null | undefined {
-  const value = call.args[name]
-  if (value === undefined) return undefined
-  if (value === null || value === '') return null
-  if (typeof value !== 'string') throw new Refused('bad_arguments', `${name} is a day as YYYY-MM-DD`)
-  return value
-}
-function repeatArg(call: Call): string | null | undefined {
-  const value = call.args.repeat
-  if (value === undefined) return undefined
-  if (value === null || value === '') return null
-  if (typeof value !== 'string') {
-    throw new Refused(
-      'bad_arguments',
-      'repeat is a rule like "every 3 days", or "every! 10 days" to count from when it is done',
-    )
-  }
-  return value
-}
-function priorityArg(call: Call): Priority | undefined {
-  const sent = call.args.priority
-  if (sent === undefined) return undefined
-  const value = typeof sent === 'string' && /^\s*\d+\s*$/.test(sent) ? Number(sent) : sent
-  if (!isPriority(value)) throw new Refused('bad_arguments', 'priority is 0, 1, 2 or 3')
-  return value
-}
-type Mutable<T> = { -readonly [K in keyof T]: T[K] }
-function patchOf(call: Call): TodoPatch {
-  const patch: Mutable<TodoPatch> = {}
-  const title = maybe(call, 'title') ?? maybe(call, 'text')
-  if (title !== null) patch.title = title
-  const description = call.args.description
-  if (typeof description === 'string') patch.description = description
-  const labels = textsOf(call.args.labels) ?? textsOf(call.args.tags)
-  if (labels !== undefined) patch.labels = labels
-  const start = dayArg(call, 'start')
-  if (start !== undefined) patch.start = start
-  const deadline = dayArg(call, 'deadline' in call.args ? 'deadline' : 'due')
-  if (deadline !== undefined) patch.deadline = deadline
-  const priority = priorityArg(call)
-  if (priority !== undefined) patch.priority = priority
-  const repeat = repeatArg(call)
-  if (repeat !== undefined) patch.repeat = repeat
-  if (call.args.done !== undefined && call.args.done !== null) patch.done = flag(call, 'done')
-  return patch
-}
 export async function listTasks(call: Call): Promise<AgentAnswer> {
-  const { todos, sortedTodos } = await import('../../tasks-model/src/api')
+  const { listTodos } = await readerTodos()
   reachTodos(call)
-  const label = maybe(call, 'label')
-  const withDone = flag(call, 'done')
-  const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
-  const shown = sortedTodos(
-    todos.todos.filter((one) => (label === null || one.labels.includes(label)) && (withDone || !one.done)),
-    'deadline',
-  )
-  return done({ total: shown.length, todos: shown.slice(0, limit).map(todoOut) })
+  return done(listTodos(call.args))
 }
 export async function addTask(call: Call): Promise<AgentAnswer> {
-  const { todos } = await import('../../tasks-model/src/api')
+  const { addTodo, todoTitle } = await readerTodos()
   reachTodos(call)
-  const title = maybe(call, 'title') ?? need(call, 'text')
+  const title = todoTitle(call.args)
   const question = await asked(call, null, `Add the todo ${title}`)
   if (question) return question
-  const made = await todos.add({ ...patchOf(call), title, done: false })
-  if (!made.ok) throw new Refused('bad_arguments', made.error.message)
-  return done(todoOut(made.value))
+  return done(await addTodo(call.args, title))
 }
 export async function updateTask(call: Call): Promise<AgentAnswer> {
-  const { todos } = await import('../../tasks-model/src/api')
+  const { todoNamed, updateTodo } = await readerTodos()
   reachTodos(call)
-  const id = maybe(call, 'id') ?? need(call, 'at')
-  const was = todos.todo(id)
-  if (!was) throw new Refused('no_such_file', `there is no todo ${id}`)
+  const was = todoNamed(call.args)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
-  const kept = await todos.update(id, patchOf(call))
-  if (!kept.ok) throw new Refused('bad_arguments', kept.error.message)
-  return done(todoOut(kept.value))
+  return done(await updateTodo(call.args, was.id))
 }
 function writableNote(call: Call, path: string) {
   return noteOf({ ...call, args: { ...call.args, tab: null, path } }, true)
@@ -212,28 +88,9 @@ async function rewritten<T>(
   }
 }
 export async function queryBase(call: Call): Promise<AgentAnswer> {
-  const yaml = maybe(call, 'yaml')
-  const { place, base } =
-    yaml === null
-      ? await baseToAnswer(call)
-      : (() => {
-          try {
-            return { place: placeOf(call), base: readBase(yaml) }
-          } catch (error) {
-            throw new Refused('bad_arguments', `the yaml does not read: ${String(error)}`)
-          }
-        })()
-  const rows = await rowsStore()
-  const seenRows = rows.of(place.space.name).filter((row) => seen(onDisk(place, row.path)))
-  try {
-    const answer = queried(base, maybe(call, 'view') ?? undefined, seenRows, {
-      ...(await contextOf()),
-      ...linkContext(seenRows),
-    })
-    return done(answer, sourceOf([place]))
-  } catch (error) {
-    refused(error)
-  }
+  const place = placeOf(call)
+  const { answer, source } = await (await readerBases()).queryBaseAt(place, call.args)
+  return done(answer, source)
 }
 async function freePath(place: Place, folder: string, name: string): Promise<string> {
   for (let counter = 1; counter < 100; counter++) {
@@ -265,7 +122,9 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const where = rowPlace(base, maybe(call, 'view') ?? undefined)
   const looksIn = (where.folder ?? folderOf(relative)).trim().replace(/^\/+/, '')
   const folder = looksIn === '' || looksIn === '.' ? '' : judgedForWriting(looksIn)
-  const rows = await rowsStore()
+  const bases = await readerBases()
+  const refused: Refusing = bases.refused
+  const rows = await bases.rowsStore()
   const template = await templateOf(place, where.template, rows.of(place.space.name))
   const name = judgedForWriting(noteName(maybe(call, 'title') ?? 'Untitled'))
   const path = await freePath(place, folder, name)
@@ -293,6 +152,7 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
   if (typeof properties !== 'object' || properties === null || Array.isArray(properties)) {
     throw new Refused('bad_arguments', 'properties is an object of property names and values')
   }
+  const refused: Refusing = (await readerBases()).refused
   const named = paths.map((path) => writableNote(call, path))
   const question = await asked(call, null, `Set properties on ${named.length} notes`)
   if (question) return question
@@ -312,7 +172,7 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
   }
   return done({ changed })
 }
-function baseEdited(base: Base, ops: unknown): Base {
+function baseEdited(base: Base, ops: unknown, refused: Refusing): Base {
   try {
     return editedBase(base, ops)
   } catch (error) {
@@ -321,14 +181,15 @@ function baseEdited(base: Base, ops: unknown): Base {
 }
 export async function editBase(call: Call): Promise<AgentAnswer> {
   const { place, relative, base } = await baseAt(call)
+  const refused: Refusing = (await readerBases()).refused
   const path = onDisk(place, relative)
   writableAt(place, path)
-  baseEdited(base, call.args.ops)
+  baseEdited(base, call.args.ops, refused)
   const question = await asked(call, null, `Edit ${shownPath(nameOf(relative))} in ${place.space.name}`)
   if (question) return question
   const { written, next } = await inTurn(path, async () => {
     const { text, base: now } = await baseAt(call)
-    const next = baseEdited(now, call.args.ops)
+    const next = baseEdited(now, call.args.ops, refused)
     const written = writeBase(next, text)
     if (written !== text) await writeFile(path, written)
     return { written: written !== text, next }

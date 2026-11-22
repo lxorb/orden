@@ -1,22 +1,11 @@
 import { threadSpaceOf } from '../../automation/src/api'
-import { insideOnly, insideSpace, namesByShortName, nameOf, relativeTo, spaceHolding } from '../../platform/src/api'
+import { insideSpace, nameOf, relativeTo, spaceHolding } from '../../platform/src/api'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
-import { type Space, workspace } from '../../workspace/src/api'
+import { workspace } from '../../workspace/src/api'
 import { type Call, maybe } from './call'
-import { Refused } from './problem'
+import { type Place, placeFor, reachable, reaches, Refused } from '../../reader-verbs/src/api'
 
-export interface Place {
-  space: Space
-  open: boolean
-}
-function reaches(call: Call, space: Space): boolean {
-  const agent = call.caller.agent
-  return agent === null || agent.spaces === 'all' || agent.spaces.includes(space.name)
-}
-export function reachable(call: Call): Space[] {
-  return workspace.spaces.filter((space) => reaches(call, space))
-}
 export function reachesSpace(call: Call, id: string | null): boolean {
   const agent = call.caller.agent
   if (agent === null || agent.spaces === 'all') return true
@@ -27,20 +16,6 @@ export function tabsInReach(call: Call): Tab[] {
   if (agent === null || agent.spaces === 'all') return workspace.tabs
   const reached = new Set(reachable(call).map((one) => one.id))
   return workspace.tabs.filter((tab) => reached.has(workspace.spaceOf(tab.note) ?? ''))
-}
-export function placeFor(call: Call, named: string | null): Place {
-  const open = workspace.activeSpace
-  if (named === null) {
-    if (!open) throw new Refused('no_such_space', 'there is no space open: say which space')
-    if (!reaches(call, open)) {
-      throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
-    }
-    return { space: open, open: true }
-  }
-  const folded = named.trim().toLowerCase()
-  const found = reachable(call).find((one) => one.id === named || one.name.toLowerCase() === folded)
-  if (!found) throw new Refused('no_such_space', `there is no space called ${named}`)
-  return { space: found, open: found.id === open?.id }
 }
 export function placeOf(call: Call): Place {
   const named = maybe(call, 'space')
@@ -53,24 +28,6 @@ export function placeOf(call: Call): Place {
     throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
   }
   return { space: home, open: home.id === workspace.activeSpace?.id }
-}
-export function judged(asked: string): string {
-  const safe = insideOnly(asked)
-  if (safe === null) throw new Refused('bad_arguments', `${asked} is not a path inside the space`)
-  if (safe.includes(':')) {
-    throw new Refused('bad_arguments', `${asked} holds a colon, which names a stream on Windows`)
-  }
-  if (namesByShortName(safe)) {
-    throw new Refused('bad_arguments', `${asked} is a short name: give each name in full`)
-  }
-  return safe
-}
-export function judgedForWriting(asked: string): string {
-  const safe = judged(asked)
-  if (safe.split('/').some((step) => step.startsWith('.'))) {
-    throw new Refused('bad_arguments', `${asked} is hidden, and an agent leaves it alone`)
-  }
-  return safe
 }
 export function sharedSource(place: Place, relative = ''): string | null {
   if (relative) return docSource({ path: onDisk(place, relative), shared: null })
@@ -93,3 +50,4 @@ export function writableAt(place: Place, path: string): void {
     throw new Refused('read_only', `${place.space.name} is shared with you to read`)
   }
 }
+export { judged, judgedForWriting, type Place, placeFor, reachable } from '../../reader-verbs/src/api'

@@ -6,6 +6,7 @@
     "agent-docs",
     "agent-protocol",
     "automation",
+    "reader-verbs",
     "documents",
     "platform",
     "sharing",

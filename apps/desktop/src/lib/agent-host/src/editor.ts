@@ -16,7 +16,7 @@ import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import { type Call, docSource, done, need, Refused, namedTab } from '../../agent-verbs/src/api'
 import { readersView } from './reader-view'
-import { readable } from './guarded'
+import { readable } from '../../reader-verbs/src/api'
 
 const MOST_MARKS = 500
 const MOST_SELECTIONS = 500

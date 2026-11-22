@@ -25,9 +25,8 @@ import {
   writableAt,
 } from '../../agent-verbs/src/api'
 import { indexOf } from './links'
-import { readable } from './guarded'
+import { readable, readableAll } from '../../reader-verbs/src/api'
 import { inFlight as moving } from '../../file-ops/src/api'
-import { readableAll } from './guarded'
 import { readersView } from './reader-view'
 
 const KINDS = ['note', 'canvas', 'page', 'pdf', 'web', 'file'] as const

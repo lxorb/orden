@@ -19,7 +19,7 @@ import {
   sharedSource,
   writableAt,
 } from '../../agent-verbs/src/api'
-import { readable } from './guarded'
+import { readable } from '../../reader-verbs/src/api'
 
 function idOf(version: Version): string {
   return `${version.path === null ? 'account' : 'device'}:${version.at}`

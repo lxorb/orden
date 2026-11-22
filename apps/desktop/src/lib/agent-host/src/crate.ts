@@ -9,7 +9,7 @@ import { protection } from '../../protect/src/api'
 import { lendTab, readerTabs } from './tabs'
 
 async function storeFor(args: Said): Promise<StoreSaid> {
-  const place = placeFor({ verb: 'agent.store_for', args, caller: READER }, said(args, 'space'))
+  const place = placeFor({ caller: READER }, said(args, 'space'))
   const lending = portOf('web.lending')
   return { space: place.space.name, store: lending.ok ? await lending.value.readerStore() : null }
 }

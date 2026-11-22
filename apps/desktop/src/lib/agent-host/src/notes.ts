@@ -37,7 +37,7 @@ import {
 import { heldIndex, indexOf } from './links'
 import { openFile } from './reader-view'
 import { createFile, fileKindOf } from './new-files'
-import { readable, seen } from './guarded'
+import { readable, seen } from '../../reader-verbs/src/api'
 import { notes } from './docs'
 
 export function noteOf(call: Call, writing: boolean): { place: Place; relative: string; tab?: string } {

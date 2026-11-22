@@ -31,7 +31,7 @@ import {
 } from '../../agent-verbs/src/api'
 import { made, madeOrChanged } from './notes'
 import { treeOf } from './tree'
-import { readable } from './guarded'
+import { readable } from '../../reader-verbs/src/api'
 import { noteBehind } from '../../protect/src/api'
 import { saveAsset } from '../../file-writes/src/api'
 

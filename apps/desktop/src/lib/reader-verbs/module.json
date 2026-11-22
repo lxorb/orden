@@ -1,0 +1,19 @@
+{
+  "name": "reader-verbs",
+  "layer": "content",
+  "dependsOn": [
+    "contracts",
+    "accounts",
+    "agent-protocol",
+    "automation",
+    "bases",
+    "gates",
+    "markdown",
+    "platform",
+    "protect",
+    "rows",
+    "sharing",
+    "tasks-model",
+    "workspace"
+  ]
+}

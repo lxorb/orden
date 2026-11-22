@@ -7,6 +7,7 @@ import type { FilePorts } from './files'
 import type { ImportPorts } from './import'
 import type { PreviewPorts } from './previews'
 import type { QuittingPorts, StopAskingPort, StopReason } from './quitting'
+import type { ReaderPorts } from './reader'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
 import type {
@@ -40,6 +41,7 @@ export type PortMap = AccountPorts &
   ImportPorts &
   PreviewPorts &
   QuittingPorts &
+  ReaderPorts &
   SettingsPorts &
   SharingPorts &
   SurfacePorts &

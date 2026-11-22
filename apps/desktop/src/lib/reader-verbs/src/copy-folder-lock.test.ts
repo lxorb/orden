@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 const { protection } = await import('../../protect/src/api')
-const { readableAll } = await import('./guarded')
+const { readableAll } = await import('./api')
 const ROOT = '/space'
 const ORIGINAL = `${ROOT}/Work`
 describe.each([`${ROOT}/Work (# Name clash 2026-11-15 abc1234 #)`, `${ROOT}/Work-DESKTOP-AB12CD3`])(
