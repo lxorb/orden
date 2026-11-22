@@ -200,6 +200,7 @@ import {
   reachedByOthersIn,
   roleOf,
   share,
+  shareThisFile,
   sharedWithYou,
   trustsHtmlAt,
   trustsHtmlIn,
@@ -1247,6 +1248,17 @@ describe('whether a file can be shared from here', () => {
   test('yes, for a file of a space the account is an admin of', () => {
     account.spaces = [remote('space-1', 'owner'), { ...remote('space-2', 'write', true), admin: true }]
     expect(canShareItem('Theirs/plan.md')).toBe(true)
+  })
+  test('never, for a web note, whose site profile stays with the one who made it (#2475)', async () => {
+    world.notes = { ...world.notes, 'Notes/Docs.url': 'note-3', 'Notes/Mail.URL': 'note-4' }
+    expect(canShareItem('Notes/Docs.url')).toBe(false)
+    expect(canShareItem('Notes/Mail.URL')).toBe(false)
+    expect(canShareItem('Notes/plan.md')).toBe(true)
+    share.close()
+    const was = share.item
+    await shareThisFile('Notes/Docs.url')
+    expect(share.item).toBe(was)
+    expect(share.open).toBe(false)
   })
   test('and no, for nothing at all', () => {
     expect(canShareItem(null)).toBe(false)

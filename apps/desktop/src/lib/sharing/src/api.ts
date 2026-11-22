@@ -11,6 +11,7 @@ export {
   canWriteIn,
   isShared,
   isSharedItem,
+  isWebNote,
   managesSpace,
   mayCarryBetween,
   members,
