@@ -24,5 +24,8 @@ fn the_server_lives_in_ordens_folder_and_says_its_state_plainly() {
         json!({ "state": "off", "port": null })
     );
     let _: fn() = orden_opencode::stop_all;
+    assert!(orden_opencode::proxy::allowed("POST", "/session/ses_1/prompt_async"));
+    assert!(!orden_opencode::proxy::allowed("PATCH", "/config"));
+    assert!(!orden_opencode::proxy::allowed("GET", "/session/..%2Fconfig"));
     let _ = std::any::type_name::<Status>();
 }

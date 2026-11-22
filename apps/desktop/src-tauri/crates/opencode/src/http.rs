@@ -13,22 +13,132 @@ pub struct Said {
     pub body: String,
 }
 pub fn get(port: u16, path: &str, password: Option<&str>) -> io::Result<Said> {
+    request(port, ("GET", path), None, password, WITHIN)
+}
+fn opened(port: u16, within: Duration) -> io::Result<TcpStream> {
     let address = SocketAddr::from(([127, 0, 0, 1], port));
-    let mut stream = TcpStream::connect_timeout(&address, WITHIN)?;
-    stream.set_read_timeout(Some(WITHIN))?;
+    let stream = TcpStream::connect_timeout(&address, WITHIN)?;
+    stream.set_read_timeout(Some(within))?;
     stream.set_write_timeout(Some(WITHIN))?;
+    Ok(stream)
+}
+fn head(port: u16, (method, path): (&str, &str), password: Option<&str>) -> String {
     let mut asked =
-        format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n");
+        format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n");
     if let Some(password) = password {
         let pair =
             base64::engine::general_purpose::STANDARD.encode(format!("{USERNAME}:{password}"));
         let _ = write!(asked, "Authorization: Basic {pair}\r\n");
     }
-    asked.push_str("\r\n");
-    stream.write_all(asked.as_bytes())?;
+    asked
+}
+pub fn request(
+    port: u16,
+    asked: (&str, &str),
+    body: Option<&str>,
+    password: Option<&str>,
+    within: Duration,
+) -> io::Result<Said> {
+    let mut stream = opened(port, within)?;
+    let mut said = head(port, asked, password);
+    if let Some(body) = body {
+        let _ =
+            write!(said, "Content-Type: application/json\r\nContent-Length: {}\r\n", body.len());
+    } else if asked.0 != "GET" {
+        said.push_str("Content-Length: 0\r\n");
+    }
+    said.push_str("\r\n");
+    said.push_str(body.unwrap_or_default());
+    stream.write_all(said.as_bytes())?;
     let mut raw = Vec::new();
     stream.read_to_end(&mut raw)?;
     said_of(&raw)
+}
+pub fn stream(
+    port: u16,
+    path: &str,
+    password: &str,
+    tick: Duration,
+    mut heard: impl FnMut(Option<&str>) -> bool,
+) -> io::Result<()> {
+    let mut stream = opened(port, tick)?;
+    let mut asked = head(port, ("GET", path), Some(password));
+    asked.push_str("Accept: text/event-stream\r\n\r\n");
+    stream.write_all(asked.as_bytes())?;
+    let mut raw = Vec::new();
+    let mut text = Vec::new();
+    let mut chunked = None;
+    let mut piece = [0u8; 16384];
+    loop {
+        match stream.read(&mut piece) {
+            Ok(0) => return Ok(()),
+            Ok(size) => raw.extend_from_slice(&piece[..size]),
+            Err(why)
+                if matches!(why.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut) =>
+            {
+                if heard(None) {
+                    continue;
+                }
+                return Ok(());
+            }
+            Err(why) => return Err(why),
+        }
+        if chunked.is_none() {
+            let Some(split) = raw.windows(4).position(|one| one == b"\r\n\r\n") else {
+                continue;
+            };
+            let said = said_of(&raw[..split + 4])?;
+            if said.status != 200 {
+                return Err(io::Error::other(format!("the stream answered {}", said.status)));
+            }
+            let top = String::from_utf8_lossy(&raw[..split]).to_ascii_lowercase();
+            chunked =
+                Some(top.lines().any(|line| {
+                    line.starts_with("transfer-encoding:") && line.contains("chunked")
+                }));
+            raw.drain(..split + 4);
+        }
+        let ended = if chunked == Some(true) {
+            unchunked_so_far(&mut raw, &mut text)
+        } else {
+            text.append(&mut raw);
+            false
+        };
+        text.retain(|one| *one != b'\r');
+        while let Some(end) = text.windows(2).position(|one| one == b"\n\n") {
+            let block: Vec<u8> = text.drain(..end + 2).collect();
+            let block = String::from_utf8_lossy(&block);
+            let data: Vec<&str> = block
+                .lines()
+                .filter_map(|line| line.strip_prefix("data:"))
+                .map(|data| data.strip_prefix(' ').unwrap_or(data))
+                .collect();
+            if !data.is_empty() && !heard(Some(&data.join("\n"))) {
+                return Ok(());
+            }
+        }
+        if ended {
+            return Ok(());
+        }
+    }
+}
+fn unchunked_so_far(raw: &mut Vec<u8>, out: &mut Vec<u8>) -> bool {
+    while let Some(end) = raw.windows(2).position(|one| one == b"\r\n") {
+        let size = String::from_utf8_lossy(&raw[..end]);
+        let Ok(size) = usize::from_str_radix(size.split(';').next().unwrap_or("").trim(), 16)
+        else {
+            return true;
+        };
+        if size == 0 {
+            return true;
+        }
+        if raw.len() < end + 2 + size + 2 {
+            return false;
+        }
+        out.extend_from_slice(&raw[end + 2..end + 2 + size]);
+        raw.drain(..end + 2 + size + 2);
+    }
+    false
 }
 fn said_of(raw: &[u8]) -> io::Result<Said> {
     let broken = || io::Error::new(io::ErrorKind::InvalidData, "not an http answer");

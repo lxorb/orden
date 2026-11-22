@@ -17,13 +17,13 @@ const IDLE_EVERY: Duration = Duration::from_millis(500);
 pub struct Running {
     child: Child,
     family: Family,
-    line: Line,
+    pub(crate) line: Line,
     pub launch: Launch,
 }
-#[derive(Clone)]
-struct Line {
-    port: u16,
-    password: String,
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct Line {
+    pub(crate) port: u16,
+    pub(crate) password: String,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -133,6 +133,9 @@ fn status_of(engine: &Engine) -> Status {
 pub fn status() -> Status {
     status_of(&ENGINE.held())
 }
+pub(crate) fn line() -> Option<Line> {
+    ENGINE.held().running.as_ref().map(|one| one.line.clone())
+}
 fn begun(launch: Launch, before: Option<Running>) -> Result<(), String> {
     if let Some(before) = before {
         before.stop();
@@ -170,8 +173,7 @@ pub fn restart(launch: Launch) -> Status {
 }
 fn when_idle() {
     loop {
-        let line = ENGINE.held().running.as_ref().map(|one| one.line.clone());
-        if !line.is_some_and(|line| line.busy()) {
+        if !line().is_some_and(|line| line.busy()) {
             break;
         }
         std::thread::sleep(IDLE_EVERY);
