@@ -229,6 +229,29 @@ describe('serving an image', () => {
       }
     }
   })
+  test('is served as the picture it is when the same bytes first came up as a plain file (#2451)', async () => {
+    const picture = sized(64)
+    const plain = await call(env, `/v2/blobs/${picture.hash}`, {
+      method: 'PUT',
+      token,
+      raw: picture.bytes,
+      headers: { 'content-type': 'application/octet-stream' },
+    })
+    expect(plain.status).toBeLessThan(300)
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(404)
+    env.db.prepare("update blobs set type = 'image/png' where hash = ?").run(picture.hash)
+    const before = await call(env, `/i/${picture.hash}`)
+    expect(before.status).toBe(200)
+    expect(before.headers.get('content-type')).toBe('image/png')
+    env.db.prepare("update blobs set type = 'application/octet-stream' where hash = ?").run(picture.hash)
+    expect((await call(env, `/i/${picture.hash}`)).status).toBe(404)
+    await upload(picture)
+    const after = await call(env, `/i/${picture.hash}.png`, { host: 'nibeditor.com' })
+    expect(after.status).toBe(200)
+    expect(after.headers.get('content-type')).toBe('image/png')
+    expect((await env.NOTES.get(`blobs/${picture.hash}`))?.httpMetadata?.contentType).toBe('image/png')
+    expect(env.db.prepare('select type from blobs where hash = ?').all(picture.hash)).toEqual([{ type: 'image/png' }])
+  })
   test('is a miss for something never stored', async () => {
     expect((await call(env, `/i/${OTHER}.png`)).status).toBe(404)
   })
