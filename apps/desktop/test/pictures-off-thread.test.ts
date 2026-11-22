@@ -7,6 +7,7 @@ import { code, walk } from './files'
 const LIB = fileURLToPath(new URL('../src/lib', import.meta.url))
 const SMALL = [
   'icons/src/kept-picture.ts',
+  'icons/src/site-mask.ts',
   'overview/src/mirror.ts',
   'tab-strip/src/thumb.ts',
   'theme-looks/src/wallpaper/render.ts',

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { registerTabKind } from '@orden/contracts'
 
-const { tintOf, wear, wornBy } = await import('../src/icon-target')
+const { offersPlain, tintOf, wear, wornBy } = await import('../src/icon-target')
 const gone: (() => void)[] = []
 afterEach(() => {
   for (const one of gone.splice(0)) one()
@@ -28,6 +28,13 @@ describe('the icon picker', () => {
     wear(target, 'rocket', null)
     expect(wornBy(target)).toBe('rocket')
     expect(tintOf(target)).toBeNull()
+  })
+  test('offers the plain mark only to an item that wears a chosen icon (#2485)', () => {
+    const take = () => undefined
+    expect(offersPlain({ kind: 'pass', worn: null, take })).toBe(false)
+    expect(offersPlain({ kind: 'pass', worn: 'star', take })).toBe(true)
+    expect(offersPlain({ kind: 'pass', worn: 'mask:data:image/png;base64,iVBORw0KGgo=', take })).toBe(true)
+    expect(offersPlain({ kind: 'file', path: '/nowhere/Plain.md' })).toBe(false)
   })
   test('never wears a web icon that only names its site: a chosen icon is kept in the value itself (#2257)', () => {
     const took: (string | null)[] = []
