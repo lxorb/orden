@@ -162,6 +162,9 @@ fn land(cdp: &mut impl FnMut(&str, Value) -> Result<Value, String>, one: &Kept, 
     }
     went(&one.id, problem);
 }
+fn may_wait(on: bool, running: bool, blocked: bool) -> bool {
+    on || !running || blocked
+}
 fn turned(
     cdp: &mut impl FnMut(&str, Value) -> Result<Value, String>,
     one: Kept,
@@ -301,8 +304,11 @@ pub async fn extensions_set(
                     }
                 }
                 (Err(why), None) => return Err(why),
-                (Err(_), Some(one)) => {
+                (Err(why), Some(one)) => {
                     let folder = library::folder_of(&root, &one.id, &one.version);
+                    if !may_wait(on, library::running(&folder), chromium::blocked()) {
+                        return Err(why);
+                    }
                     turned(&mut browser, one, &folder, on);
                 }
                 (Ok(()), None) => {}
@@ -338,22 +344,32 @@ pub async fn extensions_set(
 pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
-        {
-            let ours = kept(&app).iter().any(|one| one.id == id && library::ours(&root, one));
-            let done =
-                if ours { live::unload(&mut browser, &id) } else { chromium::remove(&app, &id) };
-            if let Err(why) = done {
-                if !ours || chromium::installed(&app).iter().any(|(one, _)| one.id == id) {
-                    return Err(why);
-                }
+        let ours = kept(&app).into_iter().find(|one| one.id == id && library::ours(&root, one));
+        match &ours {
+            Some(one) => {
+                let running = library::running(&library::folder_of(&root, &one.id, &one.version));
+                taken_out(
+                    &mut browser,
+                    &id,
+                    || chromium::remove(&app, &id),
+                    || chromium::has(&app, &id),
+                    running,
+                )?;
             }
-            went(&id, None);
+            None => chromium::remove(&app, &id)?,
         }
+        went(&id, None);
         {
             let _writing = WRITING.held();
-            let mut list = kept(&app);
-            list.retain(|one| one.id != id);
-            library::write(&root, &list)?;
+            let list = kept(&app);
+            if ours.is_some() {
+                library::dropped(&root, &list, &id)?;
+            } else {
+                library::write(
+                    &root,
+                    &list.into_iter().filter(|one| one.id != id).collect::<Vec<_>>(),
+                )?;
+            }
         }
         let _ = listed(&app);
         changed(&app);
@@ -361,6 +377,25 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
     })
     .await
     .map_err(|error| error.to_string())?
+}
+fn taken_out(
+    cdp: &mut impl FnMut(&str, Value) -> Result<Value, String>,
+    id: &str,
+    fallback: impl FnOnce() -> Result<(), String>,
+    still_there: impl FnOnce() -> Option<bool>,
+    running: bool,
+) -> Result<(), String> {
+    let Err(why) = live::unload(cdp, id) else {
+        return Ok(());
+    };
+    if fallback().is_ok() {
+        return Ok(());
+    }
+    match still_there() {
+        Some(false) => Ok(()),
+        None if !running => Ok(()),
+        _ => Err(why),
+    }
 }
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
@@ -452,7 +487,8 @@ mod tests {
     use serde_json::{json, Value};
 
     use super::{
-        land, library, merged, page_for, shown, turned, went, About, Kept, Store, LARGEST,
+        land, library, may_wait, merged, page_for, shown, taken_out, turned, went, About, Kept,
+        Store, LARGEST,
     };
 
     const RUNS: &str = r#"{"manifest_version": 3, "name": "Pass", "version": "1.2.3"}"#;
@@ -713,5 +749,44 @@ mod tests {
         assert_eq!(said["cannotRun"], "It uses an old format this browser no longer runs");
         assert_eq!(said["problem"], Value::Null);
         assert_eq!(said["pending"], false);
+    }
+    #[test]
+    fn a_removal_holds_only_once_chromium_has_let_go_of_it_and_says_why_when_not() {
+        let id = "n".repeat(32);
+        let gone = || Ok(json!({}));
+        let kept_it = || Err::<Value, String>("Uninstall failed".to_owned());
+        let mut fallback_asked = false;
+        assert_eq!(
+            taken_out(
+                &mut |_: &str, _: Value| gone(),
+                &id,
+                || {
+                    fallback_asked = true;
+                    Ok(())
+                },
+                || Some(true),
+                true
+            ),
+            Ok(())
+        );
+        assert!(!fallback_asked);
+        let refused = |fallback: Result<(), String>, there: Option<bool>, running: bool| {
+            taken_out(&mut |_: &str, _: Value| kept_it(), &id, || fallback, || there, running)
+        };
+        assert_eq!(refused(Ok(()), Some(true), true), Ok(()));
+        let no = || Err("the engine did not remove it".to_owned());
+        assert_eq!(refused(no(), Some(false), true), Ok(()));
+        assert_eq!(refused(no(), None, false), Ok(()));
+        let why = Err("Chromium did not remove it: Uninstall failed".to_owned());
+        assert_eq!(refused(no(), Some(true), true), why);
+        assert_eq!(refused(no(), None, true), why);
+    }
+    #[test]
+    fn a_running_extension_turned_off_stops_at_once_unless_chromium_cannot_be_asked() {
+        assert!(!may_wait(false, true, false));
+        assert!(may_wait(false, true, true));
+        assert!(may_wait(false, false, false));
+        assert!(may_wait(true, true, false));
+        assert!(may_wait(true, false, false));
     }
 }
