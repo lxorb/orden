@@ -44,6 +44,55 @@ fn names(file: &str, version: &str) -> bool {
             .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
     })
 }
+fn moved_target(os: &str, built: &str, native: Option<&str>) -> Option<String> {
+    let native = native?;
+    let moves = matches!(os, "windows" | "darwin") && built == "x86_64" && native == "aarch64";
+    moves.then(|| format!("{os}-{native}"))
+}
+#[cfg(target_os = "windows")]
+#[allow(unsafe_code)]
+fn native_arch() -> Option<&'static str> {
+    use windows::Win32::System::SystemInformation::{
+        IMAGE_FILE_MACHINE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_ARM64,
+    };
+    use windows::Win32::System::Threading::{GetCurrentProcess, IsWow64Process2};
+    let (mut process, mut native) = (IMAGE_FILE_MACHINE(0), IMAGE_FILE_MACHINE(0));
+    unsafe { IsWow64Process2(GetCurrentProcess(), &raw mut process, Some(&raw mut native)) }
+        .ok()?;
+    match native {
+        IMAGE_FILE_MACHINE_ARM64 => Some("aarch64"),
+        IMAGE_FILE_MACHINE_AMD64 => Some("x86_64"),
+        _ => None,
+    }
+}
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+fn native_arch() -> Option<&'static str> {
+    let mut translated: libc::c_int = 0;
+    let mut size = std::mem::size_of::<libc::c_int>();
+    let read = unsafe {
+        libc::sysctlbyname(
+            c"sysctl.proc_translated".as_ptr(),
+            (&raw mut translated).cast(),
+            &raw mut size,
+            std::ptr::null_mut(),
+            0,
+        )
+    };
+    match (read, translated) {
+        (0, 1) => Some("aarch64"),
+        (0, _) => Some(std::env::consts::ARCH),
+        _ => None,
+    }
+}
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+fn native_arch() -> Option<&'static str> {
+    None
+}
+fn machine_target() -> Option<String> {
+    let os = if cfg!(target_os = "macos") { "darwin" } else { std::env::consts::OS };
+    moved_target(os, std::env::consts::ARCH, native_arch())
+}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Found {
@@ -66,6 +115,9 @@ pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Fo
             (lifecycle.before_installer)(&app, &label);
         }
     });
+    if let Some(target) = machine_target() {
+        builder = builder.target(target);
+    }
     if let Some(endpoints) = endpoints(&channel) {
         builder = builder
             .endpoints(endpoints)
@@ -90,7 +142,7 @@ pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Fo
 }
 #[cfg(test)]
 mod tests {
-    use super::{endpoints, offered, EDGE, PREFIXES, RELEASES, UNSTABLE};
+    use super::{endpoints, moved_target, offered, EDGE, PREFIXES, RELEASES, UNSTABLE};
     use tauri::Url;
 
     fn bundle(version: &str) -> String {
@@ -221,5 +273,37 @@ mod tests {
             Some("https://github.com/lxorb/orden/releases/latest/download/latest.json")
         );
         assert!(EDGE.starts_with(RELEASES[1]));
+    }
+    #[test]
+    fn an_x64_install_on_an_arm_machine_takes_the_arm_build() {
+        assert_eq!(
+            moved_target("windows", "x86_64", Some("aarch64")).as_deref(),
+            Some("windows-aarch64")
+        );
+        assert_eq!(
+            moved_target("darwin", "x86_64", Some("aarch64")).as_deref(),
+            Some("darwin-aarch64")
+        );
+    }
+    #[test]
+    fn an_install_built_for_its_machine_keeps_the_updater_s_own_choice() {
+        for (os, built, native) in [
+            ("windows", "x86_64", Some("x86_64")),
+            ("windows", "aarch64", Some("aarch64")),
+            ("darwin", "aarch64", Some("aarch64")),
+            ("darwin", "x86_64", Some("x86_64")),
+            ("windows", "x86_64", None),
+            ("linux", "x86_64", Some("aarch64")),
+            ("windows", "aarch64", Some("x86_64")),
+        ] {
+            assert_eq!(moved_target(os, built, native), None, "{os} {built} {native:?}");
+        }
+    }
+    #[test]
+    fn the_arm_builds_are_in_the_manifest_under_the_names_the_updater_asks_for() {
+        let manifest = include_str!("../../../../../../scripts/update-manifest.mjs");
+        for key in ["windows-aarch64", "darwin-aarch64"] {
+            assert!(manifest.contains(&format!("'{key}'")), "{key}");
+        }
     }
 }
