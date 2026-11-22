@@ -2,6 +2,8 @@
   import { account } from '../../accounts/src/api'
   import { ACCENTS } from '../../theme/src/api'
   import {
+    brandIcon,
+    BRANDS,
     closeOnBack,
     EMOJI_OUTLINE,
     type IconEntry,
@@ -11,6 +13,7 @@
     readIcon,
     sameIcon,
     SITE_ICONS,
+    siteBrand,
     siteOfIcon,
     takesTint,
     viewport,
@@ -19,7 +22,7 @@
   import { Icon } from '../../glyphs/src/api'
   import { TickBox, trap } from '../../ui-controls/src/api'
   import { iconChoice } from './icon-choice.svelte'
-  import { tintOf, wear, wornBy } from './icon-target'
+  import { offersPlain, tintOf, wear, wornBy } from './icon-target'
   import { iconLibrary } from '../../glyphs/src/api'
   import {
     iconRecent,
@@ -30,6 +33,7 @@
     PICKER_SETS,
     pickerCredit,
     refreshSites,
+    siteMasks,
   } from '../../icons/src/api'
   import { dur, fade, LAYER, scale } from '../../platform/src/api'
   import { sayNotice } from '@orden/contracts'
@@ -57,11 +61,19 @@
   const worn = $derived(target === null ? null : wornBy(target))
   const written = $derived(readIcon(worn))
   const twins = $derived(outlined ? (iconLibrary.loaded[EMOJI_OUTLINE] ?? null) : null)
+  let masks = $state<Record<string, string | null>>({})
+  const brands = $derived(outlined ? (iconLibrary.loaded[BRANDS] ?? null) : null)
+  const brandOf = (site: string): string | null => {
+    const slug = siteBrand(`https://${site}`)
+    return slug && brands?.shape(slug) ? brandIcon(slug) : null
+  }
   const variant = (name: string): string => {
+    const site = siteOfIcon(name)
+    if (site !== null) return outlined ? (brandOf(site) ?? masks[site] ?? name) : name
     const twin = twins?.twin?.(name)
     return twin ? writtenIcon(EMOJI_OUTLINE, twin) : name
   }
-  const shows = (name: string): boolean => !twins || inOneColour(readIcon(variant(name)))
+  const shows = (name: string): boolean => !outlined || inOneColour(readIcon(variant(name)))
   const pending = $derived(PICKER_SETS.some((id) => !LATER_SETS.has(id) && iconLibrary.loading(id)))
   const absent = $derived(PICKER_SETS.every((id) => iconLibrary.absent[id]))
   const held = $derived.by(() => {
@@ -74,6 +86,7 @@
     return parts.length ? mergeSets(parts) : null
   })
   const signedIn = $derived(account.accountToken !== null)
+  const offered = $derived(target !== null && offersPlain(target))
   const siteSet = $derived.by(() => {
     const set = signedIn ? iconLibrary.loaded[SITE_ICONS] : undefined
     return set && !set.unoffered ? set : null
@@ -102,13 +115,13 @@
       return out
     }
     if (query || !held.groups.length) return runs(cells)
-    const web: Row[] =
-      !siteSet || twins
-        ? []
-        : [
-            { head: 'Web icons' },
-            ...(siteRow.length ? runs(siteRow.map((one) => one.name)) : [{ note: 'Sites you visit will appear here' }]),
-          ]
+    const near = siteRow.map((one) => one.name).filter(shows)
+    const web: Row[] = !siteSet
+      ? []
+      : [
+          { head: 'Web icons' },
+          ...(near.length ? runs(near) : siteRow.length ? [] : [{ note: 'Sites you visit will appear here' }]),
+        ]
     return [...web, ...held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names.filter(shows))])]
   })
   const words = $derived.by(() => {
@@ -159,6 +172,23 @@
     for (const id of PICKER_SETS) if (all || !LATER_SETS.has(id)) iconLibrary.load(id)
     if (signedIn) iconLibrary.load(SITE_ICONS)
     if (outlined) iconLibrary.load(EMOJI_OUTLINE)
+    if (outlined && signedIn) iconLibrary.load(BRANDS)
+  })
+  $effect(() => {
+    if (!outlined || !brands || !siteSet) return
+    const asked = query ? rankIcons(sites, query, FOUND) : siteRow.map((one) => one.name)
+    const missing = asked.flatMap((name) => {
+      const site = siteOfIcon(name)
+      return site === null || brandOf(site) !== null || untrack(() => site in masks) ? [] : [site]
+    })
+    if (!missing.length) return
+    untrack(() => (masks = { ...masks, ...Object.fromEntries(missing.map((site) => [site, null])) }))
+    void siteMasks().then(async ({ keptSiteMask }) => {
+      for (const site of missing) {
+        const made = await keptSiteMask(site)
+        masks = { ...masks, [site]: made }
+      }
+    })
   })
   $effect(() => {
     if (!wanted && held && height && top + height * 2 >= rows.length * cell) wanted = true
@@ -266,7 +296,7 @@
     {#if iconRecent.list.length}
       <div class="recent">
         {#each iconRecent.list as one (one)}
-          {@const label = readIcon(one)?.kind === 'picture' ? 'Web icon' : one}
+          {@const label = readIcon(one)?.kind === 'picture' || readIcon(one)?.kind === 'mask' ? 'Web icon' : one}
           <button
             type="button"
             class="cell"
@@ -350,9 +380,11 @@
     {/if}
 
     <div class="ends">
-      <button class="clear" onclick={() => chose(null)}>
-        {target.kind === 'space' ? 'Use the first letter instead' : 'Use the plain mark instead'}
-      </button>
+      {#if offered}
+        <button class="clear" onclick={() => chose(null)}>
+          {target.kind === 'space' ? 'Use the first letter instead' : 'Use the plain mark instead'}
+        </button>
+      {/if}
       {#if target.kind !== 'pass' && (worn !== null || tint !== null)}
         <button class="clear" onclick={remove}>Remove icon</button>
       {/if}

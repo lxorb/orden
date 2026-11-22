@@ -21,6 +21,7 @@ export type WrittenIcon =
   | { kind: 'emoji'; text: string }
   | { kind: 'set'; set: string; name: string }
   | { kind: 'picture'; src: string }
+  | { kind: 'mask'; src: string }
 const EMOJI = /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\p{Regional_Indicator})+$/u
 const PICTURE = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
 const LONGEST = 16
@@ -30,10 +31,17 @@ const KEPT_PICTURE = /^data:image\/png;base64,[A-Za-z\d+/]+={0,2}$/
 export function isKeptPicture(value: string | null | undefined): boolean {
   return !!value && value.length <= LONGEST_PICTURE && KEPT_PICTURE.test(value)
 }
+export const MASKED = 'mask:'
+export function isKeptMask(value: string | null | undefined): boolean {
+  return (
+    !!value && value.length <= LONGEST_PICTURE && value.startsWith(MASKED) && isKeptPicture(value.slice(MASKED.length))
+  )
+}
 export function readIcon(value: string | null | undefined): WrittenIcon | null {
   const said = (value ?? '').trim()
   if (!said) return null
   if (isKeptPicture(said)) return { kind: 'picture', src: said }
+  if (isKeptMask(said)) return { kind: 'mask', src: said.slice(MASKED.length) }
   if (said.length <= LONGEST && PICTURE.test(said) && EMOJI.test(said)) {
     return { kind: 'emoji', text: said }
   }
@@ -55,7 +63,7 @@ export function siteOfIcon(value: string | null | undefined): string | null {
 const TINTED_SETS: ReadonlySet<string> = new Set([EMOJI_OUTLINE])
 export function takesTint(icon: WrittenIcon | null): boolean {
   if (!icon) return false
-  return icon.kind === 'lucide' || (icon.kind === 'set' && TINTED_SETS.has(icon.set))
+  return icon.kind === 'lucide' || icon.kind === 'mask' || (icon.kind === 'set' && TINTED_SETS.has(icon.set))
 }
 export function inOneColour(icon: WrittenIcon | null): boolean {
   return takesTint(icon) || (icon?.kind === 'set' && icon.set === BRANDS)

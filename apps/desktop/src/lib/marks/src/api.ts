@@ -1,4 +1,4 @@
-export { addressOf, chosenIcon, chosenTint } from './chosen-icon'
+export { addressOf, chosenIcon, chosenTint, sourceMark } from './chosen-icon'
 export { faceOf, fileMark, initialOf, MARKS, terminalMark } from './file-mark'
 export { default as FileMark } from './FileMark.svelte'
 export { default as SpaceMark } from './SpaceMark.svelte'

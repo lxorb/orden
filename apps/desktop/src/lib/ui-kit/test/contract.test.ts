@@ -9,9 +9,11 @@ import {
   DIVIDER,
   initial,
   inOneColour,
+  isKeptMask,
   isKeptPicture,
   isSubmenu,
   LONGEST_PICTURE,
+  MASKED,
   matchesCombination,
   message,
   opensAt,
@@ -149,6 +151,18 @@ describe('icons', () => {
       expect(isKeptPicture(not)).toBe(false)
     }
     expect(LONGEST_PICTURE).toBe(2048)
+  })
+  test('a one-colour picture is a mask kept in the value, drawn in the text colour (#2485)', () => {
+    const png = `data:image/png;base64,${'A'.repeat(64)}==`
+    const mask = `${MASKED}${png}`
+    expect(readIcon(mask)).toEqual({ kind: 'mask', src: png })
+    expect(isKeptMask(mask)).toBe(true)
+    expect(takesTint(readIcon(mask))).toBe(true)
+    expect(inOneColour(readIcon(mask))).toBe(true)
+    expect(isKeptMask(png)).toBe(false)
+    expect(isKeptMask(`${MASKED}${'A'.repeat(64)}`)).toBe(false)
+    expect(isKeptMask(`${MASKED}data:image/png;base64,${'A'.repeat(LONGEST_PICTURE)}`)).toBe(false)
+    expect(readIcon(png)?.kind).toBe('picture')
   })
   test('a web icon names the site it came from, and only a web icon does', () => {
     expect(siteOfIcon(writtenIcon(SITE_ICONS, 'github.com'))).toBe('github.com')

@@ -1,8 +1,8 @@
-import { chosenIcon, chosenTint } from '../../marks/src/api'
+import { chosenIcon, chosenTint, fileMark, sourceMark } from '../../marks/src/api'
 import { setFileIcon } from './file-icon'
 import type { IconTarget } from './icon-choice.svelte'
 import { tabKindParts } from '@orden/contracts'
-import { siteOfIcon } from '../../ui-kit/src/api'
+import { sameIcon, siteOfIcon } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 
 const terminalIcon = () => tabKindParts('terminal').icon
@@ -11,6 +11,13 @@ export function wornBy(target: IconTarget): string | null {
   if (target.kind === 'space') return workspace.iconFor(target.id)
   if (target.kind === 'terminal') return terminalIcon()?.worn(target.tab) ?? null
   return chosenIcon(target.path)
+}
+function plainOf(target: IconTarget): string | null {
+  return target.kind === 'file' ? sourceMark(fileMark(target.path), target.path).icon : null
+}
+export function offersPlain(target: IconTarget): boolean {
+  const worn = wornBy(target)
+  return worn !== null && !sameIcon(worn, plainOf(target))
 }
 export function tintOf(target: IconTarget): string | null {
   if (target.kind === 'pass') return null

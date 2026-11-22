@@ -36,6 +36,14 @@
 {:else if drawing?.kind === 'picture' && broken !== drawing.src}
   {@const src = drawing.src}
   <img class="glyph picture" {src} alt="" draggable="false" onerror={() => (broken = src)} />
+{:else if drawing?.kind === 'mask'}
+  <span
+    class="glyph masked"
+    aria-hidden="true"
+    style:mask-image="url({drawing.src})"
+    style:-webkit-mask-image="url({drawing.src})"
+    style:background-color={colour ?? 'currentColor'}
+  ></span>
 {:else if stroked}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" style:color={colour}>
     {#each stroked as [tag, attrs] (JSON.stringify(attrs))}
@@ -60,6 +68,14 @@
   }
   .picture {
     object-fit: contain;
+  }
+  .masked {
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
   }
   .emoji {
     display: flex;

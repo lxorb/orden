@@ -36,6 +36,7 @@ export type IconShape =
   | { kind: 'stroked'; icon: IconNode }
   | { kind: 'drawn'; body: string; box: string }
   | { kind: 'picture'; src: string }
+  | { kind: 'mask'; src: string }
 export interface LoadedSet {
   entries: IconEntry[]
   groups: { label: string; names: string[] }[]
