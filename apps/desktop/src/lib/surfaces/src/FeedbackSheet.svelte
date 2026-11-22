@@ -1,5 +1,6 @@
 <script lang="ts">
   import { dropOver, closeOnBack, Cross, overlays } from '../../ui-kit/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { cubicOut } from 'svelte/easing'
   import { MOST_PICTURES, type Picture, picturesAmong, pictureOf, feedback } from '../../feedback/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
@@ -95,6 +96,7 @@
   >
     {#if received}
       <div class="received" role="status">
+        <Mascot mood="love" size={32} />
         <p class="title">Report received</p>
         {#if received.url}
           <p class="detail">Your report reached us. You can follow it here:</p>

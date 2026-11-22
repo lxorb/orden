@@ -2,6 +2,7 @@
   import { whenLoaded } from '@orden/contracts'
   import { cubicOut } from 'svelte/easing'
   import { Cross } from '../../ui-kit/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { type Channel, restartToUpdate } from './updater'
   import { dur, fly, log } from '../../platform/src/api'
   import { told } from '../../ui-kit/src/api'
@@ -73,6 +74,9 @@
   {@attach told(managed ? `Orden ${version} is available.` : `Orden ${version} is ready to install.`)}
   {@attach heldBy}
 >
+  {#if !command}
+    <Mascot mood="excited" size={24} />
+  {/if}
   {#if command}
     <p>To update, run this in a terminal:</p>
     {#await import('../../ui-controls/src/api') then { Copyable }}

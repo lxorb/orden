@@ -1,5 +1,6 @@
 <script lang="ts">
   import { feedback } from '../../feedback/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import LogoTile from './LogoTile.svelte'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
@@ -23,6 +24,7 @@
 {#snippet head()}
   <LogoTile size={112} assemble class="rise" />
   <div class="welcome rise">{before}<em>{NAME}</em>{after}</div>
+  <div class="rise"><Mascot mood="waving" size={40} /></div>
 {/snippet}
 
 <Screen
