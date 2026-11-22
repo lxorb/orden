@@ -43,6 +43,8 @@ interface Kept {
   done: boolean
   group: Grouping | null
   folded: readonly string[]
+  label: string | null
+  boardLabel: string | null
 }
 const LINGER = 900
 function keptOf(value: unknown): Kept {
@@ -52,6 +54,8 @@ function keptOf(value: unknown): Kept {
     done: read.done === true,
     group: isGrouping(read.group) ? read.group : null,
     folded: Array.isArray(read.folded) ? read.folded.filter((one): one is string => typeof one === 'string') : [],
+    label: typeof read.label === 'string' ? read.label : null,
+    boardLabel: typeof read.boardLabel === 'string' ? read.boardLabel : null,
   }
 }
 export class Shown {
@@ -70,6 +74,7 @@ export class Shown {
     this.panelDone = kept.done
     this.group = kept.group
     this.folded = kept.folded
+    this.label = where === 'board' ? kept.boardLabel : kept.label
   }
   private remember(change: Partial<Kept>): void {
     this.world.keep({ ...keptOf(this.world.kept()), ...change })
@@ -130,6 +135,7 @@ export class Shown {
   }
   setLabel(value: string | null): void {
     this.label = value
+    this.remember(this.where === 'board' ? { boardLabel: value } : { label: value })
   }
   get space(): Space | null {
     return this.world.activeSpace()

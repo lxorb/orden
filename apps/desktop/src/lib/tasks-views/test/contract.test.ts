@@ -157,17 +157,19 @@ describe('tasks-views contract', () => {
     expect(Object.keys(SORT_NAMES)).toEqual(['deadline', 'priority', 'manual'])
     expect(shown.sort).toBe('deadline')
   })
-  test('the sort is kept between openings, the label is not, and an old kept "only this space" is left out', () => {
+  test('the sort and the label filter are kept between openings, kept apart for the panel and the board, and an old kept "only this space" is left out (#2505)', () => {
     const { world: w, read } = world([todo({ id: 'a', labels: ['x'] }), todo({ id: 'b' })])
     w.keep({ onlySpace: true, sort: 'deadline', done: false })
     const first = new Shown(w)
     expect(first.todos.map((t) => t.id)).toEqual(['a', 'b'])
     first.setSort('manual')
     first.setLabel('x')
-    expect(read()).toEqual({ sort: 'manual', done: false, group: null, folded: [] })
+    expect(read()).toEqual({ sort: 'manual', done: false, group: null, folded: [], label: 'x', boardLabel: null })
     const second = new Shown(w)
     expect(second.sort).toBe('manual')
-    expect(second.label).toBeNull()
+    expect(second.label).toBe('x')
+    expect(second.todos.map((t) => t.id)).toEqual(['a'])
+    expect(new Shown(w, 'board').label).toBeNull()
   })
   test('the label dropdown lists only labels carried by shown todos', () => {
     const { world: w } = world([
@@ -239,7 +241,7 @@ describe('tasks-views contract', () => {
     expect(shown.todos.map((t) => t.id)).toEqual(['b'])
     shown.setShowDone(true)
     expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
-    expect(read()).toEqual({ sort: 'deadline', done: true, group: null, folded: [] })
+    expect(read()).toEqual({ sort: 'deadline', done: true, group: null, folded: [], label: null, boardLabel: null })
     vi.useRealTimers()
   })
   test('the board keeps its grouping, Show done, Ignore start date and column order in the synced board', () => {
