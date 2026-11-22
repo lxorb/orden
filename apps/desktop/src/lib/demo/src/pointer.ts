@@ -10,25 +10,6 @@ export interface Stop {
 export type Look = 'user' | 'ai' | 'touch' | 'pen'
 const ARROW = 'M3 2 L3 25 L9.2 19.2 L13.4 28.6 L17.6 26.8 L13.5 17.6 L22 17.6 Z'
 const PEN = 'M4 28 L7 19 L22 4 L28 10 L13 25 Z M7 19 L13 25'
-const PRESS = 0.035
-const ease = (value: number) => value * value * (3 - 2 * value)
-export function placeAt(phase: number, stops: readonly Stop[]): { at: Point | null; press: number } {
-  let from = -1
-  for (let index = 0; index < stops.length; index++) if ((stops[index]?.at ?? 2) <= phase) from = index
-  const before = stops[from]
-  const after = stops[from + 1]
-  const start = before?.to() ?? null
-  let at = start
-  if (before && after) {
-    const end = after.to()
-    const span = after.at - before.at
-    const moving = ease(Math.min(1, Math.max(0, (phase - before.at) / Math.max(0.001, span * 0.7))))
-    if (start && end) at = { x: start.x + (end.x - start.x) * moving, y: start.y + (end.y - start.y) * moving }
-    else at = end ?? start
-  }
-  const pressed = stops.find((one) => one.press && phase >= one.at && phase < one.at + PRESS)
-  return { at, press: pressed ? 1 - (phase - pressed.at) / PRESS : 0 }
-}
 export function boxOf(selector: string, inside: ParentNode = document): Point | null {
   const found = inside.querySelector(selector)
   if (!found) return null
@@ -48,6 +29,7 @@ export class Pointer {
   private readonly root = document.createElement('div')
   private readonly ring = document.createElement('div')
   private shown = ''
+  private last: Point | null = null
   constructor(look: Look, label?: string) {
     const ink = look === 'ai' ? '#7c6bf5' : '#ffffff'
     const edge = look === 'ai' ? '#ffffff' : '#111318'
@@ -125,7 +107,11 @@ export class Pointer {
     }
     document.body.append(this.root)
   }
+  where(): Point | null {
+    return this.last
+  }
   show(at: Point | null, press = 0): void {
+    this.last = at
     const key = at ? `${Math.round(at.x)},${Math.round(at.y)},${press.toFixed(2)}` : ''
     if (key === this.shown) return
     this.shown = key

@@ -2,7 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
 import { describe, expect, test, vi } from 'vitest'
+import { builtAt, PARTS, planOf } from '../src/doc'
 import { holdDatabases } from '../src/held'
+import { keysOf, moveAt, PAUSE, typedAt } from '../src/motion'
 import { drifted, frameAt, replacement, SCENES, writtenAt } from '../src/scenes'
 import { PLAN_TEXT, WRITTEN } from '../src/space'
 
@@ -289,5 +291,50 @@ describe('the demo', () => {
     expect(now instanceof Date).toBe(true)
     expect(typeof Clock()).toBe('string')
     expect(visitor('?space=1').into.Date).toBe(Date)
+  })
+})
+describe('the demo moves like a person', () => {
+  test('types at an uneven pace, slips now and then, and always ends on the words it meant', () => {
+    const text = 'Send the kit to three city blogs before the weekend rides start'
+    const keys = keysOf(text, 7)
+    expect(keysOf(text, 7)).toEqual(keys)
+    expect(typedAt(keys, keys.took)).toBe(text)
+    expect(typedAt(keys, -1)).toBe('')
+    const gaps = keys.times.slice(1).map((one, at) => one - (keys.times[at] ?? 0))
+    expect(new Set(gaps.map((one) => Math.round(one / 10))).size).toBeGreaterThan(5)
+    const slipped = Array.from({ length: 40 }, (_, seed) => keysOf(text, seed)).some((one) =>
+      one.shown.some((shown) => !text.startsWith(shown)),
+    )
+    expect(slipped).toBe(true)
+    expect(keysOf(text, 3, 1, false).shown.every((shown) => text.startsWith(shown))).toBe(true)
+  })
+  test('arrives where it aims, on a curve, and presses a moment after it lands', () => {
+    const from = { x: 0, y: 0 }
+    const to = { x: 400, y: 0 }
+    const moves = [
+      { at: 0, to: () => from },
+      { at: 2000, to: () => to, press: true },
+    ]
+    expect(moveAt(0, moves).at).toEqual(from)
+    expect(moveAt(2000, moves).at).toEqual(to)
+    expect(Math.abs(moveAt(1700, moves).at?.y ?? 0)).toBeGreaterThan(1)
+    expect(moveAt(2000, moves).press).toBe(0)
+    expect(moveAt(2000 + PAUSE + 10, moves).press).toBeGreaterThan(0.9)
+  })
+})
+describe('the shared note', () => {
+  test('ends as a whole document, with every block closed while it is typed', () => {
+    const plan = planOf('https://orden.so')
+    const done = builtAt(plan, plan.done, true).text
+    for (const part of PARTS)
+      expect(done).toContain(part.text.replace('ROUTES', 'https://orden.so/demo/web/routes.html').trim().split('\n')[0])
+    expect(done).toContain('- [x] Book the café')
+    expect(builtAt(plan, 0, false).text).toBe('')
+    for (const part of PARTS) if (part.units) expect(part.units.join('')).toBe(part.text)
+    for (let ms = 0; ms < plan.done; ms += 250) {
+      const text = builtAt(plan, ms, false).text
+      expect((text.match(/\$\$/g) ?? []).length % 2).toBe(0)
+      expect((text.match(/```/g) ?? []).length % 2).toBe(0)
+    }
   })
 })

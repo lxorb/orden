@@ -23,7 +23,9 @@ export const WRITTEN = [
 ] as const
 export const SPEC = 'Spec sheet.pdf'
 export const RIDE_DATA = 'Ride data.md'
-export const RIDE_TEXT = `# Ride data
+export const REPORT = 'Ride report.md'
+export const INTERVIEWS = 'Research/Interviews.md'
+const RIDE_TEXT = `# Ride data
 
 Average speed on the river loop:
 
@@ -35,12 +37,9 @@ $$
 const loop = { km: 14, minutes: 48 }
 \`\`\`
 `
-export const RIDE_WRITTEN = [
-  { after: '{0.8\\ \\text{h}}\n$$', words: 'That is about **17.5 km/h**, faster than the bus.', lead: '\n\n' },
-  { after: 'const loop = { km: 14, minutes: 48 }', words: 'const speed = loop.km / (loop.minutes / 60)', lead: '\n' },
-] as const
 export const NOTES: Readonly<Record<string, string>> = {
   [RIDE_DATA]: RIDE_TEXT,
+  [REPORT]: '',
   [PLAN]: PLAN_TEXT,
   [PRESS]: `# Press kit
 
@@ -48,7 +47,7 @@ export const NOTES: Readonly<Record<string, string>> = {
 - The ride test, in numbers
 - Quotes from Mara and Jonas
 `,
-  'Research/Interviews.md': `# Interviews
+  [INTERVIEWS]: `# Interviews
 
 Twelve riders, four weeks. Most ride under 8 km and carry the bike up stairs.
 `,

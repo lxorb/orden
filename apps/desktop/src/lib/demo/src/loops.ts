@@ -1,9 +1,8 @@
 import { type ChatsDemo, portOf } from '@orden/contracts'
-import { setPeers } from '@orden/editor'
+import { EditorView, setPeers } from '@orden/editor'
 import type { DemoCue } from '../../showcase/src/api'
 import { CanvasStore } from '../../canvas/src/api'
 import { samePath } from '../../platform/src/api'
-import { addTask, tickTask, todos } from '../../tasks-model/src/api'
 import { overlays } from '../../ui-kit/src/api'
 import {
   agentMarks,
@@ -16,64 +15,37 @@ import {
 } from '../../workspace/src/api'
 import { chatStore } from '../../ai-chat/src/api'
 import { ai } from '../../ai-providers/src/api'
-import { frameAt, replacement, TEAM, writtenAt } from './scenes'
+import {
+  clamp,
+  type LoopScene,
+  shown,
+  nudged,
+  opened,
+  pause,
+  phone,
+  rest,
+  scheme,
+  smooth,
+  stepOf,
+  stepper,
+  tabButton,
+  until,
+} from './kit'
+import { todosScene } from './todos'
+import { docScene } from './doc'
+import { boardScene } from './board'
+import { replacement, TEAM, writtenAt } from './scenes'
 import { browsing, scriptOf, turnsAt, working } from './ai'
 import { BEFORE, CHAT_NAME, chatAt, duringOf, PEOPLE, REACTIONS } from './chat'
 import { inkAt, nextTip } from './ink'
-import { boxOf, onPlane, placeAt, type Point, Pointer, type Stop } from './pointer'
+import { boxOf, onPlane, type Point, Pointer, type Stop } from './pointer'
+import { keysOf, moveAt, typedAt } from './motion'
 import type { Stage } from './run'
-import {
-  BASE,
-  LAUNCH,
-  PAGE,
-  PAGE_TITLE,
-  PLAN_TEXT,
-  RIDE_DATA,
-  RIDE_TEXT,
-  RIDE_WRITTEN,
-  ROOT,
-  ROUTES,
-  SPEC,
-  WRITTEN,
-} from './space'
+import { BASE, LAUNCH, PAGE, PAGE_TITLE, PLAN_TEXT, RIDE_DATA, ROOT, ROUTES, INTERVIEWS, SPEC, WRITTEN } from './space'
 
+export type { LoopScene }
 type Draw = (cue: Pick<DemoCue, 'scene' | 'at' | 'still'> & { you?: boolean }, now: number) => void
-export interface LoopScene {
-  period: number
-  still: number
-  ready?: () => Promise<void>
-  tick: (phase: number, now: number) => void
-}
-const clamp = (value: number) => Math.min(1, Math.max(0, value))
-const smooth = (value: number) => value * value * (3 - 2 * value)
 const there = (phase: number, rest = 0.2): number => smooth(clamp((0.5 - Math.abs(phase - 0.5)) / (0.5 - rest)))
-const scheme = () => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark')
-const phone = () => document.documentElement.dataset.demo === 'phone'
-const pause = (ms: number) => new Promise((done) => setTimeout(done, ms))
-const until = async <T>(found: () => T | null | undefined): Promise<T> => {
-  for (;;) {
-    const one = found()
-    if (one) return one
-    await pause(30)
-  }
-}
-async function opened(path: string): Promise<Tab> {
-  await workspace.open(path)
-  return until(() => workspace.tabs.find((one) => samePath(one.path, path)))
-}
-const rest = (): Point => ({ x: innerWidth * 0.74, y: innerHeight * 0.8 })
-const tabButton = (tab: () => Tab | null) => () => {
-  const one = tab()
-  return one ? boxOf(`button.pick[data-tab="${one.id}"]`) : null
-}
-const nudged = (at: () => Point | null, dx: number, dy: number) => () => {
-  const point = at()
-  return point ? { x: point.x + dx, y: point.y + dy } : null
-}
-function rowOf(words: string, inside: string): Element | null {
-  for (const one of document.querySelectorAll(inside)) if (one.textContent.includes(words)) return one
-  return null
-}
 const lineEnd = (words: string) => () => {
   for (const one of document.querySelectorAll('.cm-line')) {
     if (one.textContent.trim() !== words) continue
@@ -89,13 +61,17 @@ function writer(
   people: readonly (number | null)[] = [0, 1],
 ) {
   let said = ''
-  return (typed: readonly number[]) => {
+  return (typed: readonly string[]) => {
     const note = tab()?.note
     if (!note) return
-    const key = typed.join()
+    const key = typed.join('\u0000')
     if (key === said) return
     said = key
-    const { text: wanted, carets } = writtenAt(text, typed, written)
+    const { text: wanted, carets } = writtenAt(
+      text,
+      typed.map((one) => one.length),
+      written.map((one, index) => ({ ...one, words: typed[index] ?? '' })),
+    )
     const change = replacement(note.live.text.toString(), wanted)
     if (change) note.live.arrived([change])
     note.live.announce([
@@ -117,38 +93,12 @@ function writer(
     ])
   }
 }
-function stepper(go: (to: number) => Promise<void>) {
-  let now = 0
-  let wanted = 0
-  let busy = false
-  const run = async () => {
-    busy = true
-    try {
-      while (now !== wanted) {
-        const next = wanted
-        await go(next)
-        now = next
-      }
-    } finally {
-      busy = false
-    }
-  }
-  return (to: number) => {
-    wanted = to
-    if (!busy && now !== wanted) void run()
-  }
-}
-const stepOf = (phase: number, edges: readonly number[]) => {
-  const at = edges.findIndex((one) => phase < one)
-  return at === -1 ? edges.length : at
-}
 const QUERY = 'ride'
-const KEPT_TODOS = [
-  'Frame samples from the shop #launch',
-  'Ride test with Mara #launch p2',
-  'Photos of all three colours #press',
-]
-const NEW_TODO = 'Send the kit to three city blogs'
+const CHAT = 26000
+const FLOWS = 30000
+const ASK = 30000
+const BUBBLES = 24000
+const SEARCH = 23000
 export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene | undefined> & { canvas: LoopScene } {
   let mine: Pointer | null = null
   const you = () => (mine ??= new Pointer(phone() ? 'touch' : 'user'))
@@ -156,36 +106,36 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
   const assistant = () => (theirs ??= new Pointer('ai', 'AI'))
   let pen: Pointer | null = null
   const drawer = () => (pen ??= new Pointer(phone() ? 'touch' : 'pen'))
-  const follow = (phase: number, stops: readonly Stop[], who = you()) => {
-    const { at, press } = placeAt(phase, stops)
-    who.show(at, press)
-  }
-  const store = () => CanvasStore.drawing(stage.canvas.note, workspace.tabs)
-  const onBoard = (point: Point) => {
-    const held = store()
-    return held ? onPlane('.canvas.orden-host', held.camera, point) : null
-  }
+  const follow = (phase: number, period: number, stops: readonly Stop[], who = you()) =>
+    shown(
+      who,
+      phase * period,
+      stops.map((one) => ({ at: one.at * period, to: one.to, ...(one.press ? { press: true } : {}) })),
+    )
+
   let ride: Tab | null = null
-  const rideWriter = writer(() => ride, RIDE_TEXT, RIDE_WRITTEN, [null, 1])
+  let interviews: Tab | null = null
+  const firstQuery = keysOf('ride', 61, 1.2, false)
+  const secondQuery = keysOf('interviews', 62, 1.1)
+  const reply = keysOf('Framing this one for the office.', 63)
+  const planKeys = WRITTEN.map((one, index) => keysOf(one.words, 64 + index, 0.9))
+  const compose = (text: string) => {
+    const field = [...document.querySelectorAll<HTMLElement>('.cm-editor')].find(
+      (one) => one.offsetParent && one.closest('form, .composer, footer'),
+    )
+    const view = field ? EditorView.findFromDOM(field) : null
+    if (!view || view.state.doc.toString() === text) return
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } })
+  }
   const searching = stepper(async (to) => {
-    if (to === 1) return
+    if (to === 1 || to === 3) return
     overlays.escape()
     shownQuery = null
-    const tab = to === 2 ? ride : stage.canvas
+    const tab = to === 2 ? ride : to === 4 ? interviews : stage.canvas
     if (tab && workspace.activeTabId !== tab.id) workspace.activate(tab.id)
     await pause(0)
   })
   let shownQuery: string | null = null
-  let made: string | null = null
-  let typedTodo = ''
-  const todoing = stepper(async (to) => {
-    if (to === 1 && made === null) made = (await addTask(`${NEW_TODO} #press p1`))?.id ?? null
-    if (to === 2 && made !== null) await tickTask(made, true)
-    if (to === 0 && made !== null) {
-      await todos.remove(made)
-      made = null
-    }
-  })
   let spec: Tab | null = null
   let penAt: Point | null = null
   let inked = ''
@@ -259,19 +209,21 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
   }
   return {
     chat: {
-      period: 18000,
+      period: CHAT,
       still: 0.9,
       ready: restage,
       tick: (phase) => {
         const wrapped = phase < lastPhase
         lastPhase = phase
-        follow(phase, [
+        follow(phase, CHAT, [
           { at: 0, to: rest },
-          { at: 0.6, to: () => boxOf('[contenteditable="true"], textarea') },
-          { at: 0.63, to: () => boxOf('[contenteditable="true"], textarea'), press: true },
-          { at: 0.7, to: () => boxOf('button[aria-label="Send"]') ?? nudged(rest, 0, 0)(), press: true },
+          { at: 0.42, to: rest },
+          { at: 0.5, to: () => boxOf('.cm-editor .cm-content'), press: true },
+          { at: 0.68, to: () => boxOf('.cm-editor .cm-content') },
+          { at: 0.7, to: () => boxOf('button[aria-label="Send"]'), press: true },
           { at: 0.85, to: rest },
         ])
+        compose(phase < 0.52 || phase >= 0.71 ? '' : typedAt(reply, (phase - 0.52) * CHAT))
         if (wrapped) {
           void restage()
           return
@@ -303,15 +255,23 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
       },
     },
     flow: {
-      period: 20000,
+      period: FLOWS,
       still: 0.35,
       tick: (phase, now) => {
         const step = stepOf(phase, FLOW) % FLOW.length
         flowing(step)
         if (step === 0) draw({ scene: 'canvas', at: 1, still: false }, now)
-        const typed = step === 2 ? clamp((phase - 0.27) / 0.16) : step >= 3 && step <= 5 ? 1 : 0
-        planWriter(WRITTEN.map((one) => Math.round(one.words.length * typed)))
-        follow(phase, [
+        const ms = phase * FLOWS
+        planWriter(
+          planKeys.map((keys, index) =>
+            step === 2
+              ? typedAt(keys, ms - FLOWS * (0.27 + 0.02 * index))
+              : step >= 3 && step <= 5
+                ? (keys.shown.at(-1) ?? '')
+                : '',
+          ),
+        )
+        follow(phase, FLOWS, [
           { at: 0, to: rest },
           { at: 0.11, to: () => boxOf('[data-side-toggle="left"]'), press: true },
           { at: 0.24, to: tabButton(() => stage.plan), press: true },
@@ -325,7 +285,7 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
       },
     },
     ai: {
-      period: 20000,
+      period: ASK,
       still: 0.8,
       ready: async () => {
         const { chat } = await chatStore()
@@ -354,7 +314,11 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         if (!asking || !thread) return
         const turns = turnsAt(phase, script)
         const key = JSON.stringify(
-          turns.map((one) => one.parts.map((part) => (part.kind === 'tool' ? part.state : part.kind))),
+          turns.map((one) =>
+            one.parts.map((part) =>
+              part.kind === 'tool' ? part.state : part.kind === 'text' ? part.text.length : part.kind,
+            ),
+          ),
         )
         if (key !== told) {
           told = key
@@ -363,7 +327,7 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         }
         const busy = working(phase)
         if (asking.running.length > 0 !== busy) asking.running = busy ? [thread.id] : []
-        follow(phase, [
+        follow(phase, ASK, [
           { at: 0, to: rest },
           { at: 0.02, to: () => boxOf('.chat [contenteditable="true"], [contenteditable="true"]'), press: true },
           { at: 0.05, to: rest },
@@ -394,12 +358,13 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
           const tall = Math.max(0, root.scrollHeight - inner.innerHeight)
           const down =
             browsing(phase) === 'routes'
-              ? tall * smooth(clamp((phase - 0.36) / 0.08))
+              ? tall * (phase < 0.04 ? 1 : smooth(clamp((phase - 0.36) / 0.08)))
               : tall * smooth(clamp((phase - 0.16) / 0.1))
           if (Math.abs(inner.scrollY - down) > 1) inner.scrollTo(0, down)
         }
         follow(
           phase,
+          ASK,
           [
             { at: 0, to: () => null },
             { at: 0.12, to: () => (box ? { x: box.left + box.width * 0.5, y: box.top + box.height * 0.3 } : null) },
@@ -418,13 +383,15 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
       },
     },
     pages: {
-      period: 12000,
+      period: 22000,
       still: 0.8,
       ready: async () => {
         await workspace.openPdf(`${ROOT}/${SPEC}`)
         const tab = await until(() => workspace.tabs.find((one) => one.path?.endsWith('.pages')))
         await until(() => CanvasStore.drawing(tab.note, workspace.tabs))
         spec = tab
+        workspace.activate(tab.id)
+        await until(() => document.querySelector('.pages canvas.there'))
       },
       tick: (phase) => {
         if (!spec) return
@@ -448,19 +415,9 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         drawer().show(onPlane('.pages', held.camera, penAt), 0)
       },
     },
-    canvas: {
-      period: 16000,
-      still: 0.5,
-      tick: (phase, now) => {
-        const at = there(phase, 0.15)
-        draw({ scene: 'canvas', at, still: false, you: true }, now)
-        const grip = frameAt('canvas', at, location.origin, phone()).grip
-        const press = Math.max(0, 1 - Math.abs(at - 0.12) / 0.03)
-        you().show(onBoard(grip), press)
-      },
-    },
+    canvas: boardScene(stage, you),
     bubbles: {
-      period: 16000,
+      period: BUBBLES,
       still: 0.55,
       tick: (phase, now) => {
         const step = stepOf(phase, [0.12, 0.32, 0.5, 0.84]) % 4
@@ -468,7 +425,7 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         bubbling(step)
         const plan = () => boxOf(`button.window[aria-label="${PAGE_TITLE}"]`)
         const harbor = () => nudged(() => boxOf('button.window[aria-label="Menu"]'), 0, 30)()
-        follow(phase, [
+        follow(phase, BUBBLES, [
           { at: 0, to: rest },
           { at: 0.1, to: () => boxOf('button.overview[aria-label="Tabs"]'), press: true },
           { at: 0.2, to: plan },
@@ -497,9 +454,9 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
             })
             document.body.append(ghost)
           }
-          const { at } = placeAt(phase, [
-            { at: 0.3, to: plan },
-            { at: 0.5, to: harbor },
+          const { at } = moveAt(phase * BUBBLES, [
+            { at: 0.3 * BUBBLES, to: plan },
+            { at: 0.5 * BUBBLES, to: harbor, drag: true },
           ])
           if (ghost && at) {
             const box = ghost.getBoundingClientRect()
@@ -508,88 +465,47 @@ export function loopScenes(stage: Stage, draw: Draw): Record<string, LoopScene |
         }
       },
     },
-    markdown: {
-      period: 16000,
-      still: 0.5,
-      ready: async () => {
-        ride = await opened(`${ROOT}/${RIDE_DATA}`)
-      },
-      tick: (phase) => {
-        if (ride && workspace.activeTabId !== ride.id) workspace.activate(ride.id)
-        const shown = there(phase, 0.15)
-        rideWriter([
-          Math.round(RIDE_WRITTEN[0].words.length * clamp(shown * 1.25 - 0.25)),
-          Math.round(RIDE_WRITTEN[1].words.length * clamp(shown * 1.25)),
-        ])
-        follow(phase, [
-          { at: 0, to: rest },
-          { at: 0.12, to: lineEnd('$$'), press: true },
-          { at: 0.2, to: nudged(lineEnd('$$'), 60, 70) },
-          { at: 0.9, to: rest },
-        ])
-      },
-    },
+    markdown: docScene(you),
     search: {
-      period: 12000,
-      still: 0.6,
+      period: SEARCH,
+      still: 0,
       ready: async () => {
         ride = await opened(`${ROOT}/${RIDE_DATA}`)
+        interviews = await opened(`${ROOT}/${INTERVIEWS}`)
         workspace.activate(stage.canvas.id)
       },
       tick: (phase) => {
-        const step = stepOf(phase, [0.12, 0.68, 0.87])
-        searching(step === 3 ? 0 : step)
-        if (step === 1) {
-          const query = QUERY.slice(0, Math.round(QUERY.length * clamp((phase - 0.22) / 0.2)))
+        const ms = phase * SEARCH
+        const step = stepOf(ms, [2000, 6000, 9700, 14200, 18700])
+        searching(step)
+        if (step === 1 || step === 3) {
+          const query = step === 1 ? typedAt(firstQuery, ms - 2500) : typedAt(secondQuery, ms - 10200)
           if (query !== shownQuery) {
             shownQuery = query
             paletteWords.words = query
           }
         }
-        follow(phase, [
+        const search = () => boxOf('button[aria-label="Search notes and commands"]')
+        const picked = () => boxOf('[role="option"][aria-selected="true"]')
+        follow(phase, SEARCH, [
           { at: 0, to: rest },
-          { at: 0.1, to: () => boxOf('button[aria-label="Search notes and commands"]'), press: true },
-          { at: 0.5, to: () => boxOf('[role="option"][aria-selected="true"]') },
-          { at: 0.66, to: () => boxOf('[role="option"][aria-selected="true"]'), press: true },
-          { at: 0.85, to: tabButton(() => stage.canvas), press: true },
-          { at: 0.95, to: rest },
+          { at: 900 / SEARCH, to: rest },
+          { at: 1800 / SEARCH, to: search, press: true },
+          { at: 3400 / SEARCH, to: nudged(search, 60, 50) },
+          { at: 5600 / SEARCH, to: picked, press: true },
+          { at: 7600 / SEARCH, to: rest },
+          { at: 9300 / SEARCH, to: search, press: true },
+          { at: 11000 / SEARCH, to: nudged(search, 50, 60) },
+          { at: 13800 / SEARCH, to: picked, press: true },
+          { at: 15800 / SEARCH, to: rest },
+          { at: 18300 / SEARCH, to: tabButton(() => stage.canvas), press: true },
+          { at: 20000 / SEARCH, to: rest },
         ])
       },
     },
-    todos: {
-      period: 16000,
-      still: 0.5,
-      ready: async () => {
-        for (const one of KEPT_TODOS) await addTask(one)
-        workspace.showPanel('tasks')
-      },
-      tick: (phase) => {
-        const step = stepOf(phase, [0.38, 0.62, 0.9])
-        todoing(step === 3 ? 0 : step)
-        const field = document.querySelector<HTMLInputElement>('input[aria-label="Add a todo"]')
-        const typing = step === 0 ? NEW_TODO.slice(0, Math.round(NEW_TODO.length * clamp((phase - 0.18) / 0.16))) : ''
-        if (field && typing !== typedTodo) {
-          typedTodo = typing
-          field.value = typing
-          field.dispatchEvent(new Event('input', { bubbles: true }))
-        }
-        const tick = () => {
-          const row = rowOf(NEW_TODO, '.todo')
-          const box = row?.querySelector('input.tick')?.getBoundingClientRect()
-          return box ? { x: box.left + box.width / 2, y: box.top + box.height / 2 } : null
-        }
-        follow(phase, [
-          { at: 0, to: rest },
-          { at: 0.14, to: () => boxOf('input[aria-label="Add a todo"]'), press: true },
-          { at: 0.36, to: nudged(() => boxOf('input[aria-label="Add a todo"]'), 60, 0), press: true },
-          { at: 0.5, to: tick },
-          { at: 0.6, to: tick, press: true },
-          { at: 0.75, to: rest },
-        ])
-      },
-    },
+    todos: todosScene(you),
     write: {
-      period: 16000,
+      period: 24000,
       still: 0.5,
       tick: (phase, now) => draw({ scene: 'write', at: 0.3 + 0.7 * there(phase, 0.15), still: false }, now),
     },
