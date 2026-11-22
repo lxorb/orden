@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Mascot } from '../../mascot/src/api'
   import { length, nameOf, tintOf } from './look'
   import type { Slice } from './schedule'
 
@@ -65,6 +66,7 @@
       <strong>{length(ms)}</strong>
       <span>{tracked === null ? 'tracked' : `${length(tracked)} tracked`}</span>
     {:else}
+      <Mascot mood="sleepy" size={28} />
       <span>Nothing tracked</span>
     {/if}
   </figcaption>

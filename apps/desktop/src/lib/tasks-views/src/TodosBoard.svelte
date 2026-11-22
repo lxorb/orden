@@ -13,6 +13,7 @@
   import { cubicOut } from 'svelte/easing'
   import { tick } from 'svelte'
   import { dur, fly, slide } from '../../platform/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { addTodo, doWithAi, patchTodo, removeTodo, typedPatch, type Typing } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
@@ -220,7 +221,10 @@
           </ul>
         </section>
       {:else}
-        <p class="empty">Nothing to do</p>
+        <div class="empty found">
+          <Mascot mood="proud" size={32} />
+          <p>Nothing to do</p>
+        </div>
       {/each}
     </div>
     {#if open}
@@ -381,5 +385,14 @@
       border-inline-start: none;
       border-top: 1px solid var(--line);
     }
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
 </style>

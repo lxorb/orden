@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Facts } from '../../ui-kit/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { cubicOut } from 'svelte/easing'
   import { relativeStep } from '../../ui-controls/src/api'
   import { region } from '../../platform/src/api'
@@ -56,7 +57,10 @@
 {/if}
 
 {#if trash.loaded && !trash.items.length}
-  <p class="hint empty">Nothing here.</p>
+  <div class="hint empty found">
+    <Mascot mood="bored" size={32} />
+    <p>Nothing here.</p>
+  </div>
 {:else if trash.items.length}
   <div class="top">
     <button class="quiet danger" disabled={trash.busy} onclick={() => void trash.empty()}> Empty </button>
@@ -150,5 +154,14 @@
     button.quiet.danger:hover:not(:disabled) {
       color: var(--danger);
     }
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
 </style>

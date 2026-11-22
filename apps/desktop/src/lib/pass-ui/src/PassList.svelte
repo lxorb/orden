@@ -1,5 +1,6 @@
 <script lang="ts">
   import { keyElsewhere, menu, prompt } from '../../ui-kit/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { blank } from '@orden/pass/envelope'
   import type { Item } from '@orden/pass/types'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
@@ -264,6 +265,7 @@
       </button>
     {:else}
       <div class="empty">
+        <Mascot mood={ui.query.trim() !== '' ? 'shrug' : 'bored'} size={32} />
         {#if ui.query.trim() !== ''}
           <p>Nothing matches “{ui.query.trim()}”</p>
         {:else if trash}
