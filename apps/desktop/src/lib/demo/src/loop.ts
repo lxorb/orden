@@ -18,17 +18,18 @@ export async function loop(stage: Stage, draw: Draw, asked: string, site: string
   const scenes = loopScenes(stage, draw)
   const scene: LoopScene = scenes[asked] ?? scenes.canvas
   await scene.ready?.()
-  let playing = true
+  const hold = new URLSearchParams(location.search).has('hold')
+  let playing = !hold
   let still = false
   let spent = 0
   let last = performance.now()
   let ticking = false
   const phase = () => (still ? scene.still : (spent / scene.period) % 1)
   let broken = false
-  const drawn = (now: number) => {
+  const drawn = () => {
     if (broken) return false
     try {
-      scene.tick(phase(), now)
+      scene.tick(phase(), spent)
       return true
     } catch {
       broken = true
@@ -38,7 +39,7 @@ export async function loop(stage: Stage, draw: Draw, asked: string, site: string
   const tick = (now: number) => {
     if (playing && !still) spent += Math.min(100, now - last)
     last = now
-    ticking = drawn(now) && playing && !still
+    ticking = drawn() && (playing || hold) && !still
     if (ticking) requestAnimationFrame(tick)
   }
   const wake = () => {
@@ -51,18 +52,19 @@ export async function loop(stage: Stage, draw: Draw, asked: string, site: string
   addEventListener('message', (event: MessageEvent<unknown>) => {
     if (event.origin !== site || event.source !== parent) return
     const said = heard(event.data)
-    if (!said) return
+    if (!said || hold) return
     if (said.still) {
       still = true
-      drawn(performance.now())
+      drawn()
       return
     }
     playing = said.play === true
     if (playing) wake()
   })
-  drawn(performance.now())
+  drawn()
   await new Promise((done) => requestAnimationFrame(done))
   await new Promise((done) => requestAnimationFrame(done))
   wake()
+  if (hold) await new Promise((done) => setTimeout(done, 900))
   parent.postMessage({ orden: 'demo', ready: true }, site)
 }

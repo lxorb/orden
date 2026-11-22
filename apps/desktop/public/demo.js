@@ -70,6 +70,24 @@
     Object.defineProperty(into, name, { configurable: true, enumerable: true, writable: true, value })
   }
   place('localStorage', held(KEPT))
+  const Real = into.Date
+  const shift = new Real(2026, 10, 19, 10, 24, 0).getTime() - Real.now()
+  const at = () => new Real(Real.now() + shift)
+  place(
+    'Date',
+    new Proxy(Real, {
+      construct: (target, given, made) => (given.length ? Reflect.construct(target, given, made) : at()),
+      apply: () => at().toString(),
+      get: (target, key) => (key === 'now' ? () => Real.now() + shift : Reflect.get(target, key)),
+    }),
+  )
+  let seed = 2456
+  into.Math.random = () => {
+    seed = (seed + 0x6d2b79f5) | 0
+    let mixed = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed
+    return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296
+  }
   place('sessionStorage', held({}))
   function refused() {
     throw new DOMException('The demo keeps nothing in this browser', 'SecurityError')

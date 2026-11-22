@@ -32,6 +32,8 @@ function visitor(search: string, light = false, more: Record<string, unknown> = 
     EventTarget,
     Event,
     queueMicrotask,
+    Date,
+    Math: Object.create(Math) as Math,
     location: { href: `https://orden.so/${search}`, search },
     navigator: { serviceWorker: { register: registered }, userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' },
     document: { documentElement: { dataset: {} as Record<string, string>, style: { background: '#fff' } } },
@@ -271,6 +273,21 @@ describe('the demo', () => {
     const folder = join(import.meta.dirname, '../src')
     for (const name of readdirSync(folder))
       expect(readFileSync(join(folder, name), 'utf8')).not.toContain('Math.random')
-    expect(SCRIPT).not.toContain('Math.random')
+  })
+  test('keeps one clock and one chance for every visit', () => {
+    const one = visitor('?demo=chat&hold').into
+    const two = visitor('?demo=chat&hold').into
+    const draws = (into: Record<string, unknown>) => Array.from({ length: 4 }, () => (into.Math as Math).random())
+    expect(draws(one)).toEqual(draws(two))
+    const Clock = one.Date as DateConstructor
+    const now = new Clock()
+    expect([now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes()]).toEqual([
+      2026, 10, 19, 10, 24,
+    ])
+    expect(Math.abs(Clock.now() - now.getTime())).toBeLessThan(1000)
+    expect(new Clock(0).getTime()).toBe(0)
+    expect(now instanceof Date).toBe(true)
+    expect(typeof Clock()).toBe('string')
+    expect(visitor('?space=1').into.Date).toBe(Date)
   })
 })
