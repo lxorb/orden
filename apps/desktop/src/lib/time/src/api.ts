@@ -26,6 +26,7 @@ export {
   unset,
   type Write,
 } from './schedule'
+export const timeAgentVerbs = () => import('./agent').then((one) => one.timeVerbs)
 export const wakeTime = () => import('./start.svelte').then(() => undefined)
 export const loadTimePanel = () => import('./TimePanel.svelte')
 export const loadTimeTab = () => import('./TimeTab.svelte')
