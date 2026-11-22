@@ -84,6 +84,15 @@ NEAREST = """
   return least
 }
 """
+SWAY = "() => [...document.querySelectorAll('svg.cells')].map((one) => getComputedStyle(one).transform)"
+def swaying(page: Page) -> None:
+    before = page.evaluate(SWAY)
+    page.wait_for_timeout(700)
+    after = page.evaluate(SWAY)
+    moved = sum(1 for a, b in zip(before, after) if a != b and b != "none")
+    say(f"[wobble] {moved} of {len(after)} bubbles moved in 0.7 s")
+    if not after or moved < len(after):
+        wrong(f"[wobble] the bubbles stand still: {before} -> {after}")
 def meet(a: list[float], b: list[float]) -> bool:
     return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 def at_rest(page: Page, label: str) -> None:
@@ -110,6 +119,7 @@ def drive(browser: Browser) -> None:
     page.click(".tidy")
     page.wait_for_timeout(1400)
     shot(page, "packed")
+    swaying(page)
     bubbles = {one["name"]: one for one in page.evaluate(BUBBLES)}
     one_window = bubbles.get("Ideas")
     empties = [bubbles.get("Empty A"), bubbles.get("Empty B")]
@@ -165,7 +175,7 @@ def drive(browser: Browser) -> None:
     pushed = {one["name"]: one for one in page.evaluate(BUBBLES)}.get("Ideas")
     nearest = page.evaluate(NEAREST, ["Work", "Ideas"])
     say(f"[carry] Work's and Ideas' outlines {nearest:.1f} apart while one pushes the other")
-    if nearest is None or nearest > 10:
+    if nearest is None or nearest > 16:
         wrong(f"[carry] Ideas was pushed before the outlines met: {nearest}")
     if not pushed or max(abs(pushed["box"][0] - ideas["box"][0]), abs(pushed["box"][1] - ideas["box"][1])) < 20:
         wrong("[carry] Work never pushed Ideas aside")

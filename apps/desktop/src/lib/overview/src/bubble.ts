@@ -6,6 +6,9 @@ export const CLEAR = 12
 const SEAM = 4
 const STEP = 8
 const TAU = 2 * Math.PI
+const WOBBLE = 6
+const SWAYS = 36
+export const SWAY_MS = 9000
 export const COS = Float64Array.from({ length: N }, (_, i) => Math.cos((i / N) * TAU))
 export const SIN = Float64Array.from({ length: N }, (_, i) => Math.sin((i / N) * TAU))
 function reachOf(boxes: readonly Box[], by: number): Float64Array | null {
@@ -87,6 +90,11 @@ interface Edge {
   y: number
   at: number
 }
+interface Press extends Edge {
+  from: number
+  bend: number
+  middle: number
+}
 type Point = [number, number]
 function hullOf(h: Float64Array): Point[] {
   const at = (share: number) => h[Math.round(share * N) % N] ?? 0
@@ -118,6 +126,40 @@ function cut(points: readonly Point[], edge: Edge): Point[] {
   }
   return out
 }
+function pressed(points: readonly Point[], press: Press): Point[] {
+  const { x, y, at, from, bend, middle } = press
+  let reach = Number.NEGATIVE_INFINITY
+  let low = Number.POSITIVE_INFINITY
+  let high = Number.NEGATIVE_INFINITY
+  for (const [px, py] of points) {
+    reach = Math.max(reach, px * x + py * y)
+    low = Math.min(low, py * x - px * y)
+    high = Math.max(high, py * x - px * y)
+  }
+  const over = reach - at
+  if (over <= 0) return [...points]
+  const span = reach - from
+  if (span <= over)
+    return points.map(([px, py]): Point => {
+      const by = Math.max(0, px * x + py * y - at)
+      return [px - by * x, py - by * y]
+    })
+  const most = span / over
+  const c = Math.min(2, Math.max(1, 0.75 * most))
+  const steep = c >= 1.5 ? c : (3 - c) ** 2 / (3 * (2 - c))
+  const smooth = steep < 0.95 * most
+  const power = (1 + most) / 2
+  const ease = (u: number) => (smooth ? (3 - c) * u * u + (c - 2) * u * u * u : u ** power)
+  const bent = Math.max(0, Math.min(bend, 2 * over, 0.9 * (span / (smooth ? steep : power) - over)))
+  const half = Math.max(high - middle, middle - low) || 1
+  return points.map(([px, py]): Point => {
+    const share = (px * x + py * y - from) / span
+    if (share <= 0) return [px, py]
+    const across = (py * x - px * y - middle) / half
+    const by = ease(Math.min(share, 1)) * (over + bent * across * across)
+    return [px - by * x, py - by * y]
+  })
+}
 function even(points: readonly Point[]): Point[] {
   const n = points.length
   if (n < 3) return [...points]
@@ -146,11 +188,13 @@ export class Bubble {
   private readonly shown = new Float64Array(N)
   private goal: Float64Array = new Float64Array(N)
   private floor: Float64Array = new Float64Array(N)
-  private edges: Edge[] = []
+  private presses: Press[] = []
+  private round: Point[] = []
   private outline: Point[] = []
   constructor(boxes: readonly Box[]) {
     this.aim(boxes)
     this.shown.set(this.goal)
+    this.round = even(hullOf(this.shown))
     this.draw()
   }
   private aim(boxes: readonly Box[]) {
@@ -169,23 +213,28 @@ export class Bubble {
       this.floor[i] = Number.NEGATIVE_INFINITY
     }
   }
-  private middle(): { x: number; y: number } {
+  middle(): { x: number; y: number } {
     const at = (share: number) => this.shown[Math.round(share * N) % N] ?? 0
     return { x: (at(0) - at(0.5)) / 2, y: (at(0.25) - at(0.75)) / 2 }
+  }
+  size(): number {
+    const at = (share: number) => this.shown[Math.round(share * N) % N] ?? 0
+    return Math.max(at(0) + at(0.5), at(0.25) + at(0.75)) / 2
   }
   step(boxes: readonly Box[]) {
     this.aim(boxes)
     for (let i = 0; i < N; i++) this.shown[i] = Math.max(this.goal[i] ?? 0, this.floor[i] ?? 0)
-    this.edges = []
+    this.presses = []
+    this.round = even(hullOf(this.shown))
     this.draw()
   }
   private draw() {
-    let points = even(hullOf(this.shown))
-    for (const edge of this.edges) points = cut(points, edge)
+    let points = this.round
+    for (const press of this.presses) points = pressed(points, press)
     this.outline = even(points)
   }
-  meet(edge: Edge) {
-    this.edges.push(edge)
+  press(one: Press) {
+    this.presses.push(one)
     this.draw()
   }
   reach(i: number): number {
@@ -245,14 +294,37 @@ export function apart(one: Bubble, other: Bubble, ones: readonly Box[], others: 
     }
   }
   if (best < 0 || widest <= 0) return
-  const reach = one.reach(best)
-  const back = -other.reach(best + N / 2)
-  if (reach + SEAM <= back - SEAM) return
   const x = COS[best] ?? 0
   const y = SIN[best] ?? 0
-  const from = near[best] ?? 0
-  const middle = from + widest / 2
+  const middle = (near[best] ?? 0) + widest / 2
   const clear = Math.min(SEAM, widest / 2)
-  one.meet({ x, y, at: middle - clear })
-  other.meet({ x: -x, y: -y, at: -(middle + clear) })
+  const margin = Math.min(CLEAR / 2, widest / 2 - clear)
+  const bend = Math.max(0, widest / 2 - clear - margin)
+  const across =
+    (Math.max(-one.reach(best - N / 4), -other.reach(best - N / 4)) +
+      Math.min(one.reach(best + N / 4), other.reach(best + N / 4))) /
+    2
+  if (one.reach(best) > middle - clear)
+    one.press({ x, y, at: middle - clear, from: (near[best] ?? 0) + margin, bend, middle: across })
+  if (-other.reach(best + N / 2) < middle + clear)
+    other.press({
+      x: -x,
+      y: -y,
+      at: -(middle + clear),
+      from: (far[(best + N / 2) % N] ?? 0) + margin,
+      bend,
+      middle: -across,
+    })
+}
+export function wobbleOf(size: number, seed: number): Keyframe[] {
+  const by = Math.min(WOBBLE / Math.max(size, 1), 0.03)
+  const turn = (by * 90) / Math.PI
+  const p = seed * TAU
+  return Array.from({ length: SWAYS + 1 }, (_, k) => {
+    const a = (k / SWAYS) * TAU
+    const sx = 1 + by * (0.6 * Math.sin(a + p) + 0.4 * Math.sin(3 * a + 2 * p))
+    const sy = 1 + by * (0.6 * Math.sin(a + p + 2.1) + 0.4 * Math.sin(2 * a + 3 * p))
+    const rotate = turn * Math.sin(2 * a + p + 1.3)
+    return { transform: `rotate(${rotate.toFixed(4)}deg) scale(${sx.toFixed(5)}, ${sy.toFixed(5)})` }
+  })
 }
