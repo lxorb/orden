@@ -4,7 +4,6 @@
   "dependsOn": [
     "contracts",
     "documents",
-    "hints",
     "launch",
     "modes",
     "pane-tree",

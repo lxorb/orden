@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { whenLoaded } from '@orden/contracts'
-  import { hinting, loadHintCard } from '../../hints/src/api'
   import { chrome } from '../../theme/src/api'
   import { keepFocus, SEARCH_MARK, UnsavedDot, viewport } from '../../ui-kit/src/api'
   import { modes } from '../../modes/src/api'
@@ -11,7 +9,6 @@
   import { isDraft } from '../../documents/src/api'
   import { TopStrips } from '../../pane-tree/src/api'
   import { closeWindow, currentWindow, isDesktop, platform } from '../../platform/src/api'
-  import { startup } from '../../launch/src/api'
   import { scratchpadOn, swipeOpens, tabOverview, toggleTabOverview, workspace } from '../../workspace/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { WindowState } from '../../windows/src/api'
@@ -49,11 +46,6 @@
       .then((one) => one.noteMore())
       .then((one) => one.showNoteMore(from))
   }
-  $effect(() => {
-    if (swiped && workspace.openOn('left')) {
-      whenLoaded(hinting, ({ hints }) => hints.dismiss('drawer'))
-    }
-  })
   const shape = new WindowState()
   const maximized = $derived(shape.maximized)
   const mac = isDesktop && platform() === 'macos'
@@ -161,18 +153,6 @@
 {#snippet leftToggle()}
   {#if !listless}
     <SidebarToggle unseen={swiped} />
-    {#if swiped && startup.settled}
-      <span class="swipe-hint">
-        {#await loadHintCard() then card}
-          <card.default
-            hint="drawer"
-            side="below"
-            text="Swipe in from the edge to see your notes."
-            onpress={() => workspace.toggleSidebar()}
-          />
-        {/await}
-      </span>
-    {/if}
   {/if}
 {/snippet}
 
@@ -303,11 +283,6 @@
   }
   .heads > :global(*) {
     flex: 1;
-  }
-  .swipe-hint {
-    position: relative;
-    flex: none;
-    width: 0;
   }
   .overview,
   .search {

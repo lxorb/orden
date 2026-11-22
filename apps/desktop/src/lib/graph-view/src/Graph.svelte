@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { hinting } from '../../hints/src/api'
   import type { OpenHow } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
   import GraphControls from './GraphControls.svelte'
@@ -30,7 +29,6 @@
     onopen?: ((path: string, how: OpenHow) => void) | undefined
     onescape?: (() => void) | undefined
   } = $props()
-  void hinting().then(({ hints }) => hints.dismiss('graph'))
   const A_FRAME = 6
   const A_SETTLE = 10
   const A_CLICK = 3

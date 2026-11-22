@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { registerSidebarPart } from '@orden/contracts'
 import { render } from 'svelte/server'
@@ -32,5 +32,14 @@ describe('the sidebar', () => {
     expect(html).toContain('aria-label="Send feedback"')
     expect(html).toContain('aria-label="Settings"')
     expect(html).not.toContain('aria-label="Scratchpad"')
+  })
+})
+describe('hint cards', () => {
+  test('are drawn nowhere: no component wears the hint bubble and no module keeps hints', () => {
+    const drawn = readdirSync(LIB, { recursive: true, encoding: 'utf8' }).filter(
+      (one) => one.endsWith('.svelte') && /class="orden-bubble[^"]*\bhint\b/.test(readFileSync(join(LIB, one), 'utf8')),
+    )
+    expect(drawn).toEqual([])
+    expect(existsSync(join(LIB, 'hints'))).toBe(false)
   })
 })

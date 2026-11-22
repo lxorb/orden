@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { loadHintCard } from '../../hints/src/api'
   import {
     arrive,
     ASK_MARK,
@@ -58,8 +57,6 @@
     timePanel,
   } from '../../surfaces/src/api'
   import { bookmarkEntry, rowMenus } from '../../row-menu/src/api'
-  import { links } from '../../link-index/src/api'
-  import { worthAGraph } from '../../graph/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { dur, fly, onceAFrame } from '../../platform/src/api'
@@ -308,7 +305,6 @@
   })
   const held = $derived(workspace.held)
   const holdable = $derived(showing !== 'scratchpad' && workspace.holdable(showing))
-  const paletteKey = $derived(shortcuts.hint('app.palette'))
   function jump(line: number) {
     const tab = workspace.panelTab
     if (tab && tab.id !== workspace.activeTabId) workspace.activate(tab.id)
@@ -541,29 +537,6 @@
             </button>
           {/if}
         </div>
-      {/if}
-
-      {#if side === 'left' && startup.settled}
-        {#await loadHintCard() then card}
-          <card.default
-            hint="graph"
-            side="below"
-            text="See how your notes connect."
-            when={worthAGraph(links.graph)}
-            onpress={() => workspace.openGraph()}
-          />
-        {/await}
-      {/if}
-
-      {#if side === 'left' && paletteKey && startup.settled}
-        {#await loadHintCard() then card}
-          <card.default
-            hint="palette"
-            side="below"
-            text="Press {paletteKey} to find anything, notes and commands alike."
-            when={!viewport.touch}
-          />
-        {/await}
       {/if}
 
       <div class="tools" bind:clientWidth={toolsWidth}>

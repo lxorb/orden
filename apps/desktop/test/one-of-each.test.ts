@@ -520,7 +520,6 @@ describe('the bubble a sentence appears in', () => {
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/ai-providers/src/vault/VaultApprove.svelte',
       'lib/chats-client/src/view/Tip.svelte',
-      'lib/hints/src/HintCard.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',
