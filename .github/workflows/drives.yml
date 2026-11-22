@@ -250,6 +250,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: python scripts/capture-e2e.py --app "$SYNCED_EXE" --identifier "$SYNCED" --app "$OTHER_EXE" --identifier "$OTHER"
 
+      - name: Sidebar rows under a real pointer
+        id: sidebar-hover-drive
+        if: ${{ !cancelled() }}
+        run: python scripts/sidebar-hover-drive.py --exe "$SYNCED_EXE" --identifier "$SYNCED"
+
       - name: The failed drives
         id: failed
         if: always()
