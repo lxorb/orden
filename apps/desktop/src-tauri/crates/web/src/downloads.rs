@@ -3,7 +3,7 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::webview::DownloadEvent;
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
@@ -14,7 +14,9 @@ const MOVED: &str = "orden://web-download";
 const DOWNLOADS_DIR: &str = "ORDEN_DOWNLOADS_DIR";
 const LONGEST_NAME: usize = 180;
 const LONGEST_EXTENSION: usize = 32;
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+const KEPT: usize = 30;
+const KEPT_FILE: &str = "downloads.json";
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum State {
     Going,
@@ -41,6 +43,53 @@ pub struct Download {
     #[serde(skip)]
     ended: bool,
 }
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+struct Kept {
+    id: u64,
+    tab: String,
+    url: String,
+    name: String,
+    state: State,
+    received: u64,
+    total: Option<u64>,
+    path: PathBuf,
+}
+fn kept(list: &[Download]) -> Vec<Kept> {
+    let ended: Vec<&Download> =
+        list.iter().filter(|one| matches!(one.state, State::Done | State::Failed)).collect();
+    ended[ended.len().saturating_sub(KEPT)..]
+        .iter()
+        .map(|one| Kept {
+            id: one.id,
+            tab: one.tab.clone(),
+            url: one.url.clone(),
+            name: one.name.clone(),
+            state: one.state,
+            received: one.received,
+            total: one.total,
+            path: one.path.clone(),
+        })
+        .collect()
+}
+fn read_kept(text: &str, there: impl Fn(&Path) -> bool) -> Vec<Download> {
+    serde_json::from_str::<Vec<Kept>>(text)
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|one| matches!(one.state, State::Done | State::Failed))
+        .filter(|one| one.state != State::Done || there(&one.path))
+        .map(|one| Download {
+            id: one.id,
+            tab: one.tab,
+            url: one.url,
+            name: one.name,
+            state: one.state,
+            received: one.received,
+            total: one.total,
+            path: one.path,
+            ended: true,
+        })
+        .collect()
+}
 #[derive(Default)]
 pub struct Downloads {
     held: Mutex<Vec<Download>>,
@@ -59,7 +108,7 @@ impl Downloads {
             on_disk(one) || held.iter().any(|other| other.writing() && same_path(&other.path, one))
         });
         let made = Download {
-            id: held.last().map_or(1, |last| last.id + 1),
+            id: held.last().map_or(1, |last| last.id + 1).max(now_ms()),
             tab: tab.to_string(),
             url: url.to_string(),
             name: path
@@ -141,6 +190,33 @@ fn held(app: &AppHandle) -> tauri::State<'_, Downloads> {
         app.manage(Downloads::default());
     }
     app.state::<Downloads>()
+}
+static RESTORED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+fn restore(app: &AppHandle) {
+    if RESTORED.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
+    let earlier = kept_file(app)
+        .and_then(|file| std::fs::read_to_string(file).ok())
+        .map(|text| read_kept(&text, on_disk))
+        .unwrap_or_default();
+    if let Ok(mut list) = held(app).held.lock() {
+        let fresh: Vec<Download> =
+            earlier.into_iter().filter(|one| list.iter().all(|other| other.id != one.id)).collect();
+        list.splice(0..0, fresh);
+    }
+}
+fn kept_file(app: &AppHandle) -> Option<PathBuf> {
+    app.path().app_config_dir().ok().map(|folder| folder.join(KEPT_FILE))
+}
+fn keep(app: &AppHandle) {
+    let Some(file) = kept_file(app) else { return };
+    let list = held(app).held.lock().map(|held| kept(&held)).unwrap_or_default();
+    if let Ok(text) = serde_json::to_string(&list) {
+        std::thread::spawn(move || {
+            let _ = orden_base::paths::write_atomically(&file, text.as_bytes());
+        });
+    }
 }
 fn same_path(one: &Path, other: &Path) -> bool {
     one.as_os_str().to_string_lossy().eq_ignore_ascii_case(&other.as_os_str().to_string_lossy())
@@ -255,6 +331,7 @@ fn heard(app: &AppHandle, tab: &str, window: &str, event: DownloadEvent<'_>) -> 
             let ended = downloads.finish(url.as_str(), path.as_deref(), success);
             if let Some(one) = &ended {
                 let _ = settle(app, &one.tab);
+                keep(app);
             }
             ended
         }
@@ -288,8 +365,14 @@ fn settle(app: &AppHandle, tab: &str) -> bool {
     let _ = app.run_on_main_thread(move || crate::web_tabs::close_page(&closing, &tab));
     true
 }
-#[tauri::command]
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |since| u64::try_from(since.as_millis()).unwrap_or(u64::MAX))
+}
+#[tauri::command(async)]
 pub fn web_downloads(app: AppHandle) -> Vec<Download> {
+    restore(&app);
     held(&app).held.lock().map(|held| held.clone()).unwrap_or_default()
 }
 #[tauri::command(async)]
@@ -443,7 +526,9 @@ pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {
 }
 #[cfg(test)]
 mod tests {
-    use super::{clean_name, free_path, split_extension, Downloads, State};
+    use super::{
+        clean_name, free_path, kept, read_kept, split_extension, Download, Downloads, State,
+    };
     use orden_base::letters::{plain_name, spelled_out};
     use std::collections::HashSet;
     use std::ffi::OsStr;
@@ -451,6 +536,41 @@ mod tests {
 
     fn name(said: &str) -> String {
         clean_name(OsStr::new(said))
+    }
+    fn one(id: u64, state: State, path: &str) -> Download {
+        Download {
+            id,
+            tab: "t1".into(),
+            url: format!("https://a.example/{id}"),
+            name: format!("{id}.pdf"),
+            state,
+            received: 10,
+            total: Some(10),
+            path: PathBuf::from(path),
+            ended: true,
+        }
+    }
+    #[test]
+    fn the_last_thirty_ended_downloads_are_kept_and_read_back_while_their_file_is_there() {
+        let mut list: Vec<Download> =
+            (1..=34).map(|id| one(id, State::Done, &format!("/d/{id}.pdf"))).collect();
+        list.push(one(35, State::Going, "/d/35.pdf"));
+        list.push(one(36, State::Cancelled, "/d/36.pdf"));
+        list.push(one(37, State::Failed, "/d/37.pdf"));
+        let saved = kept(&list);
+        assert_eq!(saved.len(), 30);
+        assert_eq!(saved.first().map(|one| one.id), Some(6));
+        assert_eq!(saved.last().map(|one| one.id), Some(37));
+        let text = serde_json::to_string(&saved).expect("kept");
+        let gone = PathBuf::from("/d/6.pdf");
+        let read = read_kept(&text, |path| path != gone.as_path());
+        assert_eq!(read.len(), 29);
+        assert!(read.iter().all(|one| one.id != 6 && one.ended));
+        assert!(read.iter().any(|one| one.id == 37 && one.state == State::Failed));
+        let downloads = Downloads { held: std::sync::Mutex::new(read), ..Downloads::default() };
+        assert_eq!(downloads.saved(37).ok(), None);
+        assert_eq!(downloads.saved(7).ok(), Some(PathBuf::from("/d/7.pdf")));
+        assert!(read_kept("not json", |_| true).is_empty());
     }
     #[test]
     fn a_name_keeps_what_it_can_and_is_never_a_path_a_device_or_nothing() {
@@ -579,7 +699,7 @@ mod tests {
         let two = begun(&downloads, "https://x.example/f", "C:/elsewhere/report.pdf");
         assert_eq!(one.name, "Report.pdf");
         assert_eq!(two.name, "report (1).pdf");
-        assert_eq!(two.id, one.id + 1);
+        assert!(two.id > one.id);
         assert_eq!(one.path, tmp().join("Report.pdf"));
     }
     #[test]

@@ -56,6 +56,13 @@ class Downloads {
     if (fresh && one.state !== 'cancelled') downloadStarted(one.name, { tab: one.tab })
     return fresh
   }
+  async load(): Promise<void> {
+    const earlier = await invoke<unknown[]>('web_downloads').catch(() => [])
+    const read = (Array.isArray(earlier) ? earlier : []).map(readDownload).filter((one) => one !== null)
+    this.list = read
+      .reduce((list, one) => (list.some((each) => each.id === one.id) ? list : [...list, one]), this.list)
+      .sort((one, other) => one.id - other.id)
+  }
   async open(id: number): Promise<void> {
     await invoke('web_download_open', { id }).catch(() => undefined)
   }

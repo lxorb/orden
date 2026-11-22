@@ -1,12 +1,14 @@
 import { expect, test, vi } from 'vitest'
 
 const asked: { command: string; id: unknown }[] = []
+let earlier: unknown[] = []
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
-  invoke: (command: string, args: Record<string, unknown>) => {
-    asked.push({ command, id: args.id })
+  invoke: (command: string, args?: Record<string, unknown>) => {
+    asked.push({ command, id: args?.id })
+    if (command === 'web_downloads') return Promise.resolve(earlier)
     return Promise.resolve(
-      command === 'web_download_saved' ? `/home/me/Downloads/slides (${String(args.id)}).pdf` : undefined,
+      command === 'web_download_saved' ? `/home/me/Downloads/slides (${String(args?.id)}).pdf` : undefined,
     )
   },
 }))
@@ -108,4 +110,23 @@ test('a report on its way when the reader stopped a download does not bring it b
   downloads.heard(one(20, { state: 'cancelled' }))
   expect(downloads.heard(one(20, { received: 5 }))).toBe(false)
   expect(downloads.list.some((each) => each.id === 20)).toBe(false)
+})
+test('the downloads of earlier runs come back once, in order, without a notice each', async () => {
+  downloads.list = [one(40, { state: 'going' })]
+  earlier = [
+    one(38, { state: 'done', received: 9, total: 9 }),
+    one(39, { state: 'failed' }),
+    one(40, { state: 'done' }),
+    { id: 'nope' },
+  ]
+  await downloads.load()
+  expect(downloads.list.map((each) => [each.id, each.state])).toEqual([
+    [38, 'done'],
+    [39, 'failed'],
+    [40, 'going'],
+  ])
+  await downloads.load()
+  expect(downloads.list).toHaveLength(3)
+  earlier = []
+  downloads.list = []
 })

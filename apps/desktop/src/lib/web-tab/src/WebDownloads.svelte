@@ -27,6 +27,9 @@
   aria-label="Downloads"
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
+  {#if rows.length === 0}
+    <p class="empty">No downloads yet</p>
+  {/if}
   <ul>
     {#each rows as one (one.id)}
       {@const share = fraction(one)}
@@ -86,6 +89,11 @@
     max-height: 60vh;
     overflow-y: auto;
     padding: var(--space-1);
+  }
+  .empty {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-muted);
   }
   ul {
     margin: 0;
