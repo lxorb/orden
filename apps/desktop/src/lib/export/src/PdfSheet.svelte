@@ -89,19 +89,21 @@
       </div>
       <div class="orden-setting">
         <span class="name">Orientation</span>
-        <div class="orden-setting-value"><div class="orden-segmented" role="radiogroup" aria-label="Orientation" use:segmented>
-          {#each ORIENTATIONS as one (one)}
-            <button
-              type="button"
-              role="radio"
-              aria-checked={choices.page.orientation === one}
-              class:on={choices.page.orientation === one}
-              onclick={() => choices.setPage({ orientation: one })}
-            >
-              {TURNS[one]}
-            </button>
-          {/each}
-        </div></div>
+        <div class="orden-setting-value">
+          <div class="orden-segmented" role="radiogroup" aria-label="Orientation" use:segmented>
+            {#each ORIENTATIONS as one (one)}
+              <button
+                type="button"
+                role="radio"
+                aria-checked={choices.page.orientation === one}
+                class:on={choices.page.orientation === one}
+                onclick={() => choices.setPage({ orientation: one })}
+              >
+                {TURNS[one]}
+              </button>
+            {/each}
+          </div>
+        </div>
       </div>
       <label class="orden-setting">
         <span class="name">Margin</span>
