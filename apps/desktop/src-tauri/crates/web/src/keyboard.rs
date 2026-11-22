@@ -66,6 +66,30 @@ static HOMES: LazyLock<Mutex<Homes>> = LazyLock::new(Mutex::default);
 fn homes<T>(look: impl FnOnce(&mut Homes) -> T) -> T {
     look(&mut HOMES.held())
 }
+#[derive(Debug, Default)]
+struct Engine {
+    focused: HashMap<String, String>,
+}
+#[cfg_attr(not(any(windows, test)), allow(dead_code))]
+impl Engine {
+    fn got(&mut self, window: &str, label: &str) {
+        if label == window {
+            self.focused.remove(window);
+        } else {
+            self.focused.insert(window.to_string(), label.to_string());
+        }
+    }
+    fn closed(&mut self, page: &str) {
+        self.focused.retain(|_, one| one != page);
+    }
+    fn holding(&self, window: &str) -> Option<&str> {
+        self.focused.get(window).map(String::as_str)
+    }
+}
+static ENGINE: LazyLock<Mutex<Engine>> = LazyLock::new(Mutex::default);
+fn engine<T>(look: impl FnOnce(&mut Engine) -> T) -> T {
+    look(&mut ENGINE.held())
+}
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 fn overlaps(page: [i32; 4], window: [i32; 4]) -> bool {
     let [left, top, right, bottom] = page;
@@ -97,12 +121,13 @@ pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
     }
 }
 pub fn hold_for_layer(app: &AppHandle, window: &str) {
-    if native::holding(window).is_none() {
+    if cfg!(windows) || native::holding(window).is_none() {
         let _ = native::take(app, window);
     }
 }
 pub fn closed(page: &str) {
     homes(|all| all.closed(page));
+    engine(|all| all.closed(page));
     native::let_go_of(page);
 }
 pub fn window_came_back(app: &AppHandle, window: &str) {
@@ -136,9 +161,18 @@ pub fn took(label: &str) {
     if !cfg!(windows) {
         return;
     }
+    let own = APP
+        .get()
+        .and_then(|app| app.get_webview(label))
+        .filter(|view| view.window().label() == label);
+    if own.is_some() {
+        engine(|all| all.got(label, label));
+        return;
+    }
     let Some((app, _, window)) = page_of(label) else {
         return;
     };
+    engine(|all| all.got(&window, label));
     if !native::seen(label) {
         return;
     }
@@ -234,6 +268,7 @@ pub fn keyboard_back(webview: Webview, tab: Option<String>) -> bool {
 }
 mod native {
     use orden_base::Held as _;
+    #[cfg(not(windows))]
     use std::collections::HashMap;
     use std::sync::Mutex;
 
@@ -305,6 +340,16 @@ mod native {
             super::page_took(app, &window, &label);
         }
     }
+    #[cfg(windows)]
+    pub fn holding(window: &str) -> Option<String> {
+        let page = super::engine(|all| all.holding(window).map(str::to_string))?;
+        let mine = super::APP
+            .get()
+            .and_then(|app| app.get_webview(&page))
+            .is_some_and(|view| view.window().label() == window);
+        (mine && seen(&page)).then_some(page)
+    }
+    #[cfg(not(windows))]
     pub fn holding(window: &str) -> Option<String> {
         let pages: HashMap<u32, String> = PAGES
             .held()
@@ -351,7 +396,7 @@ pub use native::x11_took;
 
 #[cfg(test)]
 mod tests {
-    use super::{Back, Homes, OWED_MS};
+    use super::{Back, Engine, Homes, OWED_MS};
 
     fn typing_in(window: &str, page: &str) -> Homes {
         let mut homes = Homes::default();
@@ -367,6 +412,41 @@ mod tests {
         assert!(!super::overlaps([-20000, -19999, -18976, -19354], window));
         assert!(!super::overlaps([1024, 0, 2048, 768], window));
         assert!(!super::overlaps([10, 10, 10, 400], window));
+    }
+    #[test]
+    fn the_engine_s_last_focused_page_holds_the_keyboard_until_the_app_page_or_its_close_takes_it()
+    {
+        let mut engine = Engine::default();
+        assert_eq!(engine.holding("orden-1"), None);
+        engine.got("orden-1", "web-a");
+        assert_eq!(engine.holding("orden-1"), Some("web-a"));
+        engine.got("orden-1", "web-b");
+        assert_eq!(engine.holding("orden-1"), Some("web-b"));
+        engine.got("orden-1", "orden-1");
+        assert_eq!(engine.holding("orden-1"), None);
+        engine.got("orden-1", "web-a");
+        engine.got("orden-2", "web-c");
+        engine.closed("web-a");
+        assert_eq!(engine.holding("orden-1"), None);
+        assert_eq!(engine.holding("orden-2"), Some("web-c"));
+        engine.got("orden-2", "orden-2");
+        assert_eq!(engine.holding("orden-2"), None);
+    }
+    #[test]
+    fn on_windows_keyboard_went_asks_the_engine_s_focus_and_never_the_system_s() {
+        let source = include_str!("keyboard.rs");
+        let native = &source[source.find("\nmod native").expect("native")..];
+        let holding = &native
+            [native.find("#[cfg(windows)]\n    pub fn holding(").expect("holding on windows")..];
+        let holding = &holding[..holding.find("\n    }\n").expect("its end")];
+        assert!(holding.contains("all.holding(window)") && holding.contains("seen(&page)"));
+        assert!(!source.contains(&["Get", "Focus"].concat()));
+        let took = &source[source.find("pub fn took(").expect("took")..];
+        let took = &took[..took.find("\n}\n").expect("its end")];
+        assert!(took.contains("all.got(label, label)") && took.contains("all.got(&window, label)"));
+        let closed = &source[source.find("pub fn closed(").expect("closed")..];
+        assert!(closed[..closed.find("\n}\n").expect("its end")]
+            .contains("engine(|all| all.closed(page))"));
     }
     #[test]
     fn a_window_nobody_typed_in_a_page_of_is_typing_in_its_own() {
