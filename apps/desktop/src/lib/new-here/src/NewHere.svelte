@@ -89,16 +89,13 @@
     void launch(slot, index)
   }
 
-  let claimed = false
   function taken(): boolean {
     const hub = element?.querySelector<HTMLElement>('.hub')
     if (!hub) return false
     const at = document.activeElement
-    const claims = chosenOn !== undefined && !claimed && overlays.depth === 0
-    if (!claims && at && at !== document.body && !element?.contains(at)) return false
+    if (at && at !== document.body && !element?.contains(at)) return false
     hub.focus({ preventScroll: true })
-    claimed = document.activeElement === hub
-    return claimed
+    return document.activeElement === hub
   }
   function showingHere(): boolean {
     return chosenOn === undefined || workspace.showing(paneId)?.id === chosenOn

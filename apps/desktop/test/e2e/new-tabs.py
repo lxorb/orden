@@ -58,6 +58,7 @@ NEW_TAB = """
   return {
     newTab: !!tab && ws.isNewTab(tab),
     middle: !!at?.matches('[data-new-here] .hub'),
+    address: at?.getAttribute('aria-label') === 'Address',
     picked: !!here?.querySelector('.hub.picked'),
     quarters: here
       ? [...here.querySelectorAll('[data-slot]')].map((one) =>
@@ -174,10 +175,10 @@ def chooser(page) -> None:
         wrong(f"Ctrl+T did not make a new tab: {state['active']}")
     else:
         say("Control+T              -> a new tab")
-    if not settles(page, f"() => ({NEW_TAB})().middle") or not page.evaluate(NEW_TAB)["picked"]:
-        wrong(f"the new tab's middle did not take the keyboard: {page.evaluate(NEW_TAB)}")
+    if not settles(page, f"() => ({NEW_TAB})().address") or not page.evaluate(NEW_TAB)["picked"]:
+        wrong(f"the new tab's address did not take the keyboard over its sun: {page.evaluate(NEW_TAB)}")
     else:
-        say("the keyboard           -> on the middle of the sun, picked")
+        say("the keyboard           -> in the address, over the sun, its middle picked")
     if new["quarters"] != QUARTERS:
         wrong(f"the kinds are not in their quarters: {new['quarters']}")
     else:
@@ -191,6 +192,7 @@ def chooser(page) -> None:
     else:
         say("its name               -> New tab, in the strip and on the window")
     page.screenshot(path=str(SHOTS / "new-tab.png"))
+    page.evaluate("() => document.querySelector('[data-new-here] .hub')?.focus()")
     page.keyboard.press("KeyC")
     if not settles(page, "() => window.ordenApp.workspace.active?.kind === 'canvas'", 4000):
         wrong(f"C on a new tab made no plane: {page.evaluate(STATE)['active']}")
@@ -211,8 +213,8 @@ def chooser(page) -> None:
         wrong(f"the plus did not make a new tab: {page.evaluate(STATE)['active']}")
     else:
         say("the plus               -> a new tab, no menu")
-    if not settles(page, f"() => ({NEW_TAB})().middle"):
-        wrong("the plus kept the keyboard from the new tab's middle")
+    if not settles(page, f"() => ({NEW_TAB})().address"):
+        wrong("the plus did not put the keyboard in the new tab's address")
     choose_kind(page, "web")
     settles(page, f"() => window.ordenApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab", 4000)
     state = page.evaluate(STATE)

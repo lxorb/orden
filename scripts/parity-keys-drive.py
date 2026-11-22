@@ -946,7 +946,11 @@ return true
         state = self.js(address)
         made = self.js("orden.workspace.tabs.length")
         fresh = isinstance(before, int) and isinstance(made, int) and made > before
-        self.row(4, "a new empty tab (Mod-t) starts in its address", {"opened": fresh, "state": state}, "no note counterpart", fresh and isinstance(state, dict) and state.get("address") is True)
+        token = self.token()
+        self.keys.typed(token)
+        time.sleep(0.6)
+        typed = self.js(f"(() => {{ const one = document.activeElement; return !!one?.closest?.('.webbar') && one.tagName === 'INPUT' && one.value.includes({json.dumps(token)}) }})()") is True
+        self.row(4, "a new empty tab (Mod-t) starts in its address, and what is typed lands there", {"opened": fresh, "state": state, "typed in the address": typed}, "no note counterpart", fresh and isinstance(state, dict) and state.get("address") is True and typed)
         self.reset()
     def bar_popups(self) -> None:
         listen = (
