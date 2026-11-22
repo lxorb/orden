@@ -18,6 +18,17 @@ describe('what an agent may do', () => {
   test('every window verb names the scope it needs, or none', () => {
     expect(AGENT_WINDOW_VERBS.list_notes).toBe('notes.read')
     expect(AGENT_WINDOW_VERBS.list_spaces).toBeNull()
+    for (const verb of [
+      'time_tracker',
+      'time_blocks',
+      'time_activities',
+      'time_summary',
+      'time_health',
+      'time_files',
+      'time_settings',
+    ]) {
+      expect(AGENT_WINDOW_VERBS[verb], verb).toBe('time')
+    }
   })
   test('no window verb is also a browser verb', () => {
     const browser = new Set<string>(BROWSER_VERBS)
