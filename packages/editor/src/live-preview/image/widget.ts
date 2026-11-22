@@ -1,7 +1,6 @@
 import { EditorSelection, type EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { pressedByPointer } from '../../press'
-import { later } from '../../shared'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
 import { imageAt, type ImageSpan, type ImageSpec, imageMarkup, retag, sourceCaret, withZoom } from './markup'
@@ -48,7 +47,6 @@ export interface Parts {
   box: HTMLElement
   image: HTMLImageElement
   missing: HTMLElement
-  alt: HTMLInputElement
   size: HTMLButtonElement
   badge: HTMLElement
   tools: HTMLElement
@@ -144,7 +142,6 @@ export class ImageWidget extends OrdenWidget {
       box,
       image,
       missing: path,
-      alt: toolbar.alt,
       size: toolbar.size,
       badge,
       tools: toolbar.tools,
@@ -206,7 +203,6 @@ export class ImageWidget extends OrdenWidget {
     parts.image.title = image.title
     parts.image.style.width = displayWidth(image, natural)
     parts.missing.textContent = image.src
-    if (document.activeElement !== parts.alt) parts.alt.value = image.alt
     showSize(parts.size, image.zoom, natural)
     const plain = image.zoom === 100 && !image.width
     parts.size.disabled = plain
@@ -217,65 +213,9 @@ export class ImageWidget extends OrdenWidget {
     const target = event.target
     return target instanceof Element && target.closest('.orden-image-tools') !== null
   }
-  private toolbar(
-    view: EditorView,
-    frame: HTMLElement,
-  ): { tools: HTMLElement; alt: HTMLInputElement; size: HTMLButtonElement } {
+  private toolbar(view: EditorView, frame: HTMLElement): { tools: HTMLElement; size: HTMLButtonElement } {
     const tools = document.createElement('span')
     tools.className = 'orden-image-tools'
-    const alt = document.createElement('input')
-    alt.className = 'orden-image-alt'
-    alt.type = 'text'
-    alt.placeholder = 'Describe the image'
-    alt.spellcheck = false
-    alt.setAttribute('aria-label', 'Describe the image')
-    let held: {
-      image: ImageSpan
-      text: string
-      land: ReturnType<typeof later>
-    } | null = null
-    const stillThere = (state: EditorState) => {
-      if (!held) return null
-      return state.sliceDoc(held.image.from, held.image.to) === held.text ? held.image : null
-    }
-    const commitAlt = () => {
-      const next = alt.value.trim()
-      const landing = held?.land
-      if (!landing) {
-        const current = imageOfFrame(view, frame)
-        if (current && next !== current.alt) {
-          rewrite(view, current, { ...current, alt: next }, 'input.image.alt')
-        }
-        return
-      }
-      landing((state) => {
-        const current = (state === view.state ? imageOfFrame(view, frame) : null) ?? stillThere(state)
-        if (!current || next === current.alt) return null
-        return rewritten(state, current, { ...current, alt: next }, 'input.image.alt')
-      })
-    }
-    alt.addEventListener('keydown', (event) => {
-      event.stopPropagation()
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        view.focus()
-      } else if (event.key === 'Escape') {
-        event.preventDefault()
-        alt.value = imageOfFrame(view, frame)?.alt ?? ''
-        view.focus()
-      }
-    })
-    alt.addEventListener('focus', () => {
-      const image = imageOfFrame(view, frame)
-      held = image ? { image, text: view.state.sliceDoc(image.from, image.to), land: later(view) } : null
-    })
-    alt.addEventListener('blur', () => queueMicrotask(commitAlt))
-    this.onDestroy(frame, () => queueMicrotask(commitAlt))
-    alt.addEventListener('pointerdown', (event) => event.stopPropagation())
-    tools.append(alt)
-    const separator = document.createElement('span')
-    separator.className = 'orden-image-tools-gap'
-    tools.append(separator)
     const button = (className: string, title: string, content: Node | string, action: (image: ImageSpan) => void) => {
       const control = document.createElement('button')
       control.type = 'button'
@@ -328,7 +268,7 @@ export class ImageWidget extends OrdenWidget {
       })
     })
     button('orden-image-delete', 'Delete image', icon(ICONS.trash), (image) => remove(view, image))
-    return { tools, alt, size }
+    return { tools, size }
   }
   private startResize(event: PointerEvent, view: EditorView, frame: HTMLElement, handle: HTMLElement) {
     if (event.button !== 0) return
