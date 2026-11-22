@@ -58,8 +58,8 @@ describe('the General part of a space in Settings', () => {
 describe('the space menu', () => {
   test('catches a press outside it with a clear scrim, which covers nothing of a page under it (#2484)', () => {
     const source = readFileSync(join(import.meta.dirname, '..', 'src', 'SpaceMenu.svelte'), 'utf8')
-    const catcher = /<div class="([^"]*\bcatch\b[^"]*)"[^>]*>/.exec(source)
-    expect(catcher?.[1].split(' ')).toEqual(expect.arrayContaining(['catch', 'orden-scrim', 'is-clear']))
-    expect(catcher?.[0]).not.toContain('data-covers')
+    const [tag = '', classes = ''] = /<div class="([^"]*\bcatch\b[^"]*)"[^>]*>/.exec(source) ?? []
+    expect(classes.split(' ')).toEqual(expect.arrayContaining(['catch', 'orden-scrim', 'is-clear']))
+    expect(tag).not.toContain('data-covers')
   })
 })
