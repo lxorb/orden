@@ -117,6 +117,15 @@
   let finding = $state(false)
   let askedFind = $state(0)
   const camera = $derived(store.camera)
+  const STILL_AFTER = 180
+  let moving = $state(false)
+  const looked = $derived(`${String(camera.x)} ${String(camera.y)} ${String(camera.scale)}`)
+  $effect(() => {
+    if (!looked) return
+    moving = true
+    const stopping = setTimeout(() => (moving = false), STILL_AFTER)
+    return () => clearTimeout(stopping)
+  })
   const unit = $derived(1 / camera.scale)
   const turn = $derived(turnOf(camera))
   const spanX = $derived(turn ? Math.ceil(Math.hypot(width, height)) : width)
@@ -1299,7 +1308,7 @@
       />
     {/if}
 
-    <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
+    <div class="plane" class:moving style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
       <CanvasEdges edges={drawnEdges} nodes={shown.nodes} picked={store.pickedSet} provisional={drawing} />
 
       {#each drawnCards as node (node.id)}
@@ -1576,6 +1585,9 @@
     width: 0;
     height: 0;
     transform-origin: 0 0;
+  }
+  .plane.moving {
+    will-change: transform;
   }
   .port,
   .handle,

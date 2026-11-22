@@ -66,6 +66,9 @@
     onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
     onplaying?: (on: boolean) => void
   } = $props()
+  const DASH = 6
+  const GAP = 5
+  const FRAME_ROUND = 12
   const colour = $derived(shownColour(node.color))
   let source = $state<EmbeddedNote | null>(null)
   $effect(() => {
@@ -319,9 +322,36 @@
   {:else if node.type === 'group' && node.label}
     <span class="label">{node.label}</span>
   {/if}
+  {#if node.type === 'group'}
+    {@const line = 1 / scale}
+    <svg class="frame" aria-hidden="true">
+      <rect
+        x={line / 2}
+        y={line / 2}
+        width={Math.max(0, node.width - line)}
+        height={Math.max(0, node.height - line)}
+        rx={FRAME_ROUND}
+        stroke-width={line}
+        stroke-dasharray="{DASH * line} {GAP * line}"
+      />
+    </svg>
+  {/if}
 </div>
 
 <style>
+  .frame {
+    position: absolute;
+    inset: -1px;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    overflow: visible;
+    pointer-events: none;
+    fill: none;
+    stroke: var(--card-colour, var(--line-strong));
+  }
+  .node.picked .frame {
+    stroke: var(--accent);
+  }
   .node {
     position: absolute;
     box-sizing: border-box;
@@ -353,7 +383,7 @@
   }
   .node.group {
     background: color-mix(in srgb, var(--card-colour, var(--muted)) 7%, transparent);
-    border-style: dashed;
+    border-color: transparent;
     border-radius: var(--radius-lg);
     box-shadow: none;
     overflow: visible;
