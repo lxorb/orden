@@ -6,7 +6,7 @@ import { fenceCodeAt } from '../fence'
 import { pressedByKey } from '../press'
 import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
-import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
+import { aiFenceAt, aiRuns, askAiFence, stopAskAt } from '../ai/run'
 import { later } from '../shared'
 
 export class BulletWidget extends OrdenWidget {
@@ -152,7 +152,7 @@ export class FenceHeaderWidget extends OrdenWidget {
     pressedByKey(label, edit)
     controls.append(label)
     if (isRunnableLanguage(this.language)) controls.append(this.runButton(view, block))
-    else if (isAiLanguage(this.language)) controls.append(this.askButton(view, block))
+    else if (isAiLanguage(this.language) && aiRuns()) controls.append(this.askButton(view, block))
     const copy = document.createElement('button')
     copy.className = 'orden-fence-copy'
     copy.type = 'button'

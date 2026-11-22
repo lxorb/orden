@@ -27,6 +27,7 @@ let runner: AiRunner | null = null
 export function setAiRunner(next: AiRunner | null) {
   runner = next
 }
+export const aiRuns = (): boolean => runner !== null
 export interface AiFence {
   from: number
   to: number
