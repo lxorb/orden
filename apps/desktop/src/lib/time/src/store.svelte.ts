@@ -244,6 +244,17 @@ export class TimeStore {
     if (!activityName(next.name)) return
     this.written([this.write('activity', id, activityValue(next))])
   }
+  moveActivity(id: string, to: number): void {
+    const live = this.activities.filter((one) => !one.archived)
+    const moving = live.find((one) => one.id === id)
+    if (!moving) return
+    const next = live.filter((one) => one.id !== id)
+    next.splice(Math.max(0, Math.min(next.length, to)), 0, moving)
+    const rows = next.flatMap((one, index) =>
+      one.order === index + 1 ? [] : [this.write('activity', one.id, activityValue({ ...one, order: index + 1 }))],
+    )
+    if (rows.length) this.written(rows)
+  }
   removeActivity(id: string): void {
     const rows = [this.write('activity', id, null)]
     for (const rule of this.rules) {

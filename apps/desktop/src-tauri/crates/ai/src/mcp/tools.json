@@ -1271,12 +1271,16 @@
   },
   {
     "name": "time_activities",
-    "description": "The tracker's activities: list, create (name, tint, icon, parent), rename, recolor, archive, unarchive, delete.",
+    "description": "The tracker's activities: list, create (name, tint, icon, parent), rename, recolor, archive, unarchive, move (to: 0 for the first), delete.",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "op": { "type": "string", "enum": ["list", "create", "rename", "recolor", "archive", "unarchive", "delete"] },
+        "op": {
+          "type": "string",
+          "enum": ["list", "create", "rename", "recolor", "archive", "unarchive", "move", "delete"]
+        },
         "activity": { "type": "string", "description": "activity id or name" },
+        "to": { "type": "integer", "description": "the place to move it to, 0 for the first" },
         "name": { "type": "string" },
         "tint": { "type": "string" },
         "icon": { "type": "string" },

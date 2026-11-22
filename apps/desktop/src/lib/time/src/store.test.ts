@@ -66,6 +66,18 @@ describe('the time a person records', () => {
       [early.id, 100],
     ])
   })
+  test('an activity moved to another place keeps the others in their order', async () => {
+    const store = await opened(owner(), null)
+    for (const name of ['A', 'B', 'C', 'D']) store.addActivity(name)
+    const id = (name: string) => store.activities.find((one) => one.name === name)?.id ?? ''
+    store.moveActivity(id('D'), 0)
+    expect(store.activities.map((one) => one.name)).toEqual(['D', 'A', 'B', 'C'])
+    store.moveActivity(id('D'), 9)
+    expect(store.activities.map((one) => one.name)).toEqual(['A', 'B', 'C', 'D'])
+    store.changeActivity(id('B'), { archived: true })
+    store.moveActivity(id('A'), 1)
+    expect(store.activities.filter((one) => !one.archived).map((one) => one.name)).toEqual(['C', 'A', 'D'])
+  })
   test('taking an activity away leaves its spans without one', async () => {
     const store = await opened(owner(), null)
     const uni = store.addActivity('Uni')
