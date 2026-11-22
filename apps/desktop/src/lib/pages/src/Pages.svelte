@@ -160,7 +160,7 @@
   })
   $effect(() => {
     if (store.framed || !width || !height || !store.widest) return
-    store.fitWidth(false)
+    store.open(false)
   })
   $effect(() => {
     if (focused && !PAPER_TOOLS.has(tools.which)) tools.choose('select')

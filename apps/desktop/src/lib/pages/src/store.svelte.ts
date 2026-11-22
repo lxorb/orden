@@ -15,9 +15,12 @@ import { strokeBox } from '../../plane/src/api'
 import { type KeptView, CanvasStore } from '../../canvas/src/api'
 import type { Highlight, PaperAt, PdfHeading } from '../../pdf/src/api'
 import { stillness } from '../../platform/src/api'
+import { viewport } from '../../ui-kit/src/api'
 import type { Tab } from '../../documents/src/api'
 
 const MARGIN = 28
+export const READING = 1.15
+export const MOST_OF_A_PAGE = 0.6
 export const PEEK = 88
 const SETTLE = 420
 export class PagesStore extends CanvasStore {
@@ -42,7 +45,7 @@ export class PagesStore extends CanvasStore {
     if (was.width === width && was.height === height) return
     this.pane = { width, height }
     if (this.chose || !width || !height || !this.widest) return
-    if (this.framed) this.fitWidth()
+    if (this.framed) this.open()
   }
   private theirs() {
     this.chose = true
@@ -124,8 +127,13 @@ export class PagesStore extends CanvasStore {
       y: page.y + down / 2 - MARGIN / this.camera.scale,
     })
   }
+  open(keepTop = true) {
+    this.fitTo(this.opening, keepTop)
+  }
   fitWidth(keepTop = true) {
-    const scale = this.fitted
+    this.fitTo(this.fitted, keepTop)
+  }
+  private fitTo(scale: number, keepTop: boolean) {
     if (!scale || !this.pane.height) return
     this.halt()
     const down = this.pane.height / scale
@@ -149,6 +157,13 @@ export class PagesStore extends CanvasStore {
     if (!widest || !this.pane.width) return 0
     return clampScale((this.pane.width - 2 * MARGIN) / widest)
   }
+  get opening(): number {
+    const across = this.fitted
+    if (!across || !this.pane.height || viewport.device === 'phone') return across
+    const tallest = this.pages.reduce((most, page) => Math.max(most, page.height), 0)
+    const down = tallest ? (this.pane.height - 2 * MARGIN) / (MOST_OF_A_PAGE * tallest) : across
+    return clampScale(Math.min(across, READING, down))
+  }
   fitPage() {
     const page = this.pages[this.showing - 1] ?? this.last
     if (!page || !this.pane.width || !this.pane.height) return
@@ -171,7 +186,7 @@ export class PagesStore extends CanvasStore {
     })
   }
   fitAgain() {
-    this.chose = false
+    this.theirs()
     this.fitWidth()
   }
   addPage(after: string | null = null): number {
