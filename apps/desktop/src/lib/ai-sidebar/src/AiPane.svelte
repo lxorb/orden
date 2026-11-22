@@ -148,16 +148,6 @@
     usage.forget(provider.id)
     ai.remove(provider.id)
   }
-  async function removeDevice(id: string, name: string) {
-    const { prompt } = await import('../../ui-kit/src/api')
-    const sure = await prompt.confirm({
-      title: `Remove ${name}?`,
-      detail: 'The device can no longer read your AI accounts, and the others get a new key.',
-      confirmLabel: 'Remove',
-      danger: true,
-    })
-    if (sure) await vault.remove(id).catch(() => false)
-  }
   function engineName(engine: Engine): string {
     if (engine === 'auto') return 'Auto'
     if (engine === 'local') return 'This computer'
@@ -184,7 +174,7 @@
     <div class="orden-setting setting" onclick={() => void keepBrowserInVault(!browserVault.on)}>
       {@render hinted(
         'Keep this browser’s keys in the vault',
-        'Syncs this browser’s AI keys with your other devices through the vault.',
+        'Syncs this browser’s AI keys with your other devices through your Orden account.',
       )}
       <Switch
         on={browserVault.on}
@@ -196,52 +186,6 @@
   <p class="hint caption">
     Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.
   </p>
-{/if}
-
-{#if vault.standing === 'offered'}
-  <div class="card" transition:slide={{ duration: dur(160) }}>
-    <div class="orden-setting setting">
-      <span class="name">
-        {vault.offeredBy} offers this device your AI vault
-      </span>
-      <div class="row">
-        {#if vault.digits}<span class="hint digits">{vault.digits}</span>{/if}
-        <button class="orden-chip" onclick={() => void vault.join()}>Join</button>
-      </div>
-    </div>
-  </div>
-{/if}
-
-{#if vault.standing === 'waiting' || vault.standing === 'stranded'}
-  <div class="card" transition:slide={{ duration: dur(160) }}>
-    <div class="orden-setting setting">
-      <span class="name">
-        {vault.standing === 'waiting' ? 'Allow this device on another one' : 'Start over'}
-      </span>
-      <div class="row">
-        {#if vault.standing === 'waiting'}
-          <span class="hint digits">{vault.digits || '…'}</span>
-        {:else}
-          <button class="orden-chip" onclick={() => void vault.startOver()}>Start over</button>
-        {/if}
-      </div>
-    </div>
-  </div>
-{/if}
-
-{#if vault.standing === 'open' && vault.allowed.length}
-  <h3>Devices with your AI vault</h3>
-  {#each vault.allowed as one (one.id)}
-    <div class="card boxed" data-device={one.id} transition:slide={{ duration: dur(160) }}>
-      <div class="orden-setting setting">
-        <span class="name">{one.name}</span>
-        <div class="row">
-          {#if one.mine}<span class="hint">This device</span>{/if}
-          <button class="orden-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}>Remove</button>
-        </div>
-      </div>
-    </div>
-  {/each}
 {/if}
 
 {#if ai.accounts.length}
@@ -504,10 +448,6 @@
   }
   .hint.on {
     color: var(--accent);
-  }
-  .digits {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
   }
   .boxed {
     padding: var(--space-1) var(--space-3);
