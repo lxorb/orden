@@ -83,7 +83,7 @@ pub async fn extension_popup_open(
     store: Option<String>,
     rect: Rect,
 ) -> Result<Option<String>, String> {
-    let _ = store;
+    let store = orden_web::web_stores::named(store.as_deref())?.map(str::to_owned);
     let label = fresh_label();
     want(Some(label.clone()));
     let app = webview.app_handle().clone();
@@ -98,7 +98,7 @@ pub async fn extension_popup_open(
         .focused(orden_placement::placement::away().is_none())
         .disable_drag_drop_handler()
         .on_navigation(orden_web::web_tabs::tab_may_open);
-    let builder = orden_web::engine::web_store(builder, &app, None)?;
+    let builder = orden_web::engine::web_store(builder, &app, store.as_deref())?;
     let measuring = app.clone();
     let builder = builder.on_page_load(move |view, payload| {
         if !matches!(payload.event(), tauri::webview::PageLoadEvent::Finished) {
@@ -106,8 +106,8 @@ pub async fn extension_popup_open(
         }
         let (app, view) = (measuring.clone(), view.clone());
         if refused(payload.url()) {
-            let id = id.clone();
-            std::thread::spawn(move || failed(&app, &view, &id));
+            let (id, elsewhere) = (id.clone(), store.is_some());
+            std::thread::spawn(move || failed(&app, &view, &id, elsewhere));
         } else if orden_web::extension_ids::ours(payload.url()) {
             std::thread::spawn(move || measure(&app, &view));
         }
@@ -132,12 +132,14 @@ pub async fn extension_popup_open(
             return;
         }
         closed(&building);
+        let mut over = None;
         if let Some(page) = building.get_webview(&orden_web::web_tabs::label_of(&tab)) {
             if !orden_web::web_answers::answers(&page) {
                 orden_web::web_answers::said(&building);
                 let _ = sending.try_send(Err(orden_web::web_answers::NOT_ANSWERING.to_owned()));
                 return;
             }
+            over = page.url().ok().map(String::from);
         }
         let scale = orden_web::page_scale::of(&window).unwrap_or(1.0);
         let made = orden_web::engine::add_child(
@@ -149,7 +151,7 @@ pub async fn extension_popup_open(
         .map_err(|error| format!("that popup could not be opened: {error}"));
         let made = made.map(|view| {
             *SHOWN.held() = Some(label.clone());
-            sent(&building, &view, &address);
+            sent(&view, &address, over.as_deref());
             Some(label)
         });
         let _ = sending.try_send(made);
@@ -205,14 +207,17 @@ fn went(app: &AppHandle, label: &str) {
 fn refused(url: &Url) -> bool {
     url.scheme() == "chrome-error"
 }
-fn why(code: Option<&str>) -> String {
+const NOT_HERE: &str = "ERR_BLOCKED_BY_CLIENT";
+const STARTS_HERE: &str = "It starts in this tab's web data when Orden next opens";
+fn why(code: Option<&str>, elsewhere: bool) -> String {
     match code.map(str::trim).filter(|code| !code.is_empty()) {
+        Some(NOT_HERE) if elsewhere => STARTS_HERE.to_owned(),
         Some(code) => format!("Chromium would not open this extension's popup: {code}"),
         None => "Chromium would not open this extension's popup".to_owned(),
     }
 }
 const CODE: &str = "(() => { const one = document.querySelector('.error-code'); return one ? one.textContent : '' })()";
-fn failed(app: &AppHandle, view: &Webview, id: &str) {
+fn failed(app: &AppHandle, view: &Webview, id: &str, elsewhere: bool) {
     let code = orden_web::engine::devtools::call(
         view,
         None,
@@ -222,9 +227,11 @@ fn failed(app: &AppHandle, view: &Webview, id: &str) {
     )
     .ok()
     .and_then(|said| said.get("result")?.get("value")?.as_str().map(str::to_owned));
-    let problem = why(code.as_deref());
-    super::went(id, Some(problem.clone()));
-    super::changed(app);
+    let problem = why(code.as_deref(), elsewhere);
+    if problem != STARTS_HERE {
+        super::went(id, Some(problem.clone()));
+        super::changed(app);
+    }
     let _ = app.emit(SAID, Said::Failed { problem });
     let (closing, label) = (app.clone(), view.label().to_owned());
     let _ = app.run_on_main_thread(move || went(&closing, &label));
@@ -232,14 +239,50 @@ fn failed(app: &AppHandle, view: &Webview, id: &str) {
 fn blank() -> Result<Url, String> {
     "about:blank".parse().map_err(|_| "no blank page to start from".to_string())
 }
-fn sent(app: &AppHandle, view: &Webview, address: &Url) {
-    {
-        let _ = app;
-        let (view, address) = (view.clone(), address.clone());
-        std::thread::spawn(move || {
-            let _ = orden_web::web_worlds::sent(&view, &address, "");
-        });
+const TARGET: &str = r"(() => {
+  const want = WANTED, tabs = globalThis.chrome && chrome.tabs, windows = globalThis.chrome && chrome.windows
+  if (!tabs || typeof tabs.query !== 'function') return
+  const query = tabs.query.bind(tabs), own = tabs.getCurrent ? tabs.getCurrent.bind(tabs) : () => Promise.resolve(undefined)
+  let found
+  const theTab = () => (found ??= Promise.all([query({}), own()]).then(([all, self]) => {
+    const others = all.filter((one) => !self || one.id !== self.id)
+    return others.find((one) => want && one.url === want) ?? (others.length === 1 ? others[0] : null)
+  }, () => null))
+  const either = (promise, done) => {
+    if (typeof done !== 'function') return promise
+    promise.then((value) => done(value), () => done())
+  }
+  tabs.query = (info, done) => either(info && (info.currentWindow || info.lastFocusedWindow) ? theTab().then((one) => {
+    if (!one) return query(info)
+    const { currentWindow, lastFocusedWindow, ...rest } = info
+    return query({ ...rest, windowId: one.windowId })
+  }) : query(info), done)
+  if (!windows) return
+  const get = windows.get.bind(windows)
+  for (const name of ['getCurrent', 'getLastFocused']) {
+    if (typeof windows[name] !== 'function') continue
+    const asked = windows[name].bind(windows)
+    windows[name] = (options, done) => {
+      if (typeof options === 'function') [done, options] = [options, undefined]
+      return either(theTab().then((one) => (one ? get(one.windowId, options ?? {}) : asked(options ?? {}))), done)
     }
+  }
+})()";
+fn targeting(over: Option<&str>) -> String {
+    TARGET.replace("WANTED", &serde_json::Value::from(over.unwrap_or_default()).to_string())
+}
+fn sent(view: &Webview, address: &Url, over: Option<&str>) {
+    let (view, address, source) = (view.clone(), address.clone(), targeting(over));
+    std::thread::spawn(move || {
+        let patience = Duration::from_secs(2);
+        let call = |method: &str, params: serde_json::Value| {
+            orden_web::engine::devtools::call(&view, None, method, &params, patience)
+        };
+        let _ = call("Page.enable", serde_json::json!({}));
+        let _ =
+            call("Page.addScriptToEvaluateOnNewDocument", serde_json::json!({ "source": source }));
+        let _ = view.navigate(address);
+    });
 }
 fn measure(app: &AppHandle, view: &Webview) {
     let mine = measuring();
@@ -366,21 +409,39 @@ mod tests {
             assert!(!refused(&address(fine)), "{fine}");
         }
         assert_eq!(
-            why(Some("ERR_BLOCKED_BY_CLIENT")),
+            why(Some("ERR_BLOCKED_BY_CLIENT"), false),
             "Chromium would not open this extension's popup: ERR_BLOCKED_BY_CLIENT"
         );
-        assert_eq!(why(Some("  ")), "Chromium would not open this extension's popup");
-        assert_eq!(why(None), "Chromium would not open this extension's popup");
-        let said = serde_json::to_value(Said::Failed { problem: why(None) }).expect("said");
+        assert_eq!(why(Some(" ERR_BLOCKED_BY_CLIENT "), true), STARTS_HERE);
+        assert_eq!(
+            why(Some("ERR_FILE_NOT_FOUND"), true),
+            "Chromium would not open this extension's popup: ERR_FILE_NOT_FOUND"
+        );
+        assert_eq!(why(Some("  "), true), "Chromium would not open this extension's popup");
+        assert_eq!(why(None, false), "Chromium would not open this extension's popup");
+        let said = serde_json::to_value(Said::Failed { problem: why(None, false) }).expect("said");
         assert_eq!(said["kind"], "failed");
         assert_eq!(said["problem"], "Chromium would not open this extension's popup");
     }
     #[test]
-    fn a_popup_opens_where_its_extension_runs_whatever_store_its_tab_is_in() {
+    fn a_popup_opens_in_the_web_data_of_the_tab_it_was_opened_from() {
         let source = include_str!("popup.rs").replace('\r', "");
         let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
-        assert!(code.contains("web_store(builder, &app, None)"));
-        assert!(!code.contains("store.as_deref()"));
+        assert_eq!(code.matches("web_store(").count(), 1);
+        assert!(code.contains("web_store(builder, &app, store.as_deref())"));
+        assert!(!code.contains("let _ = store;"));
+    }
+    #[test]
+    fn a_popup_is_told_which_tab_it_was_opened_over_and_nothing_else_can_be_written_into_it() {
+        let told = targeting(Some("https://example.com/a?b=\"c\"</script>"));
+        assert!(
+            told.contains(r#"const want = "https://example.com/a?b=\"c\"</script>""#),
+            "{told}"
+        );
+        assert!(!told.contains("WANTED"));
+        assert!(targeting(None).contains(r#"const want = """#));
+        assert!(TARGET.contains("info.currentWindow || info.lastFocusedWindow"));
+        assert!(TARGET.contains("windowId: one.windowId"));
     }
     #[test]
     fn a_newer_measuring_ends_the_older() {

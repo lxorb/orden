@@ -34,6 +34,7 @@ static PENDING: LazyLock<RwLock<HashSet<String>>> = LazyLock::new(RwLock::defaul
 const PATIENCE: std::time::Duration = std::time::Duration::from_secs(20);
 const PREINSTALLED: &str = "ublock-origin-lite";
 const DECIDED: &str = ".preinstalled";
+static WOKEN: std::sync::Once = std::sync::Once::new();
 pub fn root(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = orden_base::paths::config_dir(app)?.join("extensions");
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
@@ -48,6 +49,10 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
         if let Ok(root) = root(app) {
             TIDIED.call_once(|| library::tidy(&root));
         }
+        WOKEN.call_once(|| {
+            let app = app.clone();
+            std::thread::spawn(move || chromium::woken_everywhere(&app, &kept_on(&app)));
+        });
         let installed = chromium::installed(app);
         match root(app) {
             Ok(root) => {
@@ -132,7 +137,25 @@ fn picture(folder: &Path, path: &str) -> Option<String> {
         format!("data:{kind};base64,{}", base64::engine::general_purpose::STANDARD.encode(bytes))
     })
 }
+fn kept_on(app: &AppHandle) -> Vec<String> {
+    let Ok(root) = root(app) else {
+        return Vec::new();
+    };
+    library::read(&root)
+        .into_iter()
+        .filter(|one| one.enabled && library::ours(&root, one))
+        .map(|one| one.id)
+        .collect()
+}
+fn woken_where_opened(app: &AppHandle) {
+    let waking = app.clone();
+    orden_web::engine::when_a_store_opens(move |store| {
+        let (app, store) = (waking.clone(), store.to_owned());
+        std::thread::spawn(move || chromium::woken(&app, Some(&store), &kept_on(&app)));
+    });
+}
 pub fn preinstall(app: &AppHandle) {
+    woken_where_opened(app);
     let Ok(decided) = root(app).map(|root| root.join(DECIDED)) else {
         return;
     };
@@ -313,6 +336,9 @@ pub async fn extensions_set(
                 }
                 (Ok(()), None) => {}
             }
+            if on {
+                chromium::woken_everywhere(&app, std::slice::from_ref(&id));
+            }
         }
         {
             let _writing = WRITING.held();
@@ -385,16 +411,18 @@ fn taken_out(
     still_there: impl FnOnce() -> Option<bool>,
     running: bool,
 ) -> Result<(), String> {
-    let Err(why) = live::unload(cdp, id) else {
-        return Ok(());
-    };
-    if fallback().is_ok() {
-        return Ok(());
-    }
-    match still_there() {
-        Some(false) => Ok(()),
-        None if !running => Ok(()),
-        _ => Err(why),
+    let unloaded = live::unload(cdp, id);
+    match (unloaded, fallback()) {
+        (_, Ok(())) => Ok(()),
+        (Ok(()), Err(why)) => match still_there() {
+            Some(true) => Err(why),
+            _ => Ok(()),
+        },
+        (Err(why), Err(_)) => match still_there() {
+            Some(false) => Ok(()),
+            None if !running => Ok(()),
+            _ => Err(why),
+        },
     }
 }
 #[tauri::command]
@@ -769,7 +797,19 @@ mod tests {
             ),
             Ok(())
         );
-        assert!(!fallback_asked);
+        assert!(fallback_asked, "the pipe reaches one web data, so every other one is asked too");
+        let elsewhere = |there: Option<bool>| {
+            taken_out(
+                &mut |_: &str, _: Value| gone(),
+                &id,
+                || Err("the engine did not remove it".to_owned()),
+                || there,
+                true,
+            )
+        };
+        assert_eq!(elsewhere(Some(true)), Err("the engine did not remove it".to_owned()));
+        assert_eq!(elsewhere(Some(false)), Ok(()));
+        assert_eq!(elsewhere(None), Ok(()));
         let refused = |fallback: Result<(), String>, there: Option<bool>, running: bool| {
             taken_out(&mut |_: &str, _: Value| kept_it(), &id, || fallback, || there, running)
         };

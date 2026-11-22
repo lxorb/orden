@@ -348,7 +348,7 @@ def restarted(drive: Drive) -> None:
     drive.step("the extension is pending until Orden opens again")
     restart = drive.eval("[...document.querySelectorAll('button')].map((one) => one.innerText.trim()).find((words) => /^restart/i.test(words)) ?? null")
     print(f"a restart button: {restart!r}", flush=True)
-    drive.eval("orden.settings.show('general'); return true")
+    drive.eval("orden.settings.show('browser'); return true")
     rows = drive.waited(SETTINGS, 20, "Settings has no Extensions card")
     drive.shot("pending")
     if PENDING not in str(rows):
@@ -603,7 +603,7 @@ def switched(drive: Drive, login: str) -> None:
     drive.fail("Proton Pass does not run again after it was turned back on")
 def gone(drive: Drive, login: str) -> None:
     drive.step("Proton Pass is removed from the extensions menu")
-    drive.eval("orden.settings.show('general'); return true")
+    drive.eval("orden.settings.show('browser'); return true")
     drive.waited(SETTINGS, 20, "Settings has no Extensions card")
     said = drive.eval(f"return await window.__TAURI_INTERNALS__.invoke('extensions_remove', {{ id: {json.dumps(ID)} }}).then(() => 'removed', (error) => 'ERR ' + error)", 90)
     print(f"remove: {said}", flush=True)

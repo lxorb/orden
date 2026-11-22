@@ -13,6 +13,8 @@ on:
       - apps/desktop/src/lib/web-tab/src/WebExtension*.svelte
       - apps/desktop/src/lib/web-tab/src/WebTab.svelte
       - scripts/extensions-store-drive.py
+      - scripts/extensions-web-data-drive.py
+      - apps/desktop/src-tauri/crates/web/src/engine.rs
       - scripts/devtools.py
       - scripts/native_app.py
       - scripts/fresh_app.py
@@ -106,6 +108,17 @@ jobs:
               "$RUNNER_TEMP/store/bin/pip" install --quiet mss
               "$RUNNER_TEMP/store/bin/python" "${drive[@]}"
               ;;
+          esac
+
+      - name: An extension's popup, storage, on and off and removal follow each tab's own web data
+        if: ${{ success() || failure() }}
+        timeout-minutes: 20
+        run: |
+          drive=(scripts/extensions-web-data-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out extensions-store/web-data)
+          case "$RUNNER_OS" in
+            Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
+            Windows) python "${drive[@]}" ;;
+            *) "$RUNNER_TEMP/store/bin/python" "${drive[@]}" ;;
           esac
 
       - if: ${{ always() }}

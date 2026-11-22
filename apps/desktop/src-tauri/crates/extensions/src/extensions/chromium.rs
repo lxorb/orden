@@ -46,12 +46,40 @@ fn shut(page: &Webview) {
     devtools::let_go_of(page.label());
     let _ = page.close();
 }
-fn borrowed(app: &AppHandle, name: &str, address: &str) -> Option<Borrowed<Webview>> {
+fn borrowed(
+    app: &AppHandle,
+    name: &str,
+    address: &str,
+    store: Option<&str>,
+) -> Option<Borrowed<Webview>> {
     let label = format!("{name}-{}", NUMBERED.fetch_add(1, Ordering::SeqCst));
-    hidden(app, &label, address).map(|page| Borrowed::new(label, page, shut))
+    hidden(app, &label, address, store).map(|page| Borrowed::new(label, page, shut))
+}
+fn profiles() -> Vec<Option<String>> {
+    std::iter::once(None).chain(orden_web::engine::stores_open().into_iter().map(Some)).collect()
+}
+const UNREACHED: &str = "the engine's extensions could not be reached";
+fn everywhere(
+    stores: &[Option<String>],
+    mut each: impl FnMut(Option<&str>) -> Option<Result<bool, String>>,
+) -> Result<bool, String> {
+    let mut held = false;
+    for store in stores {
+        match (store, each(store.as_deref())) {
+            (_, Some(Err(why))) => return Err(why),
+            (_, Some(Ok(had))) => held |= had,
+            (None, None) => return Err(UNREACHED.to_owned()),
+            (Some(_), None) => {}
+        }
+    }
+    Ok(held)
+}
+fn holds(page: &Webview, id: &str) -> bool {
+    let asking = format!("chrome.management.get({}).then(() => true, () => false)", json!(id));
+    asked(page, &asking) == Some(Value::Bool(true))
 }
 pub fn installed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
-    let Some(all) = controlled(app, |page| asked(page, LIST)) else {
+    let Some(all) = controlled(app, None, |page| asked(page, LIST)) else {
         static SAID: std::sync::Once = std::sync::Once::new();
         SAID.call_once(|| {
             orden_base::logs::say(
@@ -105,23 +133,55 @@ fn unpacked(home: &Path, version: &str) -> Option<PathBuf> {
         .max()
 }
 pub fn enable(app: &AppHandle, id: &str, on: bool) -> Result<(), String> {
-    controlled(app, |page| Some(set(page, id, on)))
-        .unwrap_or_else(|| Err("the engine's extensions could not be reached".to_string()))
+    let held = everywhere(&profiles(), |store| {
+        controlled(app, store, |page| {
+            Some(if holds(page, id) { set(page, id, on).map(|()| true) } else { Ok(false) })
+        })
+    })?;
+    if held {
+        Ok(())
+    } else {
+        Err("the engine does not have it".to_string())
+    }
 }
 fn set(page: &Webview, id: &str, on: bool) -> Result<(), String> {
     asked(page, &format!("chrome.management.setEnabled({}, {on}).then(() => true)", json!(id)))
         .map(|_| ())
         .ok_or_else(|| "the engine did not change it".to_string())
 }
+pub fn woken(app: &AppHandle, store: Option<&str>, ids: &[String]) {
+    if !ids.is_empty() {
+        let _ = controlled(app, store, |page| asked(page, &waking(ids)));
+    }
+}
+pub fn woken_everywhere(app: &AppHandle, ids: &[String]) {
+    for store in profiles() {
+        woken(app, store.as_deref(), ids);
+    }
+}
+fn waking(ids: &[String]) -> String {
+    format!(
+        "Promise.all({}.map((id) => chrome.management.get(id).then((one) => one.enabled || chrome.management.setEnabled(id, true).then(() => true, () => false), () => false)))",
+        json!(ids)
+    )
+}
 pub fn remove(app: &AppHandle, id: &str) -> Result<(), String> {
     if id.len() != 32 || !id.bytes().all(|byte| (b'a'..=b'p').contains(&byte)) {
         return Err("that is not an extension".to_string());
     }
     let _removing = REMOVING.held();
-    controlled(app, |page| Some(removed(app, page, id)))
-        .unwrap_or_else(|| Err("the engine's extensions could not be reached".to_string()))
+    everywhere(&profiles(), |store| {
+        controlled(app, store, |page| {
+            Some(if holds(page, id) {
+                removed(app, store, page, id).map(|()| true)
+            } else {
+                Ok(false)
+            })
+        })
+    })
+    .map(|_| ())
 }
-fn removed(app: &AppHandle, page: &Webview, id: &str) -> Result<(), String> {
+fn removed(app: &AppHandle, store: Option<&str>, page: &Webview, id: &str) -> Result<(), String> {
     let held = |expression: &str| asked(page, &expression.replace("ID", &json!(id).to_string()));
     let was_on = held("chrome.management.get(ID).then((one) => one.enabled)")
         .and_then(|on| on.as_bool())
@@ -129,7 +189,9 @@ fn removed(app: &AppHandle, page: &Webview, id: &str) -> Result<(), String> {
     if !was_on {
         set(page, id, true)?;
     }
-    if let Some(own) = borrowed(app, LEAVING, &format!("chrome-extension://{id}/manifest.json")) {
+    if let Some(own) =
+        borrowed(app, LEAVING, &format!("chrome-extension://{id}/manifest.json"), store)
+    {
         for _ in 0..50 {
             let ready = asked(&own.page, "typeof chrome.management?.uninstallSelf === 'function'");
             if ready == Some(Value::Bool(true)) {
@@ -175,12 +237,16 @@ const ALLOY_ONLY: bool = cfg!(target_os = "macos");
 fn worth_trying(alloy_only: bool, unreachable: bool) -> bool {
     !alloy_only && !unreachable
 }
-fn controlled<T>(app: &AppHandle, with: impl FnOnce(&Webview) -> Option<T>) -> Option<T> {
+fn controlled<T>(
+    app: &AppHandle,
+    store: Option<&str>,
+    with: impl FnOnce(&Webview) -> Option<T>,
+) -> Option<T> {
     if !worth_trying(ALLOY_ONLY, UNREACHABLE.load(Ordering::SeqCst)) {
         return None;
     }
     let _using = USING.held();
-    let page = borrowed(app, CONTROL, "chrome://extensions/")?;
+    let page = borrowed(app, CONTROL, "chrome://extensions/", store)?;
     let (mut waited, mut answered) = (Duration::ZERO, false);
     while waited < PATIENCE {
         let said = asked(&page.page, READY);
@@ -202,16 +268,15 @@ pub fn blocked() -> bool {
     !worth_trying(ALLOY_ONLY, UNREACHABLE.load(Ordering::SeqCst))
 }
 pub fn has(app: &AppHandle, id: &str) -> Option<bool> {
-    let asking = format!("chrome.management.get({}).then(() => true, () => false)", json!(id));
-    controlled(app, |page| asked(page, &asking).and_then(|said| said.as_bool()))
+    everywhere(&profiles(), |store| controlled(app, store, |page| Some(Ok(holds(page, id))))).ok()
 }
-fn hidden(app: &AppHandle, label: &str, address: &str) -> Option<Webview> {
+fn hidden(app: &AppHandle, label: &str, address: &str, store: Option<&str>) -> Option<Webview> {
     let window = app.get_window("main")?;
     let address: tauri::Url = address.parse().ok()?;
     let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .focused(false)
         .disable_drag_drop_handler();
-    let builder = orden_web::engine::web_store(builder, app, None).ok()?;
+    let builder = orden_web::engine::web_store(builder, app, store).ok()?;
     let (made, waiting) = std::sync::mpsc::sync_channel(1);
     app.run_on_main_thread(move || {
         let built = orden_web::engine::add_child(
@@ -321,6 +386,53 @@ mod tests {
         assert_eq!(CLOSED.with(|all| all.borrow().clone()), ["t1", "t2", "t3"]);
     }
     #[test]
+    fn a_change_reaches_every_web_data_that_holds_the_extension_and_fails_only_where_it_must() {
+        let stores = [None, Some("note_a".to_owned()), Some("note_b".to_owned())];
+        let mut seen = Vec::new();
+        let held = everywhere(&stores, |store| {
+            seen.push(store.map(str::to_owned));
+            Some(Ok(store == Some("note_b")))
+        });
+        assert_eq!(held, Ok(true));
+        assert_eq!(seen, stores.to_vec());
+        assert_eq!(everywhere(&stores, |_| Some(Ok(false))), Ok(false));
+        assert_eq!(everywhere(&stores, |store| store.map(|_| Ok(true))), Err(UNREACHED.to_owned()));
+        assert_eq!(everywhere(&stores, |store| store.is_none().then_some(Ok(true))), Ok(true));
+        let mut after = 0;
+        let failed = everywhere(&stores, |store| {
+            after += 1;
+            Some(if store == Some("note_a") { Err("refused".to_owned()) } else { Ok(true) })
+        });
+        assert_eq!((failed, after), (Err("refused".to_owned()), 2));
+    }
+    #[test]
+    fn one_kept_on_is_turned_back_on_wherever_chromium_still_holds_it_off() {
+        let asked = waking(&["a".repeat(32), "b\"');".to_owned()]);
+        assert!(
+            asked.starts_with(&format!("Promise.all([\"{}\",\"b\\\"');\"].map(", "a".repeat(32))),
+            "{asked}"
+        );
+        assert!(asked.contains("one.enabled || chrome.management.setEnabled(id, true)"));
+        assert!(!asked.contains("setEnabled(id, false)"));
+    }
+    #[test]
+    fn every_change_asks_each_web_data_through_a_page_opened_in_it() {
+        let source = include_str!("chromium.rs").replace('\r', "");
+        let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
+        for name in ["pub fn enable(", "pub fn remove(", "pub fn has("] {
+            let body = code
+                .split(name)
+                .nth(1)
+                .unwrap_or_default()
+                .split("\n}\n")
+                .next()
+                .unwrap_or_default();
+            assert!(body.contains("everywhere(&profiles()"), "{name}");
+            assert!(body.contains("controlled(app, store,"), "{name}");
+        }
+        assert!(code.contains("web_store(builder, app, store)"));
+    }
+    #[test]
     fn the_extensions_page_is_given_up_only_when_chromium_blocks_it_not_while_it_loads() {
         let at = |href: &str| Value::String(href.to_owned());
         let early = Duration::from_millis(300);
@@ -341,7 +453,8 @@ mod tests {
         let source = include_str!("chromium.rs").replace('\r', "");
         let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
         let body = code.split("fn controlled<T>").nth(1).unwrap_or_default();
-        let first = body.lines().nth(1).unwrap_or_default();
+        let inside = body.split_once("{\n").map(|(_, rest)| rest).unwrap_or_default();
+        let first = inside.lines().next().unwrap_or_default();
         assert!(first.contains("worth_trying(ALLOY_ONLY"), "{first}");
     }
     #[test]
@@ -349,8 +462,9 @@ mod tests {
         let source = include_str!("chromium.rs").replace('\r', "");
         let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
         assert_eq!(code.matches("hidden(app, ").count(), 1, "a page opened outside borrowed()");
-        assert!(code
-            .contains("hidden(app, &label, address).map(|page| Borrowed::new(label, page, shut))"));
+        assert!(code.contains(
+            "hidden(app, &label, address, store).map(|page| Borrowed::new(label, page, shut))"
+        ));
         assert!(!code.contains("get_webview("), "a page kept around to be found again");
     }
 }

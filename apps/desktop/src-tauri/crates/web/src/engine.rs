@@ -5,6 +5,7 @@ use tauri::webview::{PlatformWebview, WebviewBuilder};
 use tauri::{AppHandle, Runtime, Webview};
 
 use orden_base::paths::{config_dir, made};
+use orden_base::Held as _;
 use orden_web_engine::NativeWindow;
 
 pub use orden_web_engine::internal;
@@ -139,7 +140,31 @@ pub fn web_store<R: Runtime>(
     app: &AppHandle,
     store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
-    Ok(builder.data_directory(profile(app, store)?))
+    let dir = profile(app, store)?;
+    opened(store);
+    Ok(builder.data_directory(dir))
+}
+static OPENED: std::sync::Mutex<std::collections::BTreeSet<String>> =
+    std::sync::Mutex::new(std::collections::BTreeSet::new());
+type Opens = Box<dyn Fn(&str) + Send + Sync>;
+static OPENS: std::sync::OnceLock<Opens> = std::sync::OnceLock::new();
+pub fn when_a_store_opens(each: impl Fn(&str) + Send + Sync + 'static) {
+    let _ = OPENS.set(Box::new(each));
+}
+fn opened(store: Option<&str>) -> bool {
+    let Some(name) = store else {
+        return false;
+    };
+    let fresh = OPENED.held().insert(name.to_owned());
+    if fresh {
+        if let Some(each) = OPENS.get() {
+            each(name);
+        }
+    }
+    fresh
+}
+pub fn stores_open() -> Vec<String> {
+    OPENED.held().iter().cloned().collect()
 }
 pub fn profile(app: &AppHandle, store: Option<&str>) -> Result<PathBuf, String> {
     let root = root(app)?;
@@ -174,6 +199,15 @@ pub(crate) use with_platform;
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_store_a_page_was_opened_in_is_kept_once_and_the_global_one_never() {
+        assert!(!super::opened(None));
+        assert!(super::opened(Some("note_00aa11bb22cc33dd")));
+        assert!(!super::opened(Some("note_00aa11bb22cc33dd")));
+        let open = super::stores_open();
+        assert_eq!(open.iter().filter(|one| *one == "note_00aa11bb22cc33dd").count(), 1);
+        assert!(open.iter().all(|one| !one.is_empty()));
+    }
     #[test]
     fn a_page_asked_for_while_another_is_built_waits_for_it_and_never_builds_inside_it() {
         use std::cell::RefCell;
