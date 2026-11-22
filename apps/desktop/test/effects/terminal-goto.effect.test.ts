@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { idle } from './settle'
 
 const asked: { command: string; args: Record<string, unknown> }[] = []
-const machine = { busy: false, here: '/home/me' as string | null, gone: [] as string[] }
+const machine = { busy: false, here: '/home/me' as string | null }
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
   isDesktop: true,
@@ -18,9 +18,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     if (command === 'pty_spawn') return Promise.resolve({ pid: 1, fresh: true })
     if (command === 'pty_busy') return Promise.resolve(machine.busy)
     if (command === 'pty_folder') return Promise.resolve(machine.here)
-    if (command === 'read_tree') {
-      return Promise.resolve(machine.gone.includes(String(args.root)) ? null : { is_dir: true, children: [] })
-    }
+    if (command === 'read_tree' || command === 'file_stamp') return Promise.reject(new Error('outside the spaces'))
     return Promise.resolve(null)
   },
 }))
@@ -110,7 +108,7 @@ const typed = () => asked.filter((one) => one.command === 'pty_write').map((one)
 let place: HTMLElement
 beforeEach(() => {
   asked.length = 0
-  Object.assign(machine, { busy: false, here: '/home/me', gone: [] })
+  Object.assign(machine, { busy: false, here: '/home/me' })
   shells.restoring = true
   workspace.panes.collapse()
   workspace.tabs = []
@@ -140,7 +138,12 @@ test('a shell resting at an empty prompt goes to the folder the explorer shows, 
   expect(await goTo(tab.id, "/work/Plans B/it's")).toBe(true)
   await vi.waitFor(() => expect(typed()).toEqual(["cd '/work/Plans B/it'\\''s'\r"]))
 })
-test('nothing is typed into a shell already there, running a program, holding a half-typed line, or sent to a folder that is gone (#2274)', async () => {
+test('a folder outside every space gets the cd too, though the app reads no file there (#2274)', async () => {
+  const tab = await shell('bash', 'k-out')
+  expect(await goTo(tab.id, '/etc/ssl')).toBe(true)
+  await vi.waitFor(() => expect(typed()).toEqual(['cd /etc/ssl\r']))
+})
+test('nothing is typed into a shell already there, running a program or holding a half-typed line (#2274)', async () => {
   const tab = await shell('bash', 'k-stay')
   expect(await goTo(tab.id, '/home/me')).toBe(false)
   machine.busy = true
@@ -148,9 +151,7 @@ test('nothing is typed into a shell already there, running a program, holding a 
   machine.busy = false
   typing?.('git sta')
   expect(await goTo(tab.id, '/work')).toBe(false)
-  machine.gone = ['/work/Old']
   typing?.('\x15')
-  expect(await goTo(tab.id, '/work/Old')).toBe(false)
   await idle(20)
   expect(typed()).toEqual(['git sta', '\x15'])
   expect(await goTo(tab.id, '/work')).toBe(true)

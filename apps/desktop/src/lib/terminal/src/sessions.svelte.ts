@@ -22,7 +22,7 @@ import {
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../../ui-controls/src/api'
-import { identifier, invoke, localDate, onDisk, platform, samePath } from '../../platform/src/api'
+import { identifier, invoke, localDate, platform, samePath } from '../../platform/src/api'
 import { notify } from '../../notify/src/api'
 import { owes } from '../../parting/src/api'
 import { SHORTCUTS, shortcuts } from '../../shortcuts/src/api'
@@ -327,7 +327,7 @@ class Session {
     if (line === null) return false
     const here = (await source.where()) ?? this.spec().folder
     if (here !== null && samePath(here, folder)) return false
-    if (!(await onDisk(folder)) || (await source.busy())) return false
+    if (await source.busy()) return false
     if (source !== this.source || this.lineHeld()) return false
     this.outgoing.push({ data: `${line}\r`, binary: false })
     void this.send()
