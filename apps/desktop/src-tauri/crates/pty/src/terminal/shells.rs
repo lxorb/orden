@@ -854,7 +854,8 @@ mod tests {
     #[test]
     fn zsh_starts_from_orden_folder_that_reads_the_reader_own_files_first() {
         let zsh = Shell::new("zsh", "zsh", PathBuf::from("/bin/zsh"), Kind::Zsh);
-        let home = zsh.launch(None, &Fake::default().set("HOME", "/home/me"));
+        let home = zsh
+            .launch(None, &Fake::default().set("HOME", "/home/me").set("USERPROFILE", "/home/me"));
         for pair in [
             ("ZDOTDIR", "/cache/orden/zsh"),
             ("ORDEN_ZSH", "/cache/orden/zsh"),
