@@ -8,7 +8,7 @@
   .shell {
     position: fixed;
     inset: 0;
-    z-index: calc(var(--z-sheet) - 1);
+    z-index: calc(var(--z-screen) - 1);
     display: flex;
     flex-direction: column;
     align-items: center;
