@@ -271,6 +271,8 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/search/src/warm.svelte.ts', "the search's hold on the space"],
     ['/markdown/src/index.ts', 'the renderer'],
     ['/lib/trash/src/trash.svelte.ts', 'the recently deleted list, which start sweeps once it has come'],
+    ['/lib/updates/src/UpdateNotice.svelte', 'the update notice, which comes once an update is ready'],
+    ['/lib/mascot/src/Mascot.svelte', 'the mascot'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
