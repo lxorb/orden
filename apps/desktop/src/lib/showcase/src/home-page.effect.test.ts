@@ -203,6 +203,22 @@ describe('the home page', () => {
     placeAt(300)
     expect(document.querySelectorAll('iframe')).toHaveLength(0)
   })
+  test('shows a display marked poster-only as its poster alone, while the rest still load', () => {
+    vi.stubGlobal('matchMedia', media([]))
+    showHome(window, '/')
+    const ai = displays().findIndex((one) => one.dataset.scene === 'ai')
+    expect(displays()[ai]?.hasAttribute('data-poster-only')).toBe(true)
+    displays().forEach((box, index) => {
+      const top = (index - ai) * 1000
+      vi.spyOn(box, 'getBoundingClientRect').mockReturnValue({ top, bottom: top + 600 } as DOMRect)
+    })
+    window.dispatchEvent(new Event('scroll'))
+    vi.advanceTimersByTime(1000)
+    expect(displays()[ai]?.querySelector('iframe')).toBe(null)
+    const loaded = [...document.querySelectorAll<HTMLIFrameElement>('iframe.demo')]
+    expect(loaded.length).toBe(1)
+    expect(loaded[0]?.getAttribute('src')).not.toContain('demo=ai')
+  })
   test('finds the app beside itself when built under a path', () => {
     vi.stubGlobal('matchMedia', media([]))
     showHome(window, '/preview/')
