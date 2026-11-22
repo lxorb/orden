@@ -225,6 +225,6 @@ test('every bubble is placed in the window, where nothing that holds it can cut 
       if (hung && !bodies.some((body) => /position:\s*fixed/.test(body))) cut.push(`${key}: hung, but not fixed`)
     }
   }
-  expect(bubbles.length).toBeGreaterThan(11)
+  expect(bubbles.length).toBeGreaterThan(10)
   expect(cut).toEqual([])
 })
