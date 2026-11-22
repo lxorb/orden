@@ -137,7 +137,8 @@ html:root[data-theme='light'] {
 .display {
   --w: min(1040px, 100%);
   position: relative;
-  width: var(--w);
+  box-sizing: content-box;
+  width: calc(var(--w) - 2px);
   aspect-ratio: 1280 / 800;
   margin: 0;
   border: 1px solid var(--line-strong);
@@ -317,7 +318,9 @@ html:root[data-theme='light'] {
   .display,
   .display.is-hero {
     --w: min(300px, 78vw);
-    aspect-ratio: 410 / 864;
+    width: calc(var(--w) - 22px);
+    padding: 10px;
+    aspect-ratio: 390 / 844;
     border-radius: 46px;
     background: var(--surface-3);
   }
