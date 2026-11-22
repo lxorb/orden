@@ -686,8 +686,22 @@ export class Engine implements AskedEngine {
     for (const doc of this.core.docs.values()) doc.close()
   }
 }
+const ALIASES: readonly [RegExp, string][] = [
+  [/^(?:\\\\|\/\/)\?[\\/]UNC[\\/]/i, '//'],
+  [/^(?:\\\\|\/\/)\?[\\/]/, ''],
+  [/^\/private(?=\/(?:var|tmp|etc)(?:\/|$))/, ''],
+  [/^\/data\/user\/0(?=\/|$)/, '/data/data'],
+]
+function canonical(path: string): string {
+  return ALIASES.reduce((out, [from, to]) => out.replace(from, to), path)
+}
 function norm(root: string, value: string): string {
-  return (windowsPath(root) ? value.replace(/\\/g, '/') : value).replace(/\/+$/, '')
+  const plain = canonical(value)
+  const windows = windowsPath(canonical(root))
+  return (windows ? plain.replace(/\\/g, '/').replace(/^[a-z]:/, (drive) => drive.toUpperCase()) : plain).replace(
+    /\/+$/,
+    '',
+  )
 }
 function sameFolder(root: string, folder: string, foldsCase: boolean): boolean {
   const base = norm(root, root)

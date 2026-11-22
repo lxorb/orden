@@ -1686,6 +1686,23 @@ describe('another program’s unreadable canvas', () => {
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
 })
+describe('a note opened through another spelling of its space folder (#2460)', () => {
+  test.each([
+    ['/var/mobile/Containers/Data/Notes', '/private/var/mobile/Containers/Data/Notes/Plan.md'],
+    ['/private/var/mobile/Containers/Data/Notes', '/var/mobile/Containers/Data/Notes/Plan.md'],
+    ['/data/data/so.orden.Orden/files/Notes', '/data/user/0/so.orden.Orden/files/Notes/Plan.md'],
+    ['/data/user/0/so.orden.Orden/files/Notes', '/data/data/so.orden.Orden/files/Notes/Plan.md'],
+    ['C:\\Users\\me\\Notes', '\\\\?\\C:\\Users\\me\\Notes\\Plan.md'],
+    ['\\\\?\\C:\\Users\\me\\Notes', 'c:\\Users\\me\\Notes\\Plan.md'],
+    ['\\\\server\\share\\Notes', '\\\\?\\UNC\\server\\share\\Notes\\Plan.md'],
+  ])('%s holds %s', (root, path) => {
+    expect(relative(root, path, false)).toBe('Plan.md')
+  })
+  test('a folder that only starts alike is still another folder', () => {
+    expect(relative('/var/mobile/Notes', '/private/var/mobile/Notes 2/Plan.md', false)).toBeNull()
+    expect(relative('/data/data/app/Notes', '/data/user/10/app/Notes/Plan.md', false)).toBeNull()
+  })
+})
 describe('two spaces whose folders differ only in case', () => {
   test('a path belongs to the folder spelled like it where the disk tells case apart', () => {
     expect(relative('/s/Notes', '/s/notes/a.md', false)).toBeNull()
