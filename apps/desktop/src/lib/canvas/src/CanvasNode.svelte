@@ -26,6 +26,7 @@
     shapePath,
   } from '../../plane/src/api'
   import { account } from '../../accounts/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import CanvasPdf from './CanvasPdf.svelte'
   import { pickedLink } from '../../link-format/src/api'
   import { links } from '../../link-index/src/api'
@@ -205,6 +206,13 @@
   }
 </script>
 
+{#snippet missing()}
+  <div class="missing">
+    <Mascot mood="lost" size={28} />
+    <p>Nothing here</p>
+  </div>
+{/snippet}
+
 <div
   class="node"
   class:picked
@@ -237,7 +245,7 @@
     {@const shown = fileShown(node.file)}
     {#if shown === 'picture'}
       {#if broken}
-        <p class="missing">Nothing here</p>
+        {@render missing()}
       {:else}
         <img
           class="picture"
@@ -265,7 +273,7 @@
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
       <div class="card page embed orden-rendered" use:embeds>{@html html}</div>
     {:else}
-      <p class="missing">Nothing here</p>
+      {@render missing()}
     {/if}
   {:else if node.type === 'link'}
     <div class="card link">
@@ -513,11 +521,20 @@
     white-space: nowrap;
   }
   .missing {
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    height: 100%;
+    overflow: hidden;
     padding: 8px 12px;
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
+  }
+  .missing p {
+    margin: 0;
   }
   .editor {
     width: 100%;

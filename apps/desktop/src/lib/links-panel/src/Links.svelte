@@ -2,6 +2,7 @@
   import type { Component } from 'svelte'
   import { surfaceLoad, type OpenHow } from '@orden/contracts'
   import { neighbourhood, type NoteGraph, without } from '../../graph/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { account } from '../../accounts/src/api'
   import { chatsOn } from '../../gates/src/api'
   import { graphSurface } from '../../surfaces/src/api'
@@ -86,7 +87,10 @@
   {#if backlinks.length}
     {@render hits(backlinks)}
   {:else}
-    <p class="empty-text">Nothing links here yet</p>
+    <div class="found">
+      <Mascot mood="bored" size={28} />
+      <p class="empty-text">Nothing links here yet</p>
+    </div>
   {/if}
 
   {@render heading('Links out', outgoing.length)}
@@ -128,5 +132,15 @@
   }
   :global([data-touch]) .empty-text {
     font-size: var(--text-base);
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+  .found .empty-text {
+    margin: 0;
   }
 </style>

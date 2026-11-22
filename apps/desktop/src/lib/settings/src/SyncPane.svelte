@@ -1,5 +1,6 @@
 <script lang="ts">
   import { account } from '../../accounts/src/api'
+  import { Mascot } from '../../mascot/src/api'
   import { api } from '../../accounts/src/api'
   import { localNumber } from '../../platform/src/api'
   import { when } from '../../ui-controls/src/api'
@@ -253,7 +254,10 @@
 <h3>What synced</h3>
 
 {#if !passes.length}
-  <p class="hint">Nothing here.</p>
+  <div class="hint found">
+    <Mascot mood="bored" size={32} />
+    <p>Nothing here.</p>
+  </div>
 {:else}
   <div class="card">
     {#each passes as pass, at (at)}
@@ -456,5 +460,14 @@
   }
   .pass.bad .what {
     color: var(--danger);
+  }
+  .found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .found p {
+    margin: 0;
   }
 </style>
