@@ -118,10 +118,14 @@ describe('the home page', () => {
     const platforms = [...document.querySelectorAll('.platforms svg')].map((one) => one.getAttribute('aria-label'))
     expect(platforms).toEqual(['Windows', 'macOS', 'Linux', 'Android'])
   })
-  test('ends on its two buttons alone', () => {
+  test('ends on its two buttons alone, with a line to call for questions at the very bottom', () => {
     const coda = document.querySelector('.coda')
     expect(coda?.querySelectorAll('a.orden-button')).toHaveLength(2)
     expect(coda?.querySelector('.display, .line')).toBe(null)
+    const contact = coda?.querySelector('.contact')
+    expect(contact?.textContent.replace(/\s+/g, ' ').trim()).toBe('Questions? +49 177 1696470')
+    expect(contact?.querySelector('a')?.getAttribute('href')).toBe('tel:+491771696470')
+    expect(coda?.lastElementChild).toBe(contact)
   })
   test('keeps the release page when the release cannot be read', async () => {
     vi.stubGlobal('matchMedia', media([]))
