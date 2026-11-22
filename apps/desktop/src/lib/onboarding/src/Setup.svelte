@@ -16,6 +16,7 @@
   import McpStep from './McpStep.svelte'
   import MobileStep from './MobileStep.svelte'
   import NotesStep from './NotesStep.svelte'
+  import { gate } from './gate.svelte'
   import { setup } from './setup-state.svelte'
   import WelcomeStep from './WelcomeStep.svelte'
 
@@ -33,6 +34,7 @@
   }
   setup.resume()
   onMount(() => {
+    gate.letGo()
     iconLibrary.load(BRANDS)
     void setup.look()
   })
