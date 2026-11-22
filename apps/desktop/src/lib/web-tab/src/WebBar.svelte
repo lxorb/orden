@@ -235,7 +235,7 @@
     <ExtensionButtons {...extending} />
   {/if}
 
-  {#if downloads.list.length > 0}
+  {#if isDesktop}
     <button
       class="orden-glyph saving"
       data-opens="downloads"
@@ -245,7 +245,6 @@
       aria-label="Downloads"
       aria-haspopup="dialog"
       onclick={ondownloads}
-      transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
     >
       <Glyph icon={ArrowDownToLine} />
       {#if progress !== null}

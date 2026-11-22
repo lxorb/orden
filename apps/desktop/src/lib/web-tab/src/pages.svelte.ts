@@ -879,6 +879,7 @@ class Pages {
         const said = readDownload(event.payload)
         if (said && downloads.heard(said)) void this.downloaded(said.tab)
       })
+      void downloads.load()
       await listen('orden://web-icon', (event) => {
         const said = readIconed(event.payload)
         const page = said ? this.held.get(said.tab) : undefined
