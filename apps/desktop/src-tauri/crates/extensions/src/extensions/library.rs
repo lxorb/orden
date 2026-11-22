@@ -125,6 +125,17 @@ pub fn prune(root: &Path, id: &str, keep: &str) {
         }
     }
 }
+pub fn dropped(root: &Path, list: &[Kept], id: &str) -> Result<(), String> {
+    let kept: Vec<Kept> = list.iter().filter(|one| one.id != id).cloned().collect();
+    write(root, &kept)?;
+    for folder in
+        list.iter().filter(|one| one.id == id).map(|one| folder_of(root, &one.id, &one.version))
+    {
+        stopped(&folder);
+    }
+    forget(root, id);
+    Ok(())
+}
 pub fn forget(root: &Path, id: &str) {
     if super::link::is_id(id) {
         let _ = fs::remove_dir_all(root.join(id));

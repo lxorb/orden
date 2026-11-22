@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use orden_extensions::extensions::library::{
-    folder_of, loaded_folders, ran, running, stopped, unpack, write, Kept,
+    dropped, folder_of, loaded_folders, ran, read, running, stopped, unpack, write, Kept,
 };
 use orden_extensions::extensions::link::Store;
 use orden_extensions::extensions::{own_pages_open, shown, Done, Gaps};
@@ -122,4 +122,20 @@ fn an_old_format_folder_on_disk_is_not_handed_to_chromium_and_says_why() {
 #[test]
 fn no_page_orden_opens_for_itself_is_left_open_for_a_site_to_be_offered() {
     assert!(own_pages_open().is_empty());
+}
+#[test]
+fn a_removed_extension_leaves_neither_its_record_nor_its_folder_so_no_start_brings_it_back() {
+    let root = tempfile::tempdir().expect("a folder");
+    let root = root.path();
+    let gone = kept(&"p".repeat(32), Store::Chrome, true);
+    let stays = kept(&"o".repeat(32), Store::Firefox, true);
+    let (gone_folder, stays_folder) = (unpacked(root, &gone), unpacked(root, &stays));
+    let list = [gone.clone(), stays.clone()];
+    write(root, &list).expect("written");
+    assert_eq!(loaded_folders(root), vec![gone_folder.clone(), stays_folder.clone()]);
+    dropped(root, &list, &gone.id).expect("dropped");
+    assert_eq!(read(root), vec![stays]);
+    assert!(!root.join(&gone.id).exists());
+    assert!(!running(&gone_folder));
+    assert_eq!(loaded_folders(root), vec![stays_folder]);
 }

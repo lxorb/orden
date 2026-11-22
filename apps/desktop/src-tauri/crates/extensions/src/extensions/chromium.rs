@@ -152,25 +152,58 @@ fn removed(app: &AppHandle, page: &Webview, id: &str) -> Result<(), String> {
     }
     Err("the engine did not remove it".to_string())
 }
+const READY: &str = "typeof chrome.management === 'object' || location.href";
+const SETTLED: Duration = Duration::from_secs(10);
+const LOOK_EVERY: Duration = Duration::from_millis(100);
+#[derive(Debug, PartialEq, Eq)]
+enum Ready {
+    Yes,
+    Blocked,
+    Not,
+}
+fn ready(said: Option<&Value>, waited: Duration) -> Ready {
+    match said {
+        Some(Value::Bool(true)) => Ready::Yes,
+        Some(Value::String(at)) if at.starts_with("chrome-error:") => Ready::Blocked,
+        Some(Value::String(at)) if waited >= SETTLED && !at.starts_with("chrome://extensions") => {
+            Ready::Blocked
+        }
+        _ => Ready::Not,
+    }
+}
+const ALLOY_ONLY: bool = cfg!(target_os = "macos");
+fn worth_trying(alloy_only: bool, unreachable: bool) -> bool {
+    !alloy_only && !unreachable
+}
 fn controlled<T>(app: &AppHandle, with: impl FnOnce(&Webview) -> Option<T>) -> Option<T> {
-    if UNREACHABLE.load(Ordering::SeqCst) {
+    if !worth_trying(ALLOY_ONLY, UNREACHABLE.load(Ordering::SeqCst)) {
         return None;
     }
     let _using = USING.held();
     let page = borrowed(app, CONTROL, "chrome://extensions/")?;
-    let mut answered = false;
-    for _ in 0..50 {
-        match asked(&page.page, "typeof chrome.management === 'object'") {
-            Some(Value::Bool(true)) => return with(&page.page),
-            Some(_) => answered = true,
-            None => {}
+    let (mut waited, mut answered) = (Duration::ZERO, false);
+    while waited < PATIENCE {
+        let said = asked(&page.page, READY);
+        answered |= said.is_some();
+        match ready(said.as_ref(), waited) {
+            Ready::Yes => return with(&page.page),
+            Ready::Blocked => break,
+            Ready::Not => {}
         }
-        std::thread::sleep(Duration::from_millis(100));
+        std::thread::sleep(LOOK_EVERY);
+        waited += LOOK_EVERY;
     }
     if answered {
         UNREACHABLE.store(true, Ordering::SeqCst);
     }
     None
+}
+pub fn blocked() -> bool {
+    !worth_trying(ALLOY_ONLY, UNREACHABLE.load(Ordering::SeqCst))
+}
+pub fn has(app: &AppHandle, id: &str) -> Option<bool> {
+    let asking = format!("chrome.management.get({}).then(() => true, () => false)", json!(id));
+    controlled(app, |page| asked(page, &asking).and_then(|said| said.as_bool()))
 }
 fn hidden(app: &AppHandle, label: &str, address: &str) -> Option<Webview> {
     let window = app.get_window("main")?;
@@ -286,6 +319,30 @@ mod tests {
         .is_err());
         assert!(own_pages_open().iter().all(|one| !one.contains("-t")));
         assert_eq!(CLOSED.with(|all| all.borrow().clone()), ["t1", "t2", "t3"]);
+    }
+    #[test]
+    fn the_extensions_page_is_given_up_only_when_chromium_blocks_it_not_while_it_loads() {
+        let at = |href: &str| Value::String(href.to_owned());
+        let early = Duration::from_millis(300);
+        assert_eq!(ready(Some(&Value::Bool(true)), early), Ready::Yes);
+        assert_eq!(ready(Some(&at("chrome-error://chromewebdata/")), early), Ready::Blocked);
+        assert_eq!(ready(Some(&at("about:blank")), early), Ready::Not);
+        assert_eq!(ready(Some(&at("about:blank")), SETTLED), Ready::Blocked);
+        assert_eq!(ready(Some(&at("chrome://extensions/")), SETTLED * 3), Ready::Not);
+        assert_eq!(ready(Some(&Value::Bool(false)), SETTLED * 3), Ready::Not);
+        assert_eq!(ready(None, SETTLED * 3), Ready::Not);
+    }
+    #[test]
+    fn where_every_tab_is_alloy_the_extensions_page_is_never_tried_so_a_listing_does_not_wait() {
+        assert!(worth_trying(false, false));
+        assert!(!worth_trying(true, false));
+        assert!(!worth_trying(false, true));
+        assert_eq!(ALLOY_ONLY, cfg!(target_os = "macos"));
+        let source = include_str!("chromium.rs").replace('\r', "");
+        let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
+        let body = code.split("fn controlled<T>").nth(1).unwrap_or_default();
+        let first = body.lines().nth(1).unwrap_or_default();
+        assert!(first.contains("worth_trying(ALLOY_ONLY"), "{first}");
     }
     #[test]
     fn every_page_orden_opens_for_itself_is_borrowed_and_so_closed() {
