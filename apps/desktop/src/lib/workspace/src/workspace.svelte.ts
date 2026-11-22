@@ -906,6 +906,8 @@ class Workspace {
           log('info', `restore: ${draft.path} is outside every space, so its tab is not put back`)
           return null
         }
+        const kin = draft.shared ? this.documents.find((one) => one.shared === draft.shared) : null
+        if (kin) return made.find((one) => one?.note === kin) ?? this.viewOf(kin, paneId, draft)
         const shared = draft.share ? this.opened.withKey(draft.share) : null
         const same =
           shared && samePath(shared.path, draft.path)
@@ -931,6 +933,7 @@ class Workspace {
                 text: draft.doc,
                 dirty: draft.dirty,
                 home: draft.space ?? null,
+                shared: draft.shared ?? null,
               })
         if (draft.dirty && draft.path && !open.read && holdsWords(draft.kind)) {
           const back = note
@@ -1165,6 +1168,7 @@ class Workspace {
       ...(tab.path === null && tab.apart !== null ? { apart: tab.apart } : {}),
       ...(tab.path === null && tab.behind !== null ? { behind: tab.behind } : {}),
       ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
+      ...(tab.path === null && tab.note.shared !== null ? { shared: tab.note.shared } : {}),
     }
   }
   persist(): boolean {
