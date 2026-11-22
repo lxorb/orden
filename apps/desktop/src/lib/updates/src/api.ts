@@ -1,4 +1,4 @@
-export { default as UpdateNotice } from './UpdateNotice.svelte'
+export const loadUpdateNotice = () => import('./UpdateNotice.svelte')
 export {
   asChannel,
   installStaged,

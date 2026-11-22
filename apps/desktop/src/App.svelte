@@ -39,7 +39,7 @@
     PullMark,
   } from './lib/frame/src/api'
   import { Sidebar } from './lib/sidebar/src/api'
-  import { loadWhatsNew, UpdateNotice, updates } from './lib/updates/src/api'
+  import { loadUpdateNotice, loadWhatsNew, updates } from './lib/updates/src/api'
   import { startup, Stops } from './lib/launch/src/api'
   import { renamed } from './lib/launch/src/renamed.svelte'
   import { account, arriving, usage } from './lib/accounts/src/api'
@@ -798,13 +798,15 @@
         {/await}
       {/if}
       {#if updates.ready}
-        <UpdateNotice
-          version={updates.ready}
-          managed={updates.managed}
-          system={updates.system}
-          channel={updates.channel}
-          ondismiss={() => updates.dismiss()}
-        />
+        {#await loadUpdateNotice() then { default: UpdateNotice }}
+          <UpdateNotice
+            version={updates.ready}
+            managed={updates.managed}
+            system={updates.system}
+            channel={updates.channel}
+            ondismiss={() => updates.dismiss()}
+          />
+        {/await}
       {/if}
       {#if reloading.offered}
         <div class="reload" role="alert">
