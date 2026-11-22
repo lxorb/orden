@@ -90,6 +90,7 @@
   function optionsFor(one: Tab): StateOptions {
     return {
       shared: one.note.live,
+      readOnly: modes.readOnly || !canWriteIn(one.note),
       selection: { anchor: one.cursor ?? 0 },
       ...(onimage ? { onImage: (file: File) => onimage(file, one) } : {}),
       ...(resolveimage ? { resolveImage: (src: string, wikilink?: boolean) => resolveimage(src, one, wikilink) } : {}),

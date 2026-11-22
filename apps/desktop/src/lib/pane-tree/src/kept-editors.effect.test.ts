@@ -8,6 +8,14 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   isNative: false,
   invoke: () => Promise.resolve(undefined),
 }))
+const guest = vi.hoisted(() => ({ viewOnly: false }))
+vi.mock('../../sharing/src/api', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../sharing/src/api')>()
+  return {
+    ...real,
+    canWriteIn: (...said: Parameters<typeof real.canWriteIn>) => !guest.viewOnly && real.canWriteIn(...said),
+  }
+})
 vi.mock('@orden/editor', async (importOriginal) => {
   const real = await importOriginal<typeof import('@orden/editor')>()
   return { ...real, createEditor: vi.fn(real.createEditor) }
@@ -54,6 +62,7 @@ beforeEach(() => {
   counted.shown = {}
   counted.throws = false
   counted.ticks = 0
+  guest.viewOnly = false
 })
 afterEach(() => {
   if (shown) void unmount(shown, { outro: false })
@@ -325,4 +334,13 @@ test('a note shown keeps its editor while settings it was dressed with change an
   expect(views.of(paneId)).toBe(first)
   expect(first.dom.isConnected).toBe(true)
   expect(vi.mocked(createEditor)).toHaveBeenCalledTimes(1)
+})
+test("a note the reader may only view is read-only from the editor's first frame, built or swapped in", async () => {
+  guest.viewOnly = true
+  const { two, paneId } = opened()
+  await drawn(paneId)
+  expect(vi.mocked(createEditor).mock.calls[0]?.[0]).toMatchObject({ readOnly: true })
+  workspace.activate(two)
+  flushSync()
+  expect(vi.mocked(createEditor).mock.calls[1]?.[0]).toMatchObject({ readOnly: true })
 })
