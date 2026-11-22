@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 import { providePort, settingsPartsIn } from '@orden/contracts'
@@ -51,5 +53,13 @@ describe('the General part of a space in Settings', () => {
     expect(general).toMatchObject({ section: 'space', card: true, order: 0 })
     const said = general?.places?.().flatMap((one) => [one.label, ...one.text]) ?? []
     expect(said).toEqual(expect.arrayContaining(['Name', 'Rename', 'Icon']))
+  })
+})
+describe('the space menu', () => {
+  test('catches a press outside it with a clear scrim, which covers nothing of a page under it (#2484)', () => {
+    const source = readFileSync(join(import.meta.dirname, '..', 'src', 'SpaceMenu.svelte'), 'utf8')
+    const catcher = /<div class="([^"]*\bcatch\b[^"]*)"[^>]*>/.exec(source)
+    expect(catcher?.[1].split(' ')).toEqual(expect.arrayContaining(['catch', 'orden-scrim', 'is-clear']))
+    expect(catcher?.[0]).not.toContain('data-covers')
   })
 })
