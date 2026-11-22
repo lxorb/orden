@@ -21,6 +21,7 @@ export class Spring {
     return this.one.to
   }
   aim(target: number, after = 0) {
+    if (target === this.one.to) return
     this.one.to = target
     this.from = performance.now() + after
   }
@@ -82,19 +83,31 @@ export class Springs {
 
 const keyOf = (slot: number, kind: string) => `${slot}:${kind}`
 export class Motion extends Springs {
-  private readonly lifts: Record<number, Spring> = {}
-  private readonly grows: Record<string, Spring> = {}
-  private readonly pulls: Record<string, Spring> = {}
-  constructor(slots: readonly (readonly string[] | null)[]) {
-    super()
-    slots.forEach((kinds, slot) => {
-      if (!kinds) return
-      this.lifts[slot] = this.add(new Spring(OPENING, CLOSING))
-      for (const kind of kinds) {
-        this.grows[keyOf(slot, kind)] = this.add(new Spring(OPENING, CLOSING))
-        this.pulls[keyOf(slot, kind)] = this.add(new Spring(FOLLOWING, FOLLOWING, PIXELS))
+  private lifts = $state.raw<Record<number, Spring>>({})
+  private grows = $state.raw<Record<string, Spring>>({})
+  private pulls = $state.raw<Record<string, Spring>>({})
+  fit(slots: readonly (readonly string[] | null)[]) {
+    const lifts = { ...this.lifts }
+    const grows = { ...this.grows }
+    const pulls = { ...this.pulls }
+    let added = false
+    for (const [slot, kinds] of slots.entries()) {
+      if (!kinds) continue
+      if (!(slot in lifts)) {
+        lifts[slot] = this.add(new Spring(OPENING, CLOSING))
+        added = true
       }
-    })
+      for (const kind of kinds) {
+        if (keyOf(slot, kind) in grows) continue
+        grows[keyOf(slot, kind)] = this.add(new Spring(OPENING, CLOSING))
+        pulls[keyOf(slot, kind)] = this.add(new Spring(FOLLOWING, FOLLOWING, PIXELS))
+        added = true
+      }
+    }
+    if (!added) return
+    this.lifts = lifts
+    this.grows = grows
+    this.pulls = pulls
   }
   private static readonly RESTING = new Spring(OPENING)
   lift(slot: number): Spring {

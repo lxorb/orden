@@ -39,6 +39,7 @@
     letters = true,
     onpick,
     onready,
+    oncentre,
   }: {
     slots: (Slot<NewKindRow> | null)[]
     dial: Dial
@@ -48,6 +49,7 @@
     letters?: boolean
     onpick: (slot: number, index: number, how: Picked) => void
     onready: (one: NewKindRow) => void
+    oncentre?: () => void
   } = $props()
 
   const EACH = 64
@@ -58,7 +60,8 @@
   const trails = new Springs()
   const trailX = trails.add(new Spring(FOLLOWING, TRAILING, PIXELS))
   const trailY = trails.add(new Spring(FOLLOWING, TRAILING, PIXELS))
-  const motion = $derived(new Motion(slots.map((slot) => slot?.kinds.map((one) => one.kind) ?? null)))
+  const motion = new Motion()
+  const layout = $derived(slots.map((slot) => slot?.kinds.map((one) => one.kind).join(' ') ?? '').join('|'))
   let trailing = $state(false)
   let root = $state<HTMLElement>()
   let svg = $state<SVGSVGElement>()
@@ -86,14 +89,12 @@
     slot.kinds.length === 1 ? (slot.kinds[0]?.label() ?? '') : lineTitle(slot.line)
   const spotOf = (slot: number): Point => pointAt((HUB + INNER) / 2 + 4, middleOf(slot))
 
-  $effect(() => {
-    const moving = motion
-    return () => moving.stop()
-  })
-  $effect(() => {
+  $effect.pre(() => {
     const open = dial.open
+    const kinds = layout.split('|').map((line) => (line ? line.split(' ') : null))
     const moving = motion
     untrack(() => {
+      moving.fit(kinds)
       slots.forEach((slot, index) => {
         if (!slot) return
         const on = index === open
@@ -237,6 +238,7 @@
     const element = event.target instanceof Element ? event.target : null
     if (element?.closest('.hub')) {
       dial.aim = MIDDLE
+      oncentre?.()
       return
     }
     const group = element?.closest<SVGElement>('[data-slot]')
@@ -310,6 +312,7 @@
       window.removeEventListener('keydown', keyed, true)
       clearTimeout(leaving)
       trails.stop()
+      motion.stop()
     }
   })
 </script>
@@ -429,7 +432,7 @@
     class="hub"
     class:picked={dial.hub}
     style:--hub={`${((HUB - GAP) * 2 * 100) / (REACH * 2)}%`}
-    aria-label="New tab"
+    aria-label="Overview"
     aria-keyshortcuts="Space"
     aria-pressed={dial.hub}
   >
@@ -497,7 +500,7 @@
     pointer-events: none;
   }
   .quarter {
-    transition: opacity 0.3s var(--ease-out);
+    transition: opacity var(--dur-base) var(--ease-out);
     cursor: default;
   }
   .quarter,
@@ -519,7 +522,7 @@
   }
   .option {
     cursor: default;
-    transition: filter 0.25s var(--ease-out);
+    transition: filter var(--dur-base) var(--ease-out);
   }
   .option.picked {
     filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 45%, transparent));
@@ -542,7 +545,7 @@
   .trail {
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.2s var(--ease-out);
+    transition: opacity var(--dur-fast) var(--ease-out);
   }
   .trail.on {
     opacity: 1;
@@ -576,9 +579,14 @@
       background var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
-      box-shadow 0.25s var(--ease-out);
+      box-shadow var(--dur-base) var(--ease-out);
   }
   .hub:focus-visible {
+    border-color: var(--line-strong);
+    color: var(--text);
+  }
+  .hub:hover:not(.picked) {
+    background: var(--surface-hover);
     border-color: var(--line-strong);
     color: var(--text);
   }
