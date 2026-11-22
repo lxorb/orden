@@ -25,6 +25,7 @@ export const SPEC = 'Spec sheet.pdf'
 export const RIDE_DATA = 'Ride data.md'
 export const REPORT = 'Ride report.md'
 export const INTERVIEWS = 'Research/Interviews.md'
+export const CHECKLIST = 'Launch/Checklist.md'
 const RIDE_TEXT = `# Ride data
 
 Average speed on the river loop:
@@ -59,7 +60,7 @@ River loop, old town, harbour. All flat, all under an hour.
 
 Calm, quick, a little dry. Say it in fewer words.
 `,
-  'Launch/Checklist.md': `# Checklist
+  [CHECKLIST]: `# Checklist
 
 - [x] Frame colours
 - [ ] Ride test
