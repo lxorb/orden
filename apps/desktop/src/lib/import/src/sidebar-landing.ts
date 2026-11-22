@@ -5,29 +5,38 @@ import { type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
 import { nameKey } from './names'
 import type { Planned } from './plan'
+import type { Landed } from './run.svelte'
 import type { SpacePlan } from './sidebar-plan'
 
-export async function landSpaces(spaces: readonly SpacePlan[], lost: readonly string[], none: string): Promise<Space> {
+export async function landSpaces(
+  spaces: readonly SpacePlan[],
+  lost: readonly string[],
+  none: string,
+  told?: Landed,
+): Promise<Space> {
   const landed: Space[] = []
   for (const plan of spaces) {
-    const space = await landSpace(plan)
+    const space = await landSpace(plan, told)
     if (space) landed.push(space)
   }
   const [first] = landed
   if (!first) throw new Error(none)
-  if (lost.length) busy.failed(lost.join(' '))
+  if (told) told.lost.push(...lost)
+  else if (lost.length) busy.failed(lost.join(' '))
   return first
 }
-async function landSpace(plan: SpacePlan): Promise<Space | null> {
+async function landSpace(plan: SpacePlan, told?: Landed): Promise<Space | null> {
   const held = workspace.spaces.find((one) => nameKey(safeName(one.name) ?? '') === nameKey(safeName(plan.name) ?? ''))
   const { canWriteAt } = await import('../../sharing/src/api')
   if (held && !canWriteAt(held.root)) return null
   const space = held ?? (await workspace.addSpace(plan.name))
   if (!space) throw new Error('That import could not be written.')
+  if (!held) told?.made.push(space)
   if (workspace.activeSpaceId !== space.id) await workspace.selectSpace(space.id)
   const root = space.root
   const files = held ? await unseen(root, plan.files) : plan.files
   const landed = files.length ? await applyImport({ files }, { root, folder: '' }) : { paths: [] }
+  told?.paths.push(...landed.paths)
   const went = new Map(
     files.map((file, at) => {
       const path = landed.paths[at]

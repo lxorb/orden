@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Tab } from '../../documents/src/api'
-  import { readKept, runs } from './run.svelte'
+  import { readKept } from './kept'
+  import { runs } from './run.svelte'
 
   const { tab }: { tab: Tab } = $props()
   const run = $derived(runs.get(readKept(tab.doc)?.id ?? '') ?? null)

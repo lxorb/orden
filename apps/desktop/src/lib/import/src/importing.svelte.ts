@@ -5,7 +5,6 @@ import { busy, message, prompt } from '../../ui-kit/src/api'
 import { moveTargets } from '../../tree/src/api'
 import { workspace } from '../../workspace/src/api'
 import { macNotes, todoistAccount } from './api'
-import { applyImport } from './apply'
 import { importDocument } from './document'
 import { folderNameFor, nameOfFormat } from './folder-name'
 import { keepPictures } from './pandoc-pictures'
@@ -15,7 +14,7 @@ import { insideFolder, sourcesFrom, tooMuch, type Source } from './sources'
 import { safeName } from './names'
 import type { Rows } from './table'
 
-export type Stage = 'waiting' | 'reading' | 'ready' | 'writing' | 'done'
+export type Stage = 'waiting' | 'reading' | 'ready'
 class Importing {
   open = $state(false)
   stage = $state<Stage>('waiting')
@@ -26,8 +25,6 @@ class Importing {
   folder = $state('')
   under = $state('')
   rows = $state<Rows>('table')
-  written = $state(0)
-  stepped = $state(0)
   noAccess = $state(false)
   private sources: Source[] = []
   readonly counts = $derived<Counts>(this.plan ? counts(this.plan) : { notes: 0, files: 0, folders: 0, bytes: 0 })
@@ -39,7 +36,7 @@ class Importing {
   }
   close() {
     this.open = false
-    if (this.stage === 'done' || this.stage === 'reading') this.forget()
+    if (this.stage === 'reading') this.forget()
   }
   forget() {
     this.stage = 'waiting'
@@ -48,8 +45,6 @@ class Importing {
     this.plan = null
     this.format = null
     this.error = null
-    this.written = 0
-    this.stepped = 0
     this.folder = ''
     this.rows = 'table'
   }
@@ -180,25 +175,25 @@ class Importing {
   async run() {
     const plan = this.plan
     const root = this.root
-    if (!plan || !root || this.stage === 'writing') return
-    this.stage = 'writing'
-    this.written = 0
-    this.error = null
-    try {
-      const landed = await applyImport(
-        plan,
-        {
-          root,
-          folder: [this.under, this.folder.trim() && safeName(this.folder)].filter(Boolean).join('/'),
-        },
-        { onWritten: (done) => (this.written = done) },
-      )
-      this.stepped = landed.stepped
-      this.stage = 'done'
-    } catch (error) {
-      this.stage = 'ready'
-      this.error = message(error, 'That import could not be written.')
+    if (!plan || !root) return
+    const folder = [this.under, this.folder.trim() && safeName(this.folder)].filter(Boolean).join('/')
+    if (!canWriteAt(folder ? joinPath(root, folder) : root)) {
+      this.error = 'That import could not be written.'
+      return
     }
+    const app = plan.format === 'todoist' ? 'Todoist' : nameOfFormat(plan.format)
+    const own = app !== 'Imported'
+    const label = plan.format === 'todoist' ? 'my Todoist account' : own ? `my ${app} export` : 'the files I picked'
+    this.open = false
+    this.forget()
+    const { startImport } = await import('./run.svelte')
+    await startImport({
+      name: app,
+      label,
+      title: own ? app : 'Files',
+      into: { root, folder, kept: this.under },
+      read: () => Promise.resolve({ plan }),
+    })
   }
 }
 function landing(): string | null {

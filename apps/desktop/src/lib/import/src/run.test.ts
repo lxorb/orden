@@ -95,6 +95,13 @@ const ws = {
   },
   openEntry: async (path: string) => void opened.push(path),
   showPanel: () => undefined,
+  binned: [] as string[],
+  bin: async (path: string) => {
+    ws.binned.push(path)
+    wrote.delete(path)
+    return { content: '', trashId: `t-${path}` }
+  },
+  fileGone: async () => undefined,
 }
 let unreadable = ''
 let garbled = ''
@@ -166,6 +173,7 @@ beforeEach(() => {
   ws.added = 0
   ws.refusing = false
   ws.deleted = []
+  ws.binned = []
   ws.spaces = [{ id: 'old', name: 'Old', root: '/spaces/Old' }]
   busy.clear()
 })
@@ -314,4 +322,76 @@ describe('an import into a new space', () => {
       ].join('\n'),
     )
   })
+})
+describe('an import into a space that is already there', () => {
+  const MINE = { id: 'mine', name: 'Mine', root: '/spaces/Mine' }
+  async function into(folder: string) {
+    ws.spaces.push(MINE)
+    const run = new ImportRun({
+      name: 'Notion',
+      label: 'my Notion export',
+      into: { root: MINE.root, folder },
+      read: async () => ({
+        plan: { format: 'markdown', files: [{ kind: 'note', path: 'Plan.md', text: '# Plan\n' }], lost: [] },
+      }),
+    })
+    runs.set(run.id, run)
+    await run.start()
+    return run
+  }
+  test('writes into the folder it was sent to and opens its tab in that space', async () => {
+    const run = await into('Imported')
+    expect(run.phase).toBe('review')
+    expect(wrote).toContain(`${MINE.root}/Imported/Plan.md`)
+    expect(ws.activeSpaceId).toBe('mine')
+    expect(run.kept().made).toBe(false)
+  })
+  test('cancelled, takes back only what it wrote and leaves the space where it was', async () => {
+    const run = await into('Imported')
+    await run.cancel()
+    expect(ws.binned).toEqual([`${MINE.root}/Imported/Plan.md`])
+    expect(ws.deleted).toEqual([])
+    expect(closed).toEqual(['tab-import'])
+  })
+})
+describe('a browser brought in', () => {
+  test('lists the pages it landed, brings history in only once completed, and cancelled takes it all back', async () => {
+    const HELD = { id: 'held', name: 'Held', root: '/spaces/Held' }
+    ws.spaces.push(HELD)
+    let historied = 0
+    const run = new ImportRun({
+      label: 'Safari',
+      words: { notes: 'pages', files: 'other files' },
+      land: async (told) => {
+        const space = await ws.addSpace('Safari')
+        told.made.push(space as never)
+        told.paths.push(`${ROOT}/Favourites/Home.url`, `${HELD.root}/Read later.url`)
+        told.lost.push('Saved tab groups stay in Safari')
+        told.later.push(() => {
+          historied += 1
+          return Promise.resolve()
+        })
+        return space as never
+      },
+    })
+    runs.set(run.id, run)
+    await run.start()
+    expect(run.phase).toBe('review')
+    expect(run.tally).toEqual({ notes: 2, files: 0, skipped: 1, failed: 0 })
+    expect(historied).toBe(0)
+    await run.cancel()
+    expect(ws.binned).toEqual([`${HELD.root}/Read later.url`])
+    expect(ws.deleted).toEqual(['new'])
+    expect(historied).toBe(0)
+  })
+})
+test('completed, opens a welcome note at the top of the space rather than one deep in a folder', async () => {
+  const run = await brought([
+    ...VAULT,
+    file('_system/maintenance/Spec.md', '# Spec\n'),
+    file('Diary.md', '# Diary\n'),
+    file('README.md', '# Read me\n'),
+  ])
+  await run.complete()
+  expect(opened).toEqual([`${ROOT}/README.md`])
 })
