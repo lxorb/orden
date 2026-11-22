@@ -57,7 +57,7 @@
   import { bookmarkEntry, rowMenus } from '../../row-menu/src/api'
   import { DEEPEST, SHALLOWEST } from '../../space-kept/src/api'
   import { SidebarWidth } from './sidebar-width.svelte'
-  import { dur, fly, onceAFrame } from '../../platform/src/api'
+  import { dur, fly, keepJson, onceAFrame, stored } from '../../platform/src/api'
   import { chatsOn, hiddenKinds, timeOn } from '../../gates/src/api'
   import { canWriteAt } from '../../sharing/src/api'
   import Bookmarks from './Bookmarks.svelte'
@@ -262,7 +262,9 @@
       { title: 'More' },
     )
   }
-  let graphing = $state(false)
+  const GRAPHING = 'orden:links-graph'
+  let graphing = $state(stored(GRAPHING) === true)
+  const graph = (on: boolean) => keepJson(GRAPHING, (graphing = on))
   const depth = $derived(workspace.graphSettings.here.depth)
   const listing = $derived(workspace.shownTree)
   function showOrder(event: MouseEvent) {
@@ -596,7 +598,7 @@
               title="Graph"
               aria-label="Graph"
               aria-pressed={graphing}
-              onclick={() => (graphing = !graphing)}
+              onclick={() => graph(!graphing)}
             >
               <svg viewBox="0 0 13 13"><path d={GRAPH_MARK} /></svg>
             </button>
@@ -778,7 +780,7 @@
             {/await}
           {:else if id === 'links'}
             {#await linksPanel() then Links}
-              <Links {ongoto} graph={graphing} {depth} onlist={() => (graphing = false)} />
+              <Links {ongoto} graph={graphing} {depth} onlist={() => graph(false)} />
             {/await}
           {:else if id === 'scratchpad'}
             {#await scratchpadCard() then Card}

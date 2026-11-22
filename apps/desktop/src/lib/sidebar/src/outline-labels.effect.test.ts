@@ -132,3 +132,35 @@ test('a side keeps each view it opened, hidden, so switching back finds the same
   into.remove()
   workspace.rightPanel = null
 })
+test('the Links panel remembers whether it shows a list or a graph, in a sidebar made anew (#2505)', async () => {
+  viewport.device = 'desktop'
+  workspace.tabs = []
+  workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+  workspace.activeSpaceId = 's'
+  workspace.openBlank('Linked', heads('Kestrel'))
+  workspace.rightPanel = 'links'
+  const drawn = () => {
+    const into = document.createElement('div')
+    document.body.append(into)
+    const shown = mount(Sidebar, { target: into, props: { side: 'right' as const } })
+    return {
+      into,
+      gone: () => {
+        void unmount(shown)
+        into.remove()
+      },
+    }
+  }
+  const pressed = (into: HTMLElement) => into.querySelector('button[aria-label="Graph"]')?.getAttribute('aria-pressed')
+  const first = drawn()
+  await vi.waitFor(() => expect(pressed(first.into)).toBe('false'))
+  first.into.querySelector<HTMLButtonElement>('button[aria-label="Graph"]')?.click()
+  flushSync()
+  expect(pressed(first.into)).toBe('true')
+  first.gone()
+  const again = drawn()
+  await vi.waitFor(() => expect(pressed(again.into)).toBe('true'))
+  again.gone()
+  localStorage.removeItem('orden:links-graph')
+  workspace.rightPanel = null
+})
