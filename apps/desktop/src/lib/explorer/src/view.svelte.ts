@@ -42,7 +42,7 @@ export class ExplorerView {
   #rereading = false
   #again = false
   #alive = false
-  #tuckedWith: string | null | undefined = undefined
+  #turned = false
   constructor(tab: Tab) {
     this.tab = tab
     this.spec = readSpec(tab.doc)
@@ -67,16 +67,15 @@ export class ExplorerView {
     if (folder) await this.show(folder, (listed) => this.spec ?? fresh(listed))
     else this.wrong = message(null, 'could not read this folder')
   }
-  tuck(twinWords: string) {
-    this.#tuckedWith = folderIn(twinWords)
+  tuck() {
+    this.#turned = true
   }
   #twinMoved(): string | null {
-    const left = this.#tuckedWith
-    this.#tuckedWith = undefined
-    if (left === undefined) return null
+    if (!this.#turned) return null
+    this.#turned = false
     const twin = workspace.twinOf(this.tab.id)
     const now = twin ? folderIn(twin.doc) : null
-    return now !== null && (left === null || !samePath(now, left)) ? now : null
+    return now !== null && !samePath(now, this.folder) ? now : null
   }
   async go(folder: string) {
     await this.show(folder, (listed) => (this.spec ? wentTo(this.spec, listed) : fresh(listed)))

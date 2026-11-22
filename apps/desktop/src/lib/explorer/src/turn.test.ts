@@ -1,3 +1,4 @@
+import { providePort } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Listing } from './commands'
 
@@ -67,6 +68,17 @@ const workspace = {
   },
 }
 vi.mock('../../workspace/src/api', () => ({ workspace }))
+const shell = { busy: false }
+const cds: string[][] = []
+providePort('terminal.going', {
+  goTo: (tabId: string, folder: string) => {
+    cds.push([tabId, folder])
+    const tab = [...twins.values()].find((one) => one.id === tabId)
+    if (shell.busy || !tab) return Promise.resolve(false)
+    tab.note.replace(JSON.stringify({ shell: 'bash', folder, key: 'k' }))
+    return Promise.resolve(true)
+  },
+})
 const { turnExplorer, turnLabel, turnTab } = await import('./turn')
 const { viewOf } = await import('./view.svelte')
 const { readSpec } = await import('./spec')
@@ -83,6 +95,8 @@ async function shownAgain(view: ReturnType<typeof viewOf>) {
 beforeEach(() => {
   twins.clear()
   turned.length = 0
+  cds.length = 0
+  shell.busy = false
   workspace.active = null
 })
 test('a terminal turned into an explorer writes only its folder, and the explorer reads that as a fresh way', () => {
@@ -101,6 +115,14 @@ describe('turning an explorer', () => {
     twins.set('e2', shownAs('t2', 'terminal', '{"shell":"bash","folder":"/srv","key":"k"}'))
     turnTab(tab as never)
     expect(turned).toEqual([['e2']])
+    await vi.waitFor(() => expect(cds).toEqual([['t2', '/home/me']]))
+  })
+  test('asks nothing of a terminal already in its folder', async () => {
+    const { tab } = await explorerAt('e7', '/home/me')
+    twins.set('e7', shownAs('t7', 'terminal', '{"shell":"bash","folder":"/home/me","key":"k"}'))
+    turnTab(tab as never)
+    await Promise.resolve()
+    expect(cds).toEqual([])
   })
   test('comes back where the terminal went, with the way back kept', async () => {
     const { tab, view } = await explorerAt('e3', '/home/me')
@@ -113,12 +135,27 @@ describe('turning an explorer', () => {
     await view.back()
     expect(view.folder).toBe('/home/me')
   })
-  test('keeps its own folder when the terminal stayed put', async () => {
+  test('takes the terminal to a folder it went to after the last turn, and both stay there', async () => {
     const { tab, view } = await explorerAt('e4', '/home/me')
-    await view.go('/home/me/Music')
     twins.set('e4', shownAs('t4', 'terminal', '{"shell":"bash","folder":"/home/me","key":"k"}'))
     turnTab(tab as never)
     await shownAgain(view)
+    await view.go('/home/me/Music')
+    turnTab(tab as never)
+    await vi.waitFor(() => expect(cds).toEqual([['t4', '/home/me/Music']]))
+    await shownAgain(view)
+    expect(view.folder).toBe('/home/me/Music')
+  })
+  test('follows a terminal busy with a program that could not move, with the way back kept', async () => {
+    const { tab, view } = await explorerAt('e8', '/home/me')
+    await view.go('/home/me/Music')
+    twins.set('e8', shownAs('t8', 'terminal', '{"shell":"bash","folder":"/home/me","key":"k"}'))
+    shell.busy = true
+    turnTab(tab as never)
+    await vi.waitFor(() => expect(cds).toEqual([['t8', '/home/me/Music']]))
+    await shownAgain(view)
+    expect(view.folder).toBe('/home/me')
+    await view.back()
     expect(view.folder).toBe('/home/me/Music')
   })
   test('keeps its own folder when it was never turned away', async () => {
