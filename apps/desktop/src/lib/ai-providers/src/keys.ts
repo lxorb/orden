@@ -1,9 +1,6 @@
-import { invoke, isDesktop, isNative, secrets } from '../../platform/src/api'
+import { invoke, isDesktop, secrets } from '../../platform/src/api'
 import type { Provider } from './providers'
 
-export function keysAreGuarded(): boolean {
-  return isNative
-}
 export async function keysInFile(): Promise<boolean> {
   if (!isDesktop) return false
   return (await invoke<unknown>('secrets_in_file').catch(() => false)) === true

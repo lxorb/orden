@@ -16,15 +16,6 @@ const EVERY = 5 * 60_000
 const keyed = (kind: ProviderKind) => !isLocal(kind) && kind !== 'chatgpt'
 const baseKey = (id: string) => `orden:ai-accounts-base:${id}`
 const SERVED_KEY = 'orden:ai-vault-account'
-const BROWSER_KEY = 'orden:ai-vault-browser'
-export const browserVault = $state({ on: storedText(BROWSER_KEY) === 'yes' })
-export async function keepBrowserInVault(on: boolean): Promise<void> {
-  browserVault.on = on
-  if (on) keep(BROWSER_KEY, 'yes')
-  else forget(BROWSER_KEY)
-  if (on) await vault.refresh()
-  else await vault.left(true)
-}
 async function signIns(): Promise<Record<string, string>> {
   const { plans } = await import('../local/status.svelte')
   const seen: Record<string, string> = {}
@@ -49,7 +40,7 @@ async function whoStayed(after: Contents, moved: Record<string, string>): Promis
   return who
 }
 export const world: VaultWorld = {
-  account: () => (account.user && account.token && (isNative || browserVault.on) ? account.user.id : null),
+  account: () => (account.user && account.token && isNative ? account.user.id : null),
   call: (path, method, body) =>
     request(path, {
       ...(method ? { method } : {}),
