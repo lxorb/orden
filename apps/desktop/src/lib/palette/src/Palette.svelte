@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { hinting } from '../../hints/src/api'
   import {
     OUTLINE_MARK,
     GRAPH_MARK,
@@ -41,7 +40,7 @@
   import { joinPath } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { isDesktop } from '../../platform/src/api'
-  import { type PaletteHost, paletteKind, searching, webPages, whenLoaded } from '@orden/contracts'
+  import { type PaletteHost, paletteKind, searching, webPages } from '@orden/contracts'
   import { shownAddress, visitKey } from '@orden/scan/visits'
   import { notices, paletteWords, workspace, middleOpens } from '../../workspace/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
@@ -60,9 +59,6 @@
     ongoto?: (line: number) => void
   } = $props()
   /* eslint-enable prefer-const */
-  $effect(() => {
-    if (open) whenLoaded(hinting, ({ hints }) => hints.dismiss('palette'))
-  })
   let query = $state('')
   let cursor = $state(0)
   let input = $state<HTMLInputElement>()
