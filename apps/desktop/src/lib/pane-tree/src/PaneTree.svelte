@@ -3,6 +3,7 @@
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { clamped, type Frame, paneIn, type Split, tracks } from '../../panes/src/api'
+  import { log } from '../../platform/src/api'
 
   const { frame }: { frame: Frame } = $props()
   const split = $derived(frame.kind === 'split' ? frame : null)
@@ -55,6 +56,7 @@
   let lost = $state(false)
   function rebuilt(error: unknown, reset: () => void) {
     console.error(error)
+    log('error', `pane failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`)
     if (rebuilding) return
     if (performance.now() - rebuiltAt < SETTLE) {
       lost = true
