@@ -1,8 +1,7 @@
 <script lang="ts">
   import { account, arriving, AccountBadge } from '../../accounts/src/api'
   import { showAccount } from '../../settings/src/api'
-  import { DOWNLOAD_URL } from '../../updates/src/api'
-  import { dur, fade, isNative, openExternal } from '../../platform/src/api'
+  import { dur, fade } from '../../platform/src/api'
   import { showFeedback } from '../../surfaces/src/api'
   import { SCRATCHPAD_MARK, viewport } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
@@ -43,17 +42,6 @@
   {/if}
 
   <div class="acts">
-    {#if !isNative && !viewport.touch}
-      <button
-        class="orden-glyph act"
-        title="Download the app"
-        aria-label="Download the app"
-        onclick={() => void openExternal(DOWNLOAD_URL)}
-      >
-        <svg viewBox="0 0 14 14"><path d="M7 1.5v7.5M3.8 6l3.2 3.2L10.2 6M2 12.5h10" /></svg>
-      </button>
-    {/if}
-
     <button class="orden-glyph act" title="Send feedback" aria-label="Send feedback" onclick={showFeedback}>
       <svg class="bug" viewBox="0 0 14 14"
         ><path
