@@ -13,10 +13,10 @@ describe('what is kept to be sent', () => {
   const today = '2026-11-14'
   const daily = (day: string) => ({ kind: 'daily', day }) as unknown as UsageEvent
   const counts = (day: string) => ({ kind: 'usage', day }) as unknown as UsageEvent
-  test('nothing older than the days kept, and nothing but the daily ping once help is off', () => {
+  test('nothing older than the days kept, and nothing at all once usage data is off', () => {
     const old = '2026-10-01'
     expect(pruned([daily(old), daily(today)], today, true)).toEqual([daily(today)])
-    expect(pruned([daily(today), counts(today)], today, false)).toEqual([daily(today)])
+    expect(pruned([daily(today), counts(today)], today, false)).toEqual([])
     expect(pruned([daily(today), counts(today)], today, true)).toHaveLength(2)
   })
   test('and never more than the queue holds', () => {

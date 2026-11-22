@@ -14,6 +14,7 @@ export const MOST_USAGE_EVENTS = 64
 export const MOST_USAGE_KEYS = 400
 export const MOST_USAGE_COUNT = 1_000_000
 export const USAGE_DAYS_KEPT = 30
+export const UNRELEASED_VERSION = '0.0.1'
 const NAME = /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/
 const SETTING = /^[a-z][a-zA-Z0-9]*(?:[.-][a-zA-Z0-9]+)*$/
 const MOST_NAME = 64
@@ -44,6 +45,7 @@ interface UsageCommon {
 }
 export interface DailyPing extends UsageCommon {
   kind: 'daily'
+  install?: string
 }
 export interface UsageSizes {
   notes: UsageSize
@@ -67,7 +69,7 @@ export interface UsageBatch {
 }
 export const USAGE_FIELDS = {
   batch: ['events'],
-  daily: ['v', 'kind', 'day', 'app', 'system', 'language', 'screen', 'signedIn'],
+  daily: ['v', 'kind', 'day', 'app', 'system', 'language', 'screen', 'signedIn', 'install'],
   usage: [
     'v',
     'kind',
@@ -206,7 +208,12 @@ function commonOf(raw: Raw): UsageCommon {
 function eventOf(value: unknown): UsageEvent {
   const kind = objectOf(value, 'event').kind
   if (kind === 'daily') {
-    return { ...commonOf(only(value, 'daily', USAGE_FIELDS.daily)), kind: 'daily' }
+    const raw = only(value, 'daily', USAGE_FIELDS.daily)
+    return {
+      ...commonOf(raw),
+      kind: 'daily',
+      ...(raw.install === undefined ? {} : { install: shaped(raw.install, 'install', INSTALL, 32) }),
+    }
   }
   if (kind !== 'usage') throw new Refused('kind must be daily or usage')
   const raw = only(value, 'usage', USAGE_FIELDS.usage)
@@ -241,6 +248,13 @@ export function usageBatchOf(value: unknown): UsageBatch | string {
     if (error instanceof Refused) return error.message
     throw error
   }
+}
+export function releasedVersion(version: string): boolean {
+  const parts = /^(\d+)\.(\d+)\.(\d+)(?:-\d+)?$/.exec(version)
+  return !!parts && version !== UNRELEASED_VERSION && parts.slice(1).every((one) => Number(one) < 99)
+}
+export function counted(event: UsageEvent): boolean {
+  return event.system.form === 'web' || releasedVersion(event.app.version)
 }
 export function usageName(id: string): string | null {
   const base = id.split(':')[0] ?? ''

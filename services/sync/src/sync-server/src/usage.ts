@@ -1,4 +1,5 @@
 import {
+  counted,
   daysBetween,
   dayOf,
   USAGE_DAYS_KEPT,
@@ -101,7 +102,7 @@ async function usageEvents(event: UsageDay, timestamp: string): Promise<Captured
 async function capturedOf(event: UsageEvent, at: number): Promise<Captured[]> {
   const timestamp = event.day === dayOf(at) ? new Date(at).toISOString() : `${event.day}T12:00:00.000Z`
   if (event.kind === 'usage') return usageEvents(event, timestamp)
-  return [{ event: 'daily install', distinct_id: newId(), timestamp, properties: shared(event) }]
+  return [{ event: 'daily install', distinct_id: event.install ?? newId(), timestamp, properties: shared(event) }]
 }
 function fresh(event: UsageEvent, today: string): boolean {
   const age = daysBetween(event.day, today)
@@ -129,7 +130,7 @@ usage.post('/', async (context) => {
   if (!allowed) return context.json({ error: TRY_IN_AN_HOUR }, 429)
   const at = now()
   const today = dayOf(at)
-  const kept = batch.events.filter((one) => fresh(one, today))
+  const kept = batch.events.filter((one) => fresh(one, today) && counted(one))
   const key = env.POSTHOG_KEY
   if (!key || kept.length === 0) return context.json({ ok: true, taken: kept.length })
   const captured = (await Promise.all(kept.map((one) => capturedOf(one, at)))).flat()

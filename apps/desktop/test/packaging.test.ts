@@ -4,6 +4,7 @@ import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, w
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { releasedVersion, UNRELEASED_VERSION } from '@orden/sync-core'
 import { describe, expect, test } from 'vitest'
 
 const HERE = fileURLToPath(new URL('../../..', import.meta.url))
@@ -46,6 +47,13 @@ describe('the workflow that publishes it', () => {
   test('and refuses to build a snap when the release reports no digest', () => {
     expect(workflow).toContain('reports no sha256 for a linux .deb')
     expect(workflow).toContain('exit 1')
+  })
+})
+describe('the version a build has before the release names it', () => {
+  test('is the one usage data never counts', () => {
+    const config = JSON.parse(repo('apps', 'desktop', 'src-tauri', 'tauri.conf.json')) as { version: string }
+    expect(config.version).toBe(UNRELEASED_VERSION)
+    expect(releasedVersion(config.version)).toBe(false)
   })
 })
 describe('the release', () => {

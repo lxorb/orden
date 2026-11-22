@@ -106,6 +106,32 @@ describe('the usage door', () => {
     const ids = forwarded[0]?.body.batch.map((one) => one.distinct_id)
     expect(new Set(ids).size).toBe(2)
   })
+  test('a daily ping that carries its install id keeps it, across days', async () => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+    await send({ events: [daily({ install: 'cd'.repeat(16) }), daily({ install: 'cd'.repeat(16), day: yesterday })] })
+    const ids = forwarded[0]?.body.batch.map((one) => one.distinct_id)
+    expect(ids).toEqual(['cd'.repeat(16), 'cd'.repeat(16)])
+  })
+  test('a build that is no release is taken and dropped, the web app is counted', async () => {
+    const versions = ['0.0.1', '99.0.0', '0.99.0', '0.16.0-dev', '1.2']
+    const answer = await send({
+      events: [
+        ...versions
+          .filter((version) => /^\d+\.\d+\.\d+(?:-[0-9a-z.]+)?$/.test(version))
+          .map((version) => daily({ app: { version, channel: 'stable' } })),
+        daily({ app: { version: '0.22.2', channel: 'stable' } }),
+        daily({ app: { version: '0.22.3-2240', channel: 'unstable' } }),
+        daily({
+          app: { version: '0.0.1', channel: 'stable' },
+          system: { os: 'other', arch: 'other', form: 'web', engine: 'chromium' },
+        }),
+      ],
+    })
+    expect(answer.status).toBe(200)
+    expect(answer.json.taken).toBe(3)
+    const seen = forwarded[0]?.body.batch.map((one) => (one.properties as { app_version: string }).app_version)
+    expect(seen).toEqual(['0.22.2', '0.22.3-2240', '0.0.1'])
+  })
   test('the same usage day sent twice keeps the same event ids', async () => {
     await send({ events: [usageDay()] })
     await send({ events: [usageDay()] })
@@ -169,7 +195,7 @@ describe('the allowlist', () => {
     ['a url as a tab kind', { events: [usageDay({ tabs: { 'https://example.com': 3 } })] }],
     ['text as a setting value', { events: [usageDay({ settings: { 'general.dns': { 'My Words': 1 } } })] }],
     ['an email as a feature', { events: [usageDay({ features: { 'me@example.com': 1 } })] }],
-    ['a stable install id on a daily ping', { events: [daily({ install: 'ab'.repeat(16) })] }],
+    ['an install id on a daily ping that is not one', { events: [daily({ install: 'me@example.com' })] }],
     ['a made-up os', { events: [daily({ system: { os: 'beos', arch: 'x86', form: 'web', engine: 'other' } })] }],
     [
       'a long os version',

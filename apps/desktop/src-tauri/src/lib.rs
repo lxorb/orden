@@ -307,6 +307,7 @@ macro_rules! desktop_commands {
             orden_pty::terminal::picture::remote_image,
             orden_pty::terminal::picture::remote_shell,
             orden_system::updates::check_update,
+            orden_system::usage_held::usage_held,
             orden_system::system_update::system_update,
             orden_system::package_manager::install_manager,
             orden_system::app_place::app_stuck,
