@@ -9,29 +9,8 @@ export interface ServerInfo {
   memoryGb: number
   diskGb: number
   price: number | null
-  hourly: number | null
   currency: string | null
-  made: boolean
   spent: number | null
-}
-export interface Offer {
-  name: string
-  cores: number
-  memoryGb: number
-  diskGb: number
-  cpu: 'shared' | 'dedicated'
-  arch: 'x86' | 'arm'
-  prices: { location: string; monthly: number; hourly: number }[]
-}
-interface Place {
-  name: string
-  city: string
-  country: string
-}
-export interface Offers {
-  currency: string
-  locations: Place[]
-  types: Offer[]
 }
 interface MachineInfo {
   id: string
@@ -58,7 +37,7 @@ function allowanceOf(value: unknown): Allowance | null {
 }
 function serverOf(value: unknown): ServerInfo | null {
   if (!isRecord(value) || !isString(value.type)) return null
-  const { cores, memoryGb, diskGb, price, hourly, currency, spent } = value
+  const { cores, memoryGb, diskGb, price, currency, spent } = value
   if (!isNumber(cores) || !isNumber(memoryGb) || !isNumber(diskGb)) return null
   return {
     type: value.type,
@@ -67,42 +46,8 @@ function serverOf(value: unknown): ServerInfo | null {
     memoryGb,
     diskGb,
     price: isNumber(price) ? price : null,
-    hourly: isNumber(hourly) ? hourly : null,
     currency: isString(currency) ? currency : null,
-    made: value.made !== false,
     spent: isNumber(spent) ? spent : null,
-  }
-}
-function offerOf(value: unknown): Offer | null {
-  if (!isRecord(value) || !isString(value.name) || !Array.isArray(value.prices)) return null
-  const { cores, memoryGb, diskGb } = value
-  if (!isNumber(cores) || !isNumber(memoryGb) || !isNumber(diskGb)) return null
-  const prices = value.prices.flatMap((one: unknown) =>
-    isRecord(one) && isString(one.location) && isNumber(one.monthly) && isNumber(one.hourly)
-      ? [{ location: one.location, monthly: one.monthly, hourly: one.hourly }]
-      : [],
-  )
-  return {
-    name: value.name,
-    cores,
-    memoryGb,
-    diskGb,
-    cpu: value.cpu === 'dedicated' ? 'dedicated' : 'shared',
-    arch: value.arch === 'arm' ? 'arm' : 'x86',
-    prices,
-  }
-}
-export function offersOf(value: unknown): Offers | null {
-  if (!isRecord(value) || !isString(value.currency)) return null
-  if (!Array.isArray(value.types) || !Array.isArray(value.locations)) return null
-  return {
-    currency: value.currency,
-    locations: value.locations.flatMap((one: unknown) => {
-      if (!isRecord(one) || !isString(one.name)) return []
-      const city = isString(one.city) ? one.city : cityOf(one.name)
-      return [{ name: one.name, city, country: isString(one.country) ? one.country : '' }]
-    }),
-    types: value.types.flatMap((one: unknown) => offerOf(one) ?? []),
   }
 }
 function diskOf(value: unknown): Disk | null {
@@ -172,26 +117,6 @@ export async function termSession(term: string | null, session?: string): Promis
   const found = termOf(JSON.stringify(said))
   if (!found) throw new ApiError(500, 'no session')
   return found
-}
-export async function offers(): Promise<Offers | null> {
-  try {
-    return offersOf(await request<unknown>('/v2/online/types', { token: token() }))
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) return null
-    throw error
-  }
-}
-export type Refit = 'disk' | 'arch' | 'busy' | 'budget' | 'type' | 'other'
-const REFITS: readonly Refit[] = ['disk', 'arch', 'busy', 'budget', 'type']
-export function refitOf(error: unknown): Refit {
-  return REFITS.find((one) => one === saidBy(error)) ?? 'other'
-}
-export async function chooseType(type: string, location: string | null): Promise<void> {
-  await request<unknown>('/v2/online/machine/type', {
-    method: 'POST',
-    token: token(),
-    body: { type, ...(location ? { location } : {}) },
-  })
 }
 export async function startStop(start: boolean): Promise<void> {
   await request<unknown>(`/v2/online/machine/${start ? 'start' : 'stop'}`, {
