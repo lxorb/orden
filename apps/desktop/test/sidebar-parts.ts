@@ -1,4 +1,7 @@
-import { registerSidebarPart } from '@orden/contracts'
+import type { Component } from 'svelte'
+import { registerSidebarPart, registerSurfaces } from '@orden/contracts'
+
+const NOTHING = (() => undefined) as unknown as Component
 
 export async function registerSidebarParts(): Promise<void> {
   const [{ askPart }, { outlinePart }, { scratchpadPart }] = await Promise.all([
@@ -7,4 +10,5 @@ export async function registerSidebarParts(): Promise<void> {
     import('../src/lib/scratchpad/src/api'),
   ])
   for (const part of [askPart, outlinePart, scratchpadPart]) registerSidebarPart(part)
+  registerSurfaces({ ask: () => Promise.resolve({ default: NOTHING }) })
 }
