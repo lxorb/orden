@@ -82,6 +82,7 @@ export interface StateOptions {
   moveCover?: (position: number) => void
   editPreview?: PreviewMount
   coveredBelow?: () => number
+  readOnly?: boolean
 }
 export interface EditorOptions extends StateOptions {
   parent: HTMLElement
@@ -132,7 +133,7 @@ export function editorState(options: StateOptions): EditorState {
       EditorView.contentAttributes.of({ class: 'orden-write' }),
       syntaxHighlighting(ordenHighlightStyle),
       codeThemeExtension(options.codeTheme),
-      modeExtensions(text.length),
+      modeExtensions(text.length, options.readOnly === true),
       mathsPreview,
       parseAhead,
       completionExtensions(),
