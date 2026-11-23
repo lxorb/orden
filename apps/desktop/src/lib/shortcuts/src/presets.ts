@@ -49,12 +49,16 @@ const NOTION: KeyOverrides = {
   'edit.move-block-down': 'Mod-Shift-ArrowDown',
 }
 const NOTION_MAC: KeyOverrides = {
+  'space.switcher': 'Mod-Ctrl-s',
   'paragraph.heading-1': 'Mod-Alt-1',
   'paragraph.heading-2': 'Mod-Alt-2',
   'paragraph.heading-3': 'Mod-Alt-3',
   'paragraph.task-list': 'Mod-Alt-4',
   'paragraph.bullet-list': 'Mod-Alt-5',
   'paragraph.ordered-list': 'Mod-Alt-6',
+  'paragraph.heading-4': null,
+  'paragraph.heading-5': null,
+  'paragraph.heading-6': null,
   'paragraph.code-block': 'Mod-Alt-8',
 }
 const VSCODE: KeyOverrides = {

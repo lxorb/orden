@@ -703,23 +703,23 @@ describe('the keys that move the keyboard about', () => {
   })
   test('leaves Siri and the input sources their keys on a Mac, for the switcher and every key held outside the app', async () => {
     const { shortcuts } = await onMac()
-    for (const key of ['Mod-Shift-Space', 'Ctrl-Alt-Space', 'Mod-Space', 'Ctrl-Space']) {
+    for (const key of ['Mod-Shift-Space', 'Ctrl-Alt-Space', 'Mod-Space', 'Ctrl-Space', 'Ctrl-Shift-Space']) {
       expect(shortcuts.warning(key), key).not.toBeNull()
     }
     for (const id of ['space.switcher', 'app.quick-add', 'agents.stop']) {
       expect(shortcuts.warning(shortcuts.keyFor(id)), id).toBeNull()
     }
-    expect(shortcuts.keyFor('space.switcher')).toBe('Ctrl-Shift-Space')
+    expect(shortcuts.keyFor('space.switcher')).toBe('Mod-Shift-s')
     expect(shortcuts.keyFor('app.quick-add')).toBe('Mod-Ctrl-a')
   })
-  test('opens the switcher on Ctrl+Space and Ctrl+Shift+Space', () => {
+  test('opens the switcher on Ctrl+Space and Ctrl+Shift+Space, on a Mac on Cmd+Shift+S', () => {
     const switcher = found('space.switcher')
     const alt = found('space.switcher.alt')
     for (const platform of ['win', 'linux'] as const) {
       expect(defaultKeyFor(switcher, platform)).toBe('Mod-Space')
       expect(defaultKeyFor(alt, platform)).toBe('Mod-Shift-Space')
     }
-    expect(defaultKeyFor(switcher, 'mac')).toBe('Ctrl-Shift-Space')
+    expect(defaultKeyFor(switcher, 'mac')).toBe('Mod-Shift-s')
     expect(defaultKeyFor(alt, 'mac')).toBeNull()
     expect(alt.alias).toBe(true)
     expect(alt.label()).toBe(switcher.label())

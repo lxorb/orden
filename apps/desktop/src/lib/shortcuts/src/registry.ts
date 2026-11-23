@@ -424,7 +424,7 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'space.previous', 'Previous space', 'Mod-Shift-,', () => stepSpace(-1)),
   app('view', 'space.next', 'Next space', 'Mod-Shift-.', () => stepSpace(1)),
   app('view', 'space.switcher', 'Spaces', 'Mod-Space', toggleSpacePicker, {
-    mac: 'Ctrl-Shift-Space',
+    mac: 'Mod-Shift-s',
   }),
   app('view', 'space.switcher.alt', 'Spaces', 'Mod-Shift-Space', toggleSpacePicker, {
     mac: null,
@@ -807,6 +807,7 @@ export const SYSTEM_KEYS: Record<Platform, string[]> = {
     'Mod-Shift-Space',
     'Mod-Alt-Space',
     'Ctrl-Space',
+    'Ctrl-Shift-Space',
     'Ctrl-Alt-Space',
     'Mod-Ctrl-Space',
     'Mod-Shift-3',
