@@ -11,6 +11,7 @@
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import { drawing, Glyph } from '../../../chat-kit/src/api'
   import type { ChatPage } from './chat.svelte'
+  import EditInPlace from './EditInPlace.svelte'
   import Gallery from './Gallery.svelte'
   import { markMentions } from './marks'
   import NoteCard from './NoteCard.svelte'
@@ -65,6 +66,8 @@
   const quoted = $derived(message.quote === undefined ? null : page.messages.find((one) => one.id === message.quote))
   const mine = $derived(page.me !== null && message.author === page.me)
   const arrived = $derived(message.seq > arrivedAfter)
+  const rises = $derived((arrived && !mine) || (pending && mine))
+  const SEEN_FACES = 2
   const callable = $derived(
     page.members.flatMap((one) =>
       [one.nick, one.name]
@@ -74,6 +77,7 @@
   )
   const big = $derived(!message.files.length && onlyEmoji(message.body))
   const linked = $derived(message.deleted ? null : cardTarget(message.body))
+  const editing = $derived(page.editing?.id === message.id && page.editing.replies === inReplies)
   const home = $derived(page.entry?.path ?? null)
   function words(
     node: HTMLElement,
@@ -134,11 +138,12 @@
   class:lit
   class:flash={flashed}
   class:pending
+  class:editing
   data-message={message.id}
   oncontextmenu={(event) => onmenu(event, message)}
   in:fly={{
-    y: arrived && !mine ? 6 : 0,
-    duration: dur(arrived && !mine ? 160 : 0),
+    y: rises ? 6 : 0,
+    duration: dur(rises ? 180 : 0),
     easing: cubicOut,
   }}
 >
@@ -185,7 +190,16 @@
     {#if message.deleted}
       <p class="deleted">Deleted</p>
     {:else}
-      {#if message.body}
+      {#if editing}
+        <EditInPlace
+          text={message.body}
+          onsend={(words: string) => {
+            page.edit(message, words)
+            page.editing = null
+          }}
+          oncancel={() => (page.editing = null)}
+        />
+      {:else if message.body}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <div
           class="body orden-rendered"
@@ -264,7 +278,7 @@
     {#if message.replies > 0 && !inReplies}
       <button type="button" class="replies" onclick={() => onreply(message)}>
         <Glyph name="replies" />
-        <span class="count">{localNumber(message.replies)}</span>
+        <span class="count">{localNumber(message.replies)} {message.replies === 1 ? 'reply' : 'replies'}</span>
         {#if message.lastReplyAt}<span class="last">{timeOf(message.lastReplyAt)}</span>{/if}
       </button>
     {/if}
@@ -280,12 +294,11 @@
     {/if}
 
     {#if seen.length}
-      <span class="seen">
-        {#each seen as who (who)}
-          <span use:tip={() => nameOf(who, page.members, space)}>
-            <Avatar face={faceOf(who, page.members, space)} size={16} />
-          </span>
+      <span class="seen" use:tip={() => seen.map((who) => nameOf(who, page.members, space)).join(', ')}>
+        {#each seen.slice(0, SEEN_FACES) as who (who)}
+          <span class="face"><Avatar face={faceOf(who, page.members, space)} size={16} /></span>
         {/each}
+        {#if seen.length > SEEN_FACES}<span class="more">+{localNumber(seen.length - SEEN_FACES)}</span>{/if}
       </span>
     {/if}
   </div>
@@ -293,11 +306,12 @@
 
 <style>
   .message {
+    --message-end: 48px;
     position: relative;
     display: grid;
     grid-template-columns: 44px minmax(0, 1fr);
     gap: 0 var(--space-2);
-    padding: 2px var(--space-4) 2px var(--space-2);
+    padding: 2px var(--message-end) 2px var(--space-2);
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-row);
@@ -307,13 +321,20 @@
   .message.head {
     padding-top: var(--space-3);
   }
+  :global([data-touch]) .message {
+    --message-end: 36px;
+  }
   @media (hover: hover) {
     .message:hover {
       background: var(--surface-hover);
     }
   }
+  .message.editing {
+    background: var(--surface-selected);
+  }
   .message.lit {
     background: var(--surface-selected);
+    box-shadow: inset 2px 0 0 var(--accent);
   }
   .message.flash {
     animation: landed 1.2s var(--ease-out);
@@ -329,8 +350,16 @@
       background: var(--accent-soft);
     }
   }
+  .main {
+    position: relative;
+    max-width: var(--readable, none);
+  }
+  .body,
+  .deleted {
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
   .message.pending .body {
-    opacity: 0.6;
+    opacity: 0.7;
   }
   .gutter {
     display: flex;
@@ -338,15 +367,16 @@
     padding-top: 2px;
   }
   .hover-time {
-    visibility: hidden;
+    opacity: 0;
     color: var(--muted);
-    font-size: 10.5px;
-    line-height: 22px;
+    font-size: var(--text-xs);
+    line-height: 20px;
     font-variant-numeric: tabular-nums;
+    transition: opacity var(--dur-fast) var(--ease-out);
   }
   .message:hover .hover-time,
   .message.lit .hover-time {
-    visibility: visible;
+    opacity: 1;
   }
   .meta {
     display: flex;
@@ -384,8 +414,8 @@
   }
   .pinned.corner {
     position: absolute;
-    top: 6px;
-    right: var(--space-4);
+    top: 4px;
+    right: calc(var(--space-3) - var(--message-end));
   }
   .agent {
     display: grid;
@@ -492,6 +522,19 @@
     background: var(--surface-2);
     color: var(--text);
     text-decoration: none;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .file :global(svg) {
+    color: var(--accent);
+  }
+  @media (hover: hover) {
+    .file:hover,
+    .preview:hover {
+      border-color: var(--line-strong);
+      background: var(--surface-hover);
+    }
   }
   .file-name {
     flex: 1;
@@ -551,12 +594,14 @@
     --glyph-size: 14px;
     display: inline-flex;
     align-items: center;
-    gap: var(--space-1);
+    gap: var(--space-2);
+    height: var(--row-height-sm);
     margin-top: var(--space-1);
-    padding: 2px var(--space-2);
-    border: 1px solid transparent;
+    padding: 0 var(--space-2);
+    white-space: nowrap;
+    border: 1px solid var(--line);
     border-radius: var(--radius-row);
-    background: none;
+    background: var(--surface);
     color: var(--accent);
     font: inherit;
     font-size: var(--text-sm);
@@ -564,13 +609,17 @@
     cursor: pointer;
     transition:
       border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
+      background var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-spring);
   }
   @media (hover: hover) {
     .replies:hover {
-      border-color: var(--line);
-      background: var(--surface);
+      border-color: var(--line-strong);
+      background: var(--surface-hover);
     }
+  }
+  .replies:active {
+    transform: scale(0.97);
   }
   .replies .last {
     color: var(--muted);
@@ -580,10 +629,18 @@
   .sending {
     --glyph-size: 11px;
     position: absolute;
-    right: var(--space-3);
-    bottom: 6px;
+    right: calc(var(--space-3) - var(--message-end));
+    bottom: 4px;
     color: var(--muted);
-    opacity: 0.7;
+    animation: waited var(--dur-base) var(--ease-out) 600ms both;
+  }
+  @keyframes waited {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 0.7;
+    }
   }
   .refused {
     display: inline-flex;
@@ -591,9 +648,25 @@
     margin-top: var(--space-1);
   }
   .seen {
+    position: absolute;
+    right: calc(var(--space-2) - var(--message-end));
+    bottom: 1px;
     display: flex;
-    justify-content: flex-end;
-    gap: 2px;
-    margin-top: 2px;
+    align-items: center;
+    animation: waited var(--dur-base) var(--ease-out) both;
+  }
+  .seen .face {
+    display: inline-flex;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1.5px var(--bg);
+  }
+  .seen .face + .face {
+    margin-inline-start: -5px;
+  }
+  .seen .more {
+    margin-inline-start: 2px;
+    color: var(--muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
   }
 </style>

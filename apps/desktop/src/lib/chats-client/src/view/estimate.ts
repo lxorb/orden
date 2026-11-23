@@ -3,15 +3,16 @@ import { fitted, gallery, galleryWidth, sortFiles } from './media'
 import type { Item } from './rows'
 
 const LINE = 21
-const GUTTER = 64
+const GUTTER = 96
+export const READABLE = 760
 const CHARACTER = 7.2
 export function estimate(item: Item, width: number): number {
   if (item.kind === 'day') return 36
   if (item.kind === 'new') return 22
-  return messageHeight(item.message, item.head, width) + (item.seen.length ? 20 : 0)
+  return messageHeight(item.message, item.head, width)
 }
 function messageHeight(message: Message, head: boolean, width: number): number {
-  const column = Math.max(120, width - GUTTER)
+  const column = Math.min(READABLE, Math.max(120, width - GUTTER))
   let height = head ? 30 : 6
   if (message.deleted) return height + LINE
   if (message.quote !== undefined) height += 24

@@ -6,9 +6,9 @@
   import { chatReplies } from '../../../ai-chat/src/api'
   import { chooseFiles } from '../../../ui-controls/src/api'
   import { pickedLink } from '../../../link-format/src/api'
-  import { localDate, localNumber, dur, fade, insideSpace, afterQuiet } from '../../../platform/src/api'
+  import { localDate, localNumber, dur, fade, scale, insideSpace, afterQuiet } from '../../../platform/src/api'
   import { links } from '../../../link-index/src/api'
-  import { DIVIDER, menu } from '../../../ui-kit/src/api'
+  import { DIVIDER, longPress, menu } from '../../../ui-kit/src/api'
   import { modes } from '../../../modes/src/api'
   import { followHref, followNoteFrom, workspace } from '../../../workspace/src/api'
   import { shortcuts } from '../../../shortcuts/src/api'
@@ -54,7 +54,6 @@
   let alsoToChat = $state(false)
   let mention = $state<{ from: number; query: string } | null>(null)
   let mentionLit = $state(0)
-  let before: string | null = null
   const attachments = new Attachments()
   let offered: string | null = null
   let dropped = $state<string | null>(null)
@@ -68,10 +67,9 @@
     if (!editor) return
     const words = editor.state.doc.toString()
     dropped = linkedNote(words) ?? (words.trim() ? offered : null)
-    if (!editingAside()) store().keepDraft(draftKey, words)
+    store().keepDraft(draftKey, words)
   }, 600)
   const aside = $derived(parent ? null : page.aside)
-  const editingAside = () => aside?.kind === 'edit'
   const choices = $derived(mention ? mentionChoices(mention.query, page.members, page.me, mention.from === 0) : [])
   onMount(() => {
     if (!host) return
@@ -107,14 +105,13 @@
     const unoffer = store().offers((offer) => {
       if (offer.chat !== page.id || offer.parent !== parent) return
       take(store().takeOffer(page.id, parent))
-      if (editingAside()) before = offer.text
-      else setText(offer.text)
+      setText(offer.text)
       focus()
     })
     return () => {
       unoffer()
       keep.cancel()
-      if (!editingAside()) store().keepDraft(draftKey, made.state.doc.toString())
+      store().keepDraft(draftKey, made.state.doc.toString())
       made.destroy()
       attachments.clear()
     }
@@ -123,21 +120,8 @@
     const index = links.index(path)
     if (editor) setNoteIndex(editor, index)
   })
-  let wasEditing: string | null = null
   $effect(() => {
-    const now = aside?.kind === 'edit' ? aside.message : null
-    untrack(() => {
-      if (now && wasEditing !== now.id) {
-        before ??= text()
-        setText(now.body)
-        wasEditing = now.id
-      } else if (!now && wasEditing !== null) {
-        wasEditing = null
-        setText(before ?? '')
-        before = null
-      }
-      if (aside) focus()
-    })
+    if (aside) untrack(focus)
   })
   function text(): string {
     return editor?.state.doc.toString() ?? ''
@@ -169,11 +153,6 @@
   async function send() {
     let words = text()
     if (!attachments.ready) return
-    if (aside?.kind === 'edit') {
-      page.edit(aside.message, words)
-      page.aside = null
-      return
-    }
     if (!words.trim() && !attachments.refs.length) return
     const long = asFile(words, 'Text')
     if (long) {
@@ -264,13 +243,14 @@
       const last = page.lastOwn()
       if (last) {
         spend()
-        page.aside = { kind: 'edit', message: last }
+        page.editing = { id: last.id, replies: false }
       }
       return
     }
     if (event.key === 'Escape') {
       spend()
       if (aside) page.aside = null
+      else if (page.editing) page.editing = null
       else onescape?.()
       return
     }
@@ -365,14 +345,10 @@
 
   {#if aside}
     <div class="aside" transition:fade={{ duration: dur(100) }}>
-      <Glyph name={aside.kind === 'edit' ? 'pencil' : 'quote'} />
+      <Glyph name="quote" />
       <span class="aside-words">
-        {#if aside.kind === 'edit'}
-          Edit
-        {:else}
-          <strong>{nameOf(aside.message.author, page.members, space)}</strong>
-          {aside.message.body.split('\n')[0]}
-        {/if}
+        <strong>{nameOf(aside.message.author, page.members, space)}</strong>
+        {aside.message.body.split('\n')[0]}
       </span>
       <button type="button" class="orden-glyph" aria-label="Cancel" onclick={() => (page.aside = null)}
         ><Glyph name="close" /></button
@@ -387,7 +363,12 @@
   {#if attachments.list.length}
     <div class="chips">
       {#each attachments.list as one (one.id)}
-        <span class="chip" class:failed={one.failed} class:busy={!one.ref && !one.failed}>
+        <span
+          class="chip"
+          class:failed={one.failed}
+          class:busy={!one.ref && !one.failed}
+          in:scale={{ start: 0.85, duration: dur(150) }}
+        >
           {#if one.thumb}
             <img src={one.thumb} alt="" draggable="false" />
           {:else}
@@ -402,7 +383,7 @@
     </div>
   {/if}
 
-  <div class="box orden-field" class:editing={aside?.kind === 'edit'}>
+  <div class="box orden-field">
     {#if recording}
       <Recorder onsend={sendFile} ondone={() => ((recording = false), focus())} />
     {:else}
@@ -416,7 +397,9 @@
       <div class="field">
         <div class="editor" bind:this={host}></div>
         {#if empty}
-          <span class="placeholder" aria-hidden="true">{page.entry?.name ?? ''}</span>
+          <span class="placeholder" aria-hidden="true"
+            >{parent ? 'Reply' : page.entry?.name ? `Message ${page.entry.name}` : ''}</span
+          >
         {/if}
       </div>
       <button
@@ -432,18 +415,28 @@
           class="tool"
           aria-label="Voice message"
           {@attach shortcuts.tip('Voice message', 'chat.record')}
-          onclick={() => (recording = true)}><Glyph name="mic" /></button
+          onclick={() => (recording = true)}
+          in:scale={{ start: 0.7, duration: dur(130) }}><Glyph name="mic" /></button
         >
       {:else}
-        <span class="send-group">
-          <button type="button" class="send" aria-label="Send" disabled={!attachments.ready} onclick={() => void send()}
-            ><Glyph name="send" /></button
-          >
-          {#if !parent && !aside && !attachments.list.length}
-            <button type="button" class="later" aria-label="Send later" onclick={later}><Glyph name="chevron" /></button
-            >
-          {/if}
-        </span>
+        {@const canLater = !parent && !aside && !attachments.list.length}
+        <button
+          type="button"
+          class="send"
+          aria-label="Send"
+          disabled={!attachments.ready}
+          use:tip={() => (canLater ? 'Send, right-click to send later' : 'Send')}
+          onclick={() => void send()}
+          oncontextmenu={(event) => {
+            if (!canLater) return
+            event.preventDefault()
+            later(event)
+          }}
+          use:longPress={(event) => {
+            if (canLater) later(event)
+          }}
+          in:scale={{ start: 0.7, duration: dur(130) }}><Glyph name="send" /></button
+        >
       {/if}
     {/if}
   </div>
@@ -490,9 +483,6 @@
     min-height: 42px;
     padding: 4px;
   }
-  .box.editing {
-    border-color: var(--accent);
-  }
   .field {
     position: relative;
     flex: 1;
@@ -537,7 +527,6 @@
     line-height: 1.45;
   }
   .tool,
-  .later,
   .send {
     display: grid;
     place-items: center;
@@ -547,8 +536,7 @@
     border: none;
     border-radius: var(--radius-md);
   }
-  .tool,
-  .later {
+  .tool {
     --glyph-size: 18px;
     flex: none;
     background: none;
@@ -559,15 +547,10 @@
       color var(--dur-fast) var(--ease-out);
   }
   @media (hover: hover) {
-    .tool:hover,
-    .later:hover {
+    .tool:hover {
       background: var(--surface-hover);
       color: var(--text-strong);
     }
-  }
-  .send-group {
-    display: flex;
-    align-items: center;
   }
   .send {
     --glyph-size: 16px;
@@ -580,9 +563,10 @@
   .send:active:not(:disabled) {
     transform: scale(0.92);
   }
-  .later {
-    --glyph-size: 14px;
-    width: 20px;
+  @media (hover: hover) {
+    .send:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
   }
   .aside {
     --glyph-size: 14px;
@@ -630,8 +614,15 @@
     border-radius: var(--radius-sm);
     object-fit: cover;
   }
-  .chip.busy {
+  .chip.busy img,
+  .chip.busy .chip-name {
     opacity: 0.6;
+    animation: ghost 1.4s var(--ease-in-out) infinite;
+  }
+  @keyframes ghost {
+    50% {
+      opacity: 0.35;
+    }
   }
   .chip.failed {
     border-color: var(--danger);
@@ -726,7 +717,9 @@
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .dots i {
+    .dots i,
+    .chip.busy img,
+    .chip.busy .chip-name {
       animation: none;
     }
   }

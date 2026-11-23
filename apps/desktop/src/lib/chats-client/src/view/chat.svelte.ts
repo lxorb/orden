@@ -10,12 +10,17 @@ import { saved } from './saved.svelte'
 import { store } from './source.svelte'
 import { dayOf } from './when'
 
-export type Aside = { kind: 'quote'; message: Message } | { kind: 'edit'; message: Message } | null
+export type Aside = { kind: 'quote'; message: Message } | null
+export interface Editing {
+  id: string
+  replies: boolean
+}
 export class ChatPage {
   readonly id: string
   readonly view: ChatView
   replying = $state<string | null>(null)
   aside = $state<Aside>(null)
+  editing = $state<Editing | null>(null)
   flashed = $state<string | null>(null)
   constructor(id: string) {
     this.id = id

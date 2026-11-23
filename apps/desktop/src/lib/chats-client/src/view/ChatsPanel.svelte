@@ -27,9 +27,11 @@
   import { levelWord } from '../level-words'
   import type { Priority } from '@orden/markdown/task-line'
   import { showQuickAdd } from '@orden/contracts'
+  import { Mascot, type Mood } from '../../../mascot/src/api'
 
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
   let activity = $state.raw<Hit[]>([])
+  let activityRead = $state(false)
   let arranged = $state<'all' | 'priority'>('all')
   const here = $derived(chatsHere(store().list, workspace.activeSpace?.root))
   const chats = $derived.by(() => {
@@ -104,6 +106,7 @@
   }
   async function lookActive() {
     activity = await store().search('mentions:me')
+    activityRead = true
   }
   onMount(() => void lookActive())
   function open(chat: ChatEntry | undefined, message?: string) {
@@ -124,6 +127,13 @@
     <span class="orden-row-label">{line}</span>
     <span class="orden-row-meta">{chat?.name ?? ''}</span>
   </button>
+{/snippet}
+
+{#snippet none(mood: Mood, words: string)}
+  <div class="none">
+    <Mascot {mood} size={32} />
+    <p>{words}</p>
+  </div>
 {/snippet}
 
 {#snippet namer(value: string, label: string, commit: (typed: string) => void, cancel: () => void)}
@@ -295,6 +305,14 @@
             <span class="orden-row-meta count">{localNumber(count)}</span>
           {/if}
         </button>{/if}
+    {:else}
+      {#if chatsView.naming === null && store().ready}
+        {#if chatsView.query.trim()}
+          {#if !hitsHere.length}{@render none('shrug', 'Nothing found')}{/if}
+        {:else}
+          {@render none('happy', 'No chats in this space yet')}
+        {/if}
+      {/if}
     {/each}
   {:else}
     <button type="button" class="orden-row back" onclick={() => (showing = 'chats')}>
@@ -305,13 +323,13 @@
       {#each onlyHere(activity, here) as one (`${one.chat}:${one.message.id}`)}
         {@render found(one.chat, one.message.id, one.message.author, firstLine(one.message.body))}
       {:else}
-        <p class="empty"><Glyph name="mention" /></p>
+        {#if activityRead}{@render none('bored', 'No mentions yet')}{/if}
       {/each}
     {:else}
       {#each savedHere as one (`${one.chat}:${one.message}`)}
         {@render found(one.chat, one.message, one.author, one.line)}
       {:else}
-        <p class="empty"><Glyph name="saved" /></p>
+        {@render none('sleepy', 'Nothing saved yet')}
       {/each}
     {/if}
   {/if}
@@ -401,12 +419,23 @@
   .back {
     color: var(--muted-strong);
   }
-  .empty {
-    --glyph-size: 20px;
-    display: grid;
-    place-items: center;
-    margin: var(--space-5) 0;
+  .none {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+    animation: none-in var(--dur-base) var(--ease-out) both;
+  }
+  .none p {
+    margin: 0 var(--row-pad);
     color: var(--muted);
-    opacity: 0.5;
+    font-size: var(--text-row);
+    text-align: center;
+  }
+  @keyframes none-in {
+    from {
+      opacity: 0;
+    }
   }
 </style>

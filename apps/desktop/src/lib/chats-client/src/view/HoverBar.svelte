@@ -60,7 +60,7 @@
 <style>
   .bar {
     position: absolute;
-    right: var(--space-4);
+    right: max(var(--space-3), calc(100% - var(--readable, 100%) - 60px));
     z-index: var(--z-lifted);
     display: flex;
     gap: 1px;
