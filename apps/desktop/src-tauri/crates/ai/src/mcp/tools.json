@@ -566,7 +566,7 @@
   },
   {
     "name": "read_canvas",
-    "description": "A canvas or page note as JSON Canvas: its cards with their ids, text and places, and the connections. A page note also lists its pages in order, and each card's page. A page of a PDF also gives its fontSize, the size of its printed words, and its fields, the spaces left for answers (form fields, else empty boxes, rows of blanks and gaps between the lines), each with x, y, width and height from the page's corner and the question before it. To answer on the page, add a card on each field's page with the field's x, y, width and height: it takes the page's fontSize and no card behind it; lay out the answer in short lines or points and use the space.",
+    "description": "A canvas or page note as JSON Canvas: cards (ids, text, places), connections, a page note's pages and each card's page. A PDF page (`pages`, else 1-20) adds fontSize and fields (x, y, width, height from its corner, and question). Answer in a card cut to a field, short lines filling it.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -576,26 +576,22 @@
           "type": "string",
           "description": "In place of path: a canvas or page note tab's id."
         },
-        "pages": { "type": "string", "description": "Such as 1-3,7: the pages that get their fields, else the first 20." }
+        "pages": { "type": "string" }
       }
     },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
   {
     "name": "note_screenshot",
-    "description": "A PNG of a note, canvas or page note as it is drawn, to check how cards sit. A page note shows one page (`page`, from 1); x, y, width and height cut out an area, in the units read_canvas gives: from the page's corner, on a canvas its own places, in a note pixels of an 800 wide picture. At most 1600 pixels a side unless `scale`.",
+    "description": "PNG of a note, canvas or page note's `page`. area: [x, y, width, height] in read_canvas's units (notes 800 px wide).",
     "inputSchema": {
       "type": "object",
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
-        "tab": { "type": "string", "description": "In place of path: a note, canvas or page note tab's id." },
+        "tab": { "type": "string" },
         "page": { "type": "integer" },
-        "x": { "type": "number" },
-        "y": { "type": "number" },
-        "width": { "type": "number" },
-        "height": { "type": "number" },
-        "scale": { "type": "number" }
+        "area": { "type": "array", "items": { "type": "number" } }
       }
     },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
@@ -902,7 +898,7 @@
   },
   {
     "name": "edit_canvas",
-    "description": "Change a canvas or page note object by object. Merges with what the reader is drawing. In a page note, `page` (a number from 1) on add_card or move measures x and y from that page's corner, and add_page (after?), remove_page and move_page (to) change the pages. A text card takes fontSize, fit (shrink the words into the card), bare (no card behind the words, which then take the colour) and color, on add_card or by style; null takes fontSize or color away. On a page of a PDF a new card has the page's fontSize and is bare unless told otherwise. To answer a field read_canvas gives, cut the card to the field, lay out the answer in short lines or points, use the space, and check it with note_screenshot.",
+    "description": "Change a canvas or page note by ops, merged live with the reader's. In a page note `page` (from 1) on add_card or move puts x, y from its corner; add_page (after?), remove_page, move_page (to). Text cards take fontSize, fit, bare (no card), color by add_card or style, null clears; on a PDF page its fontSize, bare.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -916,7 +912,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "description": "{op, id?, text?, x?, y?, width?, height?, from?, to?, page?, after?, fontSize?, fit?, bare?, color?}: the ids are read_canvas's.",
+            "description": "{op, id?, text?, x?, y?, width?, height?, from?, to?, page?, after?}",
             "properties": {
               "op": {
                 "type": "string",
