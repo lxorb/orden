@@ -137,7 +137,8 @@ export function readChosen(value: unknown): string | null {
 }
 export async function chooseTab(tab: string): Promise<void> {
   const { workspace } = await import('../../workspace/src/api')
-  if (workspace.activeTabId === tab || !workspace.tabs.some((one) => one.id === tab)) return
+  const one = workspace.tabs.find((each) => each.id === tab)
+  if (!one || workspace.activeTabId === tab || workspace.showing(one.paneId)?.id !== tab) return
   workspace.activate(tab)
 }
 export function cardCorner(within?: Element | null): Foot {

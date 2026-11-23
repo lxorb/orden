@@ -23,6 +23,13 @@ on:
       - scripts/pinch-drive.py
       - .github/workflows/web-tab.yml
   workflow_dispatch:
+    inputs:
+      switches:
+        description: How many tab switches the pane-front drive makes.
+        default: '120'
+      seeds:
+        description: The pane-front drive's seeds, one run each.
+        default: '2416'
   workflow_call:
 
 concurrency:
@@ -46,7 +53,7 @@ jobs:
           - runner: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 75
+    timeout-minutes: ${{ inputs.switches && 180 || 75 }}
     permissions:
       contents: read
     defaults:
@@ -122,13 +129,20 @@ jobs:
       - name: The pane shows the tab in front, on the screen
         id: pane-front-drive
         if: ${{ !cancelled() && env.EXE != '' && runner.os != 'macOS' }}
-        timeout-minutes: 15
+        timeout-minutes: ${{ inputs.switches && 120 || 15 }}
+        env:
+          SWITCHES: ${{ inputs.switches }}
+          SEEDS: ${{ inputs.seeds }}
         run: |
-          drive=(scripts/pane-front-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
-          case "$RUNNER_OS" in
-            Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
-            *) python "${drive[@]}" ;;
-          esac
+          failed=0
+          for seed in ${SEEDS:-2416}; do
+            drive=(scripts/pane-front-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --switches "${SWITCHES:-120}" --seed "$seed")
+            case "$RUNNER_OS" in
+              Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" || failed=1 ;;
+              *) python "${drive[@]}" || failed=1 ;;
+            esac
+          done
+          exit $failed
 
       - name: Orden's own scripts are not the reader's press
         if: ${{ !cancelled() && env.EXE != '' }}
