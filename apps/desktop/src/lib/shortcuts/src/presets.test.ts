@@ -70,7 +70,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode'])('the %s keyboard', (i
     expect(twice).toEqual([])
   })
   test.each(PLATFORMS)('leaves nothing on a key something else is on (%s)', (platform) => {
-    const keys = keysOf()
+    const keys = { ...keysOf(), ...(platform === 'mac' ? presets.presetById(id)?.mac : {}) }
     const held = new Map<string, string>()
     const clashes: string[] = []
     for (const entry of registry.SHORTCUTS) {

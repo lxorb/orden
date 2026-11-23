@@ -155,7 +155,7 @@ class Layers:
                 keys.move(*self.drive.screen.at(pane["x"] + pane["width"] / 2, pane["y"] + pane["height"] / 2))
         self.case("tab menu", ".orden-layer.menu", right_click_tab, escape)
         self.case("command palette", ".orden-screen.palette", lambda: keys.chord("Mod-Shift-p"), escape)
-        self.case("space picker", ".orden-screen.picker", lambda: keys.chord("Ctrl-Shift-Space" if MAC else "Mod-Space"), escape)
+        self.case("space picker", ".orden-screen.picker", lambda: keys.chord("Mod-Shift-s" if MAC else "Mod-Space"), escape)
         def new_space() -> None:
             keys.chord("Mod-Shift-p")
             time.sleep(0.8)
