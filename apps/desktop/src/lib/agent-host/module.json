@@ -51,7 +51,6 @@
     "sync-store",
     "modes",
     "gates",
-    "pages",
-    "export"
+    "pages"
   ]
 }

@@ -1,3 +1,4 @@
+import { portOf } from '@orden/contracts'
 import type { AgentAnswer } from '../../automation/src/api'
 import { type Call, done, maybe, onDisk, Refused, sharedSource } from '../../agent-verbs/src/api'
 import { toBase64 } from '../../platform/src/api'
@@ -87,10 +88,9 @@ async function noteShot(call: Call): Promise<AgentAnswer> {
   const named = noteOf(call, false)
   const read = await notes.readNote(at(named), ['text'])
   const path = named.relative ? onDisk(named.place, named.relative) : null
-  const target = { source: read.text ?? '', name: named.relative || 'Untitled.md', path, trusted: false }
-  const { exporters, renderOptions } = await import('../../export/src/api')
-  const { notePng } = await exporters()
-  const bytes = await notePng(target, { ...(await renderOptions(target, undefined, 'light')) }, NOTE_WIDTH)
+  const pictures = portOf('export.notePicture')
+  const note = { source: read.text ?? '', name: named.relative || 'Untitled.md', path }
+  const bytes = pictures.ok ? await pictures.value.png(note, NOTE_WIDTH) : null
   if (!bytes) throw new Refused('failed', 'that note could not be drawn')
   const image = await createImageBitmap(blobOf(bytes))
   const whole = { x: 0, y: 0, width: image.width, height: image.height }

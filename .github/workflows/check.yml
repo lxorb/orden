@@ -2,7 +2,7 @@ name: check
 
 on:
   push:
-    branches: [main]
+    branches: [main, unstable]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -16,8 +16,35 @@ permissions:
   contents: read
 
 jobs:
+  unstable:
+    if: ${{ github.ref == 'refs/heads/unstable' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Types and generated stylesheets
+        run: pnpm check
+
+      - name: Module boundaries
+        run: node scripts/modules.mjs --check
+
+      - name: Prettier
+        run: pnpm format:check
+
   test:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -43,7 +70,7 @@ jobs:
         run: pnpm test
 
   lint:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -78,7 +105,7 @@ jobs:
         run: pnpm knip
 
   walks:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -99,7 +126,7 @@ jobs:
         run: pnpm --filter @orden/desktop sim:long
 
   smoke:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -153,7 +180,7 @@ jobs:
           if-no-files-found: ignore
 
   rust:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     permissions:
       contents: read
     strategy:
@@ -232,7 +259,7 @@ jobs:
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
   windows-probe:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: windows-latest
     timeout-minutes: 75
     permissions:
@@ -272,7 +299,7 @@ jobs:
           if-no-files-found: ignore
 
   mobile-touched:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

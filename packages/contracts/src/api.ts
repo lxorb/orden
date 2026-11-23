@@ -263,6 +263,8 @@ export type {
   SharedItem,
 } from './import'
 export type {
+  NotePicturePort,
+  NoteShown,
   PlanePicturePort,
   PlaneShown,
   PreviewedTab,
