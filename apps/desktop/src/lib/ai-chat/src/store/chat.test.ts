@@ -322,24 +322,39 @@ describe('the panel’s chats', () => {
 })
 describe('the field while a message is changed', () => {
   const note = { kind: 'note', path: '/notes/Work/Plan.md', name: 'Plan' } as never
-  test('keeps the draft aside while an earlier message is edited, and gives it back on Escape', async () => {
+  test('leaves the draft alone while an earlier message is edited in place, and on Escape', async () => {
     const chat = await asked()
     chat.text = 'a long new draft'
     chat.chips = [note]
     chat.startEdit('u1')
-    expect(chat.text).toBe('old question')
+    expect([chat.editing, chat.changing, chat.text, chat.chips]).toEqual(['u1', false, 'a long new draft', [note]])
     chat.cancelEdit()
-    expect(chat.text).toBe('a long new draft')
-    expect(chat.chips).toEqual([note])
+    expect([chat.editing, chat.text, chat.chips]).toEqual([null, 'a long new draft', [note]])
   })
-  test('gives the draft back once the edited message is sent', async () => {
+  test('sends the message edited in place as the earlier one changed, and leaves the draft alone', async () => {
     const chat = await asked()
+    edits.length = 0
     chat.text = 'a long new draft'
     chat.startEdit('u1')
-    chat.text = 'old question, fixed'
-    chat.submit({ front: null, selection: '' })
+    chat.resend('  old question, fixed ')
     expect(chat.editing).toBe(null)
+    expect(edits).toEqual(['u1:old question, fixed'])
     expect(chat.text).toBe('a long new draft')
+  })
+  test('sends nothing for a message edited in place down to nothing', async () => {
+    const chat = await asked()
+    edits.length = 0
+    chat.startEdit('u1')
+    chat.resend('   ')
+    expect([chat.editing, edits]).toEqual(['u1', []])
+  })
+  test('edits one message in place at a time', async () => {
+    const chat = await asked(['work'], 'p', [
+      { id: 'u2', role: 'you', at: 2, parts: [], draft: { text: 'later', attachments: [] } },
+    ])
+    chat.startEdit('u1')
+    chat.startEdit('u2')
+    expect(chat.editing).toBe('u2')
   })
   test('keeps the draft aside while a queued message is changed, and gives it back once sent', async () => {
     const chat = await asked()
@@ -367,7 +382,7 @@ describe('the field while a message is changed', () => {
     chat.text = 'a long new draft'
     chat.editQueued('q2')
     expect(chat.changing).toBe(true)
-    chat.cancelEdit()
+    chat.cancelChange()
     expect(chat.changing).toBe(false)
     expect(chat.text).toBe('a long new draft')
     expect(chat.queue.map((one) => one.id)).toEqual(['q1', 'q2', 'q3'])
@@ -377,7 +392,7 @@ describe('the field while a message is changed', () => {
     chat.text = 'a long new draft'
     chat.startEdit('u1')
     chat.newThread()
-    expect(chat.changing).toBe(false)
+    expect(chat.editing).toBe(null)
     expect(chat.text).toBe('a long new draft')
   })
   test('keeps an edited message that could not be sent, with the draft it gave back', async () => {
@@ -385,8 +400,7 @@ describe('the field while a message is changed', () => {
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
     chat.text = 'a long new draft'
     chat.startEdit('u1')
-    chat.text = 'old question, fixed'
-    chat.submit({ front: null, selection: '' })
+    chat.resend('old question, fixed')
     await waitFor(() => expect(chat.trouble).toBe('down'))
     expect(chat.text).toBe('old question, fixed\n\na long new draft')
   })
@@ -434,7 +448,7 @@ describe('the field while a message is changed', () => {
     chat.editQueued(chat.queue[0]!.id)
     answer()
     await waitFor(() => expect(chat.busy).toBe(false))
-    chat.cancelEdit()
+    chat.cancelChange()
     await waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
     expect(chat.queue).toEqual([])
   })
@@ -453,7 +467,7 @@ describe('the field while a message is changed', () => {
     chat.editQueued(chat.queue[0]!.id)
     chat.stop()
     await waitFor(() => expect(chat.busy).toBe(false))
-    chat.cancelEdit()
+    chat.cancelChange()
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(sentWords()).toEqual(['first'])
     expect(chat.queue.map((one) => one.text)).toEqual(['second'])
@@ -480,7 +494,7 @@ describe('the field while a message is changed', () => {
     chat.text = 'second, changed'
     chat.steer()
     expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
-    chat.cancelEdit()
+    chat.cancelChange()
     answer()
     await waitFor(() => expect(chat.busy).toBe(false))
     expect(steer).toHaveBeenCalledWith(expect.anything(), 'second, changed')
@@ -495,7 +509,7 @@ describe('the field while a message is changed', () => {
     chat.text = '/export'
     chat.taken()
     expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
-    chat.cancelEdit()
+    chat.cancelChange()
     answer()
     await waitFor(() => expect(chat.busy).toBe(false))
     expect(sentWords()).toEqual(['first'])
@@ -512,11 +526,11 @@ describe('the field while a message is changed', () => {
     chat.text = 'q1 changed'
     chat.editQueued('q2')
     expect(chat.text).toBe('q2 words')
-    chat.cancelEdit()
+    chat.cancelChange()
     expect(chat.text).toBe('my draft')
     expect(chat.queue.map((one) => one.text)).toEqual(['q1 changed', 'q2 words', 'q3 words'])
   })
-  test('puts a queued message being changed back when an earlier message is taken to change', async () => {
+  test('keeps a queued message being changed in the field while an earlier message is edited in place', async () => {
     const chat = await asked()
     const id = String(chat.thread?.id)
     ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
@@ -525,8 +539,9 @@ describe('the field while a message is changed', () => {
     chat.text = 'my draft'
     chat.editQueued('q1')
     chat.startEdit('u1')
-    expect(chat.text).toBe('old question')
-    chat.submit(around)
+    expect([chat.editing, chat.changing, chat.text]).toEqual(['u1', true, 'q1 words'])
+    chat.cancelEdit()
+    chat.cancelChange()
     expect(chat.text).toBe('my draft')
     expect(chat.queue.map((one) => one.text)).toEqual(['q1 words'])
   })
@@ -561,20 +576,20 @@ describe('the field while a message is changed', () => {
     await heldAfterAnswer(chat)
     const { ai } = await import('../../../ai-providers/src/store.svelte')
     const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
-    chat.cancelEdit()
+    chat.cancelChange()
     await settled()
     gone.mockRestore()
     expect(chat.text).toBe('second\n\nmy draft')
   })
-  test('opens an earlier message to change while a queued one is in the field, and sends the queued one after', async () => {
+  test('opens an earlier message to edit in place while a queued one is in the field, and sends the queued one after', async () => {
     const chat = await asked()
     await heldAfterAnswer(chat)
     chat.startEdit('u1')
-    expect([chat.changing, chat.text]).toEqual([true, 'old question'])
-    expect(chat.queue.map((one) => one.text)).toEqual(['second'])
+    expect([chat.editing, chat.changing, chat.text]).toEqual(['u1', true, 'second'])
+    chat.cancelEdit()
     await settled()
     expect(sentWords()).toEqual(['first'])
-    chat.cancelEdit()
+    chat.cancelChange()
     await waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
   })
   test('sends what was queued while Ask again answered', async () => {
@@ -591,7 +606,7 @@ describe('the field while a message is changed', () => {
     chat.editQueued(chat.queue[1]!.id)
     answer()
     await waitFor(() => expect(sentWords()).toEqual(['old question', 'second']))
-    chat.cancelEdit()
+    chat.cancelChange()
     await waitFor(() => expect(sentWords()).toEqual(['old question', 'second', 'third']))
   })
   test('sends what was queued while the chat was compacted', async () => {

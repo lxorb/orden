@@ -262,7 +262,7 @@
     const empty = !chat.text.trim()
     if (event.key === 'ArrowUp' && empty && !event.altKey && !event.ctrlKey && !event.metaKey)
       return run(() => chat.startEdit())
-    if (event.key === 'Escape' && chat.changing) return run(() => chat.cancelEdit())
+    if (event.key === 'Escape' && chat.changing) return run(() => chat.cancelChange())
     if (event.key === 'Escape' && empty && head?.kept) {
       const now = Date.now()
       if (now - escaped < 500) {
@@ -411,7 +411,9 @@
   {#if chat.changing}
     <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
       <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
-      <button class="drop" aria-label="Cancel" title="Cancel" onclick={() => chat.cancelEdit()}><Cross small /></button>
+      <button class="drop" aria-label="Cancel" title="Cancel" onclick={() => chat.cancelChange()}
+        ><Cross small /></button
+      >
     </div>
   {/if}
   {#if goal}
