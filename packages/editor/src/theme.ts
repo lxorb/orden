@@ -47,7 +47,7 @@ export const ordenHighlightStyle = HighlightStyle.define([
   { tag: tags.heading3, fontWeight: '620' },
   { tag: tags.heading4, fontWeight: '620' },
   { tag: tags.heading5, fontWeight: '620' },
-  { tag: tags.heading6, fontWeight: '620', color: 'var(--muted-strong)' },
+  { tag: tags.heading6, fontWeight: '620' },
   { tag: tags.strong, fontWeight: '650', color: 'var(--text-strong)' },
   { tag: tags.emphasis, fontStyle: 'italic' },
   { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--muted)' },

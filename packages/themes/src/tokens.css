@@ -189,6 +189,7 @@
   --canvas-5: #53dfdd;
   --canvas-6: #a882ff;
   --canvas-dot: #2b323d;
+  --heading-tint: 100%;
   --mark-1: color-mix(in srgb, var(--canvas-1) 22%, transparent);
   --mark-2: color-mix(in srgb, var(--canvas-2) 22%, transparent);
   --mark-4: color-mix(in srgb, var(--canvas-4) 22%, transparent);
@@ -237,6 +238,7 @@
   --canvas-5: #00b3b0;
   --canvas-6: #7852ee;
   --canvas-dot: #d5dce5;
+  --heading-tint: 60%;
   --select-arrow: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' fill='none' stroke='%235c6574' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4l3 3 3-3'/%3E%3C/svg%3E");
   --tab-edge: color-mix(in srgb, var(--text) 24%, transparent);
   --ink-wash: color-mix(in srgb, var(--text) 7%, transparent);
@@ -287,6 +289,15 @@
   --callout-example: var(--accent);
   --callout-quote: var(--muted-strong);
   --tag: var(--accent-hover);
+}
+:root,
+[data-theme] {
+  --heading-1: color-mix(in srgb, var(--canvas-6) var(--heading-tint), var(--text-strong));
+  --heading-2: color-mix(in srgb, var(--canvas-5) var(--heading-tint), var(--text-strong));
+  --heading-3: color-mix(in srgb, var(--canvas-4) var(--heading-tint), var(--text-strong));
+  --heading-4: color-mix(in srgb, var(--canvas-3) var(--heading-tint), var(--text-strong));
+  --heading-5: color-mix(in srgb, var(--canvas-2) var(--heading-tint), var(--text-strong));
+  --heading-6: color-mix(in srgb, var(--canvas-1) var(--heading-tint), var(--text-strong));
 }
 @media (prefers-reduced-motion: reduce) {
   :root {
