@@ -4,6 +4,7 @@
   import PaneTree from './PaneTree.svelte'
   import { clamped, type Frame, paneIn, type Split, tracks } from '../../panes/src/api'
   import { log } from '../../platform/src/api'
+  import { redrawn } from './redraw.svelte'
 
   const { frame }: { frame: Frame } = $props()
   const split = $derived(frame.kind === 'split' ? frame : null)
@@ -131,7 +132,9 @@
   </div>
 {:else if frame.kind === 'pane'}
   <svelte:boundary onerror={rebuilt}>
-    <Pane pane={frame} />
+    {#key redrawn.at[frame.id]}
+      <Pane pane={frame} />
+    {/key}
   </svelte:boundary>
 {/if}
 

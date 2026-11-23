@@ -16,6 +16,7 @@ import {
   stallWatch,
 } from './platform/src/api'
 import { startup, Stops } from './launch/src/api'
+import { frontWatch } from './pane-tree/src/api'
 import { choices, modes } from './modes/src/api'
 import { warmDoors } from './features'
 import { recovery } from './history/src/api'
@@ -58,6 +59,7 @@ export function start(): () => void {
   mark('start')
   collectErrors()
   void startup.turn('doors').then(async () => (await stallWatch()).watchStalls())
+  void startup.turn('doors').then(async () => (await frontWatch()).watchFronts())
   void startup
     .turn('doors')
     .then(async () => (await import('./theme-looks/src/api')).store.keepUp())
