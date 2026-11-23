@@ -13,7 +13,7 @@ function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
   else delete file.orden
 }
 const ORDEN_FIELDS = new Set(
-  'version icon iconColor pages ink shapes order words locked at gone moved outside'.split(' '),
+  'version icon iconColor pages ink shapes order words sizes fit locked at gone moved outside'.split(' '),
 )
 const RECORD = 'outside'
 type Fields = Record<string, unknown>

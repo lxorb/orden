@@ -40,6 +40,7 @@ const WORDS: Readonly<Record<string, string>> = {
   read_note: READING,
   list_versions: READING,
   read_canvas: READING,
+  note_screenshot: READING,
   read_pdf: READING,
   pdf_highlights: READING,
   edit_note: WRITING,

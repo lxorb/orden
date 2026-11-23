@@ -28,6 +28,8 @@ interface TextNode extends NodeBase {
   type: 'text'
   text: string
   bare?: true
+  size?: number
+  fit?: true
 }
 interface FileNode extends NodeBase {
   type: 'file'
@@ -119,7 +121,7 @@ export const emptyCanvas = (): Canvas => ({
   icon: null,
   iconColor: null,
 })
-function colourOf(value: unknown): CanvasColour | undefined {
+export function colourOf(value: unknown): CanvasColour | undefined {
   if (!isString(value)) return undefined
   const colour = value.trim()
   return PRESET_COLOURS.some((one) => one === colour) || HEX.test(colour) ? colour : undefined
@@ -127,6 +129,12 @@ function colourOf(value: unknown): CanvasColour | undefined {
 export const FURTHEST = 1e9
 const held = (value: number): number => Math.min(FURTHEST, Math.max(-FURTHEST, value))
 const pixels = (value: unknown, fallback: number): number => (isNumber(value) ? held(Math.round(value)) : fallback)
+export const SMALLEST_TEXT = 4
+export const LARGEST_TEXT = 400
+export const textSized = (value: unknown): number | undefined =>
+  isNumber(value) && value > 0
+    ? Math.min(LARGEST_TEXT, Math.max(SMALLEST_TEXT, Math.round(value * 10) / 10))
+    : undefined
 export const DEFAULT_WIDTH = 250
 export const DEFAULT_HEIGHT = 60
 const one = <T extends string>(value: unknown, allowed: readonly T[]): T | undefined =>
@@ -361,7 +369,10 @@ export type Thing = CanvasNode | CanvasEdge | InkStroke
 export function nodeOf(value: unknown): CanvasNode | null {
   if (isRecord(value) && value.type === 'shape') return readShape(value)
   if (isRecord(value) && value.type === 'page') return readPage(value)
-  return readNode(value)
+  const node = readNode(value)
+  if (node?.type !== 'text' || !isRecord(value)) return node
+  const size = textSized(value.size)
+  return { ...node, ...(size === undefined ? {} : { size }), ...(value.fit === true ? { fit: true } : {}) }
 }
 export const readCanvas = (text: string): Canvas => canvasIn(text) ?? emptyCanvas()
 export function holdsCanvas(text: string): boolean {
@@ -447,6 +458,15 @@ export function canvasIn(text: string): Canvas | null {
     const bare = new Set(own.words.filter(isString))
     for (const [at, node] of nodes.entries()) {
       if (node.type === 'text' && bare.has(node.id)) nodes[at] = { ...node, bare: true }
+    }
+  }
+  const sizes = isRecord(own.sizes) ? own.sizes : {}
+  const fit = new Set(Array.isArray(own.fit) ? own.fit.filter(isString) : [])
+  for (const [at, node] of nodes.entries()) {
+    if (node.type !== 'text') continue
+    const size = Object.hasOwn(sizes, node.id) ? textSized(sizes[node.id]) : undefined
+    if (size !== undefined || fit.has(node.id)) {
+      nodes[at] = { ...node, ...(size === undefined ? {} : { size }), ...(fit.has(node.id) ? { fit: true } : {}) }
     }
   }
   firstOfEach(own.shapes, readShape, ids, nodes)
@@ -612,6 +632,11 @@ function ownRuns(canvas: Canvas): string[][] {
   const edges = canvas.edges.map(edgeText)
   const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
   const words = canvas.nodes.filter((node) => node.type === 'text' && node.bare).map((node) => node.id)
+  const sized = canvas.nodes.flatMap((node) =>
+    node.type === 'text' && node.size ? [[node.id, node.size] as const] : [],
+  )
+  const sizes = sized.length ? `,\n\t\t"sizes": ${printed(Object.fromEntries(sized), 2)}` : ''
+  const fit = canvas.nodes.filter((node) => node.type === 'text' && node.fit).map((node) => node.id)
   const locked = canvas.nodes.filter((node) => node.locked).map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
@@ -620,7 +645,7 @@ function ownRuns(canvas: Canvas): string[][] {
   const tint = canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
   const owned =
     icon !== '' ||
-    [pages, canvas.ink, shapes, order, words, locked].some((list) => list.length > 0) ||
+    [pages, canvas.ink, shapes, order, words, sized, fit, locked].some((list) => list.length > 0) ||
     at !== null ||
     gone !== null ||
     moved !== null
@@ -646,6 +671,8 @@ function ownRuns(canvas: Canvas): string[][] {
       closes(2, shapes.length) +
         (order.length ? `,\n\t\t"order": ${printed(order, 2)}` : '') +
         (words.length ? `,\n\t\t"words": ${printed(words, 2)}` : '') +
+        sizes +
+        (fit.length ? `,\n\t\t"fit": ${printed(fit, 2)}` : '') +
         (locked.length ? `,\n\t\t"locked": ${printed(locked, 2)}` : '') +
         (at ? ',\n\t\t"at": ' : ''),
     ],

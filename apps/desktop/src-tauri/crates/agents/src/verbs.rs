@@ -973,6 +973,7 @@ pub mod window {
         ("read_note", Some(Scope::NotesRead)),
         ("list_versions", Some(Scope::NotesRead)),
         ("read_canvas", Some(Scope::NotesRead)),
+        ("note_screenshot", Some(Scope::NotesRead)),
         ("read_pdf", Some(Scope::NotesRead)),
         ("pdf_highlights", Some(Scope::NotesRead)),
         ("edit_note", Some(Scope::NotesWrite)),

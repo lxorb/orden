@@ -42,7 +42,7 @@ interface Verb {
 const SCOPED: [Scope | null, string][] = [
   [null, 'list_spaces read_setting'],
   ['context', 'get_context read_terminal'],
-  ['notes.read', 'list_notes search_notes list_backlinks read_note list_versions read_canvas'],
+  ['notes.read', 'list_notes search_notes list_backlinks read_note list_versions read_canvas note_screenshot'],
   ['notes.read', 'read_pdf pdf_highlights list_tasks query_base'],
   ['notes.write', 'edit_note write_note append_note set_property set_task add_task update_task'],
   ['notes.write', 'add_row edit_rows edit_base create_note restore_version edit_canvas'],

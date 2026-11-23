@@ -185,7 +185,7 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
                 vec![text(&marked(source.as_deref().unwrap_or("the page"), &found.join("\n")))]
             }
         }
-        "browser_screenshot" => {
+        "browser_screenshot" | "note_screenshot" => {
             let size = |key: &str| result.get(key).and_then(Value::as_u64).unwrap_or(0);
             vec![
                 json!({ "type": "image", "data": words("png"), "mimeType": "image/png" }),

@@ -98,6 +98,7 @@ export { DEFAULT_INK, paletteOf, readPalette, shownColour, shownInk } from './pa
 export {
   drawnNode,
   exportCanvasPdf,
+  canvasPng,
   exportCanvasPng,
   exportCanvasSvg,
   inlinedSvg,
