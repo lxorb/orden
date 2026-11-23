@@ -430,6 +430,7 @@
         class:editor={here}
         class:kept={!here}
         hidden={!here}
+        data-kept={one.id}
         data-region={here ? 'editor' : undefined}
         oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews[one.id], one.path)}
       >
@@ -441,7 +442,7 @@
 
     {#each keptOwn as one (one.id)}
       {@const here = one.id === shownKept}
-      <div class:front={here} class:kept={!here} hidden={!here} inert={!here}>
+      <div class:front={here} class:kept={!here} hidden={!here} inert={!here} data-kept={one.id}>
         <svelte:boundary failed={unreachable}>
           <Shown shown={here}>{@render own(one, here)}</Shown>
         </svelte:boundary>
