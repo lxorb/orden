@@ -27,7 +27,7 @@ afterEach(() => {
   for (const one of undo.splice(0)) one()
   crate.calls.length = 0
 })
-async function mounted(root = 'C:\\Users\\me\\Orden\\Plans') {
+async function mounted(root = 'C:\\Users\\me\\Orden\\Plans', web = WEB) {
   const bytes = new MemoryBytes()
   let keys = 0
   let clock = 1000
@@ -36,8 +36,8 @@ async function mounted(root = 'C:\\Users\\me\\Orden\\Plans') {
     key: () => `k${String((keys += 1))}`,
     foldsCase: true,
   })
-  undo.push(mountRows(WEB, internalRows(folder, WEB, readsAsText)))
-  undo.push(mountRoot({ root, web: WEB, folder }))
+  undo.push(mountRows(web, internalRows(folder, web, readsAsText)))
+  undo.push(mountRoot({ root, web, folder }))
   return { bytes, folder, root }
 }
 const keyAt = async (folder: InternalFolder, path: string) => (await folder.at(path))?.key
@@ -72,6 +72,25 @@ describe('a space Orden keeps, through the file commands', () => {
     expect(await keyAt(folder, 'Done/Plan.md')).toBe(plan)
     expect(await keyAt(folder, 'Done/cat.png')).toBe(cat)
     expect(await folder.at('Work')).toBeNull()
+  })
+  test('moves a folder of folders to another kept space and leaves not one of them behind', async () => {
+    const { folder } = await mounted()
+    const other = (await mounted('C:\\Users\\me\\Orden\\School', '/internal-u')).folder
+    await webInvoke('write_note', { path: `${WEB}/Med/Svenska.md`, content: 'hej' })
+    await webInvoke('write_note', { path: `${WEB}/Med/Genetics/Genetics.md`, content: 'DMD' })
+    await webInvoke('write_note', { path: `${WEB}/Med/Cells/Cells.md`, content: 'cells' })
+    await webInvoke('create_folder', { path: `${WEB}/Med/Cells/Empty` })
+    await webInvoke('rename_note', { from: `${WEB}/Med`, to: '/internal-u/Med' })
+    expect((await folder.list()).map((one) => one.path)).toEqual([])
+    expect((await other.list()).map((one) => one.path)).toEqual([
+      'Med',
+      'Med/Cells',
+      'Med/Cells/Cells.md',
+      'Med/Cells/Empty',
+      'Med/Genetics',
+      'Med/Genetics/Genetics.md',
+      'Med/Svenska.md',
+    ])
   })
   test('a PDF takes its highlights along, and a page note its paper', async () => {
     const { folder } = await mounted()

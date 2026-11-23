@@ -3,6 +3,10 @@ import type { PlaneMarks } from '@orden/scan/canvas'
 import { type AssetRow, type FileRow, KEEP, type Rows, type Trashed } from '../web/store'
 import type { InternalEntry, InternalFolder } from './folder'
 
+function emptiedFirst(paths: readonly string[], isKeep: (path: string) => boolean): string[] {
+  const folders = paths.filter(isKeep).sort((a, b) => b.split('/').length - a.split('/').length)
+  return [...paths.filter((path) => !isKeep(path)), ...folders]
+}
 export function internalRows(folder: InternalFolder, root: string, words: (path: string) => boolean): Rows {
   const base = normalise(root)
   const inSpace = (path: string): string => {
@@ -92,9 +96,8 @@ export function internalRows(folder: InternalFolder, root: string, words: (path:
     },
     async move(rows, gone) {
       for (const row of rows) await write(row.path, row.content)
-      for (const path of gone) {
-        if (!rows.some((row) => row.path === path)) await files.remove(path)
-      }
+      const leaving = gone.filter((path) => !rows.some((row) => row.path === path))
+      for (const path of emptiedFirst(leaving, isKeep)) await files.remove(path)
     },
   }
   const assets: Rows['assets'] = {
