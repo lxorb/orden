@@ -402,7 +402,7 @@ def main() -> int:
         wrong = drive.wrong
         for one in drive.unpressed:
             known(2416, one)
-        said = app.eval("return (await orden.invoke('read_log')).split('\\n').filter((one) => / error /.test(one) || one.includes(TOLD)).slice(-30)".replace("TOLD", json.dumps(TOLD)), 20)
+        said = app.eval("return (await orden.invoke('read_log')).split('\\n').filter((one) => (/ error /i.test(one) && !one.includes('ResizeObserver loop')) || one.includes(TOLD)).slice(-30)".replace("TOLD", json.dumps(TOLD)), 20)
         if isinstance(said, list) and said:
             print(f"the app's log: {json.dumps(said)[:6000]}", flush=True)
             if any(TOLD in one for one in said):
