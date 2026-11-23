@@ -33,7 +33,6 @@
     use:focused
     data-entry
     rows="1"
-    dir="auto"
     aria-label="Edit message"
     onkeydown={onKey}></textarea>
   <div class="actions">
@@ -57,7 +56,6 @@
     max-height: 50vh;
     min-height: 0;
     resize: none;
-    outline: none;
     line-height: 1.5;
     field-sizing: content;
   }
@@ -65,17 +63,6 @@
     display: flex;
     justify-content: flex-end;
     gap: var(--space-2);
-  }
-  .actions .orden-button {
-    min-height: var(--row-height-sm);
-    padding-block: 0;
-    padding-inline: var(--space-3);
-    border-radius: var(--radius-row);
-    font-size: var(--text-row);
-  }
-  :global([data-touch]) .actions .orden-button {
-    min-height: var(--row-height);
-    font-size: var(--text-base);
   }
   :global([data-touch]) textarea {
     font-size: var(--text-base);
