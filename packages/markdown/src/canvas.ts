@@ -121,7 +121,7 @@ export const emptyCanvas = (): Canvas => ({
   icon: null,
   iconColor: null,
 })
-function colourOf(value: unknown): CanvasColour | undefined {
+export function colourOf(value: unknown): CanvasColour | undefined {
   if (!isString(value)) return undefined
   const colour = value.trim()
   return PRESET_COLOURS.some((one) => one === colour) || HEX.test(colour) ? colour : undefined

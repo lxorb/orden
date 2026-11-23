@@ -61,6 +61,8 @@ function union(one: Box, other: Box): Box {
 const inside = (box: Box, x: number, y: number) => x > box.x && x < right(box) && y > box.y && y < bottom(box)
 const centred = (words: Words, box: Box) =>
   inside(box, words.box.x + words.box.width / 2, words.box.y + words.box.height / 2)
+export const printedSize = (words: readonly Words[]): number =>
+  bodySize(words.filter((one) => one.text.trim() && !BLANK.test(one.text)))
 function bodySize(words: readonly Words[]): number {
   const sized = words
     .filter((one) => one.size > 0 && one.text.trim())

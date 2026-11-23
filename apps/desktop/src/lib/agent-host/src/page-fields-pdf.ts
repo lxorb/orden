@@ -31,10 +31,29 @@ const PAINTS = [
   'closeFillStroke',
   'closeEOFillStroke',
 ]
-const PICTURES = ['paintImageXObject', 'paintInlineImageXObject', 'paintImageMaskXObject']
-function marksOf(fns: readonly number[], args: readonly unknown[], ops: Ops, view: readonly number[]): Mark[] {
+const PICTURES = ['paintImageXObject', 'paintInlineImageXObject', 'paintImageMaskXObject', 'paintSolidColorImageMask']
+const numbers = (value: unknown): number[] | null =>
+  Array.isArray(value) || ArrayBuffer.isView(value) ? Array.from(value as ArrayLike<number>) : null
+function placesOf(fn: number, said: readonly unknown[], ops: Ops): number[][] {
+  if (fn === ops.paintImageXObjectRepeat) {
+    const [, across = 1, down = 1] = said as number[]
+    const at = numbers(said[3]) ?? []
+    const out: number[][] = []
+    for (let one = 0; one + 1 < at.length; one += 2) out.push([across, 0, 0, down, at[one] ?? 0, at[one + 1] ?? 0])
+    return out
+  }
+  const group = fn === ops.paintInlineImageXObjectGroup ? said[1] : said[0]
+  return (Array.isArray(group) ? group : []).flatMap((one) => {
+    const transform = numbers((one as { transform?: unknown } | null)?.transform)
+    return transform ? [transform] : []
+  })
+}
+export function marksOf(fns: readonly number[], args: readonly unknown[], ops: Ops, view: readonly number[]): Mark[] {
   const paints = new Set(PAINTS.map((name) => ops[name]))
   const pictures = new Set(PICTURES.map((name) => ops[name]))
+  const groups = new Set(
+    ['paintImageXObjectRepeat', 'paintInlineImageXObjectGroup', 'paintImageMaskXObjectGroup'].map((name) => ops[name]),
+  )
   const stack: Matrix[] = []
   let now: Matrix = [...IDENTITY]
   const marks: Mark[] = []
@@ -42,11 +61,15 @@ function marksOf(fns: readonly number[], args: readonly unknown[], ops: Ops, vie
     const said = (args[at] ?? []) as unknown[]
     if (fn === ops.save) stack.push(now)
     else if (fn === ops.restore) now = stack.pop() ?? now
-    else if (fn === ops.transform) now = times(now, said as number[])
+    else if (fn === ops.transform) now = times(now, numbers(said) ?? IDENTITY)
     else if (fn === ops.paintFormXObjectBegin) {
       stack.push(now)
-      if (Array.isArray(said[0])) now = times(now, said[0] as number[])
-    } else if (fn === ops.paintFormXObjectEnd) now = stack.pop() ?? now
+      const matrix = numbers(said[0])
+      if (matrix) now = times(now, matrix)
+    } else if (fn === ops.beginAnnotation) {
+      stack.push(now)
+      now = times(numbers(said[2]) ?? IDENTITY, numbers(said[3]) ?? IDENTITY)
+    } else if (fn === ops.paintFormXObjectEnd || fn === ops.endAnnotation) now = stack.pop() ?? now
     else if (fn === ops.constructPath) {
       const limits = said[2] as ArrayLike<number> | null | undefined
       if (!paints.has(said[0] as number) || !limits || limits.length < 4) continue
@@ -55,6 +78,10 @@ function marksOf(fns: readonly number[], args: readonly unknown[], ops: Ops, vie
       marks.push({ box: boxThrough(times(view, now), x0, y0, x1, y1), picture: false })
     } else if (pictures.has(fn)) {
       marks.push({ box: boxThrough(times(view, now), 0, 0, 1, 1), picture: true })
+    } else if (groups.has(fn)) {
+      for (const place of placesOf(fn, said, ops)) {
+        marks.push({ box: boxThrough(times(times(view, now), place), 0, 0, 1, 1), picture: true })
+      }
     }
   }
   return marks
@@ -91,6 +118,10 @@ function widgetsOf(annotations: readonly unknown[], view: readonly number[]): Wi
     const [x0 = 0, y0 = 0, x1 = 0, y1 = 0] = rect as number[]
     return [{ name: typeof fieldName === 'string' ? fieldName : '', box: boxThrough(view, x0, y0, x1, y1) }]
   })
+}
+export async function wordsOn(page: PDFPageProxy): Promise<{ words: Words[]; width: number }> {
+  const view = page.getViewport({ scale: 1 })
+  return { words: wordsOf((await page.getTextContent()).items, view.transform), width: view.width }
 }
 export async function sheetOf(page: PDFPageProxy, ops: Ops): Promise<Sheet> {
   const view = page.getViewport({ scale: 1 })

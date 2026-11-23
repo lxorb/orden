@@ -29,8 +29,8 @@ import {
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
 import { applied, readable } from './canvas-ops'
-import { pageIn, readablePages } from './pages-ops'
-import { readsOf } from './pages-read'
+import { readablePages } from './pages-ops'
+import { readsOf, sizesOf } from './pages-read'
 import { pagesAsked } from './pdf-text'
 import { pagesOf } from '@orden/markdown/pages'
 import { isRecord } from '../../platform/src/api'
@@ -141,19 +141,9 @@ export async function readCanvas(call: Call): Promise<AgentAnswer> {
   )
 }
 async function printedSizes(target: Target, canvas: Canvas, ops: unknown): Promise<Map<string, number>> {
-  if (!isPages(target) || !Array.isArray(ops)) return new Map()
-  const pages = new Set(
-    ops.flatMap((op) => {
-      if (!isRecord(op) || op.op !== 'add_card' || op.page === undefined) return []
-      try {
-        return [pageIn(canvas, op.page)]
-      } catch {
-        return []
-      }
-    }),
-  )
-  const reads = await readsOf([...pages], paperPlace(target))
-  return new Map([...reads].map(([id, read]) => [id, read.size]))
+  const placing = Array.isArray(ops) && ops.some((op) => isRecord(op) && op.op === 'add_card' && op.page !== undefined)
+  if (!isPages(target) || !placing) return new Map()
+  return sizesOf(pagesOf(canvas), paperPlace(target))
 }
 export async function editCanvas(call: Call): Promise<AgentAnswer> {
   const target = canvasOf(call, true)

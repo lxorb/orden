@@ -73,8 +73,8 @@ function plainLines(text: string): string[] {
 const PER_CHARACTER = 0.52
 const LINE = 17
 const CARD_FONT = 13
-function fitted(text: string, width: number): string[] {
-  const most = Math.max(4, Math.floor((width - 24) / (CARD_FONT * PER_CHARACTER)))
+function fitted(text: string, width: number, size = CARD_FONT): string[] {
+  const most = Math.max(4, Math.floor((width - 24) / (size * PER_CHARACTER)))
   const out: string[] = []
   for (const line of plainLines(text)) {
     let rest = line
@@ -88,13 +88,34 @@ function fitted(text: string, width: number): string[] {
   }
   return out
 }
-function plainCard(text: string, box: Box, palette: Palette): string {
-  const lines = fitted(text, box.width).slice(0, Math.floor((box.height - 12) / LINE))
+interface Look {
+  size?: number
+  fit?: boolean
+  colour?: string
+}
+const SMALLEST_FIT = 4
+function plainCard(text: string, box: Box, palette: Palette, look: Look = {}): string {
+  let size = look.size ?? CARD_FONT
+  const step = (at: number) => (LINE / CARD_FONT) * at
+  const rows = (at: number) => Math.floor((box.height - 12) / step(at))
+  while (look.fit && size > SMALLEST_FIT && fitted(text, box.width, size).length > rows(size)) size -= 0.5
+  const lines = fitted(text, box.width, size).slice(0, rows(size))
   if (!lines.length) return ''
   const spans = lines
-    .map((line, index) => `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escapeAll(line)}</tspan>`)
+    .map(
+      (line, index) =>
+        `<tspan x="${box.x + 12}" y="${box.y + 7 + size + index * step(size)}">${escapeAll(line)}</tspan>`,
+    )
     .join('')
-  return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="words">${spans}</text>`
+  return `<text font-size="${size}" fill="${look.colour ?? palette.text ?? '#111'}" class="words">${spans}</text>`
+}
+function lookOf(node: CanvasNode, palette: Palette): Look {
+  if (node.type !== 'text') return {}
+  return {
+    ...(node.size ? { size: node.size } : {}),
+    ...(node.fit ? { fit: true } : {}),
+    ...(node.bare && node.color !== undefined ? { colour: colourOf(node, palette, palette.text ?? '#111') } : {}),
+  }
 }
 function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean): string {
   switch (node.type) {
@@ -176,7 +197,7 @@ export function drawnNode(
       ? ''
       : `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
   if (plain) {
-    return `<g>${card}${plainCard(saidBy(node), box, palette)}</g>`
+    return `<g>${card}${plainCard(saidBy(node), box, palette, lookOf(node, palette))}</g>`
   }
   return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath, trusted)}</foreignObject></g>`
 }

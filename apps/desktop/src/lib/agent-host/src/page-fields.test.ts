@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import { describe, expect, test } from 'vitest'
 import { type Box, fieldsOf, scaled, type Sheet, type Words } from './page-fields'
-import { sheetOf } from './page-fields-pdf'
+import { marksOf, sheetOf } from './page-fields-pdf'
 
 const SIZE = 11
 const LINE = 14
@@ -144,5 +144,47 @@ describe('a real PDF', () => {
     expect(field).toMatchObject({ kind: 'form', name: 'first', question: QUESTIONS[0]!.text })
     expect(Math.abs(field!.x - 72)).toBeLessThan(2)
     expect(Math.abs(field!.y - (250 - 120))).toBeLessThan(2)
+  })
+})
+describe('the marks drawn on a page', () => {
+  const OPS = {
+    save: 1,
+    restore: 2,
+    transform: 3,
+    constructPath: 4,
+    stroke: 5,
+    paintFormXObjectBegin: 6,
+    paintFormXObjectEnd: 7,
+    beginAnnotation: 8,
+    endAnnotation: 9,
+    paintImageXObject: 10,
+    paintImageXObjectRepeat: 11,
+  }
+  const path = (x0: number, y0: number, x1: number, y1: number) => [
+    OPS.stroke,
+    [null],
+    new Float32Array([x0, y0, x1, y1]),
+  ]
+  test('sit where a form or an annotation moves them, and every picture of a repeat counts', () => {
+    const marks = marksOf(
+      [6, 4, 7, 8, 4, 9, 11],
+      [
+        [new Float32Array([0.5, 0, 0, 0.5, 50, 20]), null],
+        path(100, 400, 400, 600),
+        [],
+        ['a1', [0, 0, 10, 10], [1, 0, 0, 1, 200, 300], [2, 0, 0, 2, 0, 0], false],
+        path(0, 0, 10, 10),
+        [],
+        ['img', 10, 10, [5, 5, 30, 30]],
+      ],
+      OPS,
+      [1, 0, 0, 1, 0, 0],
+    )
+    expect(marks.map((one) => [one.box, one.picture])).toEqual([
+      [{ x: 100, y: 220, width: 150, height: 100 }, false],
+      [{ x: 200, y: 300, width: 20, height: 20 }, false],
+      [{ x: 5, y: 5, width: 10, height: 10 }, true],
+      [{ x: 30, y: 30, width: 10, height: 10 }, true],
+    ])
   })
 })

@@ -6,6 +6,7 @@ import {
   freshId,
   FURTHEST,
   type Side,
+  colourOf,
   textSized,
 } from '@orden/markdown/canvas'
 import { connected, movedBy, removed, withLabel, withNode, withText } from '../../plane/src/api'
@@ -56,6 +57,12 @@ function pageNamed(canvas: Canvas, op: Record<string, unknown>) {
   if (!hasPages(canvas)) throw new Refused('bad_arguments', 'a canvas has no pages')
   return pageIn(canvas, op.page)
 }
+const COLOURS_SAID = 'color is a preset 1 to 6 or a hex colour'
+function colourIn(value: unknown): string {
+  const found = colourOf(value)
+  if (found === undefined) throw new Refused('bad_arguments', COLOURS_SAID)
+  return found
+}
 function flag(op: Record<string, unknown>, key: string): boolean | null {
   const value = op[key]
   return typeof value === 'boolean' ? value : null
@@ -75,10 +82,7 @@ function styled(card: TextCard, op: Record<string, unknown>): TextCard {
   const wantSize = fontSizeOf(op)
   const nextSize = wantSize === undefined ? size : (wantSize ?? undefined)
   const said = op.color === undefined ? op.colour : op.color
-  if (said !== undefined && said !== null && typeof said !== 'string') {
-    throw new Refused('bad_arguments', 'color is a preset 1 to 6 or a hex colour')
-  }
-  const nextColour = said === undefined ? color : said === null || said === '' ? undefined : said
+  const nextColour = said === undefined ? color : said === null || said === '' ? undefined : colourIn(said)
   return {
     ...rest,
     ...(nextColour === undefined ? {} : { color: nextColour }),
@@ -110,7 +114,8 @@ export function applied(
       case 'add_card': {
         const page = pageNamed(now, op)
         const at = page ? placeOnPage(now, page, numberOf(op, 'x'), numberOf(op, 'y')) : freePlace(now)
-        const colour = textOf(op, 'color') ?? textOf(op, 'colour')
+        const said = op.color ?? op.colour
+        const colour = said === undefined || said === null || said === '' ? null : colourIn(said)
         const printed = page ? pageSizes.get(page.id) : undefined
         const plain: TextCard = {
           id: freshId(),

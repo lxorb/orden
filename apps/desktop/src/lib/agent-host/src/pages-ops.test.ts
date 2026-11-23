@@ -146,4 +146,12 @@ describe('words written onto a page', () => {
     expect(read.pages[0]).toMatchObject({ fontSize: 38, fields })
     expect(readablePages(one).pages[0]).not.toHaveProperty('fields')
   })
+  test('refuse a colour that is none, on add_card and on style', () => {
+    expect(refusal(() => applied(one, [{ op: 'add_card', page: 1, text: 'A', color: 'red' }]))).toBe('bad_arguments')
+    const added = applied(one, [{ op: 'add_card', page: 1, text: 'A', color: '#AbC' }])
+    expect(card(added.canvas, added.made[0]!)).toMatchObject({ color: '#AbC' })
+    expect(refusal(() => applied(added.canvas, [{ op: 'style', id: added.made[0], color: 'red' }]))).toBe(
+      'bad_arguments',
+    )
+  })
 })

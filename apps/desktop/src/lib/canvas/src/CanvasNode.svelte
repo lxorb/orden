@@ -226,8 +226,18 @@
       }
       card.style.fontSize = `${low}px`
     }
+    let latest = wanted
+    const again = () => fit(latest)
     fit(wanted)
-    return { update: fit }
+    if ('fonts' in document) void document.fonts.ready.then(again)
+    card.addEventListener('load', again, true)
+    return {
+      update: (now: typeof wanted) => {
+        latest = now
+        fit(now)
+      },
+      destroy: () => card.removeEventListener('load', again, true),
+    }
   }
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape') return

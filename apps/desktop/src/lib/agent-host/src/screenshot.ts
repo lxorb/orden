@@ -17,15 +17,17 @@ function numberOf(call: Call, key: string): number | null {
   const value = call.args[key]
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
+function spanOf(from: number | null, length: number | null, whole: number): [number, number] {
+  const start = from ?? 0
+  const end = length === null ? whole : start + length
+  const low = Math.max(0, Math.min(whole, start))
+  return [low, Math.max(low, Math.min(whole, end)) - low]
+}
 function areaAsked(call: Call, whole: Area): Area {
-  const x = numberOf(call, 'x') ?? 0
-  const y = numberOf(call, 'y') ?? 0
-  const left = Math.max(0, Math.min(whole.width, x))
-  const top = Math.max(0, Math.min(whole.height, y))
-  const width = Math.min(whole.width - left, numberOf(call, 'width') ?? whole.width - left)
-  const height = Math.min(whole.height - top, numberOf(call, 'height') ?? whole.height - top)
+  const [x, width] = spanOf(numberOf(call, 'x'), numberOf(call, 'width'), whole.width)
+  const [y, height] = spanOf(numberOf(call, 'y'), numberOf(call, 'height'), whole.height)
   if (width < 1 || height < 1) throw new Refused('bad_arguments', 'that area lies outside what there is to see')
-  return { x: left, y: top, width, height }
+  return { x, y, width, height }
 }
 async function cut(picture: Blob, whole: Area, area: Area, scale: number | null) {
   const image = await createImageBitmap(picture)
