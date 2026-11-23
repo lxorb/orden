@@ -71,11 +71,12 @@ describe('the panel tabs', () => {
     expect(strip('right')).toEqual(['Links', 'Ask', 'Todos', 'Outline', 'Scratchpad'])
     workspace.right = [...panels.STARTS_RIGHT]
   })
-  test('hold the time tracker only once Settings turns it on', () => {
+  test('hold the time tracker on the right, beside Todos, only once Settings turns it on', () => {
     hiddenKinds.hidden = [EXPERIMENTAL_WORD, TIME_WORD]
-    expect(strip('left')).toEqual(['Files', 'Time tracker'])
-    hiddenKinds.hidden = []
+    expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Todos', 'Time tracker', 'Scratchpad'])
     expect(strip('left')).toEqual([])
+    hiddenKinds.hidden = []
+    expect(strip('right')).toEqual(['Outline', 'Links', 'Ask', 'Todos', 'Scratchpad'])
   })
   test('show a panel only where they offer its tab: chats wait for an account', () => {
     open('# Head\n')
