@@ -147,6 +147,9 @@ pub fn built(page: &str) {
 pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
     let page = view.label();
     let window = view.window();
+    if !visible {
+        presses(|all| all.closed(page));
+    }
     if homes(|all| all.placed(page, visible, now())) && native::in_front(&window) {
         give(app, window.label(), page);
     }
@@ -286,7 +289,8 @@ pub fn keyboard_released(webview: Webview) {
     };
     let app = webview.app_handle();
     let mine = app.get_webview(&page).is_some_and(|view| view.window().label() == window);
-    if mine && native::seen(&page) && native::take(app, &page) {
+    let shown = homes(|all| all.shown.contains(&page));
+    if mine && shown && native::seen(&page) && native::take(app, &page) {
         homes(|all| all.page_took(&window, &page));
     }
 }
@@ -546,6 +550,8 @@ mod tests {
             .contains("give(webview.app_handle(), window.label(), &page)"));
         assert!(body("pub fn placed(").contains("give(app, window.label(), page)"));
         assert!(!body("pub fn placed(").contains("native::take("));
+        assert!(body("pub fn keyboard_released(").contains("all.shown.contains(&page)"));
+        assert!(body("pub fn placed(").contains("presses(|all| all.closed(page))"));
         let script = include_str!("keyboard_press.js");
         assert!(script.contains("'pointerup'") && script.contains("'keyboard_released'"));
         let lib = include_str!("../../../src/lib.rs");

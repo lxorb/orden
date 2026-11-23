@@ -1015,12 +1015,19 @@ describe("the card's corner a page is placed with", () => {
 describe('a page a person presses in or types into', () => {
   let did: string[] = []
   let inFront = 'a'
+  let fronts: Record<string, string> = {}
   beforeEach(async () => {
     did = []
     inFront = 'a'
     const { workspace } = await import('../../workspace/src/api')
     vi.spyOn(workspace, 'activeTabId', 'get').mockImplementation(() => inFront)
-    vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([{ id: 'a' }, { id: 'b' }] as Tab[])
+    vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([
+      { id: 'a', paneId: 'left' },
+      { id: 'b', paneId: 'right' },
+      { id: 'c', paneId: 'right' },
+    ] as Tab[])
+    fronts = { left: 'a', right: 'b' }
+    vi.spyOn(workspace, 'showing').mockImplementation((pane) => ({ id: fronts[pane] }) as Tab)
     vi.spyOn(workspace, 'activate').mockImplementation((id) => {
       did.push(`activate ${id}`)
       inFront = id
@@ -1028,6 +1035,14 @@ describe('a page a person presses in or types into', () => {
   })
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+  test('a page behind another tab of its pane never chooses its tab back over a click that left it (#2535)', async () => {
+    await built('b')
+    fronts = { left: 'a', right: 'c' }
+    const chosen = await hearing('orden://web-chosen')
+    chosen({ payload: { tab: 'b' } })
+    await settle()
+    expect(did).toEqual([])
   })
   test('makes its tab, in the other pane, the one being worked in', async () => {
     await built('b')

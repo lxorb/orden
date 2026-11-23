@@ -14,8 +14,7 @@ and says what the pane held. It also fails when the app's own watch wrote to its
 pane showed another tab than the one in front.
 
 A press that leaves another tab in front, with the strip, the pane and the screen all on that
-tab, is not this failure: it is told as known, with the tabs the workspace had in front right
-after the press.
+tab, fails too (#2535), with the tabs the workspace had in front right after the press.
 
     python scripts/pane-front-drive.py --exe <probe orden> --identifier <probe id> [--switches N] [--seed N]
 """
@@ -39,7 +38,7 @@ from typing import Any, Callable
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from fresh_app import ended, fresh  # noqa: E402
-from native_app import INNER, App, config_of, endpoint, forward, known  # noqa: E402
+from native_app import INNER, App, config_of, endpoint, forward  # noqa: E402
 
 switch = importlib.import_module("web-switch-drive")
 PAGES = ("red", "green")
@@ -186,7 +185,7 @@ class Drive:
         return name
     def pressed(self, name: str, how: str) -> str | None:
         spot = self.app.eval(SPOT.replace("${ID}", self.tabs[name]))
-        if not isinstance(spot, dict):
+        if not isinstance(spot, dict) or "x" not in spot or "y" not in spot:
             return None
         x, y = self.on_screen(spot["x"], spot["y"])
         self.pointer.move(x - 4, y + 1)
@@ -335,11 +334,11 @@ def main() -> int:
             tabs[name] = tab
             time.sleep(0.5)
         shells = app.eval("return await orden.invoke('terminal_shells')", 20)
-        known = [one.get("id") for one in shells] if isinstance(shells, list) else []
+        offered = [one.get("id") for one in shells] if isinstance(shells, list) else []
         base = lambda one: str(one).replace("\\", "/").rsplit("/", 1)[-1].removesuffix(".exe").lower()
-        shell = next((one for want in ("powershell", "pwsh", "bash", "zsh", "sh") for one in known if base(one) == want), None)
+        shell = next((one for want in ("powershell", "pwsh", "bash", "zsh", "sh") for one in offered if base(one) == want), None)
         if shell is None:
-            raise SystemExit(f"no shell to paint the terminal with among {known}")
+            raise SystemExit(f"no shell to paint the terminal with among {offered}")
         tab = app.eval(
             "const ws = orden.workspace;"
             f" return ws.openUnsaved('terminal', JSON.stringify({{ shell: {json.dumps(shell)}, folder: ws.activeSpace.root, key: 'pane-front' }}), 'Shell').id"
@@ -400,8 +399,7 @@ def main() -> int:
             if step % 20 == 0:
                 print(f"switch {step}: {how} to {went}, fine so far" if not drive.wrong else f"switch {step}: {len(drive.wrong)} wrong", flush=True)
         wrong = drive.wrong
-        for one in drive.unpressed:
-            known(2416, one)
+        wrong.extend(f"{one} (#2535: a press on a tab wins over a page's keyboard)" for one in drive.unpressed)
         said = app.eval("return (await orden.invoke('read_log')).split('\\n').filter((one) => (/ error /i.test(one) && !one.includes('ResizeObserver loop')) || one.includes(TOLD)).slice(-30)".replace("TOLD", json.dumps(TOLD)), 20)
         if isinstance(said, list) and said:
             print(f"the app's log: {json.dumps(said)[:6000]}", flush=True)
