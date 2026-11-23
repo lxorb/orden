@@ -366,6 +366,7 @@ class Chat implements Panel {
     void this.loadModels(provider)
   }
   private show(thread: Thread): void {
+    if (thread !== this.open) this.editing = null
     const left = thread !== this.open && this.changing ? this.letGo() : null
     const before = this.open
     this.open = thread
@@ -605,14 +606,8 @@ class Chat implements Panel {
     const text = this.text.trim()
     const chips = this.chips
     if (!text && !chips.length) return
-    const edited = this.editing
     this.chips = []
     this.taken()
-    const thread = this.open
-    if (edited && thread) {
-      void editMessage(thread, edited, text, this)
-      return
-    }
     this.say(text, chips, around)
   }
   editing = $state<string | null>(null)
@@ -620,7 +615,7 @@ class Chat implements Panel {
   private requeue = $state.raw<{ one: Queued; at: number; thread: Thread } | null>(null)
   private owed = new Set<string>()
   get changing(): boolean {
-    return this.editing !== null || this.requeue !== null
+    return this.requeue !== null
   }
   private setAside(): void {
     this.aside ??= { text: this.text, chips: this.chips }
@@ -629,15 +624,20 @@ class Chat implements Panel {
     const thread = this.open
     if (!thread || this.answers(thread)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
-    if (!message?.draft) return
-    this.putBack(this.requeue, true)
-    this.setAside()
-    this.editing = message.id
-    this.text = message.draft.text
-    this.chips = []
-    this.focus()
+    if (message?.draft) this.editing = message.id
   }
   cancelEdit(): void {
+    this.editing = null
+  }
+  resend(text: string): void {
+    const thread = this.open
+    const turn = this.editing
+    const words = text.trim()
+    if (!thread || !turn || !words || this.answers(thread)) return
+    this.editing = null
+    void editMessage(thread, turn, words, this)
+  }
+  cancelChange(): void {
     const thread = this.letGo()
     if (thread) this.drain(thread)
   }
@@ -649,11 +649,11 @@ class Chat implements Panel {
     return thread
   }
   release(): void {
+    this.editing = null
     this.putBack(this.requeue, true)
     this.taken()
   }
   taken(): void {
-    this.editing = null
     this.requeue = null
     this.text = this.aside?.text ?? ''
     if (this.aside) this.chips = this.aside.chips
@@ -825,6 +825,7 @@ class Chat implements Panel {
     this.stoppers.set(thread.id, stopper)
     if (!thread.turns.length && thread.provider === this.providerForNew()?.id) this.following.add(thread.id)
     this.running = [...this.running, thread.id]
+    if (thread === this.open) this.editing = null
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
     this.live.set(thread.id, thread)
     this.relist()
@@ -1010,7 +1011,6 @@ class Chat implements Panel {
     const thread = this.open
     if (!thread || !this.queue.some((each) => each.id === id)) return
     this.putBack(this.requeue, true)
-    this.editing = null
     const at = this.queue.findIndex((each) => each.id === id)
     const one = this.queue[at]
     if (!one) return

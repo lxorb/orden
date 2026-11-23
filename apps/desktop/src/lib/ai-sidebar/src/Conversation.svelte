@@ -18,6 +18,7 @@
   import Branches from './review/Branches.svelte'
   import ChangesCard from './review/ChangesCard.svelte'
   import Reply from './Reply.svelte'
+  import EditMessage from './EditMessage.svelte'
 
   const { ongoto, ready }: { ongoto?: ((line: number) => void) | undefined; ready: boolean } = $props()
   let talk = $state<HTMLElement>()
@@ -199,7 +200,13 @@
       {@const index = from + at}
       {#if turn.role === 'you'}
         {@const words = turn.draft?.text ?? ''}
-        <div class="said" class:steered={turn.steered} in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
+        {@const editing = !!thread && !running && chat.editing === turn.id}
+        <div
+          class="said"
+          class:steered={turn.steered}
+          class:editing
+          in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
+        >
           {#if attachedOf(index).length}
             <div class="went">
               {#each attachedOf(index) as label, at (at)}
@@ -207,23 +214,27 @@
               {/each}
             </div>
           {/if}
-          <div class="held">
-            <p class="bubble" dir="auto">{words}</p>
-            {#if thread && !turn.steered}
-              <span class="tools">
-                {@render tool(
-                  'Copy',
-                  () => void copied.copy(words, turn.id),
-                  copied.what === turn.id ? 'M2.8 6.8l2.4 2.4 5-5.4' : COPY,
-                )}
-                {#if !running}
-                  {@render tool('Edit', () => chat.startEdit(turn.id), EDIT)}
-                  {@render tool('Rewind', () => chat.rewind(turn.id), REWIND)}
-                {/if}
-              </span>
-            {/if}
-          </div>
-          {#if thread && !turn.steered}
+          {#if editing}
+            <EditMessage text={words} onsend={(text: string) => chat.resend(text)} oncancel={() => chat.cancelEdit()} />
+          {:else}
+            <div class="held">
+              <p class="bubble" dir="auto">{words}</p>
+              {#if thread && !turn.steered}
+                <span class="tools">
+                  {@render tool(
+                    'Copy',
+                    () => void copied.copy(words, turn.id),
+                    copied.what === turn.id ? 'M2.8 6.8l2.4 2.4 5-5.4' : COPY,
+                  )}
+                  {#if !running}
+                    {@render tool('Edit', () => chat.startEdit(turn.id), EDIT)}
+                    {@render tool('Rewind', () => chat.rewind(turn.id), REWIND)}
+                  {/if}
+                </span>
+              {/if}
+            </div>
+          {/if}
+          {#if thread && !turn.steered && !editing}
             <Branches {thread} turn={turn.id} panel={chat} />
           {/if}
         </div>
@@ -339,6 +350,9 @@
     line-height: 1.5;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+  }
+  .said.editing {
+    align-items: stretch;
   }
   .said.steered .bubble {
     box-shadow: inset 0 0 0 1px var(--accent-line);
