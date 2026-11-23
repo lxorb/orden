@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Message } from '@orden/chats'
   import { backOut } from 'svelte/easing'
-  import { dur, scale, localNumber } from '../../../platform/src/api'
+  import { dur, fly, scale, localNumber } from '../../../platform/src/api'
   import type { ChatPage } from './chat.svelte'
   import { Glyph } from '../../../chat-kit/src/api'
   import { nameOf } from './people'
@@ -39,7 +39,9 @@
         in:scale={{ start: 0.8, duration: dur(160), easing: backOut }}
       >
         <span class="emoji">{emoji}</span>
-        <span class="count">{localNumber(who.length)}</span>
+        {#key who.length}
+          <span class="count" in:fly={{ y: -5, duration: dur(150) }}>{localNumber(who.length)}</span>
+        {/key}
       </button>
     {/each}
     {#if canReact}
@@ -97,6 +99,11 @@
   .emoji {
     font-size: 15px;
     line-height: 1;
+  }
+  .count {
+    display: inline-block;
+    min-width: 1ch;
+    text-align: center;
   }
   .more {
     --glyph-size: 15px;

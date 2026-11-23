@@ -10,7 +10,8 @@
   import { Glyph } from '../../../chat-kit/src/api'
   import { messageMenu } from './message-menu'
   import MessageRow from './MessageRow.svelte'
-  import { rowsOf } from './rows'
+  import { type Item, rowsOf } from './rows'
+  import { atBottom, ownSent } from './scroll'
   import { dayOf } from './when'
 
   const {
@@ -39,8 +40,14 @@
     composer?.focus()
     return () => replies.close()
   })
+  let following = true
+  let shown: readonly Item[] = []
   $effect(() => {
-    if (!items.length) return
+    const now = items
+    const follow = following || ownSent(shown, now, page.me) !== null
+    shown = now
+    if (!now.length || !follow) return
+    following = true
     queueMicrotask(() => scroller?.scrollTo({ top: scroller.scrollHeight }))
   })
   const items = $derived(
@@ -60,10 +67,7 @@
       messageMenu(page, message, page.view.role, {
         reply: () => composer?.focus(),
         quote: () => composer?.focus(),
-        edit: () => {
-          page.aside = { kind: 'edit', message }
-          onclose()
-        },
+        edit: () => (page.editing = { id: message.id, replies: true }),
       }),
     )
   }
@@ -87,7 +91,13 @@
     <span class="count">{localNumber(replies.messages.length)}</span>
     <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}><Glyph name="close" /></button>
   </header>
-  <div class="list orden-scrolls" bind:this={scroller}>
+  <div
+    class="list orden-scrolls"
+    bind:this={scroller}
+    onscroll={() => {
+      if (scroller) following = atBottom(scroller)
+    }}
+  >
     {#snippet row(message: Shown, head: boolean, pending: boolean, arrivedAfter: number)}
       <MessageRow
         {message}
@@ -96,7 +106,7 @@
         seen={[]}
         {page}
         {space}
-        column={width - 72}
+        column={width - 96}
         lit={false}
         flashed={false}
         {arrivedAfter}
@@ -110,7 +120,9 @@
     {/snippet}
     {#if replies.parent}
       {@render row(replies.parent, true, false, Number.MAX_SAFE_INTEGER)}
-      <div class="rule" role="separator"><span>{localNumber(replies.messages.length)}</span></div>
+      <div class="rule" role="separator">
+        <span>{localNumber(replies.messages.length)} {replies.messages.length === 1 ? 'reply' : 'replies'}</span>
+      </div>
     {/if}
     {#each items as item (item.key)}
       {@render row(item.message, item.head, item.pending, 0)}
@@ -135,7 +147,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    height: var(--header-height, 40px);
+    flex: none;
+    height: 44px;
     padding: 0 var(--space-2) 0 var(--space-4);
     border-bottom: 1px solid var(--line);
     color: var(--muted);

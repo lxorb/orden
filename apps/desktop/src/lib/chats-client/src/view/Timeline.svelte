@@ -1,14 +1,16 @@
 <script lang="ts">
   import { may, type Message } from '@orden/chats'
   import { onMount, untrack } from 'svelte'
-  import { dur, fade, localNumber } from '../../../platform/src/api'
+  import { dur, fade, localNumber, stillness } from '../../../platform/src/api'
   import { longPress, menu } from '../../../ui-kit/src/api'
   import type { ChatPage } from './chat.svelte'
-  import { estimate } from './estimate'
+  import { estimate, READABLE } from './estimate'
   import { Glyph } from '../../../chat-kit/src/api'
   import HoverBar from './HoverBar.svelte'
   import { messageMenu } from './message-menu'
   import MessageRow from './MessageRow.svelte'
+  import type { Item } from './rows'
+  import { atBottom, glides, ownSent } from './scroll'
   import { dayLine } from './when'
   import { type Anchor, anchorAt, anchored, Heights } from './window'
 
@@ -41,6 +43,9 @@
   let version = $state(0)
   let stuck = $state(true)
   let lit = $state<string | null>(null)
+  let gliding = false
+  let glideEnds: ReturnType<typeof setTimeout> | undefined
+  let shownItems: readonly Item[] = []
   let hovered = $state<{ id: string; top: number } | null>(null)
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- measurements, read when a window is built
   const measured = new Map<string, number>()
@@ -49,7 +54,7 @@
   let arrivedAfter = $state(Number.MAX_SAFE_INTEGER)
   const role = $derived(page.view.role)
   const canPost = $derived(may(role, 'post', page.view.meta.posting))
-  const column = $derived(Math.max(160, width - 72))
+  const column = $derived(Math.min(READABLE, Math.max(160, width - 96)))
   const layout = $derived.by(() => {
     const items = page.items
     const across = width
@@ -95,7 +100,10 @@
       },
     }
   }
-  onMount(() => () => observer.disconnect())
+  onMount(() => () => {
+    observer.disconnect()
+    clearTimeout(glideEnds)
+  })
   function settle() {
     const box = scroller
     if (!box || !page.ready) return
@@ -107,20 +115,28 @@
         const y =
           target.where === 'centre' ? rowTop - room / 2 + heights.heightOf(at) / 2 : rowTop - Math.min(120, room * 0.25)
         box.scrollTop = Math.max(0, y)
-        stuck = box.scrollTop + box.clientHeight >= box.scrollHeight - 4
+        stuck = atBottom(box)
         anchor = { key: target.key, offset: rowTop - box.scrollTop }
         target = null
       }
     } else if (stuck) {
-      box.scrollTop = box.scrollHeight
+      if (!gliding) box.scrollTop = box.scrollHeight
     } else {
       const y = anchored(heights, keys, anchor)
       if (y !== null && Math.abs(y - box.scrollTop) >= 1) box.scrollTop = y
     }
     top = box.scrollTop
   }
-  function settleAfter(_measured: number, _held: unknown) {
-    untrack(settle)
+  function settleAfter(_measured: number, held: { items: readonly Item[] }) {
+    untrack(() => {
+      if (held.items !== shownItems && ownSent(shownItems, held.items, page.me)) {
+        stuck = true
+        target = null
+        lit = null
+      }
+      shownItems = held.items
+      settle()
+    })
   }
   $effect(() => settleAfter(version, layout))
   let opened = false
@@ -146,11 +162,27 @@
     const done = setTimeout(() => (page.flashed = null), 1400)
     return () => clearTimeout(done)
   })
+  $effect(() => {
+    const id = page.editing && !page.editing.replies ? page.editing.id : null
+    if (!id) return
+    untrack(() => {
+      const at = layout.index.get(id)
+      if (at === undefined) return
+      const rowTop = layout.heights.top(at)
+      if (rowTop >= top && rowTop + layout.heights.heightOf(at) <= top + room) return
+      target = { key: id, where: 'centre' }
+      settle()
+    })
+  })
   function onscroll() {
     const box = scroller
     if (!box) return
     top = box.scrollTop
-    stuck = box.scrollTop + box.clientHeight >= box.scrollHeight - 4
+    if (gliding) {
+      if (!atBottom(box)) return
+      endGlide()
+    }
+    stuck = atBottom(box)
     anchor = anchorAt(layout.heights, layout.keys, top)
     hovered = null
   }
@@ -199,10 +231,27 @@
     target = { key: 'new', where: 'line' }
     settle()
   }
-  export async function toBottom(): Promise<void> {
+  function endGlide() {
+    gliding = false
+    clearTimeout(glideEnds)
+  }
+  export async function toBottom(smooth = false): Promise<void> {
+    const box = scroller
+    const left = box ? box.scrollHeight - box.clientHeight - box.scrollTop : 0
     if (page.after) await page.bottom()
     stuck = true
     lit = null
+    if (smooth && box && !page.after && !stillness() && glides(left, room)) {
+      gliding = true
+      clearTimeout(glideEnds)
+      glideEnds = setTimeout(() => {
+        endGlide()
+        settle()
+      }, 700)
+      box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' })
+      return
+    }
+    endGlide()
     settle()
   }
   export function focusRows(): void {
@@ -290,6 +339,7 @@
     if (
       !message ||
       message.deleted ||
+      page.editing?.id === id ||
       layout.items.some((one) => one.key === id && one.kind === 'message' && one.pending)
     ) {
       hovered = null
@@ -321,13 +371,19 @@
     onkeydown={onKey}
     onpointermove={pointing}
     onpointerleave={() => (hovered = null)}
+    onwheel={() => {
+      if (gliding) endGlide()
+    }}
+    ontouchstart={() => {
+      if (gliding) endGlide()
+    }}
     use:longPress={longPressed}
     role="log"
     aria-live="polite"
     aria-label={page.entry?.name ?? ''}
     tabindex="0"
   >
-    <div class="content" bind:this={content}>
+    <div class="content" bind:this={content} style:--readable="{READABLE}px">
       <div style:height="{span.above}px"></div>
       {#each layout.items.slice(span.from, span.to) as item (item.key)}
         <div class="slot" use:measure={item.key}>
@@ -387,8 +443,9 @@
     <button
       type="button"
       class="jump below orden-pill is-pressable"
+      class:fresh={unreadBelow > 0}
       aria-label="New messages"
-      onclick={() => void toBottom()}
+      onclick={() => void toBottom(true)}
       transition:fade={{ duration: dur(130) }}
     >
       <Glyph name="down" />
@@ -425,6 +482,13 @@
     font-size: var(--text-xs);
     font-weight: var(--weight-strong);
   }
+  .day span {
+    padding: 1px var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    background: var(--bg);
+    font-variant-numeric: tabular-nums;
+  }
   .day::before,
   .day::after,
   .new::after {
@@ -452,5 +516,10 @@
   }
   .jump.below {
     bottom: var(--space-3);
+  }
+  .jump.fresh {
+    border-color: transparent;
+    background: var(--accent);
+    color: var(--accent-ink);
   }
 </style>

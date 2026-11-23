@@ -51,7 +51,7 @@
   const phone = $derived(viewport.device === 'phone')
   const narrow = $derived(phone || (width > 0 && width < NARROWEST_BESIDE))
   const membersShown = $derived(
-    !!page && (narrow ? sheetFor === page.id : membersOpen.shown(page.id)) && !(phone && page.replying),
+    !!page && (narrow ? sheetFor === page.id : membersOpen.shown(page.id)) && !(narrow && page.replying),
   )
   function toggleMembers() {
     if (!page) return
@@ -93,6 +93,12 @@
       if (page?.id === offer.chat && offer.parent) page.replying = offer.parent
     }),
   )
+  let wasEditing = false
+  $effect(() => {
+    const now = !!page?.editing
+    if (wasEditing && !now) untrack(() => composer?.focus())
+    wasEditing = now
+  })
   onDestroy(() => page?.close())
   function reactPicker(message: Message, from: HTMLElement) {
     picking = { at: boxOf(from), pick: (emoji) => page?.react(message, emoji) }
@@ -154,6 +160,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="chat-tab"
+  class:narrow
   class:dropping
   data-chat-drop={tab.id}
   bind:clientWidth={width}
@@ -166,7 +173,7 @@
 >
   {#if page}
     {@const open = page}
-    <div class="main" class:hidden={phone && open.replying !== null}>
+    <div class="main" class:hidden={narrow && open.replying !== null}>
       <ChatHead page={open} {space} named={lentName} membersOn={membersShown} onmembers={toggleMembers} />
       {#if open.ready}
         <Timeline
@@ -178,13 +185,20 @@
             open.aside = { kind: 'quote', message }
             composer?.focus()
           }}
-          onedit={(message: Message) => (open.aside = { kind: 'edit', message })}
+          onedit={(message: Message) => (open.editing = { id: message.id, replies: false })}
           onpicker={reactPicker}
           onfiles={openFiles}
           oncompose={() => composer?.focus()}
         />
       {:else}
-        <div class="waiting"></div>
+        <div class="waiting" aria-busy="true" aria-label="Loading">
+          {#each [0.62, 0.38, 0.8, 0.5, 0.7] as wide, at (at)}
+            <div class="ghost" style:--wide={wide}>
+              <span class="ghost-face"></span>
+              <span class="ghost-lines"><i></i><i></i></span>
+            </div>
+          {/each}
+        </div>
       {/if}
       {#if open.view.role !== 'read'}
         <Composer
@@ -206,7 +220,7 @@
           parent={open.replying}
           {space}
           path={tab.path}
-          width={phone ? width : Math.min(420, Math.max(320, width * 0.36))}
+          width={narrow ? width : Math.min(420, Math.max(320, width * 0.36))}
           onclose={() => {
             open.replying = null
             composer?.focus()
@@ -282,17 +296,71 @@
   .main.hidden {
     display: none;
   }
-  .chat-tab :global(.replies) {
+  .chat-tab :global(aside.replies) {
     flex: none;
     width: min(420px, max(320px, 36%));
   }
-  :global([data-touch]) .chat-tab :global(.replies) {
+  .chat-tab.narrow :global(aside.replies),
+  :global([data-touch]) .chat-tab :global(aside.replies) {
     flex: 1;
     width: auto;
     border: none;
   }
   .waiting {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--space-5) var(--space-3);
+    overflow: hidden;
+    animation: ghost-in var(--dur-base) var(--ease-out) 160ms both;
+  }
+  .ghost {
+    display: flex;
+    gap: var(--space-3);
+  }
+  .ghost-face {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface-2);
+  }
+  .ghost-lines {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-width: 560px;
+    padding-top: 4px;
+  }
+  .ghost-lines i {
+    height: 10px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    animation: ghost 1.4s var(--ease-in-out) infinite;
+  }
+  .ghost-lines i:first-child {
+    width: 22%;
+  }
+  .ghost-lines i:last-child {
+    width: calc(var(--wide) * 100%);
+  }
+  @keyframes ghost {
+    50% {
+      opacity: 0.5;
+    }
+  }
+  @keyframes ghost-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ghost-lines i {
+      animation: none;
+    }
   }
   .missing {
     --glyph-size: 32px;
