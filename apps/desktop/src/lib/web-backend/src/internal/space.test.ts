@@ -7,7 +7,10 @@ import { MemoryBytes } from './memory'
 import { mountRoot } from './roots'
 import { internalRows } from './rows'
 
-const crate = vi.hoisted(() => ({ calls: [] as { command: string; args: unknown }[] }))
+const crate = vi.hoisted(() => ({
+  calls: [] as { command: string; args: unknown }[],
+  disk: new Map<string, Uint8Array | null>(),
+}))
 vi.mock('./work', () => ({
   workingFolder: (path: string) =>
     Promise.resolve(path.includes('Plans') ? 'C:\\Users\\me\\Orden\\.orden\\.work\\Plans\\Work' : null),
@@ -15,19 +18,68 @@ vi.mock('./work', () => ({
 vi.mock('../../../crate/src/native', () => ({
   invoke: (command: string, args: unknown) => {
     crate.calls.push({ command, args })
+    const onDisk = diskAnswer(command, args as Record<string, unknown> | undefined)
+    if (onDisk) return onDisk
     if (command === 'list_trash')
       return Promise.resolve([{ id: 'disk-1', kind: 'note', name: 'Old.md', from: '/d/Old.md', trashedAt: 1 }])
     if (command === 'purge_trash_older_than') return Promise.resolve(2)
     return Promise.resolve(null)
   },
 }))
+const DISK = '/d/Desk'
+const under = (path: string, top: string) => path === top || path.startsWith(`${top}/`)
+const childrenOf = (top: string) =>
+  [...crate.disk.keys()].filter((one) => one.slice(0, one.lastIndexOf('/')) === top).sort()
+function diskTree(path: string): unknown {
+  const kids = crate.disk.get(path) === null ? childrenOf(path) : []
+  return { path, is_dir: crate.disk.get(path) === null, children: kids.map(diskTree) }
+}
+function diskPut(path: string, bytes: Uint8Array | null) {
+  for (let at = path.slice(0, path.lastIndexOf('/')); under(at, DISK); at = at.slice(0, at.lastIndexOf('/'))) {
+    if (!crate.disk.has(at)) crate.disk.set(at, null)
+  }
+  crate.disk.set(path, bytes)
+}
+function diskAnswer(command: string, args: Record<string, unknown> | undefined): Promise<unknown> | null {
+  const asked = args?.path ?? args?.root
+  const path = typeof asked === 'string' ? asked : ''
+  if (!under(path, DISK)) return null
+  const held = crate.disk.get(path)
+  switch (command) {
+    case 'file_stamp':
+      return Promise.resolve(held ? { modified: 1, created: 1, len: held.length } : null)
+    case 'read_tree':
+      return held === null ? Promise.resolve(diskTree(path)) : Promise.reject(new Error('not a folder'))
+    case 'read_file':
+      return held ? Promise.resolve(held.slice().buffer) : Promise.reject(new Error('no file'))
+    case 'write_bytes':
+      diskPut(path, args?.bytes as Uint8Array)
+      return Promise.resolve(undefined)
+    case 'create_folder':
+      diskPut(path, null)
+      return Promise.resolve(undefined)
+    case 'delete_note':
+      crate.disk.delete(path)
+      return Promise.resolve(undefined)
+    case 'remove_empty_folder':
+      if (childrenOf(path).length) return Promise.reject(new Error('not empty'))
+      crate.disk.delete(path)
+      return Promise.resolve(undefined)
+    case 'delete_folder':
+      for (const one of [...crate.disk.keys()]) if (under(one, path)) crate.disk.delete(one)
+      return Promise.resolve(undefined)
+    default:
+      return Promise.resolve(null)
+  }
+}
 const WEB = '/internal-t'
 const undo: (() => void)[] = []
 afterEach(() => {
   for (const one of undo.splice(0)) one()
   crate.calls.length = 0
+  crate.disk.clear()
 })
-async function mounted(root = 'C:\\Users\\me\\Orden\\Plans') {
+async function mounted(root = 'C:\\Users\\me\\Orden\\Plans', web = WEB) {
   const bytes = new MemoryBytes()
   let keys = 0
   let clock = 1000
@@ -36,8 +88,8 @@ async function mounted(root = 'C:\\Users\\me\\Orden\\Plans') {
     key: () => `k${String((keys += 1))}`,
     foldsCase: true,
   })
-  undo.push(mountRows(WEB, internalRows(folder, WEB, readsAsText)))
-  undo.push(mountRoot({ root, web: WEB, folder }))
+  undo.push(mountRows(web, internalRows(folder, web, readsAsText)))
+  undo.push(mountRoot({ root, web, folder }))
   return { bytes, folder, root }
 }
 const keyAt = async (folder: InternalFolder, path: string) => (await folder.at(path))?.key
@@ -210,5 +262,88 @@ describe('the call to the crate, on a desktop', () => {
     ])
     expect(await internalInvoke('same_pdf', { from: '/tmp/Paper.pdf', space: root }, all())).toBeNull()
     expect(crate.calls).toHaveLength(1)
+  })
+})
+
+const MED: readonly [string, string | null][] = [
+  ['Med', null],
+  ['Med/Cells', null],
+  ['Med/Cells/Cells.md', 'cells'],
+  ['Med/Cells/Empty', null],
+  ['Med/Cells/cat.png', '\u0001\u0002'],
+  ['Med/Genetics', null],
+  ['Med/Genetics/Genetics.md', 'DMD'],
+  ['Med/Paper.pdf', '\u0003\u0004'],
+  ['Med/Paper.pdf.highlights.json', '[1]'],
+  ['Med/Svenska.md', 'hej'],
+]
+const bytesOf = (text: string) => new TextEncoder().encode(text)
+const textOf = (bytes: Uint8Array) => new TextDecoder().decode(bytes)
+interface Side {
+  root: string
+  folder: InternalFolder | null
+}
+async function kept(root: string, web: string): Promise<Side> {
+  return { root, folder: (await mounted(root, web)).folder }
+}
+async function seeded(side: Side, top: string) {
+  for (const [rest, text] of MED) {
+    const path = `${side.root}/${top}${rest.slice(3)}`
+    if (!side.folder) diskPut(path, text === null ? null : bytesOf(text))
+    else if (text === null) await webInvoke('create_folder', { path: webOf(side, path) })
+    else await webInvoke('write_bytes', { path: webOf(side, path), bytes: bytesOf(text) })
+  }
+}
+const webOf = (side: Side, path: string) => path.replace(side.root, mountWebs.get(side.root) ?? side.root)
+const mountWebs = new Map<string, string>()
+async function held(side: Side, top: string): Promise<[string, string | null][]> {
+  if (!side.folder) {
+    return [...crate.disk.entries()]
+      .filter(([path]) => under(path, `${side.root}/${top}`))
+      .map(([path, bytes]): [string, string | null] => [path.slice(side.root.length + 1), bytes && textOf(bytes)])
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+  }
+  const out: [string, string | null][] = []
+  for (const { path, entry } of await side.folder.list()) {
+    if (!under(path, top)) continue
+    const bytes = entry.key ? await side.folder.read(path) : null
+    out.push([path, bytes && textOf(bytes)])
+  }
+  return out.sort(([a], [b]) => (a < b ? -1 : 1))
+}
+const renamed = (top: string) => MED.map(([rest, text]): [string, string | null] => [`${top}${rest.slice(3)}`, text])
+describe.each([
+  {
+    way: 'within one kept space',
+    sides: async () => {
+      const one = await kept('/k/Plans', WEB)
+      return [one, one] as const
+    },
+  },
+  {
+    way: 'from one kept space into another',
+    sides: async () => [await kept('/k/Plans', WEB), await kept('/k/School', '/internal-u')] as const,
+  },
+  {
+    way: 'from a kept space onto the disk',
+    sides: async () => [await kept('/k/Plans', WEB), { root: DISK, folder: null }] as const,
+  },
+  {
+    way: 'from the disk into a kept space',
+    sides: async () => [{ root: DISK, folder: null }, await kept('/k/Plans', WEB)] as const,
+  },
+])('a folder of folders moved $way', ({ sides }) => {
+  test('arrives whole, every word and byte, and leaves nothing behind to move again', async () => {
+    mountWebs.set('/k/Plans', WEB).set('/k/School', '/internal-u')
+    const { internalInvoke } = await import('./route')
+    const [from, to] = await sides()
+    await seeded(from, 'Med')
+    await internalInvoke('rename_note', { from: `${from.root}/Med`, to: `${to.root}/Moved` })
+    expect(await held(from, 'Med')).toEqual([])
+    expect(await held(to, 'Moved')).toEqual(renamed('Moved'))
+    await seeded(from, 'Med')
+    await internalInvoke('rename_note', { from: `${from.root}/Med`, to: `${to.root}/Moved 2` })
+    expect(await held(from, 'Med')).toEqual([])
+    expect(await held(to, 'Moved 2')).toEqual(renamed('Moved 2'))
   })
 })

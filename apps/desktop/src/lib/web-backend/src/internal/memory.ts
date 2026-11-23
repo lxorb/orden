@@ -7,7 +7,8 @@ export class MemoryBytes implements InternalBytes {
   writes = 0
   failSlots = false
   readText(key: string) {
-    return Promise.resolve(this.texts.get(key) ?? null)
+    const blob = this.blobs.get(key)
+    return Promise.resolve(this.texts.get(key) ?? (blob ? new TextDecoder().decode(blob) : null))
   }
   writeText(key: string, text: string) {
     this.writes += 1
@@ -15,7 +16,8 @@ export class MemoryBytes implements InternalBytes {
     return Promise.resolve()
   }
   read(key: string) {
-    return Promise.resolve(this.blobs.get(key) ?? null)
+    const text = this.texts.get(key)
+    return Promise.resolve(this.blobs.get(key) ?? (text === undefined ? null : new TextEncoder().encode(text)))
   }
   write(key: string, bytes: Uint8Array) {
     this.writes += 1
