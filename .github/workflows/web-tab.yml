@@ -15,6 +15,7 @@ on:
       - apps/desktop/src/lib/ui-kit/src/outside-drops.ts
       - scripts/web-tab-drive.py
       - scripts/web-switch-drive.py
+      - scripts/pane-front-drive.py
       - scripts/gesture-drive.py
       - scripts/edge-drive.py
       - scripts/native_app.py
@@ -115,6 +116,17 @@ jobs:
               python3 -m pip install --quiet --break-system-packages python-xlib
               xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}"
               ;;
+            *) python "${drive[@]}" ;;
+          esac
+
+      - name: The pane shows the tab in front, on the screen
+        id: pane-front-drive
+        if: ${{ !cancelled() && env.EXE != '' && runner.os != 'macOS' }}
+        timeout-minutes: 15
+        run: |
+          drive=(scripts/pane-front-drive.py --exe "$EXE" --identifier "$IDENTIFIER")
+          case "$RUNNER_OS" in
+            Linux) xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- python3 "${drive[@]}" ;;
             *) python "${drive[@]}" ;;
           esac
 
