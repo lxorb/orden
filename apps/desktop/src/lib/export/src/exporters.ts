@@ -1,2 +1,2 @@
 export { exportPandoc } from './render'
-export { pdfPreview, runExport } from './run'
+export { notePng, pdfPreview, runExport } from './run'

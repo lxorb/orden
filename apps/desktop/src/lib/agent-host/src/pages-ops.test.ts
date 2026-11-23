@@ -88,3 +88,62 @@ describe('changing one', () => {
     expect(refusal(() => applied(plane, [{ op: 'add_card', page: 1 }]))).toBe('bad_arguments')
   })
 })
+describe('words written onto a page', () => {
+  const one = note(1)
+  const [page] = pagesOf(one)
+  const sizes = new Map([[page!.id, 38]])
+  const text = (canvas: Canvas, id: string) => {
+    const found = card(canvas, id)
+    if (found?.type !== 'text') throw new Error('no text card')
+    return found
+  }
+  test('take the size of the printed words and no card behind them on a page with print', () => {
+    const { canvas, made } = applied(one, [{ op: 'add_card', page: 1, x: 100, y: 200, text: 'Answer' }], sizes)
+    const written = text(canvas, made[0]!)
+    expect(written).toMatchObject({ bare: true, size: 38 })
+    expect(written.height).toBeGreaterThanOrEqual(Math.ceil(38 * 1.55))
+    expect(readablePages(canvas).nodes[0]).toMatchObject({ fontSize: 38, bare: true, page: 1 })
+    expect(readablePages(canvas).nodes[0]).not.toHaveProperty('size')
+  })
+  test('keep the card as it always was on a page without print', () => {
+    const { canvas, made } = applied(one, [{ op: 'add_card', page: 1, text: 'Plain' }])
+    const written = text(canvas, made[0]!)
+    expect(written).not.toHaveProperty('bare')
+    expect(written).not.toHaveProperty('size')
+    expect(written.height).toBe(60)
+  })
+  test('take a size, a colour, a card and fitting when asked', () => {
+    const { canvas, made } = applied(
+      one,
+      [{ op: 'add_card', page: 1, text: 'Mine', fontSize: 24, bare: false, fit: true, color: '#1d4ed8' }],
+      sizes,
+    )
+    const written = text(canvas, made[0]!)
+    expect(written).toMatchObject({ size: 24, fit: true, color: '#1d4ed8' })
+    expect(written).not.toHaveProperty('bare')
+  })
+  test('change their look by style, and drop what is set to null', () => {
+    const added = applied(one, [{ op: 'add_card', page: 1, text: 'Answer' }], sizes)
+    const id = added.made[0]!
+    const styled = applied(added.canvas, [{ op: 'style', id, fontSize: 30, fit: true, color: '4' }]).canvas
+    expect(text(styled, id)).toMatchObject({ size: 30, fit: true, color: '4', bare: true })
+    const cleared = applied(styled, [{ op: 'style', id, fontSize: null, bare: false, color: null }]).canvas
+    expect(text(cleared, id)).not.toHaveProperty('size')
+    expect(text(cleared, id)).not.toHaveProperty('bare')
+    expect(text(cleared, id)).not.toHaveProperty('color')
+    expect(text(cleared, id)).toMatchObject({ fit: true, text: 'Answer' })
+  })
+  test('refuse a size that is none and a style for what holds no words', () => {
+    const added = applied(one, [{ op: 'add_card', page: 1, text: 'Answer' }])
+    expect(refusal(() => applied(added.canvas, [{ op: 'style', id: added.made[0], fontSize: 'big' }]))).toBe(
+      'bad_arguments',
+    )
+    expect(refusal(() => applied(added.canvas, [{ op: 'style', id: page!.id, bare: true }]))).toBe('bad_arguments')
+  })
+  test('show each page its size of print and its answer spaces', () => {
+    const fields = [{ kind: 'gap' as const, x: 1, y: 2, width: 3, height: 4, question: 'Why?' }]
+    const read = readablePages(one, new Map([[page!.id, { size: 38, fields }]]))
+    expect(read.pages[0]).toMatchObject({ fontSize: 38, fields })
+    expect(readablePages(one).pages[0]).not.toHaveProperty('fields')
+  })
+})

@@ -46,6 +46,7 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   read_note: 'notes.read',
   list_versions: 'notes.read',
   read_canvas: 'notes.read',
+  note_screenshot: 'notes.read',
   read_pdf: 'notes.read',
   pdf_highlights: 'notes.read',
   edit_note: 'notes.write',

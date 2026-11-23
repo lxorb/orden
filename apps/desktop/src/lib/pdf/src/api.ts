@@ -1,4 +1,4 @@
-export { lentMoved, loading, openDocument, pageSizes, pdfjs, warmPdf } from './document'
+export { lentMoved, loading, openBytes, openDocument, pageSizes, pdfjs, warmPdf } from './document'
 export { placesOnPaper, spansOver, wordsOfRuns } from './find'
 export { boxOf, COLOURS, frozen, type Held, type Highlight, type Quad, toViewport } from './highlights'
 export { type PdfHeading, readOutline } from './outline'

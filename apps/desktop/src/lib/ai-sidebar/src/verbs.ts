@@ -3,7 +3,7 @@ import { verbOf as ownName } from './chat-parts'
 
 const VERBS: Record<string, string> = Object.fromEntries(
   Object.entries({
-    Read: 'read_note read_canvas read_pdf browser_read browser_snapshot browser_find browser_screenshot browser_console browser_network browser_downloads',
+    Read: 'read_note read_canvas note_screenshot read_pdf browser_read browser_snapshot browser_find browser_screenshot browser_console browser_network browser_downloads',
     Searched: 'search_notes',
     Listed: 'list_notes list_spaces list_backlinks list_versions browser_tabs workspace_tabs bookmarks',
     Checked: 'get_context agent_status approval_status read_setting',

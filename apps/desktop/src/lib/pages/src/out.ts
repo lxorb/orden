@@ -234,6 +234,18 @@ export async function exportPagesSvg(given: PagesOut): Promise<string | undefine
   const zip = await zipOf(entries)
   return handOver(`${name} pages`, 'zip', 'ZIP', zip, 'application/zip')
 }
+async function sheetPng(out: PagesOut, page: PageNode, number: number): Promise<Uint8Array | null> {
+  const paper = await paperAt(out, page)
+  const svg = await inlinedSvg(pageSvg(out, page, number, true, null, !paper))
+  const under = paper ? () => paperUnder(paper.at, paper.number) : null
+  return svgToPng(svg, page.width, page.height, under)
+}
+export async function pagePng(given: PagesOut, number: number): Promise<{ bytes: Uint8Array; page: PageNode } | null> {
+  const page = pagesOf(given.canvas)[number - 1]
+  if (!page) return null
+  const bytes = await sheetPng(await laidOf(given), page, number)
+  return bytes ? { bytes, page } : null
+}
 export async function exportPagesPng(given: PagesOut): Promise<string | undefined> {
   const out = await laidOf(given)
   const pages = sheetsOf(pagesOf(out.canvas))
@@ -241,10 +253,7 @@ export async function exportPagesPng(given: PagesOut): Promise<string | undefine
   const name = stem(out.name)
   const entries: { path: string; body: Uint8Array }[] = []
   for (const [at, page] of pages.entries()) {
-    const paper = await paperAt(out, page)
-    const svg = await inlinedSvg(pageSvg(out, page, at + 1, true, null, !paper))
-    const under = paper ? () => paperUnder(paper.at, paper.number) : null
-    const bytes = await svgToPng(svg, page.width, page.height, under)
+    const bytes = await sheetPng(out, page, at + 1)
     if (!bytes) continue
     entries.push({ path: `${name}/${name} ${numbered(at + 1, pages.length)}.png`, body: bytes })
   }

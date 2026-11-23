@@ -99,7 +99,7 @@ function plainCard(text: string, box: Box, palette: Palette): string {
 function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean): string {
   switch (node.type) {
     case 'text':
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"${node.size ? ` style="font-size:${node.size}px"` : ''}>${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
     case 'link':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(shownHost(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
     case 'file':
@@ -258,10 +258,16 @@ export function canvasSvg(
 }
 const PNG_SCALE = 2
 const PNG_MOST = 8000
-function sizeOf(svg: string): { width: number; height: number } {
+function viewOf(svg: string): Box {
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
-  return { width: Number(size?.[3] ?? 800), height: Number(size?.[4] ?? 600) }
+  return {
+    x: Number(size?.[1] ?? 0),
+    y: Number(size?.[2] ?? 0),
+    width: Number(size?.[3] ?? 800),
+    height: Number(size?.[4] ?? 600),
+  }
 }
+const sizeOf = (svg: string): { width: number; height: number } => viewOf(svg)
 async function svgToPng(svg: string, whole: string | Blob): Promise<Blob | null> {
   const { width, height } = sizeOf(svg)
   const scale = Math.min(PNG_SCALE, PNG_MOST / Math.max(width, height, 1))
@@ -348,9 +354,13 @@ export async function exportCanvasSvg(drawing: Drawing) {
   await writeFile(target, await pageBytes(whole))
   return target
 }
-export async function exportCanvasPng(drawing: Drawing) {
+export async function canvasPng(drawing: Drawing): Promise<{ blob: Blob; box: Box } | null> {
   const { svg, whole } = await readySvg(drawing, chosenPalette(drawing), true)
   const blob = await svgToPng(svg, whole).catch(() => null)
+  return blob ? { blob, box: viewOf(svg) } : null
+}
+export async function exportCanvasPng(drawing: Drawing) {
+  const blob = (await canvasPng(drawing))?.blob
   if (!blob) {
     message(new Error('that drawing could not be turned into a picture'), 'Nothing here')
     return

@@ -25,10 +25,15 @@ import {
   type Place,
   placeOf,
   sharedSource,
+  tabWithId,
 } from '../../agent-verbs/src/api'
 import { inTurn } from '../../agent-docs/src/api'
 import { applied, readable } from './canvas-ops'
-import { readablePages } from './pages-ops'
+import { pageIn, readablePages } from './pages-ops'
+import { readsOf } from './pages-read'
+import { pagesAsked } from './pdf-text'
+import { pagesOf } from '@orden/markdown/pages'
+import { isRecord } from '../../platform/src/api'
 import { kindsWhere } from '../../tab-kinds/src/api'
 
 interface Target {
@@ -93,28 +98,83 @@ function isPages(target: Target): boolean {
 function nameOf(target: Target, call: Call): string {
   return target.relative || `tab ${maybe(call, 'tab') ?? ''}`
 }
+const FIELDS_AT_ONCE = 20
+function paperPlace(target: Target) {
+  return { note: target.path, root: target.place.space.root }
+}
+async function pageReads(target: Target, canvas: Canvas, numbers: string | null) {
+  const pages = pagesOf(canvas)
+  const asked = new Set(
+    numbers === null ? pagesAsked(`1-${FIELDS_AT_ONCE}`, pages.length) : pagesAsked(numbers, pages.length),
+  )
+  return readsOf(
+    pages.filter((_, at) => asked.has(at + 1)),
+    paperPlace(target),
+  )
+}
+export function isPlaneCall(call: Call): boolean {
+  const tab = maybe(call, 'tab')
+  if (tab !== null) return PLANES.includes(tabWithId(call, tab).kind)
+  const path = maybe(call, 'path') ?? ''
+  return isCanvasTarget(path) || isPagesTarget(path)
+}
+export async function canvasShown(call: Call) {
+  const target = canvasOf(call, false)
+  return {
+    canvas: await canvasAt(target),
+    pages: isPages(target),
+    path: target.path,
+    root: target.place.space.root,
+    name: nameOf(target, call),
+    source: target.draft ? docSource(target.draft) : sharedSource(target.place, target.relative),
+  }
+}
 export async function readCanvas(call: Call): Promise<AgentAnswer> {
   const target = canvasOf(call, false)
   const canvas = await canvasAt(target)
-  const read = isPages(target) ? readablePages(canvas) : readable(canvas)
+  const read = isPages(target)
+    ? readablePages(canvas, await pageReads(target, canvas, maybe(call, 'pages')))
+    : readable(canvas)
   return done(
     { path: target.relative, ...read },
     target.draft ? docSource(target.draft) : sharedSource(target.place, target.relative),
   )
 }
+async function printedSizes(target: Target, canvas: Canvas, ops: unknown): Promise<Map<string, number>> {
+  if (!isPages(target) || !Array.isArray(ops)) return new Map()
+  const pages = new Set(
+    ops.flatMap((op) => {
+      if (!isRecord(op) || op.op !== 'add_card' || op.page === undefined) return []
+      try {
+        return [pageIn(canvas, op.page)]
+      } catch {
+        return []
+      }
+    }),
+  )
+  const reads = await readsOf([...pages], paperPlace(target))
+  return new Map([...reads].map(([id, read]) => [id, read.size]))
+}
 export async function editCanvas(call: Call): Promise<AgentAnswer> {
   const target = canvasOf(call, true)
-  applied(await canvasAt(target), call.args.ops)
+  const before = await canvasAt(target)
+  const sizes = await printedSizes(target, before, call.args.ops)
+  applied(before, call.args.ops, sizes)
   const named = nameOf(target, call)
   const question = await asked(call, null, `Edit the canvas ${shownPath(named)} in ${target.place.space.name}`)
   if (question) return question
-  const made = await edited(target, call.args.ops, call.caller.agent?.name)
+  const made = await edited(target, call.args.ops, call.caller.agent?.name, sizes)
   return done({ path: target.relative, made })
 }
-async function edited(target: Target, ops: unknown, source: string | undefined): Promise<string[]> {
+async function edited(
+  target: Target,
+  ops: unknown,
+  source: string | undefined,
+  sizes: ReadonlyMap<string, number>,
+): Promise<string[]> {
   const drawn = await drawnAt(target)
   if (drawn) {
-    const done = applied(drawn.canvas, ops)
+    const done = applied(drawn.canvas, ops, sizes)
     drawn.edit(done.canvas)
     return done.made
   }
@@ -122,7 +182,7 @@ async function edited(target: Target, ops: unknown, source: string | undefined):
   if (open) {
     open.flush()
     const before = parse(open.text)
-    const done = applied(before, ops)
+    const done = applied(before, ops, sizes)
     open.replace(writeCanvas(stamped(before, done.canvas, Date.now())))
     return done.made
   }
@@ -131,7 +191,7 @@ async function edited(target: Target, ops: unknown, source: string | undefined):
   return inTurn(path, async () => {
     const was = await invoke<string>('read_note', { path })
     const before = parse(was)
-    const done = applied(before, ops)
+    const done = applied(before, ops, sizes)
     const mine = stamped(before, done.canvas, Date.now())
     const now = await invoke<string>('read_note', { path }).catch(() => was)
     const kept = now === was ? mine : merged(mine, parse(now))

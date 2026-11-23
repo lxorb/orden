@@ -6,15 +6,17 @@ import {
   freshId,
   FURTHEST,
   type Side,
+  textSized,
 } from '@orden/markdown/canvas'
 import { connected, movedBy, removed, withLabel, withNode, withText } from '../../plane/src/api'
 import { settled } from '@orden/markdown/pages'
 import { hasPages, pageIn, pageOperation, placeOnPage } from './pages-ops'
 import { Refused } from '../../agent-verbs/src/api'
 import { isRecord } from '../../platform/src/api'
+import { shown } from './shown-node'
 
 export function readable(canvas: Canvas) {
-  return { nodes: canvas.nodes, edges: canvas.edges, ink: canvas.ink.length }
+  return { nodes: canvas.nodes.map(shown), edges: canvas.edges, ink: canvas.ink.length }
 }
 function numberOf(op: Record<string, unknown>, key: string): number | null {
   const value = op[key]
@@ -54,8 +56,47 @@ function pageNamed(canvas: Canvas, op: Record<string, unknown>) {
   if (!hasPages(canvas)) throw new Refused('bad_arguments', 'a canvas has no pages')
   return pageIn(canvas, op.page)
 }
-const OPS = 'add_card, edit_text, move, connect, remove, and in a page note add_page, remove_page, move_page'
-export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: string[] } {
+function flag(op: Record<string, unknown>, key: string): boolean | null {
+  const value = op[key]
+  return typeof value === 'boolean' ? value : null
+}
+function fontSizeOf(op: Record<string, unknown>): number | null | undefined {
+  if (op.fontSize === null) return null
+  if (op.fontSize === undefined) return undefined
+  const size = textSized(op.fontSize)
+  if (size === undefined) throw new Refused('bad_arguments', 'fontSize is a number above 0')
+  return size
+}
+type TextCard = CanvasNode & { type: 'text' }
+function styled(card: TextCard, op: Record<string, unknown>): TextCard {
+  const { bare, size, fit, color, ...rest } = card
+  const wantBare = flag(op, 'bare') ?? bare === true
+  const wantFit = flag(op, 'fit') ?? fit === true
+  const wantSize = fontSizeOf(op)
+  const nextSize = wantSize === undefined ? size : (wantSize ?? undefined)
+  const said = op.color === undefined ? op.colour : op.color
+  if (said !== undefined && said !== null && typeof said !== 'string') {
+    throw new Refused('bad_arguments', 'color is a preset 1 to 6 or a hex colour')
+  }
+  const nextColour = said === undefined ? color : said === null || said === '' ? undefined : said
+  return {
+    ...rest,
+    ...(nextColour === undefined ? {} : { color: nextColour }),
+    ...(wantBare ? { bare: true } : {}),
+    ...(nextSize === undefined ? {} : { size: nextSize }),
+    ...(wantFit ? { fit: true } : {}),
+  }
+}
+function replaced(canvas: Canvas, card: CanvasNode): Canvas {
+  return { ...canvas, nodes: canvas.nodes.map((node) => (node.id === card.id ? card : node)) }
+}
+const LEADING = 1.55
+const OPS = 'add_card, edit_text, style, move, connect, remove, and in a page note add_page, remove_page, move_page'
+export function applied(
+  canvas: Canvas,
+  ops: unknown,
+  pageSizes: ReadonlyMap<string, number> = new Map(),
+): { canvas: Canvas; made: string[] } {
   if (!Array.isArray(ops) || !ops.length) {
     throw new Refused('bad_arguments', 'ops is a list of at least one operation')
   }
@@ -70,16 +111,21 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
         const page = pageNamed(now, op)
         const at = page ? placeOnPage(now, page, numberOf(op, 'x'), numberOf(op, 'y')) : freePlace(now)
         const colour = textOf(op, 'color') ?? textOf(op, 'colour')
-        const card: CanvasNode = {
+        const printed = page ? pageSizes.get(page.id) : undefined
+        const plain: TextCard = {
           id: freshId(),
           type: 'text',
           text: textOf(op, 'text') ?? '',
           x: held(page ? at.x : (numberOf(op, 'x') ?? at.x)),
           y: held(page ? at.y : (numberOf(op, 'y') ?? at.y)),
           width: sized(op, 'width', DEFAULT_WIDTH),
-          height: sized(op, 'height', DEFAULT_HEIGHT),
+          height: 0,
           ...(colour ? { color: colour } : {}),
+          ...(printed === undefined ? {} : { bare: true, size: printed }),
         }
+        const card = styled(plain, { ...op, color: undefined, colour: undefined })
+        const line = Math.ceil((card.size ?? 0) * LEADING + 16)
+        card.height = sized(op, 'height', Math.max(DEFAULT_HEIGHT, line))
         now = withNode(now, card)
         made.push(card.id)
         break
@@ -94,6 +140,12 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
         }
         const node = nodeIn(now, id)
         now = node.type === 'group' ? withLabel(now, node.id, words) : withText(now, node.id, words)
+        break
+      }
+      case 'style': {
+        const node = nodeIn(now, id)
+        if (node.type !== 'text') throw new Refused('bad_arguments', 'style changes a text card')
+        now = replaced(now, styled(node, op))
         break
       }
       case 'move': {

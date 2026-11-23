@@ -1,6 +1,8 @@
 import { added, moved, onPage, pagesOf, removed as pageRemoved, settled } from '@orden/markdown/pages'
 import type { Canvas, CanvasNode, PageNode } from '@orden/markdown/canvas'
 import { Refused } from '../../agent-verbs/src/api'
+import type { Read } from './page-fields'
+import { shown } from './shown-node'
 
 const MARGIN = 40
 interface Box {
@@ -13,7 +15,7 @@ function pageNumberOf(pages: readonly PageNode[], box: Box): number | null {
   const at = pages.findIndex((page) => onPage({ points: [{ x: box.x, y: box.y }] }, page))
   return at < 0 ? null : at + 1
 }
-export function readablePages(canvas: Canvas) {
+export function readablePages(canvas: Canvas, reads: ReadonlyMap<string, Read> = new Map()) {
   const laid = settled(canvas)
   const pages = pagesOf(laid)
   return {
@@ -26,10 +28,11 @@ export function readablePages(canvas: Canvas) {
       height: page.height,
       ...(page.file ? { pdf: { file: page.file, page: page.page } } : {}),
       ink: laid.ink.filter((stroke) => onPage(stroke, page)).length,
+      ...(reads.has(page.id) ? { fontSize: reads.get(page.id)?.size, fields: reads.get(page.id)?.fields } : {}),
     })),
     nodes: laid.nodes
       .filter((node) => node.type !== 'page')
-      .map((node) => ({ ...node, page: pageNumberOf(pages, node) })),
+      .map((node) => ({ ...shown(node), page: pageNumberOf(pages, node) })),
     edges: laid.edges,
     ink: laid.ink.length,
   }
