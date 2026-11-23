@@ -23,18 +23,23 @@ function spanOf(from: number | null, length: number | null, whole: number): [num
   const low = Math.max(0, Math.min(whole, start))
   return [low, Math.max(low, Math.min(whole, end)) - low]
 }
-function areaAsked(call: Call, whole: Area): Area {
-  const [x, width] = spanOf(numberOf(call, 'x'), numberOf(call, 'width'), whole.width)
-  const [y, height] = spanOf(numberOf(call, 'y'), numberOf(call, 'height'), whole.height)
+function areaAsked(call: Call, whole: Area, origin = { x: 0, y: 0 }): Area {
+  const said = call.args.area
+  if (said !== undefined && said !== null) {
+    const fine = Array.isArray(said) && said.length === 4 && said.every((one) => Number.isFinite(one))
+    if (!fine) throw new Refused('bad_arguments', 'area is [x, y, width, height]')
+  }
+  const [left, top, wide, high] = (Array.isArray(said) ? said : []) as (number | undefined)[]
+  const [x, width] = spanOf(left === undefined ? null : left - origin.x, wide ?? null, whole.width)
+  const [y, height] = spanOf(top === undefined ? null : top - origin.y, high ?? null, whole.height)
   if (width < 1 || height < 1) throw new Refused('bad_arguments', 'that area lies outside what there is to see')
   return { x, y, width, height }
 }
-async function cut(picture: Blob, whole: Area, area: Area, scale: number | null) {
+async function cut(picture: Blob, whole: Area, area: Area) {
   const image = await createImageBitmap(picture)
   try {
     const density = image.width / whole.width
-    const fitted = Math.min(1, LONGEST / Math.max(area.width, area.height))
-    const by = Math.min(4, Math.max(0.05, scale ?? fitted))
+    const by = Math.min(1, LONGEST / Math.max(area.width, area.height))
     const sheet = document.createElement('canvas')
     sheet.width = Math.max(1, Math.round(area.width * by))
     sheet.height = Math.max(1, Math.round(area.height * by))
@@ -61,7 +66,6 @@ async function cut(picture: Blob, whole: Area, area: Area, scale: number | null)
 const blobOf = (bytes: Uint8Array) => new Blob([bytes.slice()], { type: 'image/png' })
 async function planeShot(call: Call): Promise<AgentAnswer> {
   const shown = await canvasShown(call)
-  const scale = numberOf(call, 'scale')
   const open = { name: shown.name, path: shown.path, root: shown.root }
   if (shown.pages) {
     const out = await (await import('../../pages/src/api')).pagesOut()
@@ -69,27 +73,14 @@ async function planeShot(call: Call): Promise<AgentAnswer> {
     const drawn = await out.pagePng({ ...out.pagesOutOf({ ...open, text: '' }), canvas: shown.canvas }, number)
     if (!drawn) throw new Refused('not_found', `there is no page ${number} to see`)
     const whole = { x: 0, y: 0, width: drawn.page.width, height: drawn.page.height }
-    return done(
-      { ...(await cut(blobOf(drawn.bytes), whole, areaAsked(call, whole), scale)), page: number },
-      shown.source,
-    )
+    return done({ ...(await cut(blobOf(drawn.bytes), whole, areaAsked(call, whole))), page: number }, shown.source)
   }
   const { canvasPng, drawingOf } = await import('../../plane/src/api')
   const drawn = await canvasPng({ ...drawingOf({ ...open, text: '' }), canvas: shown.canvas })
   if (!drawn) throw new Refused('failed', 'that canvas could not be drawn')
   const whole = { x: 0, y: 0, width: drawn.box.width, height: drawn.box.height }
-  const said = areaAsked(
-    {
-      ...call,
-      args: {
-        ...call.args,
-        x: (numberOf(call, 'x') ?? drawn.box.x) - drawn.box.x,
-        y: (numberOf(call, 'y') ?? drawn.box.y) - drawn.box.y,
-      },
-    },
-    whole,
-  )
-  const picture = await cut(drawn.blob, whole, said, scale)
+  const said = areaAsked(call, whole, drawn.box)
+  const picture = await cut(drawn.blob, whole, said)
   return done({ ...picture, x: said.x + drawn.box.x, y: said.y + drawn.box.y }, shown.source)
 }
 async function noteShot(call: Call): Promise<AgentAnswer> {
@@ -104,7 +95,7 @@ async function noteShot(call: Call): Promise<AgentAnswer> {
   const image = await createImageBitmap(blobOf(bytes))
   const whole = { x: 0, y: 0, width: image.width, height: image.height }
   image.close()
-  const picture = await cut(blobOf(bytes), whole, areaAsked(call, whole), numberOf(call, 'scale'))
+  const picture = await cut(blobOf(bytes), whole, areaAsked(call, whole))
   return done(picture, sharedSource(named.place, named.relative))
 }
 export async function noteScreenshot(call: Call): Promise<AgentAnswer> {
