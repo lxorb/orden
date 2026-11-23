@@ -48,6 +48,7 @@ body {
     --success: #1a8f5c;
     --selection: transparent;
     --accent-ink: #ffffff;
+    --heading-tint: 60%;
   }
   html,
   body {
