@@ -645,6 +645,43 @@ describe('words with no card round them (#421)', () => {
     expect(JSON.parse(plain)).not.toHaveProperty('orden')
   })
 })
+describe('words of a chosen size, or fitted to their card', () => {
+  const canvas: Canvas = {
+    ...readCanvas(blankCanvas()),
+    nodes: [
+      { id: 'card', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 'A card' },
+      { id: 'large', type: 'text', x: 0, y: 90, width: 240, height: 40, text: 'Large', bare: true, size: 36 },
+      { id: 'fitted', type: 'text', x: 0, y: 200, width: 240, height: 40, text: 'Fitted', size: 20, fit: true },
+    ],
+  }
+  const written = writeCanvas(canvas)
+  const parsed = JSON.parse(written) as {
+    nodes: Record<string, unknown>[]
+    orden: { sizes: Record<string, number>; fit: string[] }
+  }
+  test('are plain cards to the spec, kept under orden, and come back field for field', () => {
+    expect(parsed.nodes.some((node) => 'size' in node || 'fit' in node)).toBe(false)
+    expect(parsed.orden.sizes).toEqual({ large: 36, fitted: 20 })
+    expect(parsed.orden.fit).toEqual(['fitted'])
+    const back = readCanvas(written)
+    expect(back.nodes).toEqual(canvas.nodes)
+    expect(back.extras).toBeUndefined()
+    expect(writeCanvas(back)).toBe(written)
+    expect(written).toBe(`${JSON.stringify(parsed, null, '\t')}\n`)
+    expect(nodeOf({ ...canvas.nodes[2] })).toEqual(canvas.nodes[2])
+  })
+  test('leave a file without them as it was', () => {
+    const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[0]!] })
+    expect(JSON.parse(plain)).not.toHaveProperty('orden')
+    expect(readCanvas(plain).nodes[0]).not.toHaveProperty('size')
+  })
+  test('hold a size in reason and drop one that is no size', () => {
+    const file = JSON.parse(written) as { orden: { sizes: Record<string, unknown> } }
+    file.orden.sizes = { card: 'big', large: 10_000, fitted: -3 }
+    const back = readCanvas(JSON.stringify(file))
+    expect(back.nodes.map((node) => (node.type === 'text' ? node.size : null))).toEqual([undefined, 400, undefined])
+  })
+})
 describe('something locked in place (#643)', () => {
   const canvas: Canvas = {
     ...readCanvas(blankCanvas()),

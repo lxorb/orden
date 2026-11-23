@@ -50,6 +50,8 @@
     "notify",
     "sync-store",
     "modes",
-    "gates"
+    "gates",
+    "pages",
+    "export"
   ]
 }

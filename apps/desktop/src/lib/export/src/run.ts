@@ -100,6 +100,18 @@ async function exportPicture(id: 'jpg' | 'png', note: Note, options: RunOptions)
     folder: false,
   })
 }
+export async function notePng(note: Note, options: RunOptions, width: number): Promise<Uint8Array | null> {
+  const html = await pageOf(note, options, await picturesFor(note, options, true))
+  const { toImages } = await import('./image')
+  const [first] = await toImages(html, {
+    mime: 'image/png',
+    scale: 1,
+    width,
+    background: options.background ?? '#ffffff',
+    pageHeight: MOST_PIXELS,
+  })
+  return first ?? null
+}
 async function picturesFor(note: Note, options: RunOptions, whole: boolean): Promise<Picture[]> {
   if (!whole) return picturesOf(picturesIn(documentOf(note.source, note.name)), options)
   const html = await pageOf(note, { ...options, bare: true })

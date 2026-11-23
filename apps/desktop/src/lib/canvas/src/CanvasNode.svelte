@@ -201,6 +201,44 @@
     sounds = event.type === 'play' ? [...others, one] : others
     onplaying?.(sounds.length > 0)
   }
+  const sized = $derived(node.type === 'text' && node.size ? `${node.size}px` : null)
+  const fitting = $derived({
+    fit: node.type === 'text' && node.fit === true,
+    html,
+    size: sized,
+    width: node.width,
+    height: node.height,
+  })
+  const SMALLEST = 4
+  function fitted(card: HTMLElement, wanted: typeof fitting) {
+    const fit = (now: typeof wanted) => {
+      card.style.fontSize = ''
+      if (!now.fit) return
+      const spills = () => card.scrollHeight > card.clientHeight + 1 || card.scrollWidth > card.clientWidth + 1
+      if (!spills()) return
+      let high = parseFloat(getComputedStyle(card).fontSize)
+      let low = SMALLEST
+      while (high - low > 0.5) {
+        const middle = (low + high) / 2
+        card.style.fontSize = `${middle}px`
+        if (spills()) high = middle
+        else low = middle
+      }
+      card.style.fontSize = `${low}px`
+    }
+    let latest = wanted
+    const again = () => fit(latest)
+    fit(wanted)
+    if ('fonts' in document) void document.fonts.ready.then(again)
+    card.addEventListener('load', again, true)
+    return {
+      update: (now: typeof wanted) => {
+        latest = now
+        fit(now)
+      },
+      destroy: () => card.removeEventListener('load', again, true),
+    }
+  }
   function onKey(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
     event.preventDefault()
@@ -232,6 +270,7 @@
   style:height="{node.height}px"
   style:translate="{offset.x}px {offset.y}px"
   style:--card-colour={colour}
+  style:--card-size={sized}
   onplaycapture={sounding}
   onpausecapture={sounding}
   onendedcapture={sounding}
@@ -242,7 +281,7 @@
       <div class="editor" use:edit onkeydowncapture={onKey}></div>
     {:else}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own note, through the same renderer the reading view uses -->
-      <div class="card page orden-rendered" use:embeds>{@html html}</div>
+      <div class="card page orden-rendered" use:embeds use:fitted={fitting}>{@html html}</div>
     {/if}
   {:else if node.type === 'file'}
     {@const shown = fileShown(node.file)}
@@ -412,7 +451,7 @@
   .node.bare .editor :global(#write) {
     padding: 4px 6px;
     color: var(--card-colour, var(--text));
-    font-size: 16px;
+    font-size: var(--card-size, 16px);
   }
   .drawn {
     display: block;
@@ -467,7 +506,7 @@
     overflow: hidden;
     color: var(--text);
     font-family: var(--font-content);
-    font-size: 13px;
+    font-size: var(--card-size, 13px);
     line-height: 1.55;
   }
   .card.page :global(> :first-child) {
@@ -578,7 +617,7 @@
     max-width: none;
     margin: 0;
     padding: 8px 12px;
-    font-size: 13px;
+    font-size: var(--card-size, 13px);
     line-height: 1.55;
   }
 </style>

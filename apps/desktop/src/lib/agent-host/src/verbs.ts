@@ -5,6 +5,7 @@ import { askReader } from './ask'
 import { bookmarks } from './bookmarks'
 import { type Call, done, gatedBy, reachable, type Verb, verbsOf } from '../../agent-verbs/src/api'
 import { readCanvas, editCanvas } from './canvas'
+import { noteScreenshot } from './screenshot'
 import { noteEditor } from './editor'
 import { clipboard } from './clipboard'
 import { captureToNote } from './capture'
@@ -42,6 +43,7 @@ export const hostVerbs = verbsOf({
   read_note: readNote,
   list_versions: listVersions,
   read_canvas: readCanvas,
+  note_screenshot: noteScreenshot,
   read_pdf: readPdf,
   pdf_highlights: pdfHighlights,
   edit_note: editNote,
