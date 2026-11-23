@@ -1,0 +1,98 @@
+diff --git a/src/internal/client/reactivity/batch.js b/src/internal/client/reactivity/batch.js
+index 8251f7929844cf66a09fae3db2140172274e2c31..b76b44c7879a83d8c7b7e4bd5e7c5b539b3f304f 100644
+--- a/src/internal/client/reactivity/batch.js
++++ b/src/internal/client/reactivity/batch.js
+@@ -35,7 +35,7 @@ import { DEV } from 'esm-env';
+ import { invoke_error_boundary } from '../error-handling.js';
+ import { flush_eager_effects, old_values, set_eager_effects, source, update } from './sources.js';
+ import { eager_effect, teardown, unlink_effect } from './effects.js';
+-import { defer_effect } from './utils.js';
++import { clear_marked, defer_effect } from './utils.js';
+ import { UNINITIALIZED } from '../../../constants.js';
+ import { set_signal_status } from './status.js';
+ import { legacy_is_updating_store } from './store.js';
+@@ -451,9 +451,15 @@ export class Batch {
+ 					effects.push(effect);
+ 				} else if (async_mode_flag && (flags & (RENDER_EFFECT | MANAGED_EFFECT)) !== 0) {
+ 					render_effects.push(effect);
+-				} else if (is_dirty(effect)) {
+-					if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
+-					update_effect(effect);
++				} else {
++					try {
++						if (is_dirty(effect)) {
++							if ((flags & BLOCK_EFFECT) !== 0) this.#maybe_dirty_effects.add(effect);
++							update_effect(effect);
++						}
++					} catch (error) {
++						unheard(effect, error);
++					}
+ 				}
+ 
+ 				var child = effect.first;
+@@ -1094,10 +1100,15 @@ function flush_queued_effects(effects) {
+ 	while (i < length) {
+ 		var effect = effects[i++];
+ 
+-		if ((effect.f & (DESTROYED | INERT)) === 0 && is_dirty(effect)) {
++		if ((effect.f & (DESTROYED | INERT)) === 0 && dirty_or_failed(effect)) {
+ 			eager_block_effects = new Set();
+ 
+-			update_effect(effect);
++			try {
++				update_effect(effect);
++			} catch (error) {
++				unheard(effect, error);
++				continue;
++			}
+ 
+ 			// Effects with no dependencies or teardown do not get added to the effect tree.
+ 			// Deferred effects (e.g. `$effect(...)`) _are_ added to the tree because we
+@@ -1152,6 +1163,34 @@ function flush_queued_effects(effects) {
+ 	eager_block_effects = null;
+ }
+ 
++/**
++ * @param {Effect} effect
++ * @param {unknown} error
++ */
++function unheard(effect, error) {
++	if ((effect.f & DESTROYED) === 0) {
++		set_signal_status(effect, CLEAN);
++		clear_marked(effect.deps);
++	}
++
++	queueMicrotask(() => {
++		if (typeof reportError === 'function') reportError(error);
++		else throw error;
++	});
++}
++
++/**
++ * @param {Effect} effect
++ */
++function dirty_or_failed(effect) {
++	try {
++		return is_dirty(effect);
++	} catch (error) {
++		unheard(effect, error);
++		return false;
++	}
++}
++
+ /**
+  * This is similar to `mark_reactions`, but it only marks async/block effects
+  * depending on `value` and at least one of the other `sources`, so that
+diff --git a/src/internal/client/reactivity/utils.js b/src/internal/client/reactivity/utils.js
+index 0d27cb8b843d5186568e5f80d93d4ca6a8cbf893..39d6d9be059aaaaaa7aa4c1a4184daa24bd7e1e7 100644
+--- a/src/internal/client/reactivity/utils.js
++++ b/src/internal/client/reactivity/utils.js
+@@ -5,7 +5,7 @@ import { set_signal_status } from './status.js';
+ /**
+  * @param {Value[] | null} deps
+  */
+-function clear_marked(deps) {
++export function clear_marked(deps) {
+ 	if (deps === null) return;
+ 
+ 	for (const dep of deps) {
