@@ -437,6 +437,7 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    container: reading / inline-size;
   }
   .page {
     animation: settle var(--dur-base) var(--ease-out);

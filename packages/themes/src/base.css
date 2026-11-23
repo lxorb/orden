@@ -1767,11 +1767,20 @@ select:focus-visible,
   font-size: 0.94em;
 }
 #write .reading-table {
+  width: max-content;
+  min-width: 100%;
   max-width: 100%;
   margin: 1.6em 0;
   overflow-x: auto;
 }
+@container reading (width > 0) {
+  #write .reading-table {
+    max-width: calc(100% + max(0px, (100cqi - 100%) / 2 - var(--space-5)));
+  }
+}
 #write .reading-table > table {
+  width: auto;
+  min-width: 100%;
   margin: 0;
 }
 #write th,

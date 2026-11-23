@@ -623,8 +623,13 @@
   position: relative;
   animation: settle-in var(--dur-base) var(--ease-out);
 }
+.cm-scroller {
+  container-type: inline-size;
+}
 .orden-table-scroll {
-  margin-inline-end: calc(-1 * var(--space-5));
+  width: max-content;
+  min-width: calc(100% + var(--space-5));
+  max-width: calc(100% + max(var(--space-5), (100cqi - 100%) / 2 - var(--block-room)));
   overflow-x: auto;
 }
 #write .orden-table {
