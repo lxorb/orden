@@ -45,7 +45,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    padding-top: var(--space-1);
+    padding: var(--space-2);
   }
   .orden-row-meta {
     font-variant-numeric: tabular-nums;

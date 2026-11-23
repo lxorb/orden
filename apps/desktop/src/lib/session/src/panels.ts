@@ -53,8 +53,8 @@ export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
     rightPanel: open ? null : sides.rightPanel,
   }
 }
-export const STARTS_RIGHT: readonly Panel[] = ['outline', 'links', 'ask', 'tasks']
-const RIGHT_ONLY: readonly Panel[] = ['tasks']
+export const STARTS_RIGHT: readonly Panel[] = ['outline', 'links', 'ask', 'tasks', 'time']
+const RIGHT_ONLY: readonly Panel[] = ['tasks', 'time']
 export function mayLiveOn(panel: Panel, side: PanelSide): boolean {
   return side === 'right' || !RIGHT_ONLY.includes(panel)
 }

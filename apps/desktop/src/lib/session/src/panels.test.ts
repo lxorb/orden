@@ -118,22 +118,35 @@ describe('the scratchpad over the right side', () => {
 })
 describe('where a panel lives until somebody moves it', () => {
   test('is the space on the left and the note in front on the right, as Obsidian has it', () => {
-    expect(rightFrom(undefined)).toEqual(['outline', 'links', 'ask', 'tasks'])
-    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'chats', 'time'])
+    expect(rightFrom(undefined)).toEqual(['outline', 'links', 'ask', 'tasks', 'time'])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'chats'])
   })
   test('and a window arranged before the homes keeps its own arrangement', () => {
-    expect(rightFrom(['outline'])).toEqual(['outline', 'ask', 'tasks'])
+    expect(rightFrom(['outline'])).toEqual(['outline', 'ask', 'tasks', 'time'])
     expect(rightFrom(undefined)).toEqual(STARTS_RIGHT)
   })
   test('and Ask is homed on the right in a window that knew every panel before it', () => {
     const before = PANELS.filter((one) => one !== 'ask')
-    expect(rightFrom(['links'], before)).toEqual(['links', 'ask', 'tasks'])
-    expect(rightFrom([], before)).toEqual(['ask', 'tasks'])
+    expect(rightFrom(['links'], before)).toEqual(['links', 'ask', 'tasks', 'time'])
+    expect(rightFrom([], before)).toEqual(['ask', 'tasks', 'time'])
   })
-  test('while one that knew every panel is kept exactly, but for the Tasks panel', () => {
-    expect(rightFrom([], PANELS)).toEqual(['tasks'])
-    expect(rightFrom(['ask'], PANELS)).toEqual(['ask', 'tasks'])
-    expect(rightFrom(['tasks', 'ask'], PANELS)).toEqual(['tasks', 'ask'])
+  test('while one that knew every panel is kept exactly, but for the Tasks and time panels', () => {
+    expect(rightFrom([], PANELS)).toEqual(['tasks', 'time'])
+    expect(rightFrom(['ask'], PANELS)).toEqual(['ask', 'tasks', 'time'])
+    expect(rightFrom(['tasks', 'ask'], PANELS)).toEqual(['tasks', 'ask', 'time'])
+    expect(rightFrom(['time', 'tasks'], PANELS)).toEqual(['time', 'tasks'])
+  })
+})
+describe('the time tracker panel (#2542)', () => {
+  test('lives on the right, in a window that had it on the left as well', () => {
+    expect(panelsOn(rightFrom([], PANELS), 'left', PANELS)).not.toContain('time')
+    expect(sideOf(rightFrom(['outline'], PANELS), 'time')).toBe('right')
+  })
+  test('and is never moved to the left, nor opened there from a saved window', () => {
+    const sides = at(null, 'time', ['time'])
+    expect(moving(sides, 'time', 'left')).toBe(sides)
+    expect(mayLiveOn('time', 'left')).toBe(false)
+    expect(leftPanelFrom('time')).toBeNull()
   })
 })
 describe('the Tasks panel', () => {
