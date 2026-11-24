@@ -1,7 +1,7 @@
 [workspace]
 members = ["crates/*"]
 default-members = [".", "crates/*"]
-exclude = ["patches/global-hotkey"]
+exclude = ["patches/global-hotkey", "patches/tao"]
 
 [workspace.package]
 edition = "2021"
@@ -297,4 +297,5 @@ strip = true
 
 [patch.crates-io]
 global-hotkey = { path = "patches/global-hotkey" }
+tao = { path = "patches/tao" }
 
