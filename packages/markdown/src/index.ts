@@ -5,7 +5,7 @@ import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
 import { captionIn, languageIn } from './code'
 import { type PropertiesMode, propertiesSource, propertiesTable, readProperties } from './properties'
-import { withoutComments } from './comments'
+import { keptWidths, withoutComments } from './comments'
 import { type Cover, coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, pathHref, safeHref, safeSrc } from './html'
@@ -245,7 +245,11 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         return `<img${attributes.join('')}>`
       },
       table(token: Tokens.Table) {
-        return `<div class="reading-table">${defaults.table.call(this, token)}</div>`
+        const drawn = defaults.table.call(this, token)
+        const widths = keptWidths(token.raw, token.header.length)
+        const columns = widths?.map((one) => (one ? `<col width="${one}">` : '<col>')).join('')
+        const sized = columns ? drawn.replace('<table>', `<table><colgroup>${columns}</colgroup>`) : drawn
+        return `<div class="reading-table">${sized}</div>`
       },
       heading(token: Tokens.Heading) {
         const html = defaults.heading.call(this, token)
@@ -397,7 +401,7 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   const embeds = embedSink()
   const marked = needsOwn(options) ? renderer(options, headings, embeds) : options.escapeHtml ? publishing : trusting
   const words = stripFrontMatter(source)
-  const body = withoutComments(options.blockAnchors ? anchored(words) : withoutBlockIds(words))
+  const body = withoutComments(options.blockAnchors ? anchored(words) : withoutBlockIds(words), true)
   let html = parsedOrPlain(marked, body, options.breaks ?? hardBreaks())
   if (options.blockAnchors) html = blockAnchorsDrawn(html)
   html = markAbbreviations(html, collectAbbreviations(body))

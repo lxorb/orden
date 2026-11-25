@@ -5,6 +5,20 @@ const COMMENTS = [
   { open: '<!--', close: '-->' },
   { open: '%%', close: '%%' },
 ] as const
+export const WIDTHS_NOTE = /[ \t]*<!--[ \t]*orden:widths\b([^>]*?)-->/g
+export function keptWidths(text: string, columns: number): (number | null)[] | null {
+  for (const [, said = ''] of text.matchAll(WIDTHS_NOTE)) {
+    const parts = said.split(',').map((part) => part.trim())
+    const widths = parts.map((part) => (/^[1-9]\d{1,3}$/.test(part) ? Number(part) : null))
+    const understood = parts.every((part, at) => widths[at] !== null || part === '-')
+    if (parts.length === columns && understood && widths.some((one) => one !== null)) return widths
+  }
+  return null
+}
+function widthsNoteEnd(line: string, from: number): number {
+  const end = line.indexOf('-->', from)
+  return end !== -1 && /^[ \t]*orden:widths\b/.test(line.slice(from, end)) ? end + 3 : -1
+}
 function opening(line: string, at: number): { from: number; to: number; close: string } | null {
   let found: { from: number; to: number; close: string } | null = null
   for (const comment of COMMENTS) {
@@ -14,7 +28,11 @@ function opening(line: string, at: number): { from: number; to: number; close: s
   }
   return found
 }
-export function stripLine(line: string, inside: string | null): { text: string; inside: string | null } {
+export function stripLine(
+  line: string,
+  inside: string | null,
+  keepsWidths = false,
+): { text: string; inside: string | null } {
   let out = ''
   let at = 0
   let open = inside
@@ -50,6 +68,12 @@ export function stripLine(line: string, inside: string | null): { text: string; 
       at += next
       continue
     }
+    const kept = keepsWidths && found.close === '-->' && /^\s*\|/.test(line) ? widthsNoteEnd(line, found.to) : -1
+    if (kept !== -1) {
+      out += line.slice(at, kept)
+      at = kept
+      continue
+    }
     out += line.slice(at, found.from)
     at = found.to
     open = found.close
@@ -62,16 +86,17 @@ function keptInQuote(line: string, text: string, quoted: string): string {
   const lead = QUOTE_LEAD.exec(line)?.[0] ?? ''
   return lead.replace(/[ \t]/g, '') === quoted.replace(/[ \t]/g, '') ? lead + text : text
 }
-export function withoutComments(source: string): string {
+export function withoutComments(source: string, keepsWidths = false): string {
   if (!COMMENTS.some((one) => source.includes(one.open))) return source
-  return strippedLines(source).join('\n')
+  return strippedLines(source, keepsWidths).join('\n')
 }
 export class CommentLines {
   private code = new CodeBlocks()
   private quoted = ''
   inside: string | null = null
+  constructor(private readonly keepsWidths = false) {}
   copy(): CommentLines {
-    const twin = new CommentLines()
+    const twin = new CommentLines(this.keepsWidths)
     twin.code = this.code.copy()
     twin.quoted = this.quoted
     twin.inside = this.inside
@@ -79,7 +104,7 @@ export class CommentLines {
   }
   line(line: string): string {
     if (this.inside) {
-      const stripped = stripLine(line, this.inside)
+      const stripped = stripLine(line, this.inside, this.keepsWidths)
       this.inside = stripped.inside
       const text = keptInQuote(line, stripped.text, this.quoted)
       this.code.line(text)
@@ -93,7 +118,7 @@ export class CommentLines {
       const opens = line.indexOf(mark) + mark.length
       return line.slice(0, opens) + stripLine(line.slice(opens), null).text
     }
-    const stripped = stripLine(line, null)
+    const stripped = stripLine(line, null, this.keepsWidths)
     this.inside = stripped.inside
     if (this.inside) this.quoted = QUOTE_LEAD.exec(line)?.[0] ?? ''
     if (stripped.text !== line) {
@@ -103,8 +128,8 @@ export class CommentLines {
     return stripped.text
   }
 }
-function strippedLines(source: string): string[] {
-  const reader = new CommentLines()
+function strippedLines(source: string, keepsWidths = false): string[] {
+  const reader = new CommentLines(keepsWidths)
   return source.split('\n').map((line) => reader.line(line))
 }
 export function noteWithoutComments(source: string): string {

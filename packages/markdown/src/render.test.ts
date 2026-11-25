@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import './eager'
+import { noteWithoutComments, withoutComments } from './comments'
 import { codeBlocks, documentTitle, frontMatter, frontMatterValue, renderMarkdown, stripFrontMatter } from './index'
 
 test('front matter: is not rendered; can be read on its own; leaves a document without it alone; a block nobody closed is the note’s own words; answers a single field', () => {
@@ -919,5 +920,43 @@ describe('a line with = or - under it', () => {
   })
   test('and a page of them draws no heading at all', () => {
     expect(renderMarkdown('One\n===\n\nTwo\n---\n')).not.toMatch(/<h\d/)
+  })
+})
+describe('the widths a table keeps', () => {
+  const table = (note: string) => `| a | b | c |\n| --- | --- | --- |\n| 1 | 2 | 3 |${note}\n| 4 | 5 | 6 |\n`
+  test('size its columns in reading as in the editor', () => {
+    const html = renderMarkdown(table(' <!-- orden:widths 240,-,120 -->'))
+    expect(html).toContain('<table><colgroup><col width="240"><col><col width="120"></colgroup>')
+    expect(html).not.toContain('orden:widths')
+    expect(html.match(/<td>/g)).toHaveLength(6)
+  })
+  test('are read from whichever row holds the note', () => {
+    const html = renderMarkdown('| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 | <!-- orden:widths -,90 -->\n')
+    expect(html).toContain('<colgroup><col><col width="90"></colgroup>')
+  })
+  test.each([
+    ['none', ''],
+    ['one of the wrong count', ' <!-- orden:widths 240,120 -->'],
+    ['a broken one', ' <!-- orden:widths 240,abc,1e9 -->'],
+    ['one of nothing but gaps', ' <!-- orden:widths -,-,- -->'],
+    ['an empty one', ' <!-- orden:widths -->'],
+  ])('with %s the table is drawn as ever', (_what, note) => {
+    const html = renderMarkdown(table(note))
+    expect(html).toBe(renderMarkdown(table('')))
+    expect(html).not.toContain('colgroup')
+  })
+  test('a widths note outside a table row is a comment like any other', () => {
+    expect(renderMarkdown('words <!-- orden:widths 240,120 --> more\n')).not.toContain('orden')
+  })
+  test('only the drawing keeps the note: plain words lose it like any comment', () => {
+    const source = table(' <!-- orden:widths 240,-,120 -->')
+    expect(withoutComments(source)).not.toContain('orden')
+    expect(noteWithoutComments(source)).not.toContain('orden')
+    expect(withoutComments(source)).toBe(table(' '))
+  })
+  test('one shown as code stays as written', () => {
+    expect(renderMarkdown('```\n| 1 | 2 | <!-- orden:widths 90,- -->\n```\n')).toContain(
+      '&lt;!-- orden:widths 90,- --&gt;',
+    )
   })
 })

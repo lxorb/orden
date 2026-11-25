@@ -15,9 +15,9 @@ import {
   removeRow,
   serializeTable,
   setPixels,
-  sortRows,
   type TableModel,
 } from './model'
+import { sortRows } from './sort'
 import { keptViews } from '../../test/views'
 
 const NOTE = '<!-- orden:widths 240,-,120 -->'

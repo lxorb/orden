@@ -31,12 +31,12 @@ function column(view: EditorView): string[] {
     .slice(2, 5)
     .map((row) => row.split('|')[1]?.trim() ?? '')
 }
-test('sorting a column that is already in order puts it the other way round', () => {
+test('sorting a column that is already in order puts it the other way round', async () => {
   const doc = '| a |\n| --- |\n| 1 |\n| 2 |\n| 3 |\n\nend'
   const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
   open.push(view)
   press(view, 'Sort by this column')
-  expect(column(view)).toEqual(['3', '2', '1'])
+  await expect.poll(() => column(view)).toEqual(['3', '2', '1'])
   press(view, 'Sort by this column')
-  expect(column(view)).toEqual(['1', '2', '3'])
+  await expect.poll(() => column(view)).toEqual(['1', '2', '3'])
 })

@@ -63,7 +63,6 @@ import {
   movedRow,
   removedColumn,
   removedRow,
-  sortedColumn,
 } from './edits'
 import { sourceOffset } from './inline'
 import { inlineShortcut, runInCell } from './shortcuts'
@@ -840,13 +839,17 @@ export class TableView {
     const focus = this.focusedCell() ?? undefined
     const asked = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
     const other = asked === 'up' ? 'down' : 'up'
-    for (const order of [asked, other] as const) {
-      const edit = sortedColumn(current, column, order, focus)
-      if (edit.next === current) continue
-      this.sortedAs = { column, order }
-      this.apply(edit)
-      return
-    }
+    const drawn = this.model
+    void import('./sort').then(({ sortedColumn }) => {
+      if (drawn !== this.model) return
+      for (const order of [asked, other] as const) {
+        const edit = sortedColumn(current, column, order, focus)
+        if (edit.next === current) continue
+        this.sortedAs = { column, order }
+        this.apply(edit)
+        return
+      }
+    })
   }
   private moveColumnBy(column: number, step: number) {
     const current = this.current()

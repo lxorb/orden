@@ -10,9 +10,9 @@ import {
   removeRow,
   serializeTable,
   setAlign,
-  sortRows,
   setCell,
 } from './model'
+import { sortRows } from './sort'
 
 const SOURCE = ['| Name | Size |', '| :--- | ---: |', '| a    | 1    |', '| b    | 2    |'].join('\n')
 describe('parsing', () => {

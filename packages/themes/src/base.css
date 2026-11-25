@@ -1780,14 +1780,19 @@ select:focus-visible,
 }
 #write .reading-table > table {
   width: auto;
-  min-width: 100%;
+  min-width: 60%;
   margin: 0;
 }
 #write th,
 #write td {
   border: 1px solid var(--table-border-color);
-  padding: 0.5em 0.75em;
+  padding: 0.44em 0.7em;
   text-align: start;
+}
+#write .reading-table th,
+#write .reading-table td {
+  min-width: 3.5em;
+  vertical-align: top;
 }
 #write th[align='left'],
 #write td[align='left'] {
