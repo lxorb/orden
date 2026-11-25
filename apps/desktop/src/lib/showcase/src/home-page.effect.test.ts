@@ -146,7 +146,7 @@ describe('the home page', () => {
     sayReady(live(0).inside)
     expect(sources()).toEqual([
       `${location.origin}/?demo=flow&loop&phone`,
-      `${location.origin}/?demo=canvas&loop&phone`,
+      `${location.origin}/?demo=markdown&loop&phone`,
     ])
     sayReady(live(1).inside)
     expect(sources()).toHaveLength(3)
@@ -178,7 +178,7 @@ describe('the home page', () => {
     expect(hero.frame.isConnected).toBe(true)
     expect(hero.said).toHaveBeenLastCalledWith({ orden: 'demo', play: false }, location.origin)
     expect(next.said).toHaveBeenLastCalledWith({ orden: 'demo', play: true }, location.origin)
-    expect(live(3).frame.getAttribute('src')).toBe(`${location.origin}/?demo=pages&loop`)
+    expect(live(3).frame.getAttribute('src')).toBe(`${location.origin}/?demo=bubbles&loop`)
     placeAt(6000)
     expect(hero.frame.isConnected).toBe(false)
     expect(displays()[0]?.classList.contains('is-ready')).toBe(false)
@@ -227,10 +227,10 @@ describe('the home page', () => {
     expect(live(0).frame.getAttribute('src')).toBe(`${location.origin}/preview/app/?demo=flow&loop`)
   })
   test('shows the hero workflow first and then one display per feature, each under its own line', () => {
-    expect(displays().map((one) => one.dataset.scene)).toEqual([...DEMO_LOOP_SCENES])
+    expect(displays().map((one) => one.dataset.scene)).toEqual(DEMO_LOOP_SCENES.filter((one) => one !== 'canvas'))
     expect(document.querySelector('.hero .display')?.getAttribute('data-scene')).toBe('flow')
     const features = [...document.querySelectorAll<HTMLElement>('.feature')]
-    expect(features).toHaveLength(DEMO_LOOP_SCENES.length - 1)
+    expect(features).toHaveLength(DEMO_LOOP_SCENES.length - 2)
     for (const feature of features) {
       expect(feature.querySelector('h2.line')?.textContent.trim()).toBeTruthy()
       expect(feature.querySelectorAll('.display')).toHaveLength(1)

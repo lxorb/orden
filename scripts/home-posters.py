@@ -11,8 +11,8 @@ from PIL import Image
 from playwright.sync_api import sync_playwright
 
 DIST, OUT = Path(sys.argv[1]), Path(sys.argv[2])
-CUE = Path(__file__).resolve().parent.parent / "apps/desktop/src/lib/showcase/src/demo-cue.ts"
-SCENES = re.findall(r"'(\w+)'", re.search(r"DEMO_LOOP_SCENES = \[([^\]]*)\]", CUE.read_text()).group(1))
+PAGE = Path(__file__).resolve().parent.parent / "apps/desktop/home.html"
+SCENES = list(dict.fromkeys(re.findall(r'data-scene="(\w+)"', PAGE.read_text())))
 SIZES = {"desktop": (1280, 800), "phone": (390, 844)}
 PORT = 8791
 HEARD = """window.__ready = false

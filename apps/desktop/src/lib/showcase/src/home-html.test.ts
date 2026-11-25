@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { DEMO_LOOP_SCENES } from './demo-cue'
 
 const PAGE = readFileSync(new URL('../../../../home.html', import.meta.url), 'utf8')
+const SHOWN = [...PAGE.matchAll(/data-scene="(\w+)"/g)].map((found) => found[1] ?? '')
 const policy = () => /http-equiv="Content-Security-Policy"\s*content="([^"]*)"/.exec(PAGE)?.[1] ?? ''
 describe('the home page file', () => {
   test('names its one inline script by hash, and allows nothing else to run', () => {
@@ -32,12 +32,12 @@ describe('the home page file', () => {
     const pictures = [...PAGE.matchAll(/(?:src|srcset)="([^"]+)"/g)]
       .map((found) => found[1] ?? '')
       .filter((one) => !one.endsWith('.ts'))
-    expect(pictures.length).toBe(DEMO_LOOP_SCENES.length * 4)
+    expect(pictures.length).toBe(SHOWN.length * 4)
     for (const one of pictures)
       expect(one).toMatch(/^\.\/src\/lib\/showcase\/posters\/[a-z]+-(?:desktop|phone)-(?:light|dark)\.webp$/)
   })
   test('gives every display a poster for each width and theme, and every poster is on disk', () => {
-    for (const scene of DEMO_LOOP_SCENES) {
+    for (const scene of SHOWN) {
       const figure = new RegExp(`data-scene="${scene}"[\\s\\S]*?</figure>`).exec(PAGE)?.[0] ?? ''
       for (const device of ['desktop', 'phone'])
         for (const theme of ['light', 'dark']) {
@@ -61,5 +61,10 @@ describe('the home page file', () => {
         kind === 'download' ? /<span data-label>\s*Download\s*<\/span>/ : /<span>\s*Try it out\s*<\/span>/,
       )
     }
+  })
+  test('shows each scene once, and leaves the canvas section out', () => {
+    expect(SHOWN).toEqual(['flow', 'markdown', 'pages', 'bubbles', 'ai', 'todos', 'chat', 'search'])
+    expect(PAGE).not.toMatch(/Lay it out together|posters\/canvas-/)
+    expect(existsSync(new URL('../posters/canvas-desktop-dark.webp', import.meta.url))).toBe(false)
   })
 })
