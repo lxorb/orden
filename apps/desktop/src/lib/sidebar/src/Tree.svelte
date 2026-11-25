@@ -28,6 +28,7 @@
   import {
     landsIn,
     dropTarget,
+    aimFor,
     targetFor,
     folderFor,
     folderNote,
@@ -451,10 +452,16 @@
       listMotion.after = () => undefined
     }
   })
-  function takes(entry: Entry, how: 'move' | 'copy' = 'move'): boolean {
+  function takes(entry: Entry, how: 'move' | 'copy' = 'move', into = targetFor(entry.path, entry.is_dir)): boolean {
     const paths = carried()
     if (paths.includes(entry.path)) return false
-    return paths.length === 0 || landsIn(paths, targetFor(entry.path, entry.is_dir), how)
+    return paths.length === 0 || landsIn(paths, into, how)
+  }
+  function aimed(event: DragEvent, entry: Entry): string {
+    const row = event.currentTarget
+    const box = row instanceof HTMLElement ? row.getBoundingClientRect() : null
+    const along = box?.height ? (event.clientY - box.top) / box.height : 0.5
+    return aimFor(entry.path, entry.is_dir, along, entry.is_dir && workspace.isExpanded(entry.path))
   }
   function nesting(entry: Entry): boolean {
     return dropTarget.lit(entry.is_dir ? entry.path : folderFor(entry.path))
@@ -471,11 +478,12 @@
       lift.dwellOver(null, false)
       return
     }
-    if (!takes(entry, how)) return
+    const into = aimed(event, entry)
+    if (!takes(entry, how, into)) return
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = how
     lift?.slideBack(held)
-    dropTarget.over(targetFor(entry.path, entry.is_dir))
+    dropTarget.over(into)
     lift?.dwellOver(entry.path, entry.is_dir)
   }
   function stillInside(event: DragEvent): boolean {
@@ -491,7 +499,7 @@
       carrying = []
       return
     }
-    dropOnList(event, targetFor(entry.path, entry.is_dir))
+    dropOnList(event, aimed(event, entry))
   }
   function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
     event.preventDefault()

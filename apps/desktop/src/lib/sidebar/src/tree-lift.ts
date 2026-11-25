@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { tick } from 'svelte'
-import { dropTarget, targetFor, entryAt, shownNames } from '../../tree/src/api'
+import { aimFor, dropTarget, entryAt, shownNames } from '../../tree/src/api'
 import { dur, folderOf, nameOf } from '../../platform/src/api'
 import { spaceDropping } from '../../tab-strip/src/api'
 import { carryThumb } from '../../ui-kit/src/api'
@@ -22,7 +22,7 @@ export interface Held {
   carry: (paths: readonly string[]) => void
   edge: (at: number | null) => void
   box: () => HTMLElement | null
-  takes: (entry: Entry) => boolean
+  takes: (entry: Entry, how?: 'move' | 'copy', into?: string) => boolean
 }
 export function bandOf(y: number, top: number, height: number): Band {
   if (height <= 0) return 'on'
@@ -217,9 +217,13 @@ function onLiftMove(held: Held, event: TouchEvent) {
     if (aimAt(held, row, touch.clientY, entry)) {
       dropTarget.clear()
       dwellOver(null, false)
-    } else if (held.takes(entry)) {
+    } else {
+      const box = row.getBoundingClientRect()
+      const along = box.height ? (touch.clientY - box.top) / box.height : 0.5
+      const into = aimFor(entry.path, entry.is_dir, along, entry.is_dir && workspace.isExpanded(entry.path))
+      if (!held.takes(entry, 'move', into)) return
       slideBack(held)
-      dropTarget.over(targetFor(entry.path, entry.is_dir))
+      dropTarget.over(into)
       dwellOver(entry.path, entry.is_dir)
     }
   }

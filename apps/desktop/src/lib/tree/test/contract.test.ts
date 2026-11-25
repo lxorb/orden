@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { type Entry, providePort, type SyncStorePort } from '@orden/contracts'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
+  aimFor,
   Arranged,
   entryAt,
   flatRows,
@@ -260,5 +261,20 @@ describe('what the account is told of how a space is ordered', () => {
     await told(() => sorting.set('manual'))
     sorting.adopt('/s', 'name', 'me')
     expect(sorting.of('/s')).toBe('manual')
+  })
+})
+describe('a drop on a row of the tree (#2561)', () => {
+  test('lands beside the row at its top or bottom quarter, so a row in the root takes things into the root', () => {
+    expect(aimFor('/s/b.md', false, 0.1, false)).toBe('/s')
+    expect(aimFor('/s/b.md', false, 0.9, false)).toBe('/s')
+    expect(aimFor('/s/Trip', true, 0.1, false)).toBe('/s')
+    expect(aimFor('/s/Trip', true, 0.9, false)).toBe('/s')
+    expect(aimFor('/s/Trip/plan.md', false, 0.9, false)).toBe('/s/Trip')
+  })
+  test('lands in the row at its middle, and in an open folder at its bottom quarter, just above its first child', () => {
+    expect(aimFor('/s/b.md', false, 0.5, false)).toBe('/s/b')
+    expect(aimFor('/s/Trip', true, 0.5, false)).toBe('/s/Trip')
+    expect(aimFor('/s/Trip', true, 0.9, true)).toBe('/s/Trip')
+    expect(aimFor('/s/Trip', true, 0.1, true)).toBe('/s')
   })
 })
