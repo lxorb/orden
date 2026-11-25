@@ -2020,7 +2020,10 @@ class Workspace {
     keepJson(TREE_KEY, this.treeOptions)
     void this.loadTree()
   }
-  async move(from: string, intoFolder: string, how?: 'follows' | 'nests' | 'carries') {
+  move(from: string, intoFolder: string, how?: 'follows' | 'nests' | 'carries'): Promise<void> {
+    return this.undone.step(() => this.moving(from, intoFolder, how))
+  }
+  private async moving(from: string, intoFolder: string, how?: 'follows' | 'nests' | 'carries') {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
     if (samePath(target, from) || within(from, intoFolder) !== null) return
@@ -2032,7 +2035,7 @@ class Workspace {
         : null
     const kind = this.kindAt(from)
     this.showMove(from, target, kind)
-    await this.undone.batch(async () => {
+    {
       await inFlight(target, () =>
         this.saving.holdingUnder(from, async () => {
           try {
@@ -2057,7 +2060,7 @@ class Workspace {
       )
       await this.loadTree()
       await this.unnest(folderOf(from))
-    })
+    }
     this.persist()
   }
   private async unnest(folder: string) {
@@ -2065,7 +2068,7 @@ class Workspace {
     const back = entry && unnesting(entry)
     if (!back) return
     if (this.entryAt(joinPath(back.into, nameOf(back.note)))) return
-    await this.move(back.note, back.into, 'follows')
+    await this.undone.within(() => this.move(back.note, back.into, 'follows'))
     this.hideEntry(back.folder)
     await invoke('remove_empty_folder', { path: back.folder }).catch(() => undefined)
     await this.loadTree()
@@ -2497,7 +2500,10 @@ class Workspace {
     if (refused) void import('./notices.svelte').then((one) => one.reservedName.tell(intoFolder))
     return refused
   }
-  async moveMany(paths: string[], intoFolder: string, undoing = false): Promise<boolean> {
+  moveMany(paths: string[], intoFolder: string, undoing = false): Promise<boolean> {
+    return this.undone.step(() => this.movingMany(paths, intoFolder, undoing))
+  }
+  private async movingMany(paths: string[], intoFolder: string, undoing: boolean): Promise<boolean> {
     if (!undoing && this.refusedAsInstructions(paths, intoFolder)) {
       this.clearSelection()
       return false
@@ -2512,15 +2518,15 @@ class Workspace {
       return false
     }
     const stayed: string[] = []
-    await this.undone.batch(async () => {
-      await this.nestFor(intoFolder, paths)
-      for (const path of outermost(paths)) {
-        await this.move(path, intoFolder).catch((error: unknown) => {
+    await this.nestFor(intoFolder, paths)
+    for (const path of outermost(paths)) {
+      await this.undone
+        .within(() => this.move(path, intoFolder))
+        .catch((error: unknown) => {
           log('warn', `${path} not moved into ${intoFolder} - ${String(error)}`)
           stayed.push(path)
         })
-      }
-    })
+    }
     this.clearSelection()
     if (!stayed.length) return true
     const { failed } = await import('./notices.svelte')
@@ -2531,7 +2537,7 @@ class Workspace {
     const nesting = noteToNest(this.tree, intoFolder)
     if (!nesting || arriving.includes(nesting)) return
     this.showEntry(this.freshEntry(intoFolder, true))
-    await this.move(nesting, intoFolder, 'nests')
+    await this.undone.within(() => this.move(nesting, intoFolder, 'nests'))
     this.device.expand(intoFolder)
   }
   async copyMany(paths: string[], intoFolder: string) {
@@ -2598,34 +2604,31 @@ class Workspace {
     const { sync } = await import('../../sync-store/src/api')
     sync.nudge()
   }
-  async removeMany(paths: string[]) {
+  removeMany(paths: string[]): Promise<void> {
+    return this.undone.step(() => this.removingMany(paths))
+  }
+  private async removingMany(paths: string[]) {
     const going = (await import('./binning')).widened(this, await this.writableOf(this.deletable(paths)))
     this.clearSelection()
     if (!going.length) return
     for (const { path } of going) this.hideEntry(path)
     const stayed: string[] = []
-    await this.undone.batch(async () => {
-      await this.savingSettled()
-      try {
-        for (const { path, isFolder } of going) {
-          try {
-            const ended = await chatsEnding([path])
-            const kept = await this.bin(path, isFolder, { settled: true })
-            ended()
-            if (kept) this.undone.record({ kind: 'delete', path, ...kept })
-            await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
-          } catch (error) {
-            log('warn', `${path} not deleted - ${String(error)}`)
-            stayed.push(path)
-          }
-        }
-      } finally {
-        await this.loadTree()
-        for (const folder of new Set(going.map(({ path }) => folderOf(path)))) {
-          await this.unnest(folder)
+    await this.savingSettled()
+    try {
+      for (const { path, isFolder } of going) {
+        try {
+          await this.binned(path, isFolder, { settled: true })
+        } catch (error) {
+          log('warn', `${path} not deleted - ${String(error)}`)
+          stayed.push(path)
         }
       }
-    })
+    } finally {
+      await this.loadTree()
+      for (const folder of new Set(going.map(({ path }) => folderOf(path)))) {
+        await this.unnest(folder)
+      }
+    }
     if (!stayed.length) return
     const { failed } = await import('./notices.svelte')
     failed.tell(() => void this.removeMany(stayed))
@@ -2833,14 +2836,14 @@ class Workspace {
     const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas)
     await this.made(dir, 'canvas', name, blankCanvas())
   }
-  async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
-    const entry = this.entryAt(path)
-    if (!entry || !(await this.writableAt(path))) return
-    const folder = entry.is_dir ? path : folderFor(path)
-    if (samePath(folder, path) && !entry.is_dir) return
-    await this.undone.batch(async () => {
-      if (!entry.is_dir) await this.moveMany([], folder)
-      await make(folder)
+  createInside(path: string, make = (folder: string): unknown => this.createNote(folder)): Promise<void> {
+    return this.undone.step(async () => {
+      const entry = this.entryAt(path)
+      if (!entry || !(await this.writableAt(path))) return
+      const folder = entry.is_dir ? path : folderFor(path)
+      if (samePath(folder, path) && !entry.is_dir) return
+      if (!entry.is_dir) await this.undone.within(() => this.moveMany([], folder))
+      await this.undone.within(() => Promise.resolve(make(folder)))
     })
   }
   freeName(dir: string, wanted: string, except?: string): string {
@@ -2928,14 +2931,14 @@ class Workspace {
     const folder = entryAt(this.tree, folderOf(path))
     return (folder?.children ?? []).filter((one) => !samePath(one.path, path)).map((one) => one.name)
   }
-  async rename(path: string, name: string, words?: string) {
-    const clean = name.trim()
-    if (!clean || clean.includes('/') || clean.includes('\\')) return
-    const target = joinPath(folderOf(path), clean)
-    if (sameSpelling(target, path) || !(await this.writableAt(path))) return
-    await this.undone.batch(() =>
-      this.saving.holdingUnder(path, () => this.renameFile(path, target, true, false, words)),
-    )
+  rename(path: string, name: string, words?: string): Promise<void> {
+    return this.undone.step(async () => {
+      const clean = name.trim()
+      if (!clean || clean.includes('/') || clean.includes('\\')) return
+      const target = joinPath(folderOf(path), clean)
+      if (sameSpelling(target, path) || !(await this.writableAt(path))) return
+      await this.saving.holdingUnder(path, () => this.renameFile(path, target, true, false, words))
+    })
   }
   holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
     return this.saving.holdingUnder(path, run)
@@ -3022,22 +3025,27 @@ class Workspace {
     const holding = spaceHolding(this.spaces, path)
     return holding?.root ?? this.activeSpace?.root ?? null
   }
-  async remove(asked: string, folder: boolean, source?: string) {
+  remove(asked: string, folder: boolean, source?: string): Promise<void> {
+    return this.undone.step(() => this.removing(asked, folder, source))
+  }
+  private async removing(asked: string, folder: boolean, source?: string) {
     if (this.keepsArchived(asked) || !(await this.writableAt(asked))) return
     const { path, isFolder } = (await import('./binning')).widened(this, [asked], folder)[0] ?? {
       path: asked,
       isFolder: folder,
     }
-    await this.undone.batch(async () => {
-      this.hideEntry(path)
-      const ended = await chatsEnding([path])
-      const kept = await this.bin(path, isFolder, { source })
-      ended()
-      if (kept) this.undone.record({ kind: 'delete', path, ...kept })
-      await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
-      await this.loadTree()
-      await this.unnest(folderOf(path))
-    })
+    this.hideEntry(path)
+    await this.binned(path, isFolder, { source })
+    await this.loadTree()
+    await this.unnest(folderOf(path))
+  }
+  private async binned(path: string, isFolder: boolean, how: Binning) {
+    const tabs = this.tabs.flatMap((tab) => (tab.path && within(path, tab.path) !== null ? [tab.path] : []))
+    const ended = await chatsEnding([path])
+    const kept = await this.bin(path, isFolder, how)
+    ended()
+    if (kept) this.undone.record({ kind: 'delete', path, ...kept, ...(tabs.length ? { tabs } : {}) })
+    await this.fileGone(path, isFolder ? 'folder' : 'file', kept?.trashId ?? kept?.back)
   }
   async savingSettled() {
     this.saving.wordsNow()
@@ -3046,31 +3054,24 @@ class Workspace {
   bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
     return import('./binning').then((one) => one.bin(this, path, isFolder, how))
   }
-  async undoFileAction(only?: FileAction) {
-    await this.inTurn(async () => {
-      if (!(await this.landedFor(() => void this.undoFileAction(only)))) return
-      if (only && this.undone.last !== only) return
-      const { undoLastFileAction } = await import('./undoing')
-      await undoLastFileAction(this)
-    })
+  undoFileAction(only?: FileAction): Promise<void> {
+    return this.turned(
+      () => void this.undoFileAction(only),
+      async () => {
+        if (only && this.undone.last !== only) return
+        await (await import('./undoing')).undoLastFileAction(this)
+      },
+    )
   }
-  async redoFileAction() {
-    await this.inTurn(async () => {
-      if (!(await this.landedFor(() => void this.redoFileAction()))) return
-      const { redoLastFileAction } = await import('./redoing')
-      await redoLastFileAction(this)
-    })
+  redoFileAction(): Promise<void> {
+    return this.turned(
+      () => void this.redoFileAction(),
+      async () => (await import('./redoing')).redoLastFileAction(this),
+    )
   }
-  private async landedFor(again: () => void): Promise<boolean> {
-    if (await this.undone.landed()) return true
-    const { failed } = await import('./notices.svelte')
-    failed.tell(again, true)
-    return false
-  }
-  private queue: Promise<void> = Promise.resolve()
-  private inTurn(work: () => Promise<void>): Promise<void> {
-    this.queue = this.queue.then(work, work)
-    return this.queue
+  private async turned(again: () => void, work: () => Promise<void>): Promise<void> {
+    if (await this.undone.landed()) return this.undone.step(work)
+    ;(await import('./notices.svelte')).failed.tell(again, true)
   }
   async arrived(path: string) {
     const waiting = this.tabs.filter((tab) => tab.coming && samePath(tab.path, path))

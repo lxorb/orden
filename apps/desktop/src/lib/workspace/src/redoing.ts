@@ -10,6 +10,7 @@ export interface DoesAgain extends Copies {
   move(from: string, intoFolder: string, how?: 'carries'): Promise<void>
   rename(path: string, name: string, words?: string): Promise<void>
   remove(path: string, isFolder: boolean): Promise<void>
+  redoFileAction(): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string): Promise<void>
   readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   loadTree(): Promise<void>
@@ -24,10 +25,10 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
   if (!action) return
   const rest = ws.undone.ahead.slice(0, -1)
   try {
-    await ws.undone.batch(() => again(ws, action))
+    await ws.undone.within(() => ws.undone.batch(() => again(ws, action)))
   } catch {
     const { failed } = await import('./notices.svelte')
-    failed.tell(() => void redoLastFileAction(ws), true)
+    failed.tell(() => void ws.redoFileAction(), true)
     return
   }
   ws.undone.redone(rest)
@@ -39,14 +40,14 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
     case 'move':
       if (action.follows) break
       if (action.carries) (await import('./moving-space')).followsTo(action.to)
-      await ws.move(action.from, folderOf(action.to), action.carries ? 'carries' : undefined)
+      await ws.undone.within(() => ws.move(action.from, folderOf(action.to), action.carries ? 'carries' : undefined))
       if (action.carries) await (await import('./moving-space')).tabsFollow(action.to)
       break
     case 'rename':
-      await ws.rename(action.from, nameOf(action.to))
+      await ws.undone.within(() => ws.rename(action.from, nameOf(action.to)))
       break
     case 'delete':
-      await ws.remove(action.path, action.folder === true)
+      await ws.undone.within(() => ws.remove(action.path, action.folder === true))
       break
     case 'create': {
       const path = await putBack({ ...action, kind: 'delete', content: action.content ?? '' })
@@ -56,8 +57,9 @@ async function again(ws: DoesAgain, action: FileAction): Promise<void> {
     }
     case 'many':
       for (const [at, step] of action.steps.entries()) {
-        if (step.kind === 'rename') await ws.rename(step.from, nameOf(step.to), wordsOf(action.steps[at + 1], step.to))
-        else await again(ws, step)
+        if (step.kind === 'rename') {
+          await ws.undone.within(() => ws.rename(step.from, nameOf(step.to), wordsOf(action.steps[at + 1], step.to)))
+        } else await again(ws, step)
       }
       break
     case 'keep': {

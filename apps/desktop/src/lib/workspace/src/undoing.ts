@@ -28,7 +28,7 @@ import { services } from './services'
 export interface PutsBack {
   readonly undone: FileActions
   readonly archive: Archive
-  openEntry(path: string): Promise<void>
+  openEntry(path: string, how?: { activate?: boolean }): Promise<void>
   documentAt(path: string): NoteDoc | null
   entryAt(path: string): Entry | null
   reload(path: string, content: string): void
@@ -77,7 +77,8 @@ async function refused(ws: PutsBack, action: FileAction) {
 async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   try {
     switch (action.kind) {
-      case 'delete':
+      case 'delete': {
+        const was = action.path
         action.path = await putBack(action)
         await ws.fileCame(
           action.path,
@@ -86,7 +87,10 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
           action.back ?? action.trashId,
           true,
         )
+        for (const one of action.tabs ?? [])
+          await ws.openEntry(movedTo(one, was, action.path) ?? one, { activate: false })
         break
+      }
       case 'create': {
         const kept = await ws.bin(action.path, false)
         action.content = kept?.content ?? ''

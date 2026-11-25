@@ -23,6 +23,7 @@ export type FileAction =
       folder?: boolean
       notes?: { path: string; content: string }[]
       folders?: string[]
+      tabs?: string[]
     }
   | { kind: 'create'; path: string; content?: string; trashId?: string; back?: string }
   | { kind: 'many'; steps: FileAction[] }
@@ -104,25 +105,56 @@ export class FileActions {
     this.ahead = []
   }
   #held: FileAction[] | null = null
-  async batch<T>(work: () => Promise<T>): Promise<T> {
-    this.#under += 1
+  #queue: Promise<unknown> = Promise.resolve()
+  #next = false
+  #open = 0
+  #keep: FileAction[] | null = null
+  within<T>(call: () => Promise<T>): Promise<T> {
+    this.#next = true
     try {
-      if (this.#held) return await work()
-      const held: FileAction[] = (this.#held = [])
-      try {
-        return await work()
-      } finally {
-        this.#held = null
-        const [only, ...more] = held
-        if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
-      }
+      return call()
     } finally {
-      this.#under -= 1
-      if (!this.#under) {
-        this.#overdue = false
-        for (const go of this.#waiting.splice(0)) go()
+      this.#next = false
+    }
+  }
+  step<T>(work: () => Promise<T>, open = false): Promise<T> {
+    this.#under += 1
+    const joins = this.#held !== null && (this.#next || this.#open > 0)
+    this.#next = false
+    const run = async (): Promise<T> => {
+      if (open) this.#open += 1
+      try {
+        if (joins) return await work()
+        const held: FileAction[] = (this.#held = [])
+        try {
+          return await work()
+        } finally {
+          this.#held = null
+          const [only, ...more] = held
+          if (only) this.record(more.length ? { kind: 'many', steps: held } : only)
+          if (this.#keep) this.ahead = this.#keep
+          this.#keep = null
+        }
+      } finally {
+        if (open) this.#open -= 1
       }
     }
+    const going = joins ? run() : this.#queue.then(run, run)
+    if (!joins)
+      this.#queue = going.then(
+        () => undefined,
+        () => undefined,
+      )
+    return going.finally(() => this.#settled())
+  }
+  batch<T>(work: () => Promise<T>): Promise<T> {
+    return this.step(work, true)
+  }
+  #settled() {
+    this.#under -= 1
+    if (this.#under) return
+    this.#overdue = false
+    for (const go of this.#waiting.splice(0)) go()
   }
   #under = 0
   #waiting: (() => void)[] = []
@@ -162,7 +194,8 @@ export class FileActions {
     if (last) this.ahead = doesAgain(last) ? [...this.ahead, last] : []
   }
   redone(rest: FileAction[]) {
-    this.ahead = rest
+    if (this.#held) this.#keep = rest
+    else this.ahead = rest
   }
   trashed(path: string, id: string) {
     const last = this.#held?.at(-1) ?? this.last

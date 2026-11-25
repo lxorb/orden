@@ -27,6 +27,7 @@ export function rewritten(action: FileAction, from: string, to: string) {
       action.path = at(action.path)
       for (const note of action.notes ?? []) note.path = at(note.path)
       if (action.folders) action.folders = action.folders.map(at)
+      if (action.tabs) action.tabs = action.tabs.map(at)
       break
     case 'create':
       action.path = at(action.path)

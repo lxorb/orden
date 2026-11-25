@@ -645,7 +645,7 @@ describe('selecting several rows', () => {
     expect(workspace.undone.last).toEqual({
       kind: 'many',
       steps: [
-        { kind: 'delete', path: '/space/a.md', content: '' },
+        { kind: 'delete', path: '/space/a.md', content: '', tabs: ['/space/a.md'] },
         { kind: 'delete', path: '/space/d.md', content: '' },
       ],
     })
