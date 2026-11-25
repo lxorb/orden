@@ -291,6 +291,47 @@ describe('a layer on its way in', () => {
     const { hole } = sliding(6, -290)
     expect(layersOver(hole)[0]?.box).toEqual({ x: -290, y: 6, width: 576, height: 700 })
   })
+  test('a small thing flying far across the page is a hollow of itself, never of the whole way it goes (#2553)', () => {
+    document.body.innerHTML = '<div class="hole"></div><div class="orden-layer"></div>'
+    const hole = document.querySelector<HTMLElement>('.hole')!
+    const flyer = document.querySelector<HTMLElement>('.orden-layer')!
+    let ended = false
+    const at = (x: number, y: number) => ({
+      x,
+      y,
+      width: 28,
+      height: 28,
+      top: y,
+      left: x,
+      right: x + 28,
+      bottom: y + 28,
+    })
+    flyer.getBoundingClientRect = () => (ended ? at(960, 4) : at(300, 400)) as DOMRect
+    hole.getBoundingClientRect = () =>
+      ({ x: 0, y: 0, width: 1000, height: 700, top: 0, left: 0, right: 1000, bottom: 700 }) as DOMRect
+    flyer.animate = (() => {
+      ended = true
+      return { cancel: () => (ended = false) }
+    }) as unknown as typeof flyer.animate
+    const flight = {
+      playState: 'running',
+      playbackRate: 1,
+      effect: {
+        target: flyer,
+        pseudoElement: null,
+        getComputedTiming: () => ({ endTime: 500 }),
+        getKeyframes: () => [
+          { offset: 0, transform: 'none' },
+          { offset: 1, transform: 'translate(660px, -396px)' },
+        ],
+      },
+    }
+    Object.defineProperty(document, 'getAnimations', {
+      value: () => [flight as unknown as Animation],
+      configurable: true,
+    })
+    expect(layersOver(hole)[0]?.box).toEqual({ x: 300, y: 400, width: 28, height: 28 })
+  })
 })
 describe('a layer arriving over a page', () => {
   afterEach(() => vi.useRealTimers())

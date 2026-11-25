@@ -1,4 +1,3 @@
-import { webPages } from '@orden/contracts'
 import FileIcon from 'lucide/dist/esm/icons/file.mjs'
 import { calm, dur, stillness } from '../../platform/src/api'
 import { said } from '../../ui-kit/src/api'
@@ -43,15 +42,13 @@ function areaOf(): Box {
   const panes = shown(document.querySelector('[data-panes]'))
   return panes ?? { x: 0, y: 0, width: innerWidth, height: innerHeight }
 }
-const pagesInWindow = (): boolean => document.querySelector('.webbar') !== null
-const engineCuts = (): boolean => pagesInWindow() && webPages().cuts
-function pageOf(tab: string, cuts: boolean): Point | null {
+function pageOf(tab: string): Point | null {
   const glyph = [...document.querySelectorAll<HTMLElement>(GLYPHS)].find((one) => one.dataset.tab === tab)
   const pane = shown(glyph?.closest('[data-pane]'))
   if (!glyph || !pane) return null
   const bar = shown(glyph.closest('.webbar'))
-  if (cuts || !bar) return middleOf(pane)
-  return { x: pane.x + pane.width / 2, y: bar.y + bar.height }
+  if (!bar) return middleOf(pane)
+  return { x: pane.x + pane.width / 2, y: bar.y + bar.height / 2 }
 }
 const flying = new Set<Animation>()
 const answering = new WeakMap<Element, Animation>()
@@ -90,9 +87,8 @@ function fileGlyph(): SVGSVGElement {
   })
   return svg
 }
-function flyer(at: Point, cut: boolean): HTMLElement {
+function flyer(at: Point): HTMLElement {
   const node = document.createElement('div')
-  if (cut) node.className = 'orden-flight'
   node.setAttribute('aria-hidden', 'true')
   node.dataset.flight = ''
   Object.assign(node.style, {
@@ -132,7 +128,6 @@ export async function started(name: string, from: Origin, press: Press | null = 
   said.say(`Downloading ${name}`)
   const element = shown(from.element)
   await settled()
-  const cuts = engineCuts()
   const glyphs = glyphsOnScreen()
   const target = landing(
     glyphs.map((one) => one.glyph),
@@ -147,9 +142,7 @@ export async function started(name: string, from: Origin, press: Press | null = 
     if (node) answer(node)
     return
   }
-  const page = from.tab
-    ? (pageOf(from.tab, cuts) ?? (target?.tab ? pageOf(target.tab, cuts) : null) ?? middleOf(areaOf()))
-    : null
+  const page = from.tab ? (pageOf(from.tab) ?? (target?.tab ? pageOf(target.tab) : null) ?? middleOf(areaOf())) : null
   const start = startOf({
     element,
     page,
@@ -160,7 +153,7 @@ export async function started(name: string, from: Origin, press: Press | null = 
   })
   const end = target ? middleOf(target.box) : cornerOf({ width: innerWidth, height: innerHeight })
   listen()
-  const card = flyer(start, cuts)
+  const card = flyer(start)
   document.body.append(card)
   const flight = card.animate(framesOf(start, end, target !== null), {
     duration: dur(flightMs(start, end)),

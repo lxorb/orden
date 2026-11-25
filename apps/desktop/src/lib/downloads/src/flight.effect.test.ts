@@ -72,17 +72,17 @@ afterEach(() => {
 const glyph = (tab: string): Element => document.querySelector(`[data-tab="${tab}"]`)!
 const flights = () => played.filter((one) => one.node.parentElement === document.body)
 const answers = (node: Element) => played.filter((one) => one.node === node)
-test("a page's file flies from its page to its own bar's glyph, which answers", async () => {
+test("a page's file flies from its own bar, never over the page, to the bar's glyph, which answers (#2553)", async () => {
   await started('slides.pdf', { tab: 'b' })
   const [flight] = flights()
   expect(flight).toBeDefined()
   const card = flight?.node as HTMLElement
   expect(card.style.left).toBe(`${String(750 - 14)}px`)
-  expect(card.style.top).toBe(`${String(36 - 14)}px`)
+  expect(card.style.top).toBe(`${String(18 - 14)}px`)
   expect(card.className).toBe('')
   expect(card.style.pointerEvents).toBe('none')
   const last = flight?.frames.at(-1)?.transform
-  expect(last).toContain(`translate(${String(974 - 750)}px, ${String(18 - 36)}px)`)
+  expect(last).toContain(`translate(${String(974 - 750)}px, ${String(18 - 18)}px)`)
   flight?.animation.finish()
   expect(card.isConnected).toBe(false)
   expect(answers(glyph('b'))).toHaveLength(1)

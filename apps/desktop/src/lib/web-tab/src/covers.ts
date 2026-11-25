@@ -14,7 +14,7 @@ export interface Layer {
 }
 const NOTICES = '[data-notices]'
 const CARDS = `${NOTICES} > *`
-export const COVERS = ['orden-layer', 'orden-bubble', 'orden-screen', 'orden-swipe', 'orden-flight'] as const
+export const COVERS = ['orden-layer', 'orden-bubble', 'orden-screen', 'orden-swipe'] as const
 const ANY = [...COVERS.map((one) => `.${one}`), '[data-covers]', CARDS].join(', ')
 export const UNCUT = ['orden-scrim', 'orden-swipe-room'] as const
 const UNDER = UNCUT.map((one) => `.${one}`).join(', ')
@@ -88,8 +88,11 @@ function restingBox(node: Element, among: readonly Animation[] = running()): Rec
   if (ended.length === 0) return now
   const rest = boxOf(node)
   for (const one of ended) one.cancel()
-  return joined(now, rest)
+  const whole = joined(now, rest)
+  return areaOf(whole) > TRAVELS * Math.max(areaOf(now), areaOf(rest)) ? now : whole
 }
+const TRAVELS = 4
+const areaOf = (box: Rect): number => Math.max(0, box.width) * Math.max(0, box.height)
 export const TRAIL = 120
 const trails = new WeakMap<Element, { at: number; box: Rect }[]>()
 let movedAt = -Infinity
