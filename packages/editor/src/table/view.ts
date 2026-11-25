@@ -26,7 +26,7 @@ import {
   type Align,
   columnWidth,
   columnWidths,
-  nameAfter,
+  afterRow,
   paddedWidth,
   type Order,
   parseTable,
@@ -34,6 +34,7 @@ import {
   serializeRow,
   serializeTable,
   setCell,
+  setPixels,
   type TableModel,
 } from './model'
 import {
@@ -105,7 +106,7 @@ export class TableView {
   private expected: { source: string; model: TableModel; widths: number[] } | null = null
   private focusAfter: Focus | null = null
   private composing = false
-  private widths: (number | null)[]
+  private sizing: { column: number; width: number } | null = null
   private barColumn = -1
   private barRow = -1
   private sortedAs: { column: number; order: Order } | null = null
@@ -129,7 +130,6 @@ export class TableView {
     this.model = model
     this.source = text.source
     this.start = text.from
-    this.widths = model.header.map(() => null)
     this.editable = !editor.state.readOnly
     this.dom = element('div', 'orden-table-wrap')
     this.dom.contentEditable = 'false'
@@ -260,6 +260,7 @@ export class TableView {
   }
   destroy() {
     this.clearPending()
+    this.sizing = null
     this.dragging?.()
     this.unfollow()
   }
@@ -388,7 +389,7 @@ export class TableView {
       return
     }
     const lines = this.source.split('\n')
-    lines[row < 0 ? 0 : row + 2] = serializeRow(cells, sized) + (row < 0 ? '' : nameAfter(next, row))
+    lines[row < 0 ? 0 : row + 2] = serializeRow(cells, sized) + (row < 0 ? '' : afterRow(next, row))
     this.write(lines.join('\n'), 'input.type', next, sized)
   }
   private clearPending() {
@@ -416,7 +417,7 @@ export class TableView {
       grip.title = 'Drag to resize'
       grip.addEventListener('mousedown', (event) => this.startResize(event, th, column))
       th.append(grip)
-      const width = this.widths[column] ?? (windowed ? this.fitted?.[column] : undefined)
+      const width = this.pixels(column) ?? (windowed ? this.fitted?.[column] : undefined)
       if (width != null) th.style.width = `${width}px`
       headRow.append(th)
     })
@@ -452,7 +453,7 @@ export class TableView {
     const fixed = this.windowed() && fitted !== null
     this.table.classList.toggle('orden-table-windowed', fixed)
     this.table.style.width = fixed
-      ? `${fitted.reduce((sum, one, column) => sum + (this.widths[column] ?? one), 0)}px`
+      ? `${fitted.reduce((sum, one, column) => sum + (this.pixels(column) ?? one), 0)}px`
       : ''
   }
   private fit() {
@@ -461,9 +462,13 @@ export class TableView {
     if (!widths.length || widths.some((one) => one <= 0)) return
     this.fitted = widths
     heads.forEach((th, column) => {
-      th.style.width = `${this.widths[column] ?? widths[column]}px`
+      th.style.width = `${this.pixels(column) ?? widths[column]}px`
     })
     this.fitWidth()
+  }
+  private pixels(column: number): number | null {
+    if (this.sizing?.column === column) return this.sizing.width
+    return this.model.pixels?.[column] ?? null
   }
   private windowed(): boolean {
     return this.model.rows.length > WINDOWED
@@ -847,19 +852,15 @@ export class TableView {
     const current = this.current()
     const edit = movedColumn(current, column, step, this.focusedCell() ?? undefined)
     if (edit.next === current) return
-    const [width] = this.widths.splice(column, 1)
-    this.widths.splice(column + step, 0, width ?? null)
     this.apply(edit)
   }
   private insertColumnAfter(column: number) {
-    this.widths.splice(column + 1, 0, null)
     this.apply(insertedColumn(this.current(), column))
   }
   private deleteColumn(column: number) {
     const current = this.current()
     const edit = removedColumn(current, column, this.focusedCell() ?? undefined)
     if (edit.next === current) return
-    this.widths.splice(column, 1)
     this.apply(edit)
   }
   private moveRowBy(row: number, step: number) {
@@ -1003,8 +1004,8 @@ export class TableView {
     const startWidth = header.getBoundingClientRect().width
     const factor = getComputedStyle(header).direction === 'rtl' ? -1 : 1
     const move = (moved: MouseEvent) => {
-      const width = Math.max(48, startWidth + (moved.clientX - startX) * factor)
-      this.widths[column] = width
+      const width = Math.round(Math.max(48, startWidth + (moved.clientX - startX) * factor))
+      this.sizing = { column, width }
       header.style.width = `${width}px`
       this.fitWidth()
     }
@@ -1012,6 +1013,9 @@ export class TableView {
       document.removeEventListener('mousemove', move)
       document.removeEventListener('mouseup', finish)
       this.dragging = null
+      const sized = this.sizing
+      this.sizing = null
+      if (sized) this.commit(setPixels(this.current(), sized.column, sized.width), this.focusedCell() ?? undefined)
     }
     document.addEventListener('mousemove', move)
     document.addEventListener('mouseup', finish)

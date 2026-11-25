@@ -4,6 +4,20 @@ export interface TableModel {
   align: Align[]
   rows: string[][]
   names?: (string | null)[] | undefined
+  pixels?: (number | null)[] | undefined
+}
+const WIDTHS_NOTE = /[ \t]*<!--[ \t]*orden:widths\b([^>]*?)-->/g
+function readPixels(said: string, columns: number): (number | null)[] | null {
+  const parts = said.trim().split(',')
+  if (parts.length !== columns) return null
+  const pixels = parts.map((part) => (/^[1-9]\d{1,3}$/.test(part.trim()) ? Number(part.trim()) : null))
+  const understood = parts.every((part, at) => pixels[at] !== null || part.trim() === '-')
+  return understood && pixels.some((one) => one !== null) ? pixels : null
+}
+function widthsNote(model: TableModel): string {
+  const { pixels } = model
+  if (pixels?.length !== model.header.length || !pixels.some((one) => one !== null)) return ''
+  return ` <!-- orden:widths ${pixels.map((one) => one ?? '-').join(',')} -->`
 }
 const ROW_NAME = /[ \t]\^([A-Za-z0-9-]+)[ \t]*$/
 export function displayWidth(text: string): number {
@@ -63,23 +77,27 @@ export function parseTable(source: string): TableModel | null {
   const header = splitRow(headerLine)
   const align = splitRow(delimiterLine).map(readAlign)
   const named = bodyLines.map((line) => ROW_NAME.exec(line))
+  const noted: string[] = []
   const rows = bodyLines.map((line, at) => {
     const name = named[at]
-    return splitRow(name ? line.slice(0, name.index) : line)
+    const cells = name ? line.slice(0, name.index) : line
+    return splitRow(cells.replace(WIDTHS_NOTE, (_note, said: string) => (noted.push(said), '')))
   })
   const names = named.map((name) => name?.[1] ?? null)
   const columns = rows.reduce((most, row) => Math.max(most, row.length), Math.max(header.length, align.length))
   const fit = (row: string[]) => Array.from({ length: columns }, (_, i) => row[i] ?? '')
+  const pixels = noted.reduce<(number | null)[] | null>((found, said) => found ?? readPixels(said, columns), null)
   return {
     header: fit(header),
     align: Array.from({ length: columns }, (_, i) => align[i] ?? null),
     rows: rows.map(fit),
     ...(names.some(Boolean) ? { names } : {}),
+    ...(pixels ? { pixels } : {}),
   }
 }
-export function nameAfter(model: TableModel, row: number): string {
+export function afterRow(model: TableModel, row: number): string {
   const name = model.names?.[row]
-  return name ? ` ^${name}` : ''
+  return (row === 0 ? widthsNote(model) : '') + (name ? ` ^${name}` : '')
 }
 const MIN_CELL = 3
 const WIDEST_PADDED = 40
@@ -114,7 +132,7 @@ export function serializeTable(model: TableModel, widths = columnWidths(model)):
   return [
     serializeRow(model.header, widths),
     `| ${widths.map((width, i) => delimiterCell(model.align[i] ?? null, width)).join(' | ')} |`,
-    ...model.rows.map((cells, row) => serializeRow(cells, widths) + nameAfter(model, row)),
+    ...model.rows.map((cells, row) => serializeRow(cells, widths) + afterRow(model, row)),
   ].join('\n')
 }
 export function sameModel(one: TableModel, other: TableModel): boolean {
@@ -123,6 +141,7 @@ export function sameModel(one: TableModel, other: TableModel): boolean {
   return (
     same(one.header, other.header) &&
     same(one.align, other.align) &&
+    same(one.pixels ?? [], other.pixels ?? []) &&
     one.rows.length === other.rows.length &&
     one.rows.every((row, at) => same(row, other.rows[at] ?? []))
   )
@@ -133,6 +152,7 @@ export function insertColumn(model: TableModel, at: number): TableModel {
     align: withInserted(model.align, at, null),
     rows: model.rows.map((row) => withInserted(row, at, '')),
     names: model.names,
+    pixels: model.pixels && withInserted(model.pixels, at, null),
   }
 }
 export function removeColumn(model: TableModel, at: number): TableModel {
@@ -143,6 +163,7 @@ export function removeColumn(model: TableModel, at: number): TableModel {
     align: withRemoved(model.align, at),
     rows: model.rows.map((row) => withRemoved(row, at)),
     names: model.names,
+    pixels: model.pixels && withRemoved(model.pixels, at),
   }
 }
 export function insertRow(model: TableModel, at: number): TableModel {
@@ -182,6 +203,7 @@ export function moveColumn(model: TableModel, from: number, to: number): TableMo
     align: swap(model.align),
     rows: model.rows.map(swap),
     names: model.names,
+    pixels: model.pixels && swap(model.pixels),
   }
 }
 export type Order = 'up' | 'down'
@@ -227,6 +249,10 @@ export function sortRows(model: TableModel, column: number, order: Order): Table
   const rows = kept.map((one) => one.row)
   const names = model.names && kept.map((one) => model.names?.[one.at] ?? null)
   return rows.every((row, at) => row === model.rows[at]) ? model : { ...model, rows, names }
+}
+export function setPixels(model: TableModel, column: number, width: number | null): TableModel {
+  const pixels = model.header.map((_, at) => (at === column ? width : (model.pixels?.[at] ?? null)))
+  return { ...model, pixels: pixels.some((one) => one !== null) ? pixels : undefined }
 }
 export function setAlign(model: TableModel, column: number, align: Align): TableModel {
   const next = [...model.align]
