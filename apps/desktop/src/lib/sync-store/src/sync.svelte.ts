@@ -41,9 +41,7 @@ import { unixLines } from '../../documents/src/api'
 export type Status = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
 const VERSION = 'orden:sync-version'
 type Runner = (typeof import('../../sync-client/src/api'))['runner']
-function workspace(): SyncWorkspacePort {
-  return needPort('sync.workspace')
-}
+const workspace = (): SyncWorkspacePort => needPort('sync.workspace')
 class Sync {
   status = $state<Status>('off')
   lastError = $state<string | null>(null)
@@ -90,7 +88,7 @@ class Sync {
   private respell(): void {
     for (const space of workspace().spaces) {
       const key = this.keyAt(space.root)
-      const mirror = key === undefined ? undefined : this.mirrors[key]
+      const mirror = this.mirrors[key ?? '']
       if (key === undefined || !mirror || key === space.root) continue
       mirror.root = space.root
       this.mirrors = { ...without(this.mirrors, key), [space.root]: mirror }
@@ -104,8 +102,7 @@ class Sync {
   }
   private unmirror: (() => void) | null = null
   private wantsV2(): boolean {
-    if (account.guest) return false
-    return account.user?.syncVersion === 2 || storedText(VERSION) === '2'
+    return !!account.guest || account.user?.syncVersion === 2 || storedText(VERSION) === '2'
   }
   start() {
     this.generation++
@@ -147,8 +144,8 @@ class Sync {
       await startup.turn('rooms')
       const { runner } = await import('../../sync-client/src/api')
       await known()
-      if (mine !== this.generation || !account.user) return
-      if (account.user.syncVersion !== 2) {
+      if (mine !== this.generation || !account.signedIn) return
+      if (account.user?.syncVersion !== 2 && !account.guest) {
         this.status = 'offline'
         if (!(await runner.walkBack(() => mine === this.generation))) return
         keep(VERSION, '1')
@@ -170,7 +167,7 @@ class Sync {
           })
         })
       })
-      await runner.start()
+      await runner.start(account.guest?.id)
     })()
   }
   private startLocal(mine: number) {
@@ -209,7 +206,7 @@ class Sync {
     this.schedule(0)
   }
   get passing(): boolean {
-    return this.v2 ? this.v2.passing : this.running
+    return this.v2?.passing ?? this.running
   }
   stop() {
     this.generation++
@@ -699,11 +696,11 @@ function withoutCaches(mirrors: Record<string, Mirror>): Record<string, Mirror> 
   return out
 }
 function known(): Promise<void> {
-  if (account.user || !account.token) return Promise.resolve()
+  if (account.signedIn || !account.token) return Promise.resolve()
   return new Promise((resolve) => {
     const stop = $effect.root(() => {
       $effect(() => {
-        if (!account.user && account.token) return
+        if (!account.signedIn && account.token) return
         untrack(() => {
           queueMicrotask(() => stop())
           resolve()

@@ -122,6 +122,10 @@ class Runner {
   get accountNow(): string | null {
     return this.accountId
   }
+  private guest: string | null = null
+  holderNow(): string | null {
+    return account().user?.id ?? this.guest
+  }
   private stops: (() => void)[] = []
   private due = new Set<string>()
   private readonly full = new Set<string>()
@@ -154,10 +158,12 @@ class Runner {
     this.lane = next.catch(() => undefined)
     return next
   }
-  async start(): Promise<void> {
+  async start(guest?: string): Promise<void> {
     if (this.local) await this.inLane(() => this.carryLocal())
     if (this.current && this.attempt !== this.leadOf) await this.inLane(() => Promise.resolve())
-    const user = account().user
+    this.guest = account().user || !guest ? null : `guest:${guest}`
+    const id = this.holderNow()
+    const user = id === null ? null : { id }
     if (!user || this.current || this.giving) return
     const mine = ++this.attempt
     const live = () => this.attempt === mine
@@ -167,7 +173,7 @@ class Runner {
     this.giving = giving
     const held = await this.holdStore()
     const lead = held && !giving.signal.aborted ? await leadSync(giving.signal, user.id) : null
-    if (!lead || this.giving !== giving || account().user?.id !== user.id || !live()) {
+    if (!lead || this.giving !== giving || this.holderNow() !== user.id || !live()) {
       lead?.release()
       if (this.giving === giving) this.giving = null
       this.settleStore()
@@ -180,7 +186,7 @@ class Runner {
     try {
       const engine = await this.inLane(async () => {
         if (!live()) return null
-        await this.carryLocal()
+        if (!this.guest) await this.carryLocal()
         return this.running(user, live)
       })
       if (engine) await this.tookOver(engine)
@@ -861,7 +867,7 @@ class Runner {
   }
   private async reconcile(engine: Engine) {
     const token = account().token
-    if (!token || account().user?.id !== this.accountId) return
+    if (!token || this.holderNow() !== this.accountId) return
     await account().loadSpaces()
     if (account().token !== token) return
     this.reconciledAt = Date.now()
@@ -1896,7 +1902,7 @@ async function listingOf(token: string, spaceId: string): Promise<V1Listing> {
   }
 }
 function tokenOf(id: string): () => string | null {
-  return () => (account().user?.id === id ? account().token : null)
+  return () => (runner.holderNow() === id ? account().token : null)
 }
 whenPortProvided('sync.account', (signedIn) => {
   signedIn.forgetWithSession((keepHere) => {

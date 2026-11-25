@@ -18,6 +18,7 @@ const OCTETS = 'application/octet-stream'
 const OUTLIVES_PAGE = 60_000
 const leaving = () => typeof document !== 'undefined' && document.visibilityState === 'hidden'
 export const FULL = 507
+const MAY_NOT = 403
 function pathOf(route: Route, space: string, body: unknown): string {
   const at = encodeURIComponent(space)
   switch (route) {
@@ -94,9 +95,9 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
     }
   }
   return {
-    async up(hash, bytes) {
+    async up(hash, bytes, space) {
       const response = await send(
-        `/v2/blobs/${hash}`,
+        `/v2/blobs/${hash}${space ? `?space=${encodeURIComponent(space)}` : ''}`,
         {
           method: 'PUT',
           headers: { 'content-type': OCTETS },
@@ -105,7 +106,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
         true,
       )
       if (response === null) return null
-      return response.status === FULL ? 'full' : response.ok
+      return response.status === FULL ? 'full' : response.ok || response.status === MAY_NOT
     },
     async down(space, id) {
       const response = await send(`/v2/files/${encodeURIComponent(space)}/${encodeURIComponent(id)}`, { method: 'GET' })

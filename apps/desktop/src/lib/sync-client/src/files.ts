@@ -18,7 +18,7 @@ export interface Blobs {
   write(path: string, bytes: Uint8Array): Promise<void>
   size?(path: string): Promise<number | null>
   hash(bytes: Uint8Array): Promise<string>
-  up(hash: string, bytes: Uint8Array): Promise<boolean | 'full' | null>
+  up(hash: string, bytes: Uint8Array, space?: string): Promise<boolean | 'full' | null>
   down(space: string, id: string): Promise<Uint8Array | 'gone' | null>
   replace(space: string, id: string, hash: string, base: string): Promise<Replaced | null>
   have?(space: string, hashes: string[]): Promise<Set<string> | null>
@@ -93,7 +93,7 @@ export async function sendMade(
       waiting.add(op.id)
       continue
     }
-    const stored = await blobs.up(read.hash, read.bytes)
+    const stored = await blobs.up(read.hash, read.bytes, space.id)
     if (!alive() || stored === null) return null
     if (!(await taken(core, space, entry, read.hash, stored, room))) {
       waiting.add(op.id)
@@ -148,7 +148,7 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
     } else if (changedHere) {
       core.touched.add(entry.id)
       if (resting(core, entry.id, here.hash, room)) continue
-      const stored = await blobs.up(here.hash, here.bytes)
+      const stored = await blobs.up(here.hash, here.bytes, space.id)
       if (!alive() || stored === null) return false
       if (!(await taken(core, space, entry, here.hash, stored, room))) {
         continue
@@ -239,7 +239,7 @@ export async function recoverLost(core: Core, space: SpaceState, alive: () => bo
       if (entry.file_key === null || kept.has(entry.file_key)) continue
       const here = await readBytes(core, space, entry)
       if (!here || typeof here === 'string' || here.hash !== entry.file_key) continue
-      const stored = await blobs.up(here.hash, here.bytes)
+      const stored = await blobs.up(here.hash, here.bytes, space.id)
       if (!alive() || stored === null) return false
       await taken(core, space, entry, here.hash, stored, room)
     }
