@@ -212,3 +212,17 @@ describe('a table of very many rows', () => {
     expect(written.split('\n')[2]).toBe('| 0      | wider |')
   })
 })
+describe('a cell far longer than the rest', () => {
+  const long = 'a sentence that keeps going well past what any other cell in its column holds'
+  const model = parseTable(`| a | b |\n| - | - |\n| 1 | ${long} |\n| 3 | 4 |`)!
+  test('does not pad every other row out to its length', () => {
+    const [header, rule, , short] = serializeTable(model).split('\n')
+    expect(header).toBe(`| a   | ${'b'.padEnd(40)} |`)
+    expect(rule).toBe(`| --- | ${'-'.repeat(40)} |`)
+    expect(short).toBe(`| 3   | ${'4'.padEnd(40)} |`)
+  })
+  test('is written whole and read back the same', () => {
+    expect(serializeTable(model).split('\n')[2]).toBe(`| 1   | ${long} |`)
+    expect(parseTable(serializeTable(model))).toEqual(model)
+  })
+})

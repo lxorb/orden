@@ -82,6 +82,8 @@ export function nameAfter(model: TableModel, row: number): string {
   return name ? ` ^${name}` : ''
 }
 const MIN_CELL = 3
+const WIDEST_PADDED = 40
+export const paddedWidth = (text: string): number => Math.min(WIDEST_PADDED, displayWidth(text))
 const padCell = (text: string, width: number): string => text + ' '.repeat(Math.max(0, width - displayWidth(text)))
 function delimiterCell(align: Align, width: number): string {
   switch (align) {
@@ -97,8 +99,8 @@ function delimiterCell(align: Align, width: number): string {
 }
 export function columnWidth(model: TableModel, column: number): number {
   return model.rows.reduce(
-    (most, row) => Math.max(most, displayWidth(row[column] ?? '')),
-    Math.max(MIN_CELL, displayWidth(model.header[column] ?? '')),
+    (most, row) => Math.max(most, paddedWidth(row[column] ?? '')),
+    Math.max(MIN_CELL, paddedWidth(model.header[column] ?? '')),
   )
 }
 export function columnWidths(model: TableModel): number[] {

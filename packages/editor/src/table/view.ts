@@ -26,8 +26,8 @@ import {
   type Align,
   columnWidth,
   columnWidths,
-  displayWidth,
   nameAfter,
+  paddedWidth,
   type Order,
   parseTable,
   sameModel,
@@ -379,8 +379,8 @@ export class TableView {
     const now = cells[column] ?? ''
     const width = widths[column] ?? 0
     let wide = width
-    if (displayWidth(now) > width) wide = displayWidth(now)
-    else if (displayWidth(before) >= width) wide = columnWidth(next, column)
+    if (paddedWidth(now) > width) wide = paddedWidth(now)
+    else if (paddedWidth(before) >= width) wide = columnWidth(next, column)
     const sized = widths.slice()
     sized[column] = wide
     if (wide !== width) {
