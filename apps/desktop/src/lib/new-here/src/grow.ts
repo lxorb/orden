@@ -5,6 +5,7 @@ export interface Piece {
   outline: readonly Point[]
   each: number
   slot: number
+  quarter: number
   index: number
   accent: string
   ground: string
@@ -85,7 +86,7 @@ function ghostOf(here: HTMLElement, piece: Piece, pane: HTMLElement): HTMLElemen
 }
 
 export function growInto(card: HTMLElement, here: HTMLElement, piece: Piece): Growing {
-  const target = frameOutline(piece.slot, piece.each)
+  const target = frameOutline(piece.quarter, piece.each)
   const pane = card.parentElement ?? card
   const ghost = ghostOf(here, piece, pane)
   const kept = {

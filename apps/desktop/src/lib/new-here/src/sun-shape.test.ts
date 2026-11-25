@@ -13,6 +13,8 @@ import {
   outlineOf,
   PULL,
   RING,
+  quarterOf,
+  quarterPiece,
   slotOf,
   spanOf,
 } from './sun-shape'
@@ -86,15 +88,28 @@ describe('a finger dragged out from the middle', () => {
   test('is measured past the edge of the option as a pull', () => {
     expect(aimed(...toward(OUTER + 60, 250), 3, counts).pull).toBeCloseTo(60)
   })
-  test('ignores a quarter with nothing in it', () => {
-    expect(aimed(...toward((HUB + INNER) / 2, 180), null, [3, 1, null, 2])).toEqual({
-      open: null,
-      index: null,
-      pull: 0,
-    })
+  test('with three groups, opens the third of the circle it points into (#2557)', () => {
+    expect(aimed(...toward((HUB + INNER) / 2, 240), null, [3, 1, 2])).toEqual({ open: 2, index: null, pull: 0 })
+    expect(aimed(...toward((HUB + INNER) / 2, 100), null, [3, 1, 2])).toEqual({ open: 1, index: null, pull: 0 })
   })
 })
 
+describe('the wedges', () => {
+  test('share the whole circle between however many groups there are, with no wedge left over (#2557)', () => {
+    for (const slots of [1, 2, 3, 4]) {
+      const pieces = Array.from({ length: slots }, (_, slot) => quarterPiece(slot, slots))
+      expect(pieces.reduce((sum, one) => sum + one.to - one.from, 0)).toBeCloseTo(360)
+      pieces.forEach((one, slot) =>
+        expect(one.from).toBeCloseTo(slot === 0 ? -180 / slots : (pieces[slot - 1]?.to ?? 0)),
+      )
+    }
+  })
+  test('keep the four quarters where they were when all four groups are there', () => {
+    expect([0, 1, 2, 3].map((slot) => quarterPiece(slot, 4).from)).toEqual([-45, 45, 135, 225])
+    expect([0, 1, 2, 3].map((slot) => quarterOf(slot, 4))).toEqual([0, 1, 2, 3])
+    expect([0, 1, 2].map((slot) => quarterOf(slot, 3))).toEqual([0, 1, 3])
+  })
+})
 describe('the morph', () => {
   test('walks the piece and the frame round the same way, outer edge onto the screen edge on its side', () => {
     const piece = optionPiece(0, 1, 3, 1, 1, 0)

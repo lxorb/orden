@@ -90,16 +90,25 @@ test('puts each group in the quarter its arrow points to, the apps joining the b
     [3, 'browser', ['web', 'pass']],
   ])
 })
-test('leaves a quarter empty when its group is not here, the apps taking the first free one', () => {
+test('draws no wedge for a group that is not here, the groups left sharing the circle (#2557)', () => {
   makers()
   viewport.device = 'phone'
   here()
   expect(quarters()).toEqual([
     [0, 'notes', ['note', 'canvas', 'pages']],
-    [1, 'apps', ['pass']],
-    [2, 'terminals', ['online']],
+    [1, 'terminals', ['online']],
+    [2, 'apps', ['pass']],
   ])
-  expect(target.querySelectorAll('.empty')).toHaveLength(1)
+  expect(target.querySelectorAll('.quarter')).toHaveLength(3)
+  for (const one of target.querySelectorAll<SVGElement>('.quarter')) {
+    expect(one.querySelector('.glyph')?.children.length, one.dataset.quarter).toBeGreaterThan(0)
+  }
+  expect(target.querySelector('.empty')).toBeNull()
+})
+test('draws no line or dot from the middle to the pointer (#2557)', () => {
+  makers()
+  here()
+  expect(target.querySelector('.trail, line')).toBeNull()
 })
 test('starts with the middle picked and holding the keyboard', () => {
   makers()

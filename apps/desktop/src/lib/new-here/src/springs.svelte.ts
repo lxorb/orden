@@ -3,8 +3,7 @@ import { type Feel, PIXELS, resting, SHARE, spring, type Spring as Sprung, step 
 
 const OPENING: Feel = { response: 0.43, damping: 0.72 }
 const CLOSING: Feel = { response: 0.34, damping: 1 }
-export const FOLLOWING: Feel = { response: 0.21, damping: 0.87 }
-export const TRAILING: Feel = { response: 0.39, damping: 1 }
+const FOLLOWING: Feel = { response: 0.21, damping: 0.87 }
 
 export class Spring {
   value = $state(0)
@@ -40,7 +39,7 @@ export class Spring {
   }
 }
 
-export class Springs {
+class Springs {
   private readonly all: Spring[] = []
   private frame = 0
   private last = 0

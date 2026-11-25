@@ -7,6 +7,7 @@
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
   import { countsOf, slotsOf } from './sun-slots'
   import { MIDDLE, MIDDLE_KEY, RESTING, walked } from './sun-keys'
+  import { quarterOf } from './sun-shape'
   import { overlays, viewport } from '../../ui-kit/src/api'
   import { isDesktop, stillness } from '../../platform/src/api'
   import { tabOverview, toggleTabOverview, workspace } from '../../workspace/src/api'
@@ -27,8 +28,8 @@
   }
   function placeOf(one: NewKindRow): [number, number] | null {
     for (const [slot, found] of slots.entries()) {
-      const index = found?.kinds.indexOf(one) ?? -1
-      if (found && index >= 0) return [slot, index]
+      const index = found.kinds.indexOf(one)
+      if (index >= 0) return [slot, index]
     }
     return null
   }
@@ -69,6 +70,7 @@
         growing = growInto(card, here, {
           ...shape,
           slot,
+          quarter: quarterOf(slot, slots.length),
           index,
           accent: getComputedStyle(here).getPropertyValue('--accent').trim() || 'currentColor',
           ground: getComputedStyle(here).backgroundColor,

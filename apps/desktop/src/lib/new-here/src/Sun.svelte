@@ -2,10 +2,9 @@
   import { onMount, untrack } from 'svelte'
   import { MARKS } from '../../marks/src/api'
   import type { IconNode } from '../../ui-kit/src/api'
-  import { PIXELS } from '../../springs/src/api'
   import type { Dial } from './dial.svelte'
   import { lineTitle, type NewKindRow } from './new-kinds'
-  import { FOLLOWING, Motion, Spring, Springs, TRAILING } from './springs.svelte'
+  import { Motion } from './springs.svelte'
   import type { Picked, Shape, SunHand } from './sun-hand'
   import type { Slot } from './sun-slots'
   import { countsOf } from './sun-slots'
@@ -41,7 +40,7 @@
     onready,
     oncentre,
   }: {
-    slots: (Slot<NewKindRow> | null)[]
+    slots: Slot<NewKindRow>[]
     dial: Dial
     hand: SunHand
     touch: boolean
@@ -57,12 +56,8 @@
   const MOVED = 8
   const OPEN_STAGGER = 45
   const CLOSE_STAGGER = 18
-  const trails = new Springs()
-  const trailX = trails.add(new Spring(FOLLOWING, TRAILING, PIXELS))
-  const trailY = trails.add(new Spring(FOLLOWING, TRAILING, PIXELS))
   const motion = new Motion()
-  const layout = $derived(slots.map((slot) => slot?.kinds.map((one) => one.kind).join(' ') ?? '').join('|'))
-  let trailing = $state(false)
+  const layout = $derived(slots.map((slot) => slot.kinds.map((one) => one.kind).join(' ')).join('|'))
   let root = $state<HTMLElement>()
   let svg = $state<SVGSVGElement>()
   let size = $state(0)
@@ -77,26 +72,33 @@
 
   function pieceOf(slot: number, index: number, one: NewKindRow, count: number): Piece {
     const { value: grown } = motion.grow(slot, one.kind)
-    return optionPiece(slot, index, count, grown, motion.lift(slot).value, motion.pull(slot, one.kind).value)
+    return optionPiece(
+      slot,
+      index,
+      count,
+      grown,
+      motion.lift(slot).value,
+      motion.pull(slot, one.kind).value,
+      slots.length,
+    )
   }
   const iconOf = (one: NewKindRow): IconNode => one.icon ?? MARKS[one.mark]
   const iconOfSlot = ({ kinds: [first] }: Slot<NewKindRow>): IconNode => (first ? iconOf(first) : [])
   const lifted = (slot: number): string => {
-    const [x, y] = pointAt(LIFT * motion.lift(slot).value, middleOf(slot))
+    const [x, y] = pointAt(LIFT * motion.lift(slot).value, middleOf(slot, slots.length))
     return `translate(${x.toFixed(2)} ${y.toFixed(2)})`
   }
   const titleOf = (slot: Slot<NewKindRow>): string =>
     slot.kinds.length === 1 ? (slot.kinds[0]?.label() ?? '') : lineTitle(slot.line)
-  const spotOf = (slot: number): Point => pointAt((HUB + INNER) / 2 + 4, middleOf(slot))
+  const spotOf = (slot: number): Point => pointAt((HUB + INNER) / 2 + 4, middleOf(slot, slots.length))
 
   $effect.pre(() => {
     const open = dial.open
-    const kinds = layout.split('|').map((line) => (line ? line.split(' ') : null))
+    const kinds = layout.split('|').map((line) => line.split(' '))
     const moving = motion
     untrack(() => {
       moving.fit(kinds)
       slots.forEach((slot, index) => {
-        if (!slot) return
         const on = index === open
         moving.lift(index).aim(on ? 1 : 0)
         slot.kinds.forEach((one, at) => {
@@ -165,7 +167,7 @@
     const found = aimed(x, y, dial.open, counts)
     dial.aim = { hub: true, open: found.open, index: found.index }
     slots.forEach((slot, at) =>
-      slot?.kinds.forEach((one, index) =>
+      slot.kinds.forEach((one, index) =>
         motion.pull(at, one.kind).aim(found.open === at && found.index === index ? found.pull : 0),
       ),
     )
@@ -173,14 +175,8 @@
     if (found.open === null || found.index === null || found.pull < PULL) return null
     return { slot: found.open, index: found.index }
   }
-  function trail(on: boolean, x = 0, y = 0) {
-    trailing = on
-    trailX.aim(x)
-    trailY.aim(y)
-    trails.wake()
-  }
   function relax() {
-    slots.forEach((slot, at) => slot?.kinds.forEach((one) => motion.pull(at, one.kind).aim(0)))
+    slots.forEach((slot, at) => slot.kinds.forEach((one) => motion.pull(at, one.kind).aim(0)))
     motion.wake()
   }
   function press(event: PointerEvent) {
@@ -206,17 +202,13 @@
       } catch {
         return
       }
-      trailX.jump(0)
-      trailY.jump(0)
     }
     const point = dialPoint(event.clientX, event.clientY)
     if (!point) return
-    trail(true, point[0], point[1])
     const commit = aimAt(point[0], point[1])
     if (!commit) return
     drag = null
     swallow = true
-    trail(false)
     onpick(commit.slot, commit.index, 'pull')
   }
   function lift(event: PointerEvent) {
@@ -225,7 +217,6 @@
     drag = null
     if (!moved) return
     swallow = true
-    trail(false)
     relax()
     dial.aim = RESTING
   }
@@ -311,7 +302,6 @@
       watching.disconnect()
       window.removeEventListener('keydown', keyed, true)
       clearTimeout(leaving)
-      trails.stop()
       motion.stop()
     }
   })
@@ -333,99 +323,91 @@
 >
   <svg bind:this={svg} viewBox={`${-REACH} ${-REACH} ${REACH * 2} ${REACH * 2}`}>
     {#each slots as slot, at (at)}
-      {#if slot}
-        {@const count = slot.kinds.length}
-        {@const open = dial.open === at}
-        <g class="group" data-slot={at} data-line={slot.line}>
-          <path class="bridge" d={open ? arcPath(bridgePiece(at, count)) : ''} />
-          {#each slot.kinds as one, index (one.kind)}
-            {@const piece = pieceOf(at, index, one, count)}
-            {@const grown = motion.grow(at, one.kind).value}
-            {@const pull = Math.min(1, motion.pull(at, one.kind).value / PULL)}
-            {@const shown = Math.min(1, Math.max(0, (grown - 0.45) / 0.55))}
-            {@const middle = centreOf(piece)}
-            <g
-              class="option"
-              class:picked={dial.picked(at, index)}
-              data-index={index}
-              data-kind={one.kind}
-              role="button"
-              tabindex="-1"
-              aria-label={one.label()}
-              aria-keyshortcuts={letters ? one.letter.toUpperCase() : undefined}
-              aria-hidden={!open}
-              style:opacity={Math.min(1, grown * 2.2) *
-                (1 - 0.65 * Math.max(0, Math.min(1, motion.pulled / PULL) - pull))}
-            >
-              <path
-                class="shape"
-                d={grown > 0.001 ? arcPath(piece) : ''}
-                style:fill={dial.picked(at, index) && pull > 0.01
-                  ? `color-mix(in srgb, var(--accent) ${(16 + 14 * pull).toFixed(1)}%, var(--surface))`
-                  : undefined}
-              />
-              <g
-                class="content"
-                style:opacity={shown}
-                transform={`translate(${middle[0].toFixed(2)} ${middle[1].toFixed(2)}) scale(${((0.85 + 0.15 * shown) * (1 + 0.12 * pull)).toFixed(3)})`}
-              >
-                <svg
-                  class="glyph"
-                  x={labelled ? -13 : -15}
-                  y={labelled ? -35 : -23}
-                  width={labelled ? 26 : 30}
-                  height={labelled ? 26 : 30}
-                  viewBox="0 0 24 24"
-                >
-                  {#each iconOf(one) as [tag, attrs] (JSON.stringify(attrs))}
-                    <svelte:element this={tag} {...attrs} />
-                  {/each}
-                </svg>
-                {#if labelled}
-                  <text class="label" y={4}>{one.label()}</text>
-                {/if}
-                {#if letters}
-                  <text class="key" y={labelled ? 26 : 22}>{one.letter.toUpperCase()}</text>
-                {/if}
-              </g>
-            </g>
-          {/each}
+      {@const count = slot.kinds.length}
+      {@const open = dial.open === at}
+      <g class="group" data-slot={at} data-line={slot.line}>
+        <path class="bridge" d={open ? arcPath(bridgePiece(at, count, slots.length)) : ''} />
+        {#each slot.kinds as one, index (one.kind)}
+          {@const piece = pieceOf(at, index, one, count)}
+          {@const grown = motion.grow(at, one.kind).value}
+          {@const pull = Math.min(1, motion.pull(at, one.kind).value / PULL)}
+          {@const shown = Math.min(1, Math.max(0, (grown - 0.45) / 0.55))}
+          {@const middle = centreOf(piece)}
           <g
-            class="quarter"
-            class:open
-            data-quarter={slot.line}
+            class="option"
+            class:picked={dial.picked(at, index)}
+            data-index={index}
+            data-kind={one.kind}
             role="button"
             tabindex="-1"
-            aria-label={titleOf(slot)}
-            aria-expanded={count > 1 ? open : undefined}
-            transform={lifted(at)}
+            aria-label={one.label()}
+            aria-keyshortcuts={letters ? one.letter.toUpperCase() : undefined}
+            aria-hidden={!open}
+            style:opacity={Math.min(1, grown * 2.2) *
+              (1 - 0.65 * Math.max(0, Math.min(1, motion.pulled / PULL) - pull))}
           >
-            <path class="shape" d={arcPath(quarterPiece(at))} />
-            <svg
-              class="glyph"
-              x={spotOf(at)[0] - 15}
-              y={spotOf(at)[1] - (titled ? 27 : 15)}
-              width="30"
-              height="30"
-              viewBox="0 0 24 24"
+            <path
+              class="shape"
+              d={grown > 0.001 ? arcPath(piece) : ''}
+              style:fill={dial.picked(at, index) && pull > 0.01
+                ? `color-mix(in srgb, var(--accent) ${(16 + 14 * pull).toFixed(1)}%, var(--surface))`
+                : undefined}
+            />
+            <g
+              class="content"
+              style:opacity={shown}
+              transform={`translate(${middle[0].toFixed(2)} ${middle[1].toFixed(2)}) scale(${((0.85 + 0.15 * shown) * (1 + 0.12 * pull)).toFixed(3)})`}
             >
-              {#each iconOfSlot(slot) as [tag, attrs] (JSON.stringify(attrs))}
-                <svelte:element this={tag} {...attrs} />
-              {/each}
-            </svg>
-            {#if titled}
-              <text class="title" x={spotOf(at)[0]} y={spotOf(at)[1] + 18}>{lineTitle(slot.line)}</text>
-            {/if}
+              <svg
+                class="glyph"
+                x={labelled ? -13 : -15}
+                y={labelled ? -35 : -23}
+                width={labelled ? 26 : 30}
+                height={labelled ? 26 : 30}
+                viewBox="0 0 24 24"
+              >
+                {#each iconOf(one) as [tag, attrs] (JSON.stringify(attrs))}
+                  <svelte:element this={tag} {...attrs} />
+                {/each}
+              </svg>
+              {#if labelled}
+                <text class="label" y={4}>{one.label()}</text>
+              {/if}
+              {#if letters}
+                <text class="key" y={labelled ? 26 : 22}>{one.letter.toUpperCase()}</text>
+              {/if}
+            </g>
           </g>
+        {/each}
+        <g
+          class="quarter"
+          class:open
+          data-quarter={slot.line}
+          role="button"
+          tabindex="-1"
+          aria-label={titleOf(slot)}
+          aria-expanded={count > 1 ? open : undefined}
+          transform={lifted(at)}
+        >
+          <path class="shape" d={arcPath(quarterPiece(at, slots.length))} />
+          <svg
+            class="glyph"
+            x={spotOf(at)[0] - 15}
+            y={spotOf(at)[1] - (titled ? 27 : 15)}
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+          >
+            {#each iconOfSlot(slot) as [tag, attrs] (JSON.stringify(attrs))}
+              <svelte:element this={tag} {...attrs} />
+            {/each}
+          </svg>
+          {#if titled}
+            <text class="title" x={spotOf(at)[0]} y={spotOf(at)[1] + 18}>{lineTitle(slot.line)}</text>
+          {/if}
         </g>
-      {:else}
-        <path class="empty" d={arcPath(quarterPiece(at))} />
-      {/if}
+      </g>
     {/each}
-    <g class="trail" class:on={trailing}>
-      <line x1="0" y1="0" x2={trailX.value} y2={trailY.value} />
-      <circle class="dot" cx={trailX.value} cy={trailY.value} r="9" />
-    </g>
   </svg>
   <button
     type="button"
@@ -462,12 +444,6 @@
     transition:
       fill var(--dur-fast) var(--ease-out),
       stroke var(--dur-fast) var(--ease-out);
-  }
-  .empty {
-    fill: color-mix(in srgb, var(--surface) 45%, transparent);
-    stroke: color-mix(in srgb, var(--line) 60%, transparent);
-    stroke-width: 1;
-    pointer-events: none;
   }
   .bridge {
     fill: transparent;
@@ -542,24 +518,6 @@
   .option.picked .label {
     fill: var(--text-strong);
   }
-  .trail {
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-  .trail.on {
-    opacity: 1;
-  }
-  .trail line {
-    stroke: color-mix(in srgb, var(--accent) 75%, transparent);
-    stroke-width: 2.5;
-    stroke-linecap: round;
-  }
-  .trail .dot {
-    fill: color-mix(in srgb, var(--accent) 22%, transparent);
-    stroke: var(--accent);
-    stroke-width: 1.5;
-  }
   .hub {
     position: absolute;
     left: 50%;
@@ -578,14 +536,13 @@
     transition:
       background var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      box-shadow var(--dur-base) var(--ease-out);
+      color var(--dur-fast) var(--ease-out);
   }
   .hub:focus-visible {
     border-color: var(--line-strong);
     color: var(--text);
   }
-  .hub:hover:not(.picked) {
+  .hub:hover {
     background: var(--surface-hover);
     border-color: var(--line-strong);
     color: var(--text);
@@ -595,11 +552,5 @@
     font-size: var(--text-xs);
     line-height: 1;
     color: inherit;
-  }
-  .hub.picked {
-    background: color-mix(in srgb, var(--accent) 16%, var(--surface));
-    border-color: color-mix(in srgb, var(--accent) 90%, transparent);
-    color: var(--accent);
-    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
   }
 </style>

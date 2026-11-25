@@ -20,7 +20,8 @@ export interface Piece {
   to: number
 }
 
-export const middleOf = (slot: number): number => slot * 90
+export const middleOf = (slot: number, slots = SLOTS): number => (slot * 360) / Math.max(1, slots)
+export const quarterOf = (slot: number, slots: number): number => Math.round(middleOf(slot, slots) / 90) % SLOTS
 export const spanOf = (count: number): number => Math.min(WIDEST, FAN / Math.max(1, count))
 const clamp = (value: number, low = 0, high = 1): number => Math.min(high, Math.max(low, value))
 const radians = (angle: number): number => ((angle - 90) * Math.PI) / 180
@@ -31,8 +32,9 @@ export function at(radius: number, angle: number): Point {
 export function angleOf(x: number, y: number): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 450) % 360
 }
-export function slotOf(x: number, y: number): number {
-  return Math.round(angleOf(x, y) / 90) % SLOTS
+export function slotOf(x: number, y: number, slots = SLOTS): number {
+  const n = Math.max(1, slots)
+  return Math.round(angleOf(x, y) / (360 / n)) % n
 }
 function gapAt(radius: number): number {
   return (GAP / 2 / radius) * (180 / Math.PI)
@@ -74,13 +76,14 @@ export function arcPath({ inner, outer, from, to }: Piece, corner = CORNER): str
     'Z'
   )
 }
-export function quarterPiece(slot: number): Piece {
-  const middle = middleOf(slot)
-  return { inner: HUB, outer: INNER, from: middle - 45, to: middle + 45 }
+export function quarterPiece(slot: number, slots = SLOTS): Piece {
+  const middle = middleOf(slot, slots)
+  const half = 180 / Math.max(1, slots)
+  return { inner: HUB, outer: INNER, from: middle - half, to: middle + half }
 }
-export function bridgePiece(slot: number, count: number): Piece {
+export function bridgePiece(slot: number, count: number, slots = SLOTS): Piece {
   const half = (count * spanOf(count)) / 2
-  const middle = middleOf(slot)
+  const middle = middleOf(slot, slots)
   return { inner: INNER - 2, outer: RING + LIFT + 2, from: middle - half, to: middle + half }
 }
 export function optionPiece(
@@ -90,8 +93,9 @@ export function optionPiece(
   grown: number,
   lift: number,
   pull: number,
+  slots = SLOTS,
 ): Piece {
-  const middle = middleOf(slot)
+  const middle = middleOf(slot, slots)
   const span = spanOf(count)
   const start = middle - (count * span) / 2 + index * span
   const fan = clamp(grown) ** 0.8
@@ -106,9 +110,9 @@ export function optionPiece(
 export function centreOf({ inner, outer, from, to }: Piece): Point {
   return at((inner + outer) / 2, (from + to) / 2)
 }
-export function optionAt(slot: number, count: number, angle: number, loose: boolean): number | null {
+export function optionAt(slot: number, count: number, angle: number, loose: boolean, slots = SLOTS): number | null {
   const half = (count * spanOf(count)) / 2
-  const off = ((angle - middleOf(slot) + 540) % 360) - 180
+  const off = ((angle - middleOf(slot, slots) + 540) % 360) - 180
   if (!loose && Math.abs(off) > half + 25) return null
   return clamp(Math.floor((off + half) / spanOf(count)), 0, count - 1)
 }
@@ -121,15 +125,16 @@ export interface Aimed {
 export function aimed(x: number, y: number, open: number | null, counts: readonly (number | null)[]): Aimed {
   const reach = Math.hypot(x, y)
   const angle = angleOf(x, y)
-  const slot = slotOf(x, y)
+  const slots = counts.length
+  const slot = slotOf(x, y, slots)
   const there = counts[slot] ?? null
   if (reach < HUB) return { open: null, index: null, pull: 0 }
   if (reach < RING) return { open: there === null ? open : slot, index: null, pull: 0 }
   const held = open === null ? null : (counts[open] ?? null)
-  const kept = open !== null && held !== null ? optionAt(open, held, angle, false) : null
+  const kept = open !== null && held !== null ? optionAt(open, held, angle, false, slots) : null
   if (open !== null && kept !== null) return { open, index: kept, pull: Math.max(0, reach - OUTER) }
   if (there === null) return { open, index: null, pull: 0 }
-  return { open: slot, index: optionAt(slot, there, angle, true), pull: Math.max(0, reach - OUTER) }
+  return { open: slot, index: optionAt(slot, there, angle, true, slots), pull: Math.max(0, reach - OUTER) }
 }
 
 export function outlineOf(piece: Piece, each: number): Point[] {
