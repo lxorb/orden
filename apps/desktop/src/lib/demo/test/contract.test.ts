@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
 import { describe, expect, test, vi } from 'vitest'
 import { builtAt, PARTS, planOf } from '../src/doc'
+import { SHAPES, shapeOf } from '../src/bibata'
 import { holdDatabases } from '../src/held'
 import { keysOf, moveAt, PAUSE, typedAt } from '../src/motion'
 import { drifted, frameAt, replacement, SCENES, writtenAt } from '../src/scenes'
@@ -336,5 +337,23 @@ describe('the shared note', () => {
       expect((text.match(/\$\$/g) ?? []).length % 2).toBe(0)
       expect((text.match(/```/g) ?? []).length % 2).toBe(0)
     }
+  })
+})
+describe('the drawn pointer', () => {
+  test('is Bibata Modern, drawn from the files shipped with its licence', () => {
+    const folder = join(import.meta.dirname, '../../../../public/demo/bibata')
+    const shipped = (name: string) =>
+      [...readFileSync(join(folder, name), 'utf8').matchAll(/ d="([^"]+)"/g)].map((one) => one[1])
+    expect(SHAPES.arrow.parts.map((one) => one.d)).toEqual(shipped('left_ptr.svg'))
+    expect(SHAPES.hand.parts.map((one) => one.d)).toEqual(shipped('hand2.svg'))
+    expect(SHAPES.text.parts.map((one) => one.d)).toEqual(shipped('xterm.svg'))
+    expect(readFileSync(join(folder, 'LICENSE'), 'utf8')).toContain('GNU GENERAL PUBLIC LICENSE')
+    expect(readFileSync(join(folder, 'CREDITS'), 'utf8')).toContain('Bibata')
+  })
+  test('takes the shape the page asks for under it', () => {
+    expect(shapeOf('pointer', null)).toBe('hand')
+    expect(shapeOf('text', null)).toBe('text')
+    expect(shapeOf('default', null)).toBe('arrow')
+    expect(shapeOf('auto', null)).toBe('arrow')
   })
 })

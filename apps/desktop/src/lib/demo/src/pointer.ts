@@ -1,3 +1,5 @@
+import { type Shape, SHAPES, shapeOf } from './bibata'
+
 export interface Point {
   x: number
   y: number
@@ -8,7 +10,6 @@ export interface Stop {
   press?: boolean
 }
 export type Look = 'user' | 'ai' | 'touch' | 'pen'
-const ARROW = 'M3 2 L3 25 L9.2 19.2 L13.4 28.6 L17.6 26.8 L13.5 17.6 L22 17.6 Z'
 const PEN = 'M4 28 L7 19 L22 4 L28 10 L13 25 Z M7 19 L13 25'
 export function boxOf(selector: string, inside: ParentNode = document): Point | null {
   const found = inside.querySelector(selector)
@@ -25,14 +26,22 @@ export function onPlane(host: string, camera: { x: number; y: number; scale: num
     y: box.top + box.height / 2 + (point.y - camera.y) * camera.scale,
   }
 }
+const SIZE = 48
+const SVG = 'http://www.w3.org/2000/svg'
+const AI_BODY = '#7c6bf5'
+const dark = () => document.documentElement.dataset.theme !== 'light'
 export class Pointer {
   private readonly root = document.createElement('div')
   private readonly ring = document.createElement('div')
+  private readonly shapes = new Map<Shape, SVGSVGElement>()
   private shown = ''
+  private shape: Shape = 'arrow'
+  private painted = ''
   private last: Point | null = null
-  constructor(look: Look, label?: string) {
-    const ink = look === 'ai' ? '#7c6bf5' : '#ffffff'
-    const edge = look === 'ai' ? '#ffffff' : '#111318'
+  constructor(
+    private readonly look: Look,
+    label?: string,
+  ) {
     this.root.setAttribute('aria-hidden', 'true')
     Object.assign(this.root.style, {
       position: 'fixed',
@@ -50,7 +59,7 @@ export class Pointer {
       width: '60px',
       height: '60px',
       borderRadius: '50%',
-      border: `3px solid ${look === 'ai' ? ink : '#7c6bf5'}`,
+      border: `3px solid ${AI_BODY}`,
       opacity: '0',
     })
     this.root.append(this.ring)
@@ -68,27 +77,53 @@ export class Pointer {
         boxShadow: '0 2px 8px rgb(0 0 0 / 0.35)',
       })
       this.root.append(dot)
-    } else {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    } else if (look === 'pen') {
+      const svg = document.createElementNS(SVG, 'svg')
       svg.setAttribute('width', '44')
       svg.setAttribute('height', '44')
       svg.setAttribute('viewBox', '0 0 32 32')
       Object.assign(svg.style, {
         position: 'absolute',
-        left: look === 'pen' ? '-5.5px' : '-4px',
-        top: look === 'pen' ? '-38.5px' : '-3px',
+        left: '-5.5px',
+        top: '-38.5px',
         overflow: 'visible',
         filter: 'drop-shadow(0 2px 3px rgb(0 0 0 / 0.35))',
       })
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-      path.setAttribute('d', look === 'pen' ? PEN : ARROW)
-      path.setAttribute('fill', ink)
-      path.setAttribute('stroke', edge)
+      const path = document.createElementNS(SVG, 'path')
+      path.setAttribute('d', PEN)
+      path.setAttribute('fill', '#ffffff')
+      path.setAttribute('stroke', '#111318')
       path.setAttribute('stroke-width', '2')
       path.setAttribute('stroke-linejoin', 'round')
       svg.append(path)
       this.root.append(svg)
-    }
+    } else
+      for (const [name, { hot, parts }] of Object.entries(SHAPES) as [Shape, (typeof SHAPES)[Shape]][]) {
+        const svg = document.createElementNS(SVG, 'svg')
+        svg.setAttribute('width', String(SIZE))
+        svg.setAttribute('height', String(SIZE))
+        svg.setAttribute('viewBox', '0 0 256 256')
+        Object.assign(svg.style, {
+          position: 'absolute',
+          left: `${(-hot[0] * SIZE) / 256}px`,
+          top: `${(-hot[1] * SIZE) / 256}px`,
+          overflow: 'visible',
+          display: name === 'arrow' ? 'block' : 'none',
+          filter: 'drop-shadow(0 2px 3px rgb(0 0 0 / 0.3))',
+        })
+        for (const part of parts) {
+          const path = document.createElementNS(SVG, 'path')
+          path.setAttribute('d', part.d)
+          path.dataset.fill = part.fill
+          if (part.outlined) {
+            path.setAttribute('stroke-width', '17')
+            path.dataset.outlined = 'yes'
+          }
+          svg.append(path)
+        }
+        this.shapes.set(name, svg)
+        this.root.append(svg)
+      }
     if (label) {
       const tag = document.createElement('div')
       tag.textContent = label
@@ -98,14 +133,36 @@ export class Pointer {
         top: '30px',
         padding: '2px 8px',
         borderRadius: '8px',
-        background: ink,
-        color: edge,
+        background: AI_BODY,
+        color: '#ffffff',
         font: '600 13px/1.4 system-ui, sans-serif',
         whiteSpace: 'nowrap',
       })
       this.root.append(tag)
     }
+    this.paint()
     document.body.append(this.root)
+  }
+  private paint(): void {
+    const body = this.look === 'ai' ? AI_BODY : dark() ? '#ffffff' : '#000000'
+    const edge = this.look === 'ai' || !dark() ? '#ffffff' : '#000000'
+    const key = `${body}${edge}`
+    if (key === this.painted) return
+    this.painted = key
+    for (const svg of this.shapes.values())
+      for (const path of svg.querySelectorAll<SVGPathElement>('path')) {
+        path.setAttribute('fill', path.dataset.fill === 'edge' ? edge : body)
+        if (path.dataset.outlined) path.setAttribute('stroke', edge)
+      }
+  }
+  private reshape(at: Point): void {
+    if (!this.shapes.size) return
+    const under = document.elementFromPoint(at.x, at.y)
+    const next = shapeOf(under ? getComputedStyle(under).cursor : 'auto', under)
+    if (next === this.shape) return
+    this.shapes.get(this.shape)?.style.setProperty('display', 'none')
+    this.shapes.get(next)?.style.setProperty('display', 'block')
+    this.shape = next
   }
   where(): Point | null {
     return this.last
@@ -119,6 +176,8 @@ export class Pointer {
       this.root.style.display = 'none'
       return
     }
+    this.paint()
+    this.reshape(at)
     this.root.style.display = 'block'
     this.root.style.transform = `translate(${at.x}px, ${at.y}px) scale(${1 - 0.12 * press})`
     this.ring.style.opacity = String(press)
