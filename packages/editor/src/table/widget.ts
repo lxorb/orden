@@ -1,7 +1,8 @@
+import type { Extension } from '@codemirror/state'
 import { type EditorView, ViewPlugin } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { parseTable } from './model'
-import { noteChanges } from './navigation'
+import { noteChanges, tablesKeptApart } from './navigation'
 import { TableView } from './view'
 
 export { flushTableEdits } from './view'
@@ -9,7 +10,7 @@ const views = new WeakMap<HTMLElement, TableView>()
 const live = new Set<TableView>()
 const showing = new WeakMap<EditorView, object>()
 const drawnIn = new WeakMap<TableView, object | undefined>()
-export const tableTracking = ViewPlugin.define((view) => {
+const tracking = ViewPlugin.define((view) => {
   showing.set(view, {})
   return {
     update(update) {
@@ -19,6 +20,7 @@ export const tableTracking = ViewPlugin.define((view) => {
     },
   }
 })
+export const tableTracking: Extension = [tracking, tablesKeptApart]
 export function tableViewAt(editor: EditorView, from: number): TableView | null {
   for (const table of live) if (table.editor === editor && table.span()?.from === from) return table
   return null

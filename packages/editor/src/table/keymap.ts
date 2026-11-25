@@ -1,8 +1,9 @@
 import type { SelectionRange } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
 import { insertTable } from '../commands'
 import type { BindingSpec } from '../shortcuts'
-import { lineBeside, type Side, tableAt, tableCrossed } from './navigation'
+import { lineBeside, renderedTables, type Side, tableAt, tableCrossed } from './navigation'
 import type { Landing } from './view'
 import { tableViewAt } from './widget'
 
@@ -20,6 +21,25 @@ function walkInto(
     return tableViewAt(view, span.from)?.enter(side, where(view)) ?? false
   }
 }
+function reachUp(where: Landing): Command {
+  return (view) => {
+    const { state } = view
+    const { doc } = state
+    const range = state.selection.main
+    if (state.selection.ranges.length > 1 || !range.empty) return false
+    const line = doc.lineAt(range.head)
+    if (!line.text.trim() || range.head !== line.from || line.number < 2) return false
+    if (syntaxTree(state).resolveInner(line.from, 1).name !== 'Paragraph') return false
+    const blank = doc.line(line.number - 1)
+    if (blank.text.trim()) return false
+    const span = renderedTables(state).find((one) => one.to === blank.from - 1)
+    return span ? (tableViewAt(view, span.from)?.enter('below', where) ?? false) : false
+  }
+}
+const either =
+  (...commands: Command[]): Command =>
+  (view) =>
+    commands.some((command) => command(view))
 function caretX(view: EditorView): Landing {
   const { head, goalColumn } = view.state.selection.main
   if (goalColumn !== undefined) return { x: view.contentDOM.getBoundingClientRect().left + goalColumn }
@@ -63,7 +83,10 @@ export const tableBindings: BindingSpec[] = [
   {
     id: 'table.backspace',
     key: 'Backspace',
-    run: walkInto('below', backward, () => 'end'),
+    run: either(
+      walkInto('below', backward, () => 'end'),
+      reachUp('end'),
+    ),
     contextual: true,
   },
 ]
