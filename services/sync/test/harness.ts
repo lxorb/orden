@@ -227,6 +227,7 @@ interface CallOptions {
   headers?: Record<string, string>
   token?: string
   host?: string
+  cf?: Record<string, unknown>
 }
 export interface Answer<T> {
   status: number
@@ -242,7 +243,9 @@ export async function call<T = Reply>(env: Env, path: string, options: CallOptio
   Object.assign(headers, options.headers ?? {})
   const method = options.method ?? (options.body === undefined && options.raw === undefined ? 'GET' : 'POST')
   const body = options.raw ?? (options.body === undefined ? null : JSON.stringify(options.body))
-  const response = await app.fetch(new Request(`https://${host}${path}`, { method, headers, body }), env)
+  const request = new Request(`https://${host}${path}`, { method, headers, body })
+  if (options.cf) Object.defineProperty(request, 'cf', { value: options.cf })
+  const response = await app.fetch(request, env)
   const text = await response.text()
   let json: unknown = null
   try {

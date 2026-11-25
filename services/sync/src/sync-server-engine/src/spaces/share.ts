@@ -29,6 +29,7 @@ import {
 } from '../../../sync-server/src/api'
 import { avatarIn } from '../people/avatar'
 import { roomsRevoked } from '../rooms'
+import { placeText } from './seen'
 import {
   atLeast,
   isGiven,
@@ -140,7 +141,12 @@ interface FaceColumns {
   user_id: string | null
   avatar: string | null
 }
-interface MemberRow extends FaceColumns {
+interface Seen {
+  seen_at: number | null
+  seen_city: string | null
+  seen_country: string | null
+}
+interface MemberRow extends FaceColumns, Seen {
   email: string
   role: Given
   admin: number
@@ -165,7 +171,7 @@ interface LinkRow {
   mode: Mode
   created_at: number
 }
-interface GuestRow {
+interface GuestRow extends Seen {
   guest_id: string
   name: string
   email: string | null
@@ -192,7 +198,7 @@ async function accountAt(env: Env, email: string): Promise<string | null> {
 }
 async function membersOf(env: Env, spaceId: string, item: string): Promise<MemberRow[]> {
   const { results } = await env.DB.prepare(
-    `select m.email, m.role, m.admin, m.joined_at, u.name, ${FACE}
+    `select m.email, m.role, m.admin, m.joined_at, m.seen_at, m.seen_city, m.seen_country, u.name, ${FACE}
        from space_members m
        left join users u on u.email = m.email
       where m.space_id = ? and m.item = ?
@@ -216,7 +222,8 @@ async function requestsOf(env: Env, spaceId: string, item: string): Promise<Requ
 }
 async function guestsOf(env: Env, spaceId: string, item: string): Promise<GuestRow[]> {
   const { results } = await env.DB.prepare(
-    `select g.id as guest_id, g.name, g.email, m.role, m.joined_at, m.declined_at, m.created_at
+    `select g.id as guest_id, g.name, g.email, m.role, m.joined_at, m.declined_at, m.created_at,
+            m.seen_at, m.seen_city, m.seen_country
        from guest_members m join guests g on g.id = m.guest_id
       where m.space_id = ? and m.item = ? and m.declined_at is null
       order by m.created_at, g.id limit ?`,
@@ -231,7 +238,11 @@ async function linkOf(env: Env, spaceId: string, item: string): Promise<LinkRow 
     .first<LinkRow>()
   return row ?? null
 }
-function presentMember(member: MemberRow) {
+function whenAndWhere(row: Seen & { joined_at: number | null }, manages: boolean) {
+  if (!manages) return {}
+  return { since: row.joined_at, lastSeen: row.seen_at, place: placeText(row.seen_city, row.seen_country) }
+}
+function presentMember(member: MemberRow, manages: boolean) {
   return {
     ...faceOf(member),
     email: member.email,
@@ -240,9 +251,10 @@ function presentMember(member: MemberRow) {
     role: member.role,
     admin: member.admin === 1,
     pending: member.joined_at === null,
+    ...whenAndWhere(member, manages),
   }
 }
-function presentGuest(guest: GuestRow) {
+function presentGuest(guest: GuestRow, manages: boolean) {
   return {
     id: null,
     avatar: null,
@@ -251,6 +263,7 @@ function presentGuest(guest: GuestRow) {
     name: guest.name,
     role: guest.role,
     pending: false,
+    ...whenAndWhere(guest, manages),
   }
 }
 function presentLink(env: Env, link: LinkRow) {
@@ -277,7 +290,10 @@ async function sharing(env: Env, space: Reached, scope: Scope) {
       ...faceOf(owner ?? { user_id: space.user_id, avatar: null }),
     },
     item: scope.path === null ? null : { id: scope.id, path: scope.path },
-    members: [...members.map(presentMember), ...guests.filter((one) => one.joined_at !== null).map(presentGuest)],
+    members: [
+      ...members.map((one) => presentMember(one, space.manages)),
+      ...guests.filter((one) => one.joined_at !== null).map((one) => presentGuest(one, space.manages)),
+    ],
     requests: [
       ...requests.map((one) => ({
         ...faceOf(one),

@@ -219,6 +219,9 @@ describe('a link anybody may follow', () => {
         name: json.guest.name,
         role: 'write',
         pending: false,
+        since: expect.any(Number) as number,
+        lastSeen: null,
+        place: null,
       },
     ])
     const { json: rails } = await rail(owner)
@@ -573,7 +576,18 @@ describe('a guest becoming an account', () => {
     ])
     const { json: who } = await shareView()
     expect(who.members).toEqual([
-      { ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', admin: false, pending: false },
+      {
+        ...A_FACE,
+        email: GUEST,
+        guest: null,
+        name: null,
+        role: 'write',
+        admin: false,
+        pending: false,
+        since: expect.any(Number) as number,
+        lastSeen: null,
+        place: null,
+      },
     ])
   })
   test('leaves the guest session with nothing to reach afterwards', async () => {

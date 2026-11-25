@@ -539,7 +539,18 @@ describe('an invitation', () => {
     expect(sent).toMatch(/https:\/\/app\.orden\.so\/join\/[a-f0-9]{64}/)
     const { json } = await shareView()
     expect(json.members).toEqual([
-      { ...NO_FACE, email: READER, guest: null, name: null, role: 'read', admin: false, pending: true },
+      {
+        ...NO_FACE,
+        email: READER,
+        guest: null,
+        name: null,
+        role: 'read',
+        admin: false,
+        pending: true,
+        since: null,
+        lastSeen: null,
+        place: null,
+      },
     ])
   })
   test('waits for the address to be proved before anybody has been in', async () => {
@@ -1079,7 +1090,18 @@ describe('a share link', () => {
     const { json } = await shareView()
     expect(json.requests).toEqual([])
     expect(json.members).toEqual([
-      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', admin: false, pending: false },
+      {
+        ...A_FACE,
+        email: STRANGER,
+        guest: null,
+        name: null,
+        role: 'write',
+        admin: false,
+        pending: false,
+        since: expect.any(Number) as number,
+        lastSeen: null,
+        place: null,
+      },
     ])
     const wrote = await call(env, `/v1/notes/${note}`, {
       method: 'PUT',
@@ -1115,7 +1137,18 @@ describe('a share link', () => {
     const { json } = await shareView()
     expect(json.requests).toEqual([])
     expect(json.members).toEqual([
-      { ...A_FACE, email: STRANGER, guest: null, name: null, role: 'write', admin: false, pending: false },
+      {
+        ...A_FACE,
+        email: STRANGER,
+        guest: null,
+        name: null,
+        role: 'write',
+        admin: false,
+        pending: false,
+        since: expect.any(Number) as number,
+        lastSeen: null,
+        place: null,
+      },
     ])
   })
   test('keeps what a request was promised when the link changes afterwards', async () => {

@@ -134,6 +134,7 @@ export type Role = 'owner' | 'write' | 'read'
 export interface Reached extends Space {
   role: Role
   manages: boolean
+  seen_at?: number | null
 }
 export interface Scope {
   id: string

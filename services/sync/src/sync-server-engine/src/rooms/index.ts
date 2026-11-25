@@ -16,6 +16,7 @@ import {
 import { subprotocol, tokenOf, tokenProtocolOf } from '@orden/rooms'
 import { deviceOffered, ROOM_V2_NAMES } from '@orden/sync-core'
 import { boundDevice } from '../hub/devices'
+import { memberSeen } from '../spaces/seen'
 import { SIGNED_IN_AS } from './access'
 import { isChatPointer, noteKind } from './kind'
 import type { Ingested } from './room'
@@ -45,6 +46,7 @@ reached as (
 )
 select (select coalesce(user_id, guest_id) from me) as who,
        (select guest_id from me) as guest,
+       (select email from me) as email,
        (select ${boundDevice('me.session_id', 'me.user_id', '?4')} from me) as bound,
        (select space_id from reached) as space_id,
        (select path from reached) as path,
@@ -87,6 +89,7 @@ rooms.get('/:noteId', async (context) => {
     .first<{
       who: string | null
       guest: string | null
+      email: string | null
       bound: string | null
       space_id: string | null
       path: string | null
@@ -97,6 +100,10 @@ rooms.get('/:noteId', async (context) => {
   if (!allowed?.who) return context.json({ error: SIGN_IN }, 401)
   if (!allowed.space_id) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (isChatPointer(allowed.path ?? '')) return context.json({ error: NO_SUCH_NOTE }, 404)
+  const seer = allowed.guest ? { guest: allowed.guest } : allowed.email ? { email: allowed.email } : null
+  if (seer && allowed.role !== 'owner') {
+    await memberSeen(context.env, allowed.space_id, seer, ['', noteId], context.req.raw.cf, now())
+  }
   const namespace = context.env.ROOMS
   if (!namespace) return context.json({ error: 'rooms are not running here' }, 503)
   const answer = await reach(

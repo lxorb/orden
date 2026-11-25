@@ -18,6 +18,7 @@ import {
   type Whoever,
 } from '../../../sync-server/src/api'
 import { type Column, fits, writeColumn } from './columns'
+import { spaceSeen } from './seen'
 import { dnsRecords } from './addresses'
 import { readArranged } from './arranged'
 import { readBookmarks } from './bookmarks'
@@ -105,11 +106,12 @@ export async function addSpace(
 }
 const REACHED = `select sp.*,
     case when sp.user_id = ?2 then 'owner' else m.role end as role,
-    case when sp.user_id = ?2 then 1 else coalesce(m.admin, 0) end as manages
+    case when sp.user_id = ?2 then 1 else coalesce(m.admin, 0) end as manages,
+    m.seen_at as seen_at
   from spaces sp
   left join space_members m on m.space_id = sp.id and m.email = ?3 and m.item = ''
  where sp.id = ?1 and sp.deleted = 0`
-const GUEST_REACHED = `select sp.*, g.role as role
+const GUEST_REACHED = `select sp.*, g.role as role, g.seen_at as seen_at
   from spaces sp
   join guest_members g on g.space_id = sp.id and g.guest_id = ?2 and g.item = ''
  where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
@@ -160,6 +162,7 @@ export function atLeast(
     if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!allows(space.role, needed)) return context.json({ error: refusal(needed) }, 403)
     context.set('space', space)
+    await spaceSeen(context.env, context.get('who'), space, context.req.raw.cf, now())
     await next()
   }
 }
@@ -173,6 +176,7 @@ export function manages(): MiddlewareHandler<{
     if (!space) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!space.manages) return context.json({ error: ONLY_THOSE_WHO_MANAGE }, 403)
     context.set('space', space)
+    await spaceSeen(context.env, context.get('who'), space, context.req.raw.cf, now())
     await next()
   }
 }
