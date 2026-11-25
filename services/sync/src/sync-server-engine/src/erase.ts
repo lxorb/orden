@@ -71,6 +71,7 @@ export function erased(): readonly (readonly [table: string, sql: string])[] {
     ['space_requests', `delete from space_requests where space_id in (${OWNED}) or email = ?2`],
     ['guest_members', `delete from guest_members where space_id in (${OWNED})`],
     ['once_shared', `delete from once_shared where space_id in (${OWNED})`],
+    ['space_blobs', `delete from space_blobs where space_id in (${OWNED})`],
     ['guests', 'update guests set email = null where email = ?2'],
     ['notes', `delete from notes where space_id in (${OWNED})`],
     ['folders', `delete from folders where space_id in (${OWNED})`],

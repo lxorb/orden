@@ -104,6 +104,8 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'POST', path: /^\/v2\/docs\/(pull|push|keep)$/ },
   { method: 'GET', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
   { method: 'PUT', path: /^\/v2\/files\/[^/]+\/[^/]+$/ },
+  { method: 'PUT', path: /^\/v2\/blobs\/[a-fA-F0-9]+$/ },
+  { method: 'POST', path: /^\/v2\/blobs\/have$/ },
   { method: 'GET', path: /^\/v2\/chats$/ },
   { method: 'POST', path: /^\/v2\/chats$/ },
   { method: 'GET', path: /^\/v2\/chats\/search$/ },

@@ -27,7 +27,8 @@ export async function blobSizes(
                  and (exists (select 1 from notes n where n.space_id = ?4
                                 and (n.paper = b.hash or (n.kind = 'file' and n.hash = b.hash)))
                       or exists (select 1 from spaces s, json_each(s.files) f
-                                  where s.id = ?4 and json_extract(f.value, '$.hash') = b.hash))))
+                                  where s.id = ?4 and json_extract(f.value, '$.hash') = b.hash)
+                      or exists (select 1 from space_blobs u where u.space_id = ?4 and u.hash = b.hash))))
       group by b.hash`,
   )
     .bind(JSON.stringify(wanted), asker ?? '', space.user_id, space.id)

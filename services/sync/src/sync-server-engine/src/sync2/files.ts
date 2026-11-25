@@ -5,14 +5,16 @@ import {
   fits,
   fitsSql,
   laterOf,
+  NO_SUCH_SPACE,
   type Note,
   now,
   OUT_OF_SPACE,
+  type Reached,
   pokeSpace,
   type Variables,
 } from '../../../sync-server/src/api'
 import { atNextSeq, changesBy, placedOn, TAKEN_SEQ } from '../notes'
-import { atLeast, reachedSpace, spaceOf } from '../spaces/space'
+import { allows, atLeast, reachedSpace, refusal, spaceOf } from '../spaces/space'
 import { deviceOf } from './device'
 import { blobSizes, revive } from './ops'
 
@@ -26,6 +28,7 @@ export const NO_SUCH_FILE = 'no such file'
 export const WRONG_BYTES = 'those bytes are not that hash'
 const NOT_A_HASH = 'that is not a hash'
 const TOO_BIG = 'that file is too big'
+const SAY_WHICH_SPACE = 'say which space'
 const DECLARED = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'application/pdf'])
 export const BYTES = 'application/octet-stream'
 function typeOf(header: string | undefined): string {
@@ -113,36 +116,60 @@ export async function sweepMisnamed(env: Env): Promise<number> {
   return gone
 }
 export const v2Blobs = new Hono<App>()
+type Writing = { space: Reached | null; owner: string } | { refused: string; status: 400 | 403 | 404 }
+async function writingTo(env: Env, who: Variables['who'], asked: string | undefined): Promise<Writing> {
+  if (asked === undefined) {
+    return who.kind === 'user' ? { space: null, owner: who.user.id } : { refused: SAY_WHICH_SPACE, status: 400 }
+  }
+  const space = await reachedSpace(env, who, asked)
+  if (!space) return { refused: NO_SUCH_SPACE, status: 404 }
+  if (!allows(space.role, 'write')) return { refused: refusal('write'), status: 403 }
+  return { space, owner: who.kind === 'user' ? who.user.id : space.user_id }
+}
+async function usableIn(env: Env, space: Reached | null, hash: string): Promise<void> {
+  if (!space) return
+  await env.DB.prepare('insert or ignore into space_blobs (space_id, hash, created_at) values (?, ?, ?)')
+    .bind(space.id, hash, now())
+    .run()
+}
 v2Blobs.put('/:hash', async (context) => {
-  const user = context.get('user')
+  const who = context.get('who')
   const hash = context.req.param('hash').toLowerCase()
   if (!HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
   if (Number(context.req.header('content-length') ?? 0) > ONE_REQUEST) {
     return context.json({ error: TOO_BIG }, 413)
   }
-  const { mine, there } = await held(context.env, user.id, hash)
-  if (mine) return context.json({ hash, stored: false })
+  const writing = await writingTo(context.env, who, context.req.query('space'))
+  if ('refused' in writing) return context.json({ error: writing.refused }, writing.status)
+  const { space, owner } = writing
+  const { mine, there } = await held(context.env, owner, hash)
+  if (mine && who.kind === 'user') return context.json({ hash, stored: false })
   const body = await context.req.arrayBuffer()
   if (body.byteLength > ONE_REQUEST) return context.json({ error: TOO_BIG }, 413)
   if ((await hashOfBytes(body)) !== hash || spellsADiagramName(body)) {
     return context.json({ error: WRONG_BYTES }, 400)
   }
-  if (!(await fits(context.env, user.id, body.byteLength))) {
+  if (mine) {
+    await usableIn(context.env, space, hash)
+    return context.json({ hash, stored: false })
+  }
+  if (!(await fits(context.env, owner, body.byteLength))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
   const type = typeOf(context.req.header('content-type'))
   const put = () => context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   const placed = !there || !(await holdsItsName(context.env, hash, body.byteLength))
   if (placed) await put()
-  if (!(await keepBlob(context.env, user.id, hash, body.byteLength, type))) {
+  if (!(await keepBlob(context.env, owner, hash, body.byteLength, type))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
   if (!(await stillThere(context.env, hash))) await put()
+  await usableIn(context.env, space, hash)
   return context.json({ hash, stored: true }, 201)
 })
 const MOST_ASKED = 90
 v2Blobs.post('/have', async (context) => {
-  const user = context.get('user')
+  const who = context.get('who')
   const body: unknown = await context.req.json().catch(() => null)
   const { hashes, space: asked } = (typeof body === 'object' && body !== null ? body : {}) as {
     hashes?: unknown
@@ -156,16 +183,17 @@ v2Blobs.post('/have', async (context) => {
     return context.json({ error: NOT_A_HASH }, 400)
   }
   if (!hashes.length) return context.json({ kept: [] })
-  const space = typeof asked === 'string' ? await reachedSpace(context.env, context.get('who'), asked) : null
+  const space = typeof asked === 'string' ? await reachedSpace(context.env, who, asked) : null
   if (space) {
     return context.json({
-      kept: [...(await blobSizes(context.env, space, user.id, hashes)).keys()],
+      kept: [...(await blobSizes(context.env, space, who.kind === 'user' ? who.user.id : null, hashes)).keys()],
     })
   }
+  if (who.kind !== 'user') return context.json({ error: SAY_WHICH_SPACE }, 400)
   const { results } = await context.env.DB.prepare(
     `select distinct hash from blobs where user_id = ? and hash in (${hashes.map(() => '?').join(', ')})`,
   )
-    .bind(user.id, ...hashes)
+    .bind(who.user.id, ...hashes)
     .all<{ hash: string }>()
   return context.json({ kept: results.map((one) => one.hash) })
 })

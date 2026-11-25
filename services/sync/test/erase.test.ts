@@ -132,6 +132,7 @@ function seed(database: DatabaseSync, who: Person): void {
     who.space,
     `link-${who.id}`,
   )
+  run('insert into space_blobs (space_id, hash, created_at) values (?, ?, 1)', who.space, `blob-${who.id}`)
   run(`insert into guests (id, name, email, created_at) values (?, 'Guest', ?, 1)`, who.guest, who.email)
   run(
     'insert into guest_sessions (token_hash, guest_id, created_at, expires_at) values (?, ?, 1, 9e15)',
