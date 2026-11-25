@@ -136,3 +136,33 @@ describe('the people in a space', () => {
     for (const one of rows()) expect([...one.classList]).toEqual(expect.arrayContaining(['orden-setting', 'setting']))
   })
 })
+describe('when and where a member last came in (#2555)', () => {
+  const DAY = 24 * 60 * 60 * 1000
+  function withAccess() {
+    const store = storeWith()
+    store.who.members = [
+      someone('ada@example.com', { since: Date.UTC(2026, 2, 3), lastSeen: Date.now() - 3 * DAY, place: 'Zurich, CH' }),
+      someone('bob@example.com'),
+    ]
+    return store
+  }
+  test('shows when each member last opened the space, since when they have access and roughly where from', () => {
+    draw({ store: withAccess(), manages: true })
+    const ada = rowOf('ada').querySelector('.seen')?.textContent ?? ''
+    expect(ada).toContain('Opened 3d ago')
+    expect(ada).toContain('Member since')
+    expect(ada).toContain('2026')
+    expect(ada).toContain('Zurich, CH')
+  })
+  test('shows nothing of it where the server said nothing, as it does for anyone but owners and admins', () => {
+    draw({ store: withAccess(), manages: false })
+    expect(rowOf('bob').querySelector('.seen')).toBeNull()
+  })
+  test('tells everyone in the space that owners and admins see it, and says nothing on the sheet about one file', () => {
+    draw({ store: withAccess(), manages: false })
+    expect(target.querySelector('.told')?.textContent).toContain('last opened this space and roughly where from')
+    close?.()
+    draw({ store: storeWith({ id: 'note-1', path: 'Notes/plan.md' }), manages: true })
+    expect(target.querySelector('.told')).toBeNull()
+  })
+})

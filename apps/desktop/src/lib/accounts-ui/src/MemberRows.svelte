@@ -3,8 +3,8 @@
   import { type share as shareStore, whoIs } from '../../sharing/src/api'
   import { account, called } from '../../accounts/src/api'
   import type { Face, Member, MemberRole, Sharing } from '../../accounts/src/api'
-  import { Select } from '../../ui-controls/src/api'
-  import { dur, fade } from '../../platform/src/api'
+  import { agoShort, Select } from '../../ui-controls/src/api'
+  import { dur, fade, localDate } from '../../platform/src/api'
   import { ADMIN, ROLES } from './roles'
 
   const { store, manages, titled = true }: { store: typeof shareStore; manages: boolean; titled?: boolean } = $props()
@@ -22,6 +22,13 @@
   function subtitle(person: Member): (string | null | false)[] {
     if (person.guest) return [person.email, 'Guest']
     return [person.email, person.pending && 'Invited']
+  }
+  function seen(person: Member): (string | null)[] {
+    return [
+      person.lastSeen ? `Opened ${agoShort(person.lastSeen, 'en')}` : null,
+      person.since ? `Member since ${localDate(new Date(person.since), { dateStyle: 'medium' })}` : null,
+      person.place ?? null,
+    ]
   }
   const faceOf = (person: Member | Waiting | Sharing['owner'], named: string): Face => ({
     name: named,
@@ -131,6 +138,9 @@
       <span class="name">
         {name(person)}
         <small><Facts parts={subtitle(person)} /></small>
+        {#if seen(person).some(Boolean)}
+          <small class="seen"><Facts parts={seen(person)} /></small>
+        {/if}
       </span>
       <div>
         <Select
@@ -144,9 +154,17 @@
       </div>
     </div>
   {/each}
+  {#if whole}
+    <p class="told">Owners and admins see when each member last opened this space and roughly where from.</p>
+  {/if}
 {/if}
 
 <style>
+  .told {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
   .name > small {
     display: block;
     font-size: var(--text-xs);

@@ -33,6 +33,9 @@ export interface Member {
   role: GivenRole
   admin?: boolean
   pending: boolean
+  since?: number | null
+  lastSeen?: number | null
+  place?: string | null
 }
 export interface ShareLink {
   url: string
