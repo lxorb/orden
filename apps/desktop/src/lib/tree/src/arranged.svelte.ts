@@ -284,8 +284,8 @@ export class Arranged {
     this.spaces = without(this.spaces, root)
     this.writeAll()
   }
-  adopt(root: string, theirs: unknown, accountId: string): Promise<void> {
-    return arranging().then(({ fold }) => fold(this, root, theirs, accountId))
+  adopt(root: string, theirs: unknown, accountId: string, readOnly = false): Promise<void> {
+    return arranging().then(({ fold }) => fold(this, root, theirs, accountId, readOnly))
   }
   kept(root: string): { folders: Record<string, string[]>; account: string | null; sent: boolean } {
     const held = this.spaces[root]
@@ -375,17 +375,17 @@ export class SpaceSorting {
     this.keepAs(root, mode, this.spaces[root]?.account ?? null, false)
     void this.push(root)
   }
-  adopt(root: string, theirs: unknown, accountId: string) {
+  adopt(root: string, theirs: unknown, accountId: string, readOnly = false) {
     if (theirs === undefined) return
     untrack(() => {
       const account = isSortMode(theirs) ? theirs : FIRST_MODE
       const kept = this.spaces[root]
-      if (kept?.sent === false && kept.account === accountId) {
+      if (!readOnly && kept?.sent === false && kept.account === accountId) {
         if (kept.mode === account) this.keepAs(root, account, accountId, true)
         else void this.push(root)
         return
       }
-      const met = meet(kept, accountId, kept?.mode ?? FIRST_MODE, account, ORDER)
+      const met = meet(kept, accountId, kept?.mode ?? FIRST_MODE, account, ORDER, readOnly)
       if (!met) return
       this.keepAs(root, met.value, accountId, !met.tell)
       if (met.tell) void this.push(root)

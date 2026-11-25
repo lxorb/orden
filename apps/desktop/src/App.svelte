@@ -39,6 +39,7 @@
     PullMark,
   } from './lib/frame/src/api'
   import { Sidebar } from './lib/sidebar/src/api'
+  import { spaceKept } from './lib/spaces/src/api'
   import { loadUpdateNotice, loadWhatsNew, updates } from './lib/updates/src/api'
   import { startup, Stops } from './lib/launch/src/api'
   import { renamed } from './lib/launch/src/renamed.svelte'
@@ -242,19 +243,17 @@
   $effect(() => watchTextSize())
   $effect(() => workspace.onePane())
   $effect(() => {
-    const who = account.user?.id
+    const who = account.user?.id ?? (account.guest && `guest:${account.guest.id}`)
     if (!who) return
-    for (const space of workspace.spaces) {
+    const held = workspace.spaces.flatMap((space) => {
       const id = sync.remoteIdFor(space.root)
       const remote = id === null ? undefined : account.spaces.find((one) => one.id === id)
-      if (!remote) continue
-      workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
-      void workspace.arranged.adopt(space.root, remote.arranged, who)
-      workspace.graphSettings.adopt(space.root, remote.graph, who)
-      workspace.sorting.adopt(space.root, remote.sort, who)
-      workspace.excluded.adopt(space.root, remote.excluded, who)
-      void workspace.archive.adopt(space.root, remote.archived, who)
-    }
+      return remote ? [{ root: space.root, remote }] : []
+    })
+    if (held.length)
+      void spaceKept().then(({ adoptKept }) => {
+        for (const one of held) void adoptKept(one.root, one.remote, who)
+      })
   })
   $effect(() => {
     const [height, panned] = [viewport.height, viewport.panned]

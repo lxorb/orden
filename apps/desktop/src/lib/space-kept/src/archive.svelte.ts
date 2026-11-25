@@ -117,8 +117,8 @@ export class Archive {
     this.spaces = without(this.spaces, root)
     this.write()
   }
-  adopt(root: string, theirs: unknown, accountId: string): Promise<void> {
-    return import('./archive-map').then(({ fold }) => fold(this, root, theirs, accountId))
+  adopt(root: string, theirs: unknown, accountId: string, readOnly = false): Promise<void> {
+    return import('./archive-map').then(({ fold }) => fold(this, root, theirs, accountId, readOnly))
   }
   put(root: string, map: ArchiveMap, account: string | null = null) {
     const held = this.spaces[root]

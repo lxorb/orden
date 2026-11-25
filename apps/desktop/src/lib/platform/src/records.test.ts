@@ -74,6 +74,14 @@ describe("meeting the account's copy", () => {
   test('and is nothing at all when the two already agree', () => {
     expect(meet({ account: 'acc' }, 'acc', ['a'], ['a'], LETTERS)).toBeNull()
   })
+  test("takes the account's copy for a member who may only read, folding nothing in and telling nothing (#2556)", () => {
+    expect(meet({ account: null }, 'acc', ['a', 'b'], ['a'], LETTERS, true)).toEqual({ value: ['a'], tell: false })
+    expect(meet({ account: 'acc', sent: false }, 'acc', ['b'], ['a'], LETTERS, true)).toEqual({
+      value: ['a'],
+      tell: false,
+    })
+    expect(meet({ account: 'acc' }, 'acc', ['a'], ['a'], LETTERS, true)).toBeNull()
+  })
   test('folds while a push has not landed, since the account never heard it', () => {
     expect(meet({ account: 'acc', sent: false }, 'acc', ['b'], ['a'], LETTERS)).toEqual({
       value: ['a', 'b'],

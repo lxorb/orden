@@ -40,10 +40,10 @@ export function sameMap(one: ArchiveMap, other: ArchiveMap): boolean {
   const keys = Object.keys(one)
   return keys.length === Object.keys(other).length && keys.every((key) => one[key] === other[key])
 }
-export function fold(store: Archive, root: string, theirs: unknown, accountId: string) {
+export function fold(store: Archive, root: string, theirs: unknown, accountId: string, readOnly = false) {
   const account = archiveMap(theirs)
   const mine = store.of(root)
-  const met = merged(account, mine, Date.now())
+  const met = readOnly ? account : merged(account, mine, Date.now())
   if (!sameMap(met, mine) || store.account(root) !== accountId) {
     store.put(root, sameMap(met, mine) ? mine : met, accountId)
   }

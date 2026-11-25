@@ -88,10 +88,9 @@ describe('a database while they are off', () => {
       children: [entry('/s/B.base'), entry('/s/Note.md')],
     }
   })
-  test('is in no list of the space’s files that is shown, and is again once they are on', () => {
+  test('is still listed among the space’s files, so every client shows the same tree (#2556)', () => {
     const shown = () => workspace.shownFiles.map((one) => one.path)
-    expect(workspace.files.map((one) => one.path)).toContain('/s/B.base')
-    expect(shown()).toEqual(['/s/Note.md'])
+    expect(shown()).toEqual(['/s/B.base', '/s/Note.md'])
     field().set(true)
     expect(shown()).toEqual(['/s/B.base', '/s/Note.md'])
   })

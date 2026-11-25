@@ -32,8 +32,9 @@ export function meet<T>(
   mine: T,
   theirs: T,
   { fold, same }: Folding<T>,
+  readOnly = false,
 ): { value: T; tell: boolean } | null {
-  const ours = held?.account !== accountId || held.sent === false
+  const ours = !readOnly && (held?.account !== accountId || held.sent === false)
   const value = ours ? fold(theirs, mine) : theirs
   if (held && !ours && same(mine, value)) return null
   return { value, tell: ours && !same(value, theirs) }

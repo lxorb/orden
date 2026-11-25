@@ -12,7 +12,7 @@ export async function push<T>(
   const spaceId = syncStore()?.remoteIdFor(root) ?? null
   const role = spaceId ? account.spaces.find((one) => one.id === spaceId)?.role : undefined
   if (role === 'read') {
-    heard(true)
+    heard(false)
     return
   }
   if (!token || !spaceId) {

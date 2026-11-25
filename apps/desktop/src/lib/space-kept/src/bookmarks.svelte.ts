@@ -294,11 +294,11 @@ export class Bookmarks {
     if (view.length > LONGEST_VIEW) return null
     return { kind: 'graph', path: '', text: words, view }
   }
-  adopt(root: string, theirs: Bookmark[], accountId: string): Bookmark[] | null {
+  adopt(root: string, theirs: Bookmark[], accountId: string, readOnly = false): Bookmark[] | null {
     const said = bookmarkList(theirs)
     const account = this.ids ? located(root, said, this.ids) : said
     const held = this.spaces[root]
-    const met = meet(held, accountId, held?.list ?? [], account, LISTS)
+    const met = meet(held, accountId, held?.list ?? [], account, LISTS, readOnly)
     if (!met) {
       if (held && !sameIds(held.list, account)) {
         this.spaces = { ...this.spaces, [root]: { ...held, list: account } }

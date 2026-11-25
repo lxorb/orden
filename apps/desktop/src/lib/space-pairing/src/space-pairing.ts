@@ -129,6 +129,7 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
     )
   }
   const accountId = account.user?.id ?? null
+  const holding = holder()
   for (const remote of account.spaces) {
     const pair = paired().find((one) => one.spaceId === remote.id)
     if (!pair) continue
@@ -140,8 +141,8 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
       await account.loadSpaces().catch(() => undefined)
     }
     pairing.share(pair.root, remote.role !== 'owner')
-    if (accountId === null || remote.role === 'read') continue
-    const merged = workspace.bookmarks.adopt(root, remote.bookmarks, accountId)
+    if (holding === null) continue
+    const merged = workspace.bookmarks.adopt(root, remote.bookmarks, holding, remote.role === 'read')
     if (merged) {
       const landed = await api.saveBookmarks(token, remote.id, merged).then(
         () => true,

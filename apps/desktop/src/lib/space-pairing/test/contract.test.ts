@@ -16,6 +16,9 @@ const world = vi.hoisted(() => ({
   homes: new Map<string, string>(),
   stuck: false,
   binned: [] as string[],
+  holder: 'u1',
+  adopted: [] as [string, string, boolean][],
+  saved: [] as string[],
 }))
 vi.mock('../../accounts/src/api', () => ({
   account: {
@@ -34,7 +37,10 @@ vi.mock('../../accounts/src/api', () => ({
       return Promise.resolve({ space: { id: `r-${name}` } })
     },
     setSpaceIcon: () => Promise.resolve(),
-    saveBookmarks: () => Promise.resolve(),
+    saveBookmarks: (_token: string, id: string) => {
+      world.saved.push(id)
+      return Promise.resolve()
+    },
   },
 }))
 vi.mock('../../left-spaces/src/api', () => ({
@@ -56,7 +62,7 @@ vi.mock('../../sharing/src/api', () => ({
 }))
 vi.mock('../../protect/src/api', () => ({ pulled: () => Promise.resolve() }))
 vi.mock('../../space-owed/src/api', () => ({
-  holder: () => null,
+  holder: () => world.holder,
   endsOwed: () => new Set(),
   iconOwed: () => null,
   orderSent: () => Promise.resolve(false),
@@ -88,7 +94,13 @@ vi.mock('../../workspace/src/api', () => ({
       return Promise.resolve(`/${name}`)
     },
     applyIcon: () => null,
-    bookmarks: { adopt: () => null, said: () => undefined },
+    bookmarks: {
+      adopt: (root: string, _theirs: unknown, who: string, readOnly = false) => {
+        world.adopted.push([root, who, readOnly])
+        return readOnly ? null : [{ kind: 'note', path: 'A.md', text: '' }]
+      },
+      said: () => undefined,
+    },
     applySpaceOrder: (roots: string[]) => {
       world.order = roots
     },
@@ -118,6 +130,9 @@ beforeEach(() => {
   world.homes = new Map()
   world.stuck = false
   world.binned = []
+  world.holder = 'u1'
+  world.adopted = []
+  world.saved = []
 })
 describe('pairing the spaces on this device with the account s', () => {
   test('brings a space of the account onto the device and pairs it', async () => {
@@ -238,5 +253,20 @@ describe('a space renamed on the account while this device was open', () => {
     expect(world.made).toEqual([])
     expect(world.local.map((one) => one.root)).toEqual(['/Plans'])
     expect([...pairs]).toEqual([['/Plans', { spaceId: 'r1', shared: false }]])
+  })
+})
+describe('the Essentials of a paired space (#2556)', () => {
+  test('come to a guest as they come to an account', async () => {
+    world.holder = 'guest:g1'
+    world.remote = [{ id: 'r1', name: 'Work', role: 'write' }]
+    await pairSpaces('t', engine().pairing)
+    expect(world.adopted).toEqual([['/Work', 'guest:g1', false]])
+    expect(world.saved).toEqual(['r1'])
+  })
+  test("are the account's own for a member who may only read, and nothing of this device is sent", async () => {
+    world.remote = [{ id: 'r1', name: 'Work', role: 'read' }]
+    await pairSpaces('t', engine().pairing)
+    expect(world.adopted).toEqual([['/Work', 'u1', true]])
+    expect(world.saved).toEqual([])
   })
 })

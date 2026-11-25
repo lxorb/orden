@@ -21,7 +21,6 @@ import { keptAway } from '../../away/src/api'
 import {
   blockIds,
   isChatTarget,
-  isBaseTarget,
   isCanvasTarget,
   isPagesTarget,
   isPdfTarget,
@@ -683,11 +682,7 @@ class Workspace {
     return root === undefined ? out : out.filter((one) => !isInstructions(root, one.path))
   })
   readonly notes = $derived(this.files.filter((one) => !isTabFile(one.name)))
-  private readonly unlisted = $derived.by(() => {
-    const bases = basesOn()
-    return (root: string, path: string) =>
-      isInstructions(root, path) || isChatTarget(path) || (!bases && isBaseTarget(path))
-  })
+  private readonly unlisted = (root: string, path: string) => isInstructions(root, path) || isChatTarget(path)
   readonly shownFiles = $derived.by((): Entry[] => {
     const root = this.tree?.path
     return root === undefined ? [] : this.files.filter((one) => !this.unlisted(root, one.path))

@@ -15,10 +15,16 @@ const ORDERS: Folding<Record<string, string[]>> = {
   fold: (theirs, mine) => ({ ...theirs, ...mine }),
   same,
 }
-export async function fold(store: Arranged, root: string, theirs: unknown, accountId: string): Promise<void> {
+export async function fold(
+  store: Arranged,
+  root: string,
+  theirs: unknown,
+  accountId: string,
+  readOnly = false,
+): Promise<void> {
   const account = arrangedMap(theirs)
   const held = store.kept(root)
-  const met = meet(held, accountId, held.folders, account, ORDERS)
+  const met = meet(held, accountId, held.folders, account, ORDERS, readOnly)
   if (!met) return
   store.took(root, met.value, accountId, !met.tell)
   if (met.tell) await send(store, root)

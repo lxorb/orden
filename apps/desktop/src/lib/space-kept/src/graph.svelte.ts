@@ -172,11 +172,11 @@ export class SpaceGraphSettings {
     this.spaces = without(this.spaces, root)
     this.write()
   }
-  adopt(root: string, theirs: unknown, accountId: string) {
+  adopt(root: string, theirs: unknown, accountId: string, readOnly = false) {
     const account = graphSettingsOf(theirs)
     const kept = this.spaces[root]
     const unsent = kept?.sent === false && kept.account === accountId
-    const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, unsent ? UNSENT : SETTINGS)
+    const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, unsent ? UNSENT : SETTINGS, readOnly)
     if (!met) return
     const sent = !met.tell
     if (!kept || !sameGraph(kept.settings, met.value) || kept.account !== accountId || kept.sent !== sent) {

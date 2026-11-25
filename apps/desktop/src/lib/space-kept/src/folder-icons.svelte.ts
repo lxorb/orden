@@ -161,12 +161,12 @@ export class FolderIcons {
     this.spaces = without(this.spaces, root)
     this.write()
   }
-  adopt(root: string, theirs: unknown, theirTints: unknown, accountId: string) {
+  adopt(root: string, theirs: unknown, theirTints: unknown, accountId: string, readOnly = false) {
     const icons = folderIconMap(theirs)
     const held = this.spaces[root]
     const mine = { icons: held?.icons ?? {}, colors: held?.colors ?? {} }
     const colors = theirTints === undefined ? mine.colors : folderIconMap(theirTints, LONGEST_TINT)
-    const met = meet(held, accountId, mine, { icons, colors }, MAPS)
+    const met = meet(held, accountId, mine, { icons, colors }, MAPS, readOnly)
     if (!met) return
     const sent = !met.tell
     if (!held || !MAPS.same(held, met.value) || held.account !== accountId || held.sent !== sent) {

@@ -20,6 +20,7 @@ import { writeFile } from '../../file-writes/src/api'
 import { AGENTS_NAME, joinPath, samePath } from '../../platform/src/api'
 
 export const spaceArchiving = () => import('./space-archive')
+export const spaceKept = () => import('./kept')
 export function settingsSpace(asked: string | null): Space | null {
   const root = asked ?? workspace.activeSpace?.root ?? null
   return root === null ? null : (workspace.spaces.find((one) => samePath(one.root, root)) ?? null)

@@ -144,10 +144,10 @@ export class Excluded {
     this.spaces = without(this.spaces, root)
     this.write()
   }
-  adopt(root: string, theirs: unknown, accountId: string) {
+  adopt(root: string, theirs: unknown, accountId: string, readOnly = false) {
     const account = excludedPaths(theirs)
     const held = this.spaces[root]
-    const met = meet(held, accountId, held?.paths ?? [], account, PATHS)
+    const met = meet(held, accountId, held?.paths ?? [], account, PATHS, readOnly)
     if (!met) return
     const sent = !met.tell
     if (!held || !same(held.paths, met.value) || held.account !== accountId || held.sent !== sent) {
