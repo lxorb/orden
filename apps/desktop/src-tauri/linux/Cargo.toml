@@ -8,7 +8,7 @@
 [workspace]
 members = ["crates/*"]
 default-members = [".", "crates/*"]
-exclude = ["patches/global-hotkey"]
+exclude = ["patches/global-hotkey", "patches/tao"]
 
 [workspace.package]
 edition = "2021"
@@ -290,3 +290,4 @@ strip = true
 [patch.crates-io]
 tauri-runtime-cef = { path = "linux/tauri-runtime-cef" }
 global-hotkey = { path = "patches/global-hotkey" }
+tao = { path = "patches/tao" }
