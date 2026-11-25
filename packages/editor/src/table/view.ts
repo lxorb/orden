@@ -658,7 +658,7 @@ export class TableView {
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
     cell.addEventListener(PASTE_TEXT, (event) => {
-      if (event instanceof CustomEvent && typeof event.detail === 'string') this.typeInCell(event.detail, cell, at)
+      if (event instanceof CustomEvent && typeof event.detail === 'string') this.pasted('', event.detail, cell, at)
     })
     return cell
   }
@@ -796,11 +796,27 @@ export class TableView {
   }
   private pasteInCell(event: ClipboardEvent, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
-    this.typeInCell(event.clipboardData?.getData('text/plain') ?? '', cell, at)
+    const held = event.clipboardData
+    this.pasted(held?.getData('text/html') ?? '', held?.getData('text/plain') ?? '', cell, at)
+  }
+  private pasted(html: string, text: string, cell: HTMLElement, at: CellAddress) {
+    if (this.editor.state.readOnly) return
+    if (!text.includes('\t') && !/<table\b/i.test(html) && !text.includes('|')) {
+      this.typeInCell(text, cell, at)
+      return
+    }
+    void import('./spread')
+      .then(({ gridOf }) => gridOf(html, text))
+      .catch(() => null)
+      .then((grid) => {
+        if (!attached(cell) || this.editor.state.readOnly) return
+        if (grid) this.apply(grid(this.current(), at))
+        else this.typeInCell(text, cell, at)
+      })
   }
   private typeInCell(said: string, cell: HTMLElement, at: CellAddress) {
     if (this.editor.state.readOnly) return
-    const text = said.replace(/\r?\n/g, ' ')
+    const text = said.replace(/[\r\n\t]+/g, ' ')
     if (!text) return
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- no replacement reaches the browser's own undo stack
     if (document.execCommand('insertText', false, text)) return

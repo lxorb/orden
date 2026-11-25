@@ -232,7 +232,7 @@ export function setAlign(model: TableModel, column: number, align: Align): Table
   return { ...model, align: next }
 }
 export function setCell(model: TableModel, row: number, column: number, value: string): TableModel {
-  const clean = value.replace(/\r?\n/g, ' ').replace(/\\?\|/g, '\\|')
+  const clean = value.replace(/[\r\n\t]+/g, ' ').replace(/\\?\|/g, '\\|')
   if (row < 0) {
     const header = [...model.header]
     header[column] = clean
