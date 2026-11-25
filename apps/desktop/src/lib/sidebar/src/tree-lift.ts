@@ -1,6 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { tick } from 'svelte'
-import { aimFor, dropTarget, entryAt, shownNames } from '../../tree/src/api'
+import { dropTarget, entryAt, shownNames, targetFor } from '../../tree/src/api'
 import { dur, folderOf, nameOf } from '../../platform/src/api'
 import { spaceDropping } from '../../tab-strip/src/api'
 import { carryThumb } from '../../ui-kit/src/api'
@@ -23,6 +23,14 @@ export interface Held {
   edge: (at: number | null) => void
   box: () => HTMLElement | null
   takes: (entry: Entry, how?: 'move' | 'copy', into?: string) => boolean
+}
+export const aimFor = (path: string, isFolder: boolean, along: number, opened: boolean): string =>
+  along < EDGE || (along > 1 - EDGE && !opened) ? folderOf(path) : targetFor(path, isFolder)
+export function aimed(event: DragEvent, entry: Entry): string {
+  const row = event.currentTarget
+  const box = row instanceof HTMLElement ? row.getBoundingClientRect() : null
+  const along = box?.height ? (event.clientY - box.top) / box.height : 0.5
+  return aimFor(entry.path, entry.is_dir, along, entry.is_dir && workspace.isExpanded(entry.path))
 }
 export function bandOf(y: number, top: number, height: number): Band {
   if (height <= 0) return 'on'

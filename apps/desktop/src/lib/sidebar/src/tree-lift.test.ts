@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { bandOf, slides } from './tree-lift'
+import { aimFor, bandOf, slides } from './tree-lift'
 
 const TOP = 100
 const TALL = 28
@@ -61,5 +61,20 @@ describe('how far each row has to slide', () => {
       ['d.md', 28],
     ])
     expect([...slides(was, now)]).toEqual([['b.md', 28]])
+  })
+})
+describe('a drop on a row of the tree (#2561)', () => {
+  test('lands beside the row at its top or bottom quarter, so a row in the root takes things into the root', () => {
+    expect(aimFor('/s/b.md', false, 0.1, false)).toBe('/s')
+    expect(aimFor('/s/b.md', false, 0.9, false)).toBe('/s')
+    expect(aimFor('/s/Trip', true, 0.1, false)).toBe('/s')
+    expect(aimFor('/s/Trip', true, 0.9, false)).toBe('/s')
+    expect(aimFor('/s/Trip/plan.md', false, 0.9, false)).toBe('/s/Trip')
+  })
+  test('lands in the row at its middle, and in an open folder at its bottom quarter, just above its first child', () => {
+    expect(aimFor('/s/b.md', false, 0.5, false)).toBe('/s/b')
+    expect(aimFor('/s/Trip', true, 0.5, false)).toBe('/s/Trip')
+    expect(aimFor('/s/Trip', true, 0.9, true)).toBe('/s/Trip')
+    expect(aimFor('/s/Trip', true, 0.1, true)).toBe('/s')
   })
 })

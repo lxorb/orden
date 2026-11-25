@@ -28,7 +28,6 @@
   import {
     landsIn,
     dropTarget,
-    aimFor,
     targetFor,
     folderFor,
     folderNote,
@@ -374,6 +373,7 @@
     const paths = workspace.dragPayload(path)
     carry(event.dataTransfer, paths)
     carrying = paths
+    void liftCode()
     workspace.panes.dragged({ tabId: null }, endDrag)
     void spaceDropping().then((drop) => drop.followTreeDrag(paths))
     webPages().carryIn(paths)
@@ -457,12 +457,6 @@
     if (paths.includes(entry.path)) return false
     return paths.length === 0 || landsIn(paths, into, how)
   }
-  function aimed(event: DragEvent, entry: Entry): string {
-    const row = event.currentTarget
-    const box = row instanceof HTMLElement ? row.getBoundingClientRect() : null
-    const along = box?.height ? (event.clientY - box.top) / box.height : 0.5
-    return aimFor(entry.path, entry.is_dir, along, entry.is_dir && workspace.isExpanded(entry.path))
-  }
   function nesting(entry: Entry): boolean {
     return dropTarget.lit(entry.is_dir ? entry.path : folderFor(entry.path))
   }
@@ -478,7 +472,7 @@
       lift.dwellOver(null, false)
       return
     }
-    const into = aimed(event, entry)
+    const into = lift?.aimed(event, entry) ?? targetFor(entry.path, entry.is_dir)
     if (!takes(entry, how, into)) return
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = how
@@ -499,7 +493,7 @@
       carrying = []
       return
     }
-    dropOnList(event, aimed(event, entry))
+    dropOnList(event, lift?.aimed(event, entry) ?? targetFor(entry.path, entry.is_dir))
   }
   function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
     event.preventDefault()

@@ -5,8 +5,6 @@ export function targetFor(path: string, isFolder: boolean): string {
   if (isFolder) return path
   return isMarkdownPath(path) ? folderFor(path) : folderOf(path)
 }
-export const aimFor = (path: string, isFolder: boolean, along: number, opened: boolean): string =>
-  along < 0.25 || (along > 0.75 && !opened) ? folderOf(path) : targetFor(path, isFolder)
 class DropTarget {
   folder = $state<string | null>(null)
   lit(folder: string): boolean {
