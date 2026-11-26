@@ -4,7 +4,7 @@ import { freePath } from '@orden/markdown/paths'
 import { stripFrontMatter, writeFrontMatter } from '@orden/markdown/front-matter'
 import { asWords } from '@orden/markdown/words'
 import type { AgentAnswer } from '../../automation/src/api'
-import { attachmentFolder, modes, choices } from '../../modes/src/api'
+import { assetFolder, choices } from '../../modes/src/api'
 import { paperInches } from '../../files-out/src/api'
 import { notePath, relativeTo, invoke, decoded } from '../../platform/src/api'
 import { type Entry, workspace } from '../../workspace/src/api'
@@ -211,7 +211,7 @@ async function attachment(place: Place, notePath: string, file: Kept): Promise<s
   const bytes = await decoded(`data:application/octet-stream;base64,${file.base64}`)
   return await saveAsset(
     notePath,
-    attachmentFolder(modes.attachments, notePath, place.space.root),
+    assetFolder(notePath, place.space.root),
     `page-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.${file.extension}`,
     bytes,
   )

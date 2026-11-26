@@ -56,6 +56,17 @@ describe('a picture stored beside a note', () => {
     expect(links.rebased(`![](${src ?? ''})\n`, '/s/Work/Plan.md', '/s/Plan.md')).toBe(`![](Work/${src ?? ''})\n`)
   })
 })
+describe('a file pasted or dropped into a note', () => {
+  test('is kept in the space once, under the start of its hash, whatever it was called', async () => {
+    api.BASE = ''
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/s' }]
+    const bytes = new Uint8Array([7, 8, 9])
+    const first = await storeAttachment(new File([bytes], 'Quarterly report.pdf'), '/s/Work/Plan.md')
+    const again = await storeAttachment(new File([bytes], 'copy of it.PDF'), '/s/Plan.md')
+    expect(first).toMatch(/^assets\/[0-9a-f]{16}\.pdf$/)
+    expect(again).toBe(first)
+  })
+})
 describe('a file stored beside a note', () => {
   test('is told to the write hearing at its whole path, in the note folder or the space folder', async () => {
     api.BASE = ''

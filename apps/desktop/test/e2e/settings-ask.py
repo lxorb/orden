@@ -38,11 +38,11 @@ class Model(http.server.BaseHTTPRequestHandler):
         told = next((one["content"] for one in body.get("messages", []) if one.get("role") == "system"), "")
         Model.told.append(told)
         typewriter = idOf(told, "Typewriter mode")
-        attachments = idOf(told, "Attachments")
+        links = idOf(told, "New links")
         words = json.dumps({
             "say": "Typewriter mode is under Editor.",
             "show": [typewriter],
-            "change": [{"id": typewriter, "to": True}, {"id": attachments, "to": "note"}],
+            "change": [{"id": typewriter, "to": True}, {"id": links, "to": "shortest"}],
         })
         if body.get("stream"):
             self.send_response(200)
@@ -66,7 +66,7 @@ async (base) => {
 """
 SEARCH = '[aria-label=Settings] nav .search input'
 ASK = ".orden-setting.setting.ask"
-HELD = "() => ({ typewriter: window.ordenApp.modes.typewriter, attachments: window.ordenApp.modes.attachments })"
+HELD = "() => ({ typewriter: window.ordenApp.modes.typewriter, links: window.ordenApp.modes.linkFormat })"
 def waited(page: Page, expression: str, what: str, patience: float = 20) -> bool:
     return DRIVE.waited(page, expression, what, patience)
 def drive(browser: Browser, scheme: str) -> None:
@@ -80,7 +80,7 @@ def drive(browser: Browser, scheme: str) -> None:
         page.context.close()
         return
     tag = f"{scheme}/"
-    question = "Where is typewriter mode? Turn it on, and save attachments next to the note"
+    question = "Where is typewriter mode? Turn it on, and write new links as short Markdown links"
     page.locator(SEARCH).click()
     page.keyboard.type(question)
     if not waited(page, f"document.querySelector('{ASK}')", "the Ask AI row under the results"):
@@ -103,7 +103,7 @@ def drive(browser: Browser, scheme: str) -> None:
         page.context.close()
         return
     told = Model.told[-1] if Model.told else ""
-    if "Typewriter mode | switch" not in told or "Attachments | choice" not in told:
+    if "Typewriter mode | switch" not in told or "New links | choice" not in told:
         wrong("the agent was not told the settings it may change")
     said = page.locator(".asker .said").inner_text()
     if "Typewriter mode is under Editor." not in said:
@@ -120,9 +120,9 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(".asker .change", has_text="Typewriter mode").locator("button", has_text="Change").click()
     if not waited(page, f"({HELD})().typewriter === {json.dumps(not before['typewriter'])}", "Typewriter mode to change"):
         wrong("confirming the change did not make it")
-    page.locator(".asker .change", has_text="Attachments").locator("button", has_text="Skip").click()
+    page.locator(".asker .change", has_text="New links").locator("button", has_text="Skip").click()
     page.wait_for_timeout(300)
-    if page.evaluate(HELD)["attachments"] != before["attachments"]:
+    if page.evaluate(HELD)["links"] != before["links"]:
         wrong("a skipped change was made anyway")
     else:
         say("confirmed one          -> made; the skipped one is not")

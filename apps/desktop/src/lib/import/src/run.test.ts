@@ -183,7 +183,6 @@ describe('an import', () => {
       hardBreaks: modes.hardBreaks,
       quietMarks: modes.quietMarks,
       linkFormat: modes.linkFormat,
-      attachments: modes.attachments,
       preset: shortcuts.preset,
       linkWriting: linkWriting(),
     })

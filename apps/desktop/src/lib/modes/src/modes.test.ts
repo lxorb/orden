@@ -59,6 +59,7 @@ const api = vi.hoisted(() => {
   }
 })
 interface Held {
+  conflicts?: string
   attachments?: string
   vim?: boolean
   mobileSeen?: boolean
@@ -123,7 +124,7 @@ test.each([
   ['silent', false, () => modes.toggleSilent(), true],
   ['canvasTurns', true, () => modes.setCanvasTurns(false), false],
   ['canvasTurnSnaps', true, () => modes.setCanvasTurnSnaps(false), false],
-  ['attachments', 'space', () => modes.setAttachments('named'), 'named'],
+  ['conflicts', 'both', () => modes.setConflicts('newest'), 'newest'],
 ] as const)('%s starts as %j and keeps a change across a restart', async (key, start, change, to) => {
   expect(modes[key]).toBe(start)
   change()
@@ -264,7 +265,7 @@ describe('modal editing', () => {
       modes.toggleFocus()
       modes.toggleTypewriter()
       modes.toggleOpensInSource()
-      modes.setAttachments('named')
+      modes.setConflicts('newest')
       const store = await restarted()
       expect(store.vim).toBe(false)
     })
@@ -455,10 +456,10 @@ describe('taking over what the account holds', () => {
   })
   test('keeps a change the account never heard across a restart, and sends it before reading', async () => {
     const sent: Held[] = []
-    let server: Held = { attachments: 'named' }
+    let server: Held = { conflicts: 'newest' }
     const accounts = await import('../../accounts/src/api')
     accounts.account.token = 'token'
-    modes.setAttachments('note')
+    modes.setConflicts('ask')
     const store = await restarted()
     ;(await import('../../accounts/src/api')).account.token = 'token'
     api.saveSettings = async (_token: string, patch: Held) => {
@@ -468,15 +469,15 @@ describe('taking over what the account holds', () => {
     }
     api.settings = async () => ({ settings: server })
     await store.adopt('token')
-    expect(sent).toEqual([{ attachments: 'note' }])
-    expect(store.attachments).toBe('note')
+    expect(sent).toEqual([{ conflicts: 'ask' }])
+    expect(store.conflicts).toBe('ask')
     sent.length = 0
     await (await restarted()).adopt('token')
     expect(sent).toEqual([])
   })
   test('keeps what is owed to an account through a launch that does not know the account yet', async () => {
     const sent: Held[] = []
-    let server: Held = { vim: false, attachments: 'named' }
+    let server: Held = { vim: false, conflicts: 'newest' }
     const signedIn = async (id: string | null) => {
       const { account } = await import('../../accounts/src/api')
       account.token = 'token'
@@ -490,7 +491,7 @@ describe('taking over what the account holds', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     const store = await restarted()
     await signedIn(null)
-    store.setAttachments('note')
+    store.setConflicts('ask')
     await signedIn('u1')
     api.saveSettings = async (_token: string, patch: Held) => {
       sent.push(patch)
@@ -499,9 +500,9 @@ describe('taking over what the account holds', () => {
     }
     api.settings = async () => ({ settings: server })
     await store.adopt('token')
-    expect(sent).toEqual([{ vim: true, attachments: 'note' }])
+    expect(sent).toEqual([{ vim: true, conflicts: 'ask' }])
     expect(store.vim).toBe(true)
-    expect(store.attachments).toBe('note')
+    expect(store.conflicts).toBe('ask')
     const { account } = await import('../../accounts/src/api')
     account.token = null
     account.user = null
@@ -510,29 +511,29 @@ describe('taking over what the account holds', () => {
     const sent: Held[] = []
     const { account } = await import('../../accounts/src/api')
     await account.restore()
-    modes.setAttachments('note')
+    modes.setConflicts('ask')
     const store = await restarted()
     api.saveSettings = async (_token: string, patch: Held) => {
       sent.push(patch)
       return { settings: {} }
     }
-    api.settings = async () => ({ settings: { attachments: 'named' } })
+    api.settings = async () => ({ settings: { conflicts: 'newest' } })
     await store.adopt('token')
     expect(sent).toEqual([])
-    expect(store.attachments).toBe('named')
+    expect(store.conflicts).toBe('newest')
   })
   test('lets go of a change the account turned down, and hears the account again', async () => {
     const { ApiError } = await import('../../accounts/src/client')
     let server: Held = { vim: false }
     api.saveSettings = async (_token: string, patch: Held) => {
-      if (patch.attachments === 'note') throw new ApiError(400, 'refused')
+      if (patch.conflicts === 'ask') throw new ApiError(400, 'refused')
       server = { ...server, ...patch }
       return { settings: server }
     }
     api.settings = async () => ({ settings: server })
     const { account } = await import('../../accounts/src/api')
     account.token = 'token'
-    modes.setAttachments('note')
+    modes.setConflicts('ask')
     await modes.adopt('token')
     account.token = null
     server = { ...server, vim: true }
@@ -544,8 +545,8 @@ describe('taking over what the account holds', () => {
     [{ quietMarks: true }, 'quietMarks', true],
     [{ silent: true }, 'silent', true],
     [{ canvasTurns: true }, 'canvasTurns', true],
-    [{ attachments: 'named' }, 'attachments', 'named'],
-    [{ attachments: 'vault' }, 'attachments', 'space'],
+    [{ conflicts: 'newest' }, 'conflicts', 'newest'],
+    [{ conflicts: 'vault' }, 'conflicts', 'both'],
     [{ undatedInToday: false, silent: true }, 'silent', true],
   ] as [Held, string, unknown][])('takes %j from the account as %s %j', async (settings, key, value) => {
     api.settings = async () => ({ settings })
@@ -564,7 +565,7 @@ describe('taking over what the account holds', () => {
     expect(removed).toEqual(['token'])
   })
   test('says nothing about modal editing unless the account does', async () => {
-    for (const settings of [{}, { silent: true }, { attachments: 'note' }] as Held[]) {
+    for (const settings of [{}, { silent: true }, { conflicts: 'ask' }] as Held[]) {
       const store = await restarted()
       api.settings = async () => ({ settings })
       await store.adopt('token')
@@ -586,13 +587,13 @@ describe('taking over what the account holds', () => {
     expect(told.calls).toContainEqual({ mode: 'vim', on: true })
   })
   test('leaves a folder chosen while the answer was in the air', async () => {
-    const { release, settingsCall } = heldAnswer({ attachments: 'named' })
+    const { release, settingsCall } = heldAnswer({ conflicts: 'newest' })
     api.settings = settingsCall
     const adopted = modes.adopt('token')
-    modes.setAttachments('note')
+    modes.setConflicts('ask')
     release()
     await adopted
-    expect(modes.attachments).toBe('note')
+    expect(modes.conflicts).toBe('ask')
   })
   test('carries up what was decided before the session came back', async () => {
     const patches = sending()
@@ -714,12 +715,15 @@ describe('taking over what the account holds', () => {
     })
   })
 })
-describe('where a pasted picture goes', () => {
-  test('takes only one of the three names', async () => {
-    modes.setAttachments('sideways')
-    expect(modes.attachments).toBe('space')
-    localStorage.setItem('orden:modes', JSON.stringify({ attachments: 'sideways' }))
-    expect((await restarted()).attachments).toBe('space')
+describe('what a picture or file pasted into a note was once set to', () => {
+  test('is read from an older version and let go of: there is no such setting', async () => {
+    localStorage.setItem('orden:modes', JSON.stringify({ attachments: 'note', vim: true }))
+    const store = await restarted()
+    expect('attachments' in store).toBe(false)
+    expect(store.vim).toBe(true)
+    api.settings = async () => ({ settings: { attachments: 'named' } })
+    await store.adopt('token')
+    expect('attachments' in store).toBe(false)
   })
 })
 describe('how far back a bulk restore offers to go', () => {
@@ -931,16 +935,16 @@ describe('another account in the same window (#2344)', () => {
     modes.apply(surface())
     await signedIn('alice')
     modes.setVimKeys(true)
-    modes.setAttachments('named')
+    modes.setConflicts('newest')
     await modes.adopt('alice')
-    expect(server.alice).toMatchObject({ vim: true, attachments: 'named' })
+    expect(server.alice).toMatchObject({ vim: true, conflicts: 'newest' })
     told.calls = []
     await signedIn('bob')
     expect(modes.vim).toBe(false)
-    expect(modes.attachments).toBe('space')
+    expect(modes.conflicts).toBe('both')
     expect(modes.silent).toBe(true)
     expect(told.calls).toContainEqual({ mode: 'vim', on: false })
-    expect(saved()).toMatchObject({ vim: false, attachments: 'space', silent: true })
+    expect(saved()).toMatchObject({ vim: false, conflicts: 'both', silent: true })
     modes.setVimKeys(true)
     await modes.adopt('bob')
     line.offline = true
@@ -950,7 +954,7 @@ describe('another account in the same window (#2344)', () => {
     line.offline = false
     await signedIn('alice')
     expect(modes.vim).toBe(true)
-    expect(modes.attachments).toBe('named')
+    expect(modes.conflicts).toBe('newest')
     expect(modes.silent).toBe(false)
     done()
   })

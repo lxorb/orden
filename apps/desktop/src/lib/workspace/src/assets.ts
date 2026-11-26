@@ -1,5 +1,5 @@
 import { api, BASE, account } from '../../accounts/src/api'
-import { attachmentFolder, modes } from '../../modes/src/api'
+import { assetFolder } from '../../modes/src/api'
 import { sha256, spaceRelative } from '../../platform/src/api'
 import { saveAsset } from '../../file-writes/src/api'
 import { links } from '../../link-index/src/api'
@@ -35,14 +35,16 @@ const MOST_BYTES = 24 * 1024 * 1024
 export async function storeAttachment(file: File, notePath: string | null): Promise<string | null> {
   if (!notePath) return null
   if (file.size > MOST_BYTES) throw new Error('That file is larger than a note can keep.')
-  const written = await storeBeside(await file.arrayBuffer(), notePath, file.name)
+  const bytes = await file.arrayBuffer()
+  const name = `${(await sha256(bytes)).slice(0, 16)}.${extensionFor(file.type, file.name)}`
+  const written = await storeBeside(bytes, notePath, name)
   if (!written) return null
   void workspace.loadTree()
   return written
 }
 export async function storeBeside(bytes: ArrayBuffer, notePath: string, name: string): Promise<string | null> {
   const root = workspace.rootHolding(notePath)
-  const folder = attachmentFolder(modes.attachments, notePath, root)
+  const folder = assetFolder(notePath, root)
   const written = await saveAsset(notePath, folder, name, new Uint8Array(bytes)).catch(() => null)
   const relative = written === null || root === null ? null : spaceRelative(root, notePath, written)
   if (root !== null && relative) links.fileWritten(root, relative)
