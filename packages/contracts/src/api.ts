@@ -274,8 +274,6 @@ export type {
 } from './previews'
 export type { TerminalLinesPort, TerminalPorts, TerminalShell } from './terminal'
 export type {
-  EngineTaken,
-  OfferedEngine,
   PressedKey,
   SiteIcon,
   SiteIconsHeld,

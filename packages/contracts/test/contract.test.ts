@@ -373,7 +373,6 @@ describe('ports', () => {
     await expect(none.clip('t', true)).resolves.toBeNull()
     await expect(none.letGo()).resolves.toBeUndefined()
     await expect(none.bringHistory([{ url: 'https://a.example/' }])).resolves.toBeUndefined()
-    await expect(none.takeEngine({ id: 'bing' })).resolves.toBe('same')
     const page = {
       url: 'https://a.example/',
       title: 'A',
