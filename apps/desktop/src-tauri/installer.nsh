@@ -120,11 +120,22 @@ FunctionEnd
   orden_retarget_${ID}_done:
 !macroend
 
+!macro ORDEN_CLAIM_SHORTCUT LNK ID
+  IfFileExists "${LNK}" 0 orden_claim_${ID}_done
+  !insertmacro IsShortcutTarget "${LNK}" "$INSTDIR\${MAINBINARYNAME}.exe"
+  Pop $0
+  StrCmp $0 1 0 orden_claim_${ID}_done
+    !insertmacro SetLnkAppUserModelId "${LNK}"
+  orden_claim_${ID}_done:
+!macroend
+
 !define ORDEN_PINNED "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
 
 !macro ORDEN_RETARGET_SHORTCUTS
   !insertmacro ORDEN_RETARGET_SHORTCUT "$SMPROGRAMS\${PRODUCTNAME}.lnk" start
   !insertmacro ORDEN_RETARGET_SHORTCUT "$DESKTOP\${PRODUCTNAME}.lnk" desktop
+  !insertmacro ORDEN_CLAIM_SHORTCUT "$SMPROGRAMS\${PRODUCTNAME}.lnk" start
+  !insertmacro ORDEN_CLAIM_SHORTCUT "$DESKTOP\${PRODUCTNAME}.lnk" desktop
   FindFirst $R4 $R5 "${ORDEN_PINNED}\*.lnk"
   orden_pins_next:
     StrCmp $R5 "" orden_pins_done

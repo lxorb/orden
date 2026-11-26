@@ -21,7 +21,7 @@ function Running {
 function Left([int]$seconds) {
   $until = (Get-Date).AddSeconds($seconds)
   do {
-    $left = Running
+    $left = @(Running)
     if ($left.Count -eq 0) { return @() }
     Start-Sleep -Milliseconds 250
   } while ((Get-Date) -lt $until)
@@ -35,7 +35,7 @@ function Say($found) {
   }
 }
 
-$found = Running
+$found = @(Running)
 if (-not $Close) {
   Say $found
   exit $(if ($found.Count -gt 0) { 10 } else { 0 })
@@ -45,8 +45,8 @@ $ids = @($found | ForEach-Object { $_.ProcessId })
 foreach ($one in @($found | Where-Object { $ids -notcontains $_.ParentProcessId })) {
   & taskkill.exe /PID $one.ProcessId 2>&1 | Out-Null
 }
-$left = Left $Patience
+$left = @(Left $Patience)
 foreach ($one in $left) { Stop-Process -Id $one.ProcessId -Force }
-$left = Left 10
+$left = @(Left 10)
 Say $left
 exit $(if ($left.Count -gt 0) { 11 } else { 0 })
