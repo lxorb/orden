@@ -1,5 +1,6 @@
 #!/bin/bash
 set -u
+. "$(dirname "$0")/stop-app.sh"
 
 app="$1"
 identifier="so.orden.Orden.probe.mac-window"
@@ -22,8 +23,7 @@ up() {
 quit_app() {
   osascript -e "quit app id \"$identifier\"" >/dev/null 2>&1 || true
   for _ in $(seq 20); do running || return 0; sleep 1; done
-  pkill -f "$app/Contents/MacOS/" || true
-  sleep 2
+  stop_app "$app/Contents/MacOS/"
 }
 
 where='(async () => {

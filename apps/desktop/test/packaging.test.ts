@@ -424,6 +424,26 @@ describe('what a workflow is allowed to fetch', () => {
     }
   })
 })
+describe('a check that stops the app', () => {
+  test('waits until it is gone before its folders go, in every workflow and script', () => {
+    const places = [
+      ...readdirSync(join(HERE, '.github', 'workflows'))
+        .filter((name) => name.endsWith('.yml'))
+        .map((name) => join('.github', 'workflows', name)),
+      ...readdirSync(join(HERE, 'scripts'))
+        .filter((name) => name.endsWith('.sh') && name !== 'stop-app.sh')
+        .map((name) => join('scripts', name)),
+    ]
+    const bare = places.flatMap((place) =>
+      repo(place)
+        .split(/\r?\n/)
+        .filter((line) => /\bpkill\b/.test(line))
+        .map((line) => `${place}: ${line.trim()}`),
+    )
+    expect(bare).toEqual([])
+    expect(repo('scripts', 'stop-app.sh')).toMatch(/pgrep -f "\$1" >\/dev\/null \|\| return 0/)
+  })
+})
 describe('a check that cannot hang', () => {
   const workflow = repo('.github', 'workflows', 'check.yml')
   const jobs = workflow

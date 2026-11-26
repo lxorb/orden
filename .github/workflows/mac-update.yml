@@ -14,6 +14,7 @@ on:
       - apps/desktop/src-tauri/crates/system/src/app_place.rs
       - scripts/mac-move-check.sh
       - scripts/mac-window-check.sh
+      - scripts/stop-app.sh
       - apps/desktop/src-tauri/crates/placement/**
 
 concurrency:
