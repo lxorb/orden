@@ -10,11 +10,11 @@ const PIN = join(APP, 'opencode.json')
 const LICENSES = 'licenses/opencode.txt'
 const REGISTRY = 'https://registry.npmjs.org'
 const PLATFORMS = {
-  'x86_64-unknown-linux-gnu': 'linux-x64',
+  'x86_64-unknown-linux-gnu': 'linux-x64-baseline',
   'aarch64-unknown-linux-gnu': 'linux-arm64',
   'aarch64-apple-darwin': 'darwin-arm64',
-  'x86_64-apple-darwin': 'darwin-x64',
-  'x86_64-pc-windows-msvc': 'windows-x64',
+  'x86_64-apple-darwin': 'darwin-x64-baseline',
+  'x86_64-pc-windows-msvc': 'windows-x64-baseline',
   'aarch64-pc-windows-msvc': 'windows-arm64',
 }
 const UPSTREAM = {

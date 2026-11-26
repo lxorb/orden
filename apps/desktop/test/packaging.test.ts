@@ -967,15 +967,15 @@ describe('the OpenCode every desktop installer carries', () => {
     expect(ran.status, ran.stderr).toBe(0)
     return JSON.parse(ran.stdout) as { bundle: Record<string, unknown> }
   }
-  test('is one pinned version, checked by its sha512 on all six platforms', () => {
+  test('is one pinned version, checked by its sha512 on all six platforms, the x64 build for CPUs without AVX2', () => {
     expect(pin.version).toMatch(/^\d+\.\d+\.\d+$/)
     expect(Object.keys(pin.sha512).sort()).toEqual([
       'darwin-arm64',
-      'darwin-x64',
+      'darwin-x64-baseline',
       'linux-arm64',
-      'linux-x64',
+      'linux-x64-baseline',
       'windows-arm64',
-      'windows-x64',
+      'windows-x64-baseline',
     ])
     for (const [platform, digest] of Object.entries(pin.sha512))
       expect(digest, platform).toMatch(/^[A-Za-z0-9+/]{86}==$/)
