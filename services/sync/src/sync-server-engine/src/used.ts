@@ -1,7 +1,18 @@
-import { type Env, FRONT_REV, hooks, now, picturesOf, picturesOfVersion, versionKey } from '../../sync-server/src/api'
+import {
+  type Env,
+  FRONT_REV,
+  hashNamed,
+  hooks,
+  now,
+  picturesOf,
+  picturesOfVersion,
+  pokeNow,
+  versionKey,
+} from '../../sync-server/src/api'
 import { noteKey } from './notes'
 import { readSpaceFiles } from './spaces/files'
 import { blobKey } from './sync2/files'
+import { deleteById } from './sync2/ops'
 
 const LIVE = '(sp.deleted = 0 or sp.deleted_at is not null)'
 export async function usedElsewhere(
@@ -23,6 +34,7 @@ export async function usedElsewhere(
        from notes n join spaces sp on sp.id = n.space_id
       where n.kind = 'file' and n.hash in (select value from json_each(?2))
         and (?3 or sp.user_id <> ?1) and ${LIVE}
+        and not (n.deleted = 0 and sp.user_id = ?1 and ${hashNamed('n')})
      union
      select sp.user_id as owner, n.paper as hash
        from notes n join spaces sp on sp.id = n.space_id
@@ -33,8 +45,10 @@ export async function usedElsewhere(
        from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
       where p.hash in (select value from json_each(?2))
         and (?3 or sp.user_id <> ?1) and ${LIVE}
-        and exists (select 1 from blobs b
-                     where b.hash = p.hash and b.user_id = ?1 and b.type like 'image/%')
+        and exists (select 1 from blobs b where b.hash = p.hash and b.user_id = ?1
+                     and (b.type like 'image/%'
+                          or exists (select 1 from notes a where a.space_id = n.space_id and a.hash = p.hash
+                                       and ${hashNamed('a')})))
      union
      select sp.user_id as owner, f.hash as hash
        from chat_files f join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
@@ -172,7 +186,7 @@ async function versionShows(env: Env, userId: string, hash: string, done: Readin
   const found = await env.DB.prepare(
     `select v.pictures is null as unread from note_versions v join notes n on n.id = v.note_id
        join spaces sp on sp.id = n.space_id
-      where (v.pictures is null or instr(v.pictures, ?2) > 0) and ${LIVE} and ${ITS_SPACES}
+      where (v.pictures is null or instr(v.pictures, substr(?2, 1, 16)) > 0) and ${LIVE} and ${ITS_SPACES}
       limit 1`,
   )
     .bind(userId, hash)
@@ -297,7 +311,7 @@ export async function letGo(
   )
     .bind(hash, userId)
     .first<{ email: string; type: string }>()
-  const picture = mine?.type.startsWith('image/') ?? false
+  const picture = (mine?.type.startsWith('image/') ?? false) || (await namedAsAsset(env, hash))
   if (own) {
     const otherwise = await ownOtherwise(env, userId, hash, picture, done)
     if (otherwise === 'used') return true
@@ -307,6 +321,7 @@ export async function letGo(
     const user = { id: userId, email: mine.email }
     if (!(await unreadUses(env, user, new Set([hash]), owed, false, done))) return false
   }
+  if (await freedAssets(env, userId, hash)) return false
   await env.DB.batch([
     ...handedTo(env, userId, owed, now()),
     env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
@@ -314,4 +329,25 @@ export async function letGo(
   const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1').bind(hash).first()
   if (!others) await env.NOTES.delete(blobKey(hash))
   return true
+}
+const ASSETS_FREED = 'server:assets'
+async function namedAsAsset(env: Env, hash: string): Promise<boolean> {
+  const row = await env.DB.prepare(`select 1 as one from notes n where n.hash = ?1 and ${hashNamed('n')} limit 1`)
+    .bind(hash)
+    .first()
+  return !!row
+}
+async function freedAssets(env: Env, userId: string, hash: string): Promise<boolean> {
+  const { results } = await env.DB.prepare(
+    `select n.id, n.space_id from notes n join spaces sp on sp.id = n.space_id
+      where n.hash = ?1 and n.deleted = 0 and sp.user_id = ?2 and sp.deleted = 0 and ${hashNamed('n')}`,
+  )
+    .bind(hash, userId)
+    .all<{ id: string; space_id: string }>()
+  for (const one of results) {
+    await deleteById(env, one.space_id, ASSETS_FREED, one.id)
+    const row = await env.DB.prepare('select seq from notes where id = ?').bind(one.id).first<{ seq: number }>()
+    if (row) await pokeNow(env, one.space_id, row.seq, ASSETS_FREED)
+  }
+  return results.length > 0
 }

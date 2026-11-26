@@ -170,7 +170,7 @@ function titleIn(path: string, front: NoteFront): string {
 export function titleFrom(path: string, source: string): string {
   return titleIn(path, frontOf(source) ?? {})
 }
-export const FRONT_REV = 2
+export const FRONT_REV = 3
 export function writeFront(source: string): string {
   return JSON.stringify(frontOf(source) ?? {})
 }

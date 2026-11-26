@@ -1,5 +1,5 @@
-import { noteKey } from '../notes'
-import { type Env, FRONT_REV, keepPictures, keepWords, titleFrom, writeFront } from '../../../sync-server/src/api'
+import { keepAssets, noteKey } from '../notes'
+import { type Env, FRONT_REV, keepWords, titleFrom, writeFront } from '../../../sync-server/src/api'
 
 const AT_ONCE = 200
 export async function fillFronts(env: Env, spaceId: string | null): Promise<number> {
@@ -24,7 +24,7 @@ export async function fillFronts(env: Env, spaceId: string | null): Promise<numb
       const object = await env.NOTES.get(noteKey(row.space_id, row.id))
       const source = object ? await object.text() : ''
       await keepWords(env, row, source, titleFrom(row.path, source)).catch(() => undefined)
-      const kept = await keepPictures(env, row, source)
+      const kept = await keepAssets(env, row, source)
       return env.DB.prepare('update notes set front = ?, front_rev = ? where id = ?').bind(
         writeFront(source),
         kept ? FRONT_REV : 0,
