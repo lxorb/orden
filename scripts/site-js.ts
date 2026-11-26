@@ -20,7 +20,7 @@ async function bundle(): Promise<string> {
       write: false,
       target: 'es2022',
       minify: 'esbuild',
-      lib: { entry: ENTRY, formats: ['iife'], name: 'nibSite', fileName: () => 'site.js' },
+      lib: { entry: ENTRY, formats: ['iife'], name: 'ordenSite', fileName: () => 'site.js' },
     },
   })
   const chunks = Array.isArray(out) ? out : [out]
@@ -33,7 +33,7 @@ async function bundle(): Promise<string> {
   throw new Error('the site script bundled to nothing')
 }
 const THEME_JS =
-  "try{var t=localStorage.getItem('orden:site-theme')||localStorage.getItem('nib:site-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}"
+  "try{var t=localStorage.getItem('orden:site-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}"
 export async function siteScript(): Promise<string> {
   const code = await bundle()
   const path = `/s/${createHash('sha256').update(code).digest('hex').slice(0, 16)}.js`

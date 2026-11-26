@@ -143,10 +143,10 @@ describe.runIf(linux)('a session', () => {
     const on = machine()
     const one = session(on)
     const seen = watcher(on.frames)
-    one.input(bytes('echo nib-$((6*7))\r'))
+    one.input(bytes('echo orden-$((6*7))\r'))
     await until(async () => {
       await seen.caught()
-      return text(seen.term).includes('nib-42')
+      return text(seen.term).includes('orden-42')
     })
   })
   test('a late joiner past the kept megabyte draws what a watcher saw, vim and colours', async () => {

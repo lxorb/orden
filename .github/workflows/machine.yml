@@ -158,8 +158,9 @@ jobs:
         run: |
           set -euo pipefail
           sudo install -d -m 755 /run/sshd
-          sudo sshd -T | grep -qx 'permitrootlogin no'
-          sudo sshd -T | grep -qx 'passwordauthentication no'
+          sudo sshd -T >"$RUNNER_TEMP/sshd"
+          grep -qx 'permitrootlogin no' "$RUNNER_TEMP/sshd"
+          grep -qx 'passwordauthentication no' "$RUNNER_TEMP/sshd"
           grep -q 'Unattended-Upgrade "1"' /etc/apt/apt.conf.d/20auto-upgrades
           grep -q 'Automatic-Reboot "false"' /etc/apt/apt.conf.d/52orden-upgrades
           swapon --show=NAME --noheadings | grep -q swap
@@ -171,3 +172,151 @@ jobs:
       - name: What the machine said
         if: failure()
         run: sudo journalctl -u ordend -u orden-agents -u cloudflared --no-pager | tail -n 300
+
+  former:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: ordend and the bundle
+        run: pnpm --filter @orden/machine build
+
+      - name: The bundles of v0.20.0 and v0.22.5
+        run: |
+          set -euo pipefail
+          for tag in v0.20.0 v0.22.5; do
+            git fetch --depth 1 origin "refs/tags/$tag:refs/tags/$tag"
+            git worktree add "$RUNNER_TEMP/$tag" "$tag"
+            (cd "$RUNNER_TEMP/$tag" && pnpm install --frozen-lockfile --filter '@orden/machine...' &&
+              pnpm --filter @orden/machine build)
+            mkdir "$RUNNER_TEMP/$tag-bundle"
+            tar -xzf "$RUNNER_TEMP/$tag/services/machine/dist/machine.bin" -C "$RUNNER_TEMP/$tag-bundle"
+          done
+
+      - name: A server installed by v0.20.0 and kept up to v0.22.5
+        run: |
+          set -euo pipefail
+          health() { curl -fs --max-time 3 http://127.0.0.1:7680/health >/dev/null; }
+          sudo install -d -m 755 /etc/nibd /etc/nib
+          printf 'NIBD_SECRET=ci-secret\nTZ=Europe/Zurich\n' | sudo tee /etc/nibd/env >/dev/null
+          sudo chmod 600 /etc/nibd/env
+          printf 'ORDEN_ORIGIN=http://127.0.0.1:8099\n' | sudo tee /etc/nib/machine >/dev/null
+          sudo bash "$RUNNER_TEMP/v0.20.0-bundle/install.sh" --server
+          for _ in $(seq 1 30); do health && break; sleep 1; done
+          health
+          sudo bash "$RUNNER_TEMP/v0.22.5-bundle/install.sh" --files
+          sudo systemctl restart nibd
+          for _ in $(seq 1 30); do health && break; sleep 1; done
+          health
+          sudo test -f /opt/nibd/nibd.cjs
+          sudo test ! -e /opt/ordend
+          systemctl is-active nibd
+
+      - name: This build, where the server asks for it
+        run: |
+          set -euo pipefail
+          serve="$RUNNER_TEMP/serve/v2/online/machine"
+          mkdir -p "$serve"
+          sha=$(sha256sum services/machine/dist/machine.bin | cut -d' ' -f1)
+          cp services/machine/dist/machine.bin "$serve/$sha.bin"
+          printf %s "$sha" >"$serve/current"
+          cat >"$RUNNER_TEMP/fail.sh" <<'FAIL'
+          #!/bin/bash
+          set -euo pipefail
+          sudo install -d /etc/systemd/system/ordend.service.d
+          printf '[Service]\nExecStart=\nExecStart=/bin/false\n' |
+            sudo tee /etc/systemd/system/ordend.service.d/fails.conf >/dev/null
+          sudo systemd-run --quiet --collect --unit=orden-ci-serve -p WorkingDirectory="$RUNNER_TEMP/serve" \
+            python3 -m http.server 8099 --bind 127.0.0.1
+          for _ in $(seq 1 30); do
+            curl -fs --max-time 3 http://127.0.0.1:8099/v2/online/machine/current >/dev/null && break
+            sleep 1
+          done
+          sudo find /var/lib/nibd | sort >"$RUNNER_TEMP/held.before"
+          sudo systemctl restart nibd || true
+          for _ in $(seq 1 300); do
+            if sudo test -e /opt/nibd/carry-failed && systemctl is-active -q nibd &&
+              ! systemctl is-active -q orden-former-layout &&
+              curl -fs --max-time 3 http://127.0.0.1:7680/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          sudo grep -q 'ordend did not answer from the new layout' /opt/nibd/carry-failed
+          systemctl is-active -q nibd
+          systemctl is-enabled -q nibd
+          if systemctl is-active -q ordend; then exit 1; fi
+          if systemctl is-enabled -q ordend 2>/dev/null; then exit 1; fi
+          for path in /opt/ordend /etc/ordend /etc/orden /var/lib/ordend /etc/systemd/system/ordend.service; do
+            sudo test ! -e "$path" || { echo "$path is still there"; exit 1; }
+          done
+          sudo test -f /opt/nibd/nibd.cjs
+          sudo grep -qx 'NIBD_SECRET=ci-secret' /etc/nibd/env
+          sudo test -S /var/lib/nibd/holds/s_survive.sock
+          sudo find /var/lib/nibd | sort >"$RUNNER_TEMP/held.after"
+          [ -z "$(comm -23 "$RUNNER_TEMP/held.before" "$RUNNER_TEMP/held.after")" ]
+          sudo test -x /usr/local/bin/orden-open
+          sudo journalctl -u orden-former-layout --no-pager | grep -q 'the old layout runs again'
+          FAIL
+          cat >"$RUNNER_TEMP/move.sh" <<'MOVE'
+          #!/bin/bash
+          set -euo pipefail
+          sudo rm -rf /etc/systemd/system/ordend.service.d
+          sudo systemctl daemon-reload
+          sudo rm -f /opt/nibd/carry-failed /opt/nibd/bundle
+          sudo systemctl restart nibd || true
+          for _ in $(seq 1 240); do
+            if systemctl is-active -q ordend && ! systemctl is-active -q orden-former-layout && sudo test ! -e /opt/nibd; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+          MOVE
+          chmod 755 "$RUNNER_TEMP/fail.sh" "$RUNNER_TEMP/move.sh"
+
+      - name: A program goes on through a move that fails and goes back, the move that holds, and the restart after it
+        working-directory: services/machine
+        env:
+          ORDEND_SURVIVE_URL: ws://127.0.0.1:7680
+          ORDEND_SECRET: ci-secret
+          ORDEND_SURVIVE_RESTARTS: '["bash \"$RUNNER_TEMP/fail.sh\"", "bash \"$RUNNER_TEMP/move.sh\"", "sudo systemctl restart ordend"]'
+        run: pnpm exec vitest run --config vitest.image.config.ts test/survive.drive.ts
+
+      - name: Nothing of the old layout is left, and what it held is under the new one
+        run: |
+          set -euo pipefail
+          systemctl is-active ordend
+          systemctl is-enabled ordend
+          for path in /opt/nibd /etc/nibd /etc/nib /var/lib/nibd /sys/fs/cgroup/nibd /etc/profile.d/nib.sh \
+            /usr/local/bin/nib-update /usr/local/bin/nib-agents /usr/local/bin/nib-open \
+            /etc/systemd/system/nibd.service /etc/systemd/system/nib-agents.service /opt/ordend/former-layout.sh; do
+            sudo test ! -e "$path" || { echo "$path is still there"; exit 1; }
+          done
+          sudo grep -qx 'ORDEND_SECRET=ci-secret' /etc/ordend/env
+          [ "$(sudo stat -c %a /etc/ordend/env)" = 600 ]
+          grep -qx 'ORDEN_ORIGIN=http://127.0.0.1:8099' /etc/orden/machine
+          sudo test -d /var/lib/ordend/holds
+          sha=$(sha256sum services/machine/dist/machine.bin | cut -d' ' -f1)
+          [ "$(sudo cat /opt/ordend/bundle)" = "$sha" ]
+          sudo journalctl -u orden-former-layout --no-pager | grep -q 'moved to the new layout'
+          [ "$(readlink /usr/local/bin/xdg-open)" = orden-open ]
+
+      - name: What the move said
+        if: ${{ !cancelled() }}
+        run: |
+          sudo journalctl -u orden-former-layout -u nibd -u ordend --no-pager | tail -n 200 || true
+          sudo cat /opt/nibd/carry-failed 2>/dev/null || true

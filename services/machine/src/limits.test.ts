@@ -4,9 +4,9 @@ import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import { Cgroups, memoryMax, shellCommand, userOf, type User } from './limits'
 
-const NIB: User = { name: 'nib', uid: 1000, gid: 1000, home: '/home/nib', shell: '/bin/bash' }
+const OWNER: User = { name: 'nib', uid: 1000, gid: 1000, home: '/home/nib', shell: '/bin/bash' }
 test('as root, a shell runs as the user, under the process limit, as a login shell', () => {
-  expect(shellCommand('/bin/bash', NIB, 4096, () => true)).toEqual({
+  expect(shellCommand('/bin/bash', OWNER, 4096, () => true)).toEqual({
     file: '/usr/bin/setpriv',
     args: [
       '--reuid=1000',
@@ -29,13 +29,13 @@ test('as anybody else, it runs as them, still under the limit', () => {
   })
 })
 test('where the tools are missing, the shell runs plainly rather than not at all', () => {
-  expect(shellCommand('/bin/sh', NIB, 64, () => false)).toEqual({ file: '/bin/sh', args: ['-l'] })
+  expect(shellCommand('/bin/sh', OWNER, 64, () => false)).toEqual({ file: '/bin/sh', args: ['-l'] })
 })
 test('the user is read from the password file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ordend-passwd-'))
   const passwd = join(dir, 'passwd')
   writeFileSync(passwd, 'root:x:0:0:root:/root:/bin/bash\nnib:x:1000:1000::/home/nib:/usr/bin/fish\n')
-  expect(userOf('nib', passwd)).toEqual({ ...NIB, shell: '/usr/bin/fish' })
+  expect(userOf('nib', passwd)).toEqual({ ...OWNER, shell: '/usr/bin/fish' })
   expect(userOf('nobody', passwd)).toBeNull()
   expect(userOf('nib', join(dir, 'missing'))).toBeNull()
   rmSync(dir, { recursive: true })

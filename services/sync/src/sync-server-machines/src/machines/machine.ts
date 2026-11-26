@@ -983,7 +983,7 @@ export class Machine implements DurableObject {
     )
       .bind(me.user)
       .first<{ zone: string }>()
-    return { ORDEND_SECRET: secret, NIBD_SECRET: secret, TZ: zone?.zone ?? 'UTC' }
+    return { ORDEND_SECRET: secret, TZ: zone?.zone ?? 'UTC' }
   }
   private async restoreHome(me: Me, backup: string): Promise<void> {
     try {

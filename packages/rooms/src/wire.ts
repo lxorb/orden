@@ -12,16 +12,14 @@ const STEP1 = 0
 const STEP2 = 1
 const UPDATE = 2
 const TOKEN = 'orden.token.'
-const TOKENS = [TOKEN, 'nib.token.']
 export const subprotocol = (token: string): string => `${TOKEN}${token}`
 export function tokenProtocolOf(header: string | undefined): string | null {
   const offered = (header ?? '').split(',').map((one) => one.trim())
-  return offered.find((one) => TOKENS.some((prefix) => one.startsWith(prefix))) ?? null
+  return offered.find((one) => one.startsWith(TOKEN)) ?? null
 }
 export function tokenOf(header: string | undefined): string | null {
   const carrying = tokenProtocolOf(header)
-  const prefix = TOKENS.find((one) => carrying?.startsWith(one))
-  return carrying && prefix ? carrying.slice(prefix.length) : null
+  return carrying ? carrying.slice(TOKEN.length) : null
 }
 function framed(kind: number, write: (encoder: encoding.Encoder) => void): Uint8Array {
   const encoder = encoding.createEncoder()

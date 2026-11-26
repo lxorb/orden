@@ -17,8 +17,7 @@ case "$url" in
     ;;
 esac
 body=$(jq -cn --arg url "$url" --arg session "${ORDEN_SESSION:-}" '{url: $url, session: $session}')
-socket=${ORDEND_OPEN:-${NIBD_OPEN:-/run/ordend/open.sock}}
-[ -S "$socket" ] || [ ! -S /run/nibd/open.sock ] || socket=/run/nibd/open.sock
+socket=${ORDEND_OPEN:-/run/ordend/open.sock}
 said=$(curl -sS --max-time 5 --unix-socket "$socket" \
   -o /dev/null -w '%{http_code}' -H 'content-type: application/json' \
   --data-binary "$body" http://ordend/open 2>/dev/null)

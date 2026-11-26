@@ -6,7 +6,6 @@ const API = process.env.ORDEN_API ?? 'https://orden.so'
 const TOKEN = process.env.ORDEN_TOKEN ?? ''
 const NOTES = /\.(md|markdown|mdown|mkd|canvas)$/i
 const CURSOR = '.orden-cursor'
-const FORMER_CURSOR = '.nib-cursor'
 function say(words) {
   process.stdout.write(`${words}\n`)
 }
@@ -35,9 +34,7 @@ async function spaceNamed(name) {
 }
 async function pull(name, folder) {
   const space = await spaceNamed(name)
-  const kept = await readFile(join(folder, CURSOR), 'utf8').catch(() =>
-    readFile(join(folder, FORMER_CURSOR), 'utf8').catch(() => 0),
-  )
+  const kept = await readFile(join(folder, CURSOR), 'utf8').catch(() => 0)
   const since = Number(kept) || 0
   let cursor = since
   let more = true
@@ -62,7 +59,6 @@ async function pull(name, folder) {
   }
   await mkdir(folder, { recursive: true })
   await writeFile(join(folder, CURSOR), String(cursor), 'utf8')
-  await rm(join(folder, FORMER_CURSOR), { force: true })
   say(`pulled ${written} notes, removed ${removed}, cursor ${cursor}`)
 }
 async function push(name, folder) {

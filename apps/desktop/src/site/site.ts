@@ -3,7 +3,6 @@ import { neighbours, type NoteGraph } from '../lib/graph/src/api'
 import { Layout, paint, radiusOf } from '../lib/graph-drawing/src/api'
 
 const THEME_KEY = 'orden:site-theme'
-const OLD_THEME_KEY = 'nib:site-theme'
 const HOVER_IN = 320
 const HOVER_OUT = 180
 const MOST_CACHED = 40
@@ -33,7 +32,7 @@ function themeToggle() {
   }
   let held = (() => {
     try {
-      return localStorage.getItem(THEME_KEY) ?? localStorage.getItem(OLD_THEME_KEY) ?? 'system'
+      return localStorage.getItem(THEME_KEY) ?? 'system'
     } catch {
       return 'system'
     }
@@ -46,7 +45,6 @@ function themeToggle() {
     try {
       if (held === 'system') localStorage.removeItem(THEME_KEY)
       else localStorage.setItem(THEME_KEY, held)
-      localStorage.removeItem(OLD_THEME_KEY)
     } catch {
       // Nothing to do and nobody to tell.
     }

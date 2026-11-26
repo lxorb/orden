@@ -6,13 +6,11 @@
 # the way: anything that fails leaves the ordend that is there, and ordend starts.
 set -euo pipefail
 machine=/etc/orden/machine
-[ -r "$machine" ] || machine=/etc/nib/machine
 [ -r "$machine" ] || exit 0
 # shellcheck source=/dev/null
 . "$machine"
 opt=/opt/ordend
-[ ! -d "$opt" ] && [ -d /opt/nibd ] && opt=/opt/nibd
-ORDEN_ORIGIN=${ORDEN_ORIGIN:-${NIB_ORIGIN:-}}
+ORDEN_ORIGIN=${ORDEN_ORIGIN:-}
 [ -n "$ORDEN_ORIGIN" ] || exit 0
 
 sha=$(curl -fsS --max-time 10 "$ORDEN_ORIGIN/v2/online/machine/current" || true)

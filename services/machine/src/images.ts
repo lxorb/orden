@@ -14,7 +14,7 @@ export const AS_USER_SCRIPT = [
   'umask 077',
   'd="$HOME/.cache/orden/images"',
   'mkdir -p "$d" || exit 1',
-  `find "$d" "$HOME/.cache/nib/images" -maxdepth 1 -type f -mmin +${String(KEPT / 60_000)} -regextype posix-extended -regex '.*/[a-z0-9]{16,64}\\.(png|jpg|gif|webp)' -delete 2>/dev/null`,
+  `find "$d" -maxdepth 1 -type f -mmin +${String(KEPT / 60_000)} -regextype posix-extended -regex '.*/[a-z0-9]{16,64}\\.(png|jpg|gif|webp)' -delete 2>/dev/null`,
   'set -C',
   'cat > "$d/$1" || exit 1',
   'printf %s "$d/$1"',
@@ -110,7 +110,6 @@ export class Images {
     const folder = join(this.home, '.cache', 'orden', 'images')
     mkdirSync(folder, { recursive: true, mode: 0o700 })
     this.clear(folder)
-    this.clear(join(this.home, '.cache', 'nib', 'images'))
     const path = join(folder, name)
     writeFileSync(path, bytes, { mode: 0o600, flag: 'wx' })
     return path
