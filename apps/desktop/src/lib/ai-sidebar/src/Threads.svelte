@@ -104,7 +104,12 @@
 <div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
   <div class="top">
     {#if rail}
-      <button class="new" title={shortcuts.tooltip('New chat', 'ai.new')} onclick={() => chat.newThread()}>
+      <button
+        class="new"
+        aria-label="New chat"
+        {@attach shortcuts.tip('New chat', 'ai.new')}
+        onclick={() => chat.newThread()}
+      >
         <svg viewBox="0 0 13 13" aria-hidden="true"
           ><path
             d="M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z"

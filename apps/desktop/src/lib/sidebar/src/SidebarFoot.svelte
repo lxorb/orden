@@ -55,7 +55,7 @@
         class="orden-glyph act"
         class:is-on={padOn}
         aria-pressed={padOn}
-        title={shortcuts.tooltip('Scratchpad', 'app.scratchpad')}
+        {@attach shortcuts.tip('Scratchpad', 'app.scratchpad')}
         aria-label="Scratchpad"
         onclick={() => pad.toggle?.()}
       >
@@ -65,7 +65,7 @@
 
     <button
       class="orden-glyph act"
-      title={shortcuts.tooltip('Settings', 'app.settings')}
+      {@attach shortcuts.tip('Settings', 'app.settings')}
       aria-label="Settings"
       onclick={onsettings}
     >

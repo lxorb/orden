@@ -27,7 +27,7 @@ async function bar(on: boolean): Promise<HTMLElement> {
   return target
 }
 test('the turn to a terminal sits in the bar only while the Orden file explorer is turned on', async () => {
-  expect((await bar(false)).querySelector('[title^="Terminal here"]')).toBeNull()
+  expect((await bar(false)).querySelector('[aria-label^="Terminal here"]')).toBeNull()
   close?.()
-  expect((await bar(true)).querySelector('[title^="Terminal here"]')).not.toBeNull()
+  expect((await bar(true)).querySelector('[aria-label^="Terminal here"]')).not.toBeNull()
 })

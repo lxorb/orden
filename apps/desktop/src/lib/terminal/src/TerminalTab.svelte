@@ -46,7 +46,11 @@
   <div class="place" class:is-waiting={!session.live} class:turns={turnable(tab)} bind:this={place}></div>
   {#if turnable(tab) && !session.finding}
     <div class="turn">
-      <TurnButton title={shortcuts.tooltip(turnLabel(tab), 'tab.flip')} onclick={() => turnTerminal(tab)} />
+      <TurnButton
+        label={turnLabel(tab)}
+        tip={shortcuts.tip(turnLabel(tab), 'tab.flip')}
+        onclick={() => turnTerminal(tab)}
+      />
     </div>
   {/if}
 

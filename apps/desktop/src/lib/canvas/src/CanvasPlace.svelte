@@ -18,7 +18,7 @@
     <button
       type="button"
       class:on={tools.which === one.id}
-      title={hinted(one)}
+      {@attach hinted(one)}
       aria-label={one.title()}
       aria-pressed={tools.which === one.id}
       onclick={() => {

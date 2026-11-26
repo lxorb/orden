@@ -113,7 +113,7 @@
   key: string | null = null,
 )}
   <button
-    title={shortcuts.tooltip(title, key)}
+    {@attach shortcuts.tip(title, key)}
     aria-label={title}
     onpointerdown={keepFocus}
     onmousedown={keepFocus}

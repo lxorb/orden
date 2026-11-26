@@ -40,7 +40,7 @@ vi.mock('../../src/lib/workspace/src/api', () => ({
 vi.mock('../../src/lib/shortcuts/src/api', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) => id === 'edit.find' && event.key === 'f',
-    tooltip: (label: string) => label,
+    tip: () => () => () => undefined,
     hint: () => '',
   },
 }))

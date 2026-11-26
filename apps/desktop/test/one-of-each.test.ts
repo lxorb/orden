@@ -517,6 +517,7 @@ describe('the bubble a sentence appears in', () => {
     expect(own).toEqual([
       'lib/agents/src/ui/PairingBubble.svelte',
       'lib/chats-client/src/view/Tip.svelte',
+      'lib/keytip/src/Tip.svelte',
       'lib/pass-ui/src/PassFill.svelte',
       'lib/sidebar/src/NameField.svelte',
       'lib/tab-strip/src/TabCard.svelte',

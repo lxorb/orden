@@ -1,0 +1,5 @@
+{
+  "name": "keytip",
+  "layer": "shell",
+  "dependsOn": ["platform", "ui-kit"]
+}

@@ -72,7 +72,7 @@ vi.mock('../../shortcuts/src/api', () => ({
   shortcuts: {
     pressed: (id: string, event: KeyboardEvent) =>
       id === 'field.dictate' && event.altKey && event.key.toLowerCase() === 'v',
-    tooltip: (name: string) => name,
+    tip: () => () => () => undefined,
   },
 }))
 vi.mock('../../ui-kit/src/message', () => ({

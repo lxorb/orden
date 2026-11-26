@@ -523,7 +523,7 @@
               class:on={showing === item.id}
               data-tab={item.id}
               role="tab"
-              title={shortcuts.tooltip(item.label, commandOf(item.id))}
+              {@attach shortcuts.tip(item.label, commandOf(item.id))}
               aria-label={item.id === 'ask' && unread ? `${item.label}, unread` : item.label}
               aria-selected={showing === item.id}
               onclick={(event) => {
@@ -608,7 +608,7 @@
           {#if workspace.unfolded}
             <button
               class="orden-glyph tool"
-              title={shortcuts.tooltip('Collapse the file list', 'app.fold-list')}
+              {@attach shortcuts.tip('Collapse the file list', 'app.fold-list')}
               aria-label="Collapse the file list"
               onclick={() => workspace.foldList()}
               transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
@@ -641,7 +641,7 @@
           <button
             class="orden-glyph tool"
             data-tool={tool.id}
-            title={tool.command ? shortcuts.tooltip(tool.label, tool.command) : tool.label}
+            {@attach shortcuts.tip(tool.label, tool.command ?? null)}
             aria-label={tool.label}
             onclick={() => tool.run()}
           >

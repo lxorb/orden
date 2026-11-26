@@ -94,10 +94,33 @@ class Shortcuts {
     const entry = BY_ID.get(id)
     return entry && !viewport.touch && offeredHere(entry) ? this.hint(id) : undefined
   }
-  tooltip(label: string, id: string | null = null): string {
-    const key = id !== null && !viewport.touch ? this.hint(id) : undefined
-    return key ? `${label} (${key})` : label
+  tip(label: string | (() => string), id: string | null = null): (node: HTMLElement) => () => void {
+    const said = typeof label === 'string' ? () => label : label
+    return (node) => {
+      const keys = id ? parseCombination(this.keyFor(id) ?? '', this.platform) : null
+      if (keys) node.setAttribute('aria-keyshortcuts', ariaKeys(keys))
+      let off: (() => void) | undefined
+      let gone = false
+      const wake = (event: Event) => {
+        stop()
+        void import('../../keytip/src/api').then((one) => {
+          if (!gone) off = one.follow(node, said, () => (id ? this.hint(id) : undefined), event)
+        })
+      }
+      const stop = () => {
+        node.removeEventListener('pointerenter', wake)
+        node.removeEventListener('focusin', wake)
+      }
+      node.addEventListener('pointerenter', wake)
+      node.addEventListener('focusin', wake)
+      return () => {
+        gone = true
+        stop()
+        off?.()
+      }
+    }
   }
+
   conflicts(id: string, key: string): Shortcut[] {
     if (!key) return []
     const places = BY_ID.get(id)?.contextual ? placesOf(id) : null
@@ -239,6 +262,15 @@ class Shortcuts {
     saveFront()
     return true
   }
+}
+const ARIA_KEYS: Record<string, string> = { ' ': 'Space', '+': 'Plus' }
+function ariaKeys(keys: NonNullable<ReturnType<typeof parseCombination>>): string {
+  const held = (['ctrl', 'alt', 'shift', 'meta'] as const).filter((one) => keys[one])
+  const names = { ctrl: 'Control', alt: 'Alt', shift: 'Shift', meta: 'Meta' }
+  return [
+    ...held.map((one) => names[one]),
+    ARIA_KEYS[keys.key] ?? (keys.key.length === 1 ? keys.key.toUpperCase() : keys.key),
+  ].join('+')
 }
 function placesOf(id: string): string[] {
   const prefix = id.split('.')[0] ?? id

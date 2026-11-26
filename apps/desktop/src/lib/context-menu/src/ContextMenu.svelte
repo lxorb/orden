@@ -1,5 +1,6 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
+  import { Caps } from '../../keytip/src/api'
   import {
     stepped,
     type Spelling,
@@ -240,7 +241,7 @@
             {/if}
             <span class="orden-row-label">{item.label}</span>
             {#if item.checked}<span class="tick">✓</span>{/if}
-            {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
+            {#if item.hint && !viewport.touch}<Caps shown={item.hint} />{/if}
             {#if item.more}
               <span class="more" data-more aria-hidden="true">
                 <svg viewBox="0 0 16 16"><path d="M6 3.5l4.5 4.5L6 12.5" /></svg>
@@ -287,13 +288,6 @@
   button:focus:not(:disabled) {
     background: var(--surface-hover);
     color: var(--item-hover-text-color);
-  }
-  kbd {
-    flex: none;
-    margin-inline-start: var(--space-3);
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--muted);
   }
   .more {
     flex: none;

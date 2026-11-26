@@ -52,7 +52,7 @@
     class="name"
     class:open
     data-space-drop="switcher"
-    title={shortcuts.tooltip(name, 'space.switcher')}
+    {@attach shortcuts.tip(() => name, 'space.switcher')}
     aria-haspopup="menu"
     aria-expanded={open}
     onclick={() => (open = !open)}

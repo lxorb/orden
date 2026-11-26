@@ -258,7 +258,7 @@
         {#snippet arrows()}
           <button
             type="button"
-            title={shortcuts.tooltip('Undo', 'edit.undo')}
+            {@attach shortcuts.tip('Undo', 'edit.undo')}
             aria-label="Undo"
             disabled={!canundo}
             onclick={() => {
@@ -271,7 +271,7 @@
 
           <button
             type="button"
-            title={shortcuts.tooltip('Redo', 'edit.redo')}
+            {@attach shortcuts.tip('Redo', 'edit.redo')}
             aria-label="Redo"
             disabled={!canredo}
             onclick={() => {
@@ -293,7 +293,7 @@
             type="button"
             class:on={tools.which === mark.id}
             class:deeper={tools.which === mark.id && panelFor(mark.id) !== null}
-            title={hinted(mark)}
+            {@attach hinted(mark)}
             aria-label={mark.title()}
             aria-pressed={tools.which === mark.id}
             onclick={(event) => pressTool(mark, event)}
@@ -315,7 +315,7 @@
             class="pen"
             class:on={out}
             class:deeper={out}
-            title={out ? hinted({ title: PEN_NAMES[one.tool], key: 'canvas.tool.draw' }) : PEN_NAMES[one.tool]()}
+            {@attach hinted({ title: PEN_NAMES[one.tool], key: out ? 'canvas.tool.draw' : null })}
             aria-label={PEN_NAMES[one.tool]()}
             aria-pressed={out}
             style:--ink={shownInk(one.colour)}
@@ -338,7 +338,7 @@
             type="button"
             class:on={open === 'put' || putting !== undefined}
             class:deeper={putting !== undefined}
-            title={putting ? hinted(putting) : 'Add'}
+            {@attach putting ? hinted(putting) : hinted({ title: () => 'Add', key: null })}
             aria-label={putting ? putting.title() : 'Add'}
             aria-pressed={open === 'put'}
             onclick={(event) => {

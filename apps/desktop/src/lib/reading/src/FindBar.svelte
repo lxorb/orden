@@ -155,7 +155,7 @@
 
       <button
         class="orden-glyph act"
-        title={shortcuts.tooltip('Previous', 'edit.find-previous')}
+        {@attach shortcuts.tip('Previous', 'edit.find-previous')}
         aria-label="Previous"
         disabled={!count}
         onclick={() => onstep(-1)}
@@ -164,7 +164,7 @@
       </button>
       <button
         class="orden-glyph act"
-        title={shortcuts.tooltip('Next', 'edit.find-next')}
+        {@attach shortcuts.tip('Next', 'edit.find-next')}
         aria-label="Next"
         disabled={!count}
         onclick={() => onstep(1)}
@@ -176,7 +176,7 @@
         <button
           class="orden-glyph act"
           class:on={replacing}
-          title={shortcuts.tooltip('Replace', 'edit.replace')}
+          {@attach shortcuts.tip('Replace', 'edit.replace')}
           aria-label="Replace"
           aria-expanded={replacing}
           onclick={() => onreplacing?.(!replacing)}
@@ -191,7 +191,7 @@
 
       <button
         class="orden-glyph act shut"
-        title={shortcuts.tooltip('Close', 'fixed.escape')}
+        {@attach shortcuts.tip('Close', 'fixed.escape')}
         aria-label="Close"
         onclick={onclose}
       >

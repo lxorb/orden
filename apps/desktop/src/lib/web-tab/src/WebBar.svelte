@@ -158,7 +158,7 @@
 >
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip('Back', 'app.back')}
+    {@attach shortcuts.tip('Back', 'app.back')}
     aria-label="Back"
     disabled={!page.back}
     onclick={(event) => onstep('back', event)}
@@ -171,7 +171,7 @@
 
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip('Forward', 'app.forward')}
+    {@attach shortcuts.tip('Forward', 'app.forward')}
     aria-label="Forward"
     disabled={!page.forward}
     onclick={(event) => onstep('forward', event)}
@@ -184,7 +184,7 @@
 
   <button
     class="orden-glyph"
-    title={page.loading ? shortcuts.tooltip('Stop', 'web.stop') : shortcuts.tooltip('Reload', 'web.reload')}
+    {@attach page.loading ? shortcuts.tip('Stop', 'web.stop') : shortcuts.tip('Reload', 'web.reload')}
     aria-label={page.loading ? 'Stop' : 'Reload'}
     onclick={(event) => onstep(page.loading ? 'stop' : 'reload', event)}
     use:middleOpens={(event) => onstep('reload', event)}

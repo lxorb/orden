@@ -676,7 +676,7 @@
     <div class="steps">
       <button
         class="step"
-        title={shortcuts.tooltip('Back', 'app.back')}
+        {@attach shortcuts.tip('Back', 'app.back')}
         aria-label="Back"
         disabled={!walking.canGoBack}
         onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
@@ -688,7 +688,7 @@
       </button>
       <button
         class="step"
-        title={shortcuts.tooltip('Forward', 'app.forward')}
+        {@attach shortcuts.tip('Forward', 'app.forward')}
         aria-label="Forward"
         disabled={!walking.canGoForward}
         onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
@@ -897,7 +897,7 @@
             <button
               class="shut"
               class:hidden={!parts.close || !crossTakes(tab.id, opened, settledOpen)}
-              title={shortcuts.tooltip('Close', 'app.close')}
+              {@attach shortcuts.tip('Close', 'app.close')}
               aria-label="Close"
               onclick={(event) => closeTab(tab, pointerOf(event))}
             >
@@ -910,7 +910,7 @@
       {#if plus}
         <button
           class="new"
-          title={shortcuts.tooltip('New tab', 'app.new-kind')}
+          {@attach shortcuts.tip('New tab', 'app.new-kind')}
           aria-label="New tab"
           style:transform="translateX({layout.end + PLUS_GAP}px)"
           onclick={() => workspace.newTab(paneId)}

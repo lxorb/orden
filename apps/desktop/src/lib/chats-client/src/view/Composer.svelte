@@ -431,7 +431,7 @@
           type="button"
           class="tool"
           aria-label="Voice message"
-          use:tip={() => shortcuts.tooltip('Voice message', 'chat.record')}
+          {@attach shortcuts.tip('Voice message', 'chat.record')}
           onclick={() => (recording = true)}><Glyph name="mic" /></button
         >
       {:else}
