@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{Map, Value};
 
+use crate::oauth::Grant;
 use crate::types::{Found, FoundServer, Secrets, Transport};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -22,6 +23,7 @@ pub struct Place {
 pub struct Entry {
     pub server: FoundServer,
     pub values: Secrets,
+    pub oauth: Option<Grant>,
 }
 pub fn places(home: &Path, config: &Path, codex: Option<&Path>) -> Vec<Place> {
     let code = config.join("Code").join("User");
@@ -168,7 +170,40 @@ fn found(name: &str, transport: Transport, needs_input: Vec<String>, values: Sec
             needs_input,
         },
         values,
+        oauth: None,
     }
+}
+fn grant_of(url: &str, entry: &Map<String, Value>) -> Option<Grant> {
+    let block = entry.get("oauth").or_else(|| entry.get("auth")).and_then(Value::as_object)?;
+    let said = |keys: &[&str]| {
+        keys.iter()
+            .find_map(|key| block.get(*key).and_then(text_of))
+            .filter(|value| !value.is_empty() && !asks(value))
+    };
+    let scopes = match block.get("scopes").or_else(|| block.get("scope")) {
+        Some(Value::String(all)) => all.split_whitespace().map(str::to_owned).collect(),
+        listed => texts(listed),
+    };
+    let port = block
+        .get("callbackPort")
+        .and_then(Value::as_u64)
+        .or_else(|| {
+            said(&["redirectUri", "redirect_uri"])
+                .and_then(|uri| reqwest::Url::parse(&uri).ok())
+                .and_then(|uri| uri.port())
+                .map(u64::from)
+        })
+        .and_then(|port| u16::try_from(port).ok());
+    let grant = Grant {
+        client_id: said(&["clientId", "client_id", "CLIENT_ID"]),
+        client_secret: said(&["clientSecret", "client_secret", "CLIENT_SECRET"]),
+        authorization_url: said(&["authorizationUrl", "authorization_url"]),
+        token_url: said(&["tokenUrl", "token_url"]),
+        scopes,
+        port,
+        ..Grant::preset(url)
+    };
+    (grant != Grant::preset(url)).then_some(grant)
 }
 fn entry_of(name: &str, entry: &Map<String, Value>) -> Option<Entry> {
     let kind =
@@ -196,7 +231,10 @@ fn entry_of(name: &str, entry: &Map<String, Value>) -> Option<Entry> {
             let mut headers = Vec::new();
             let values = filled(pairs(entry.get("headers")), &mut headers, &mut needs);
             let transport = Transport::Http { url: url.to_owned(), headers };
-            Some(found(name, transport, needs, Secrets { env: BTreeMap::new(), headers: values }))
+            let mut found =
+                found(name, transport, needs, Secrets { env: BTreeMap::new(), headers: values });
+            found.oauth = grant_of(url, entry);
+            Some(found)
         }
         _ => None,
     }

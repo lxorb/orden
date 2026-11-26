@@ -13,7 +13,11 @@
       "args": ["mcp-server-fetch"],
       "env": { "API_KEY": "key-one" }
     },
-    "events": { "type": "sse", "url": "http://127.0.0.1:9/sse" },
+    "events": {
+      "type": "sse",
+      "url": "http://127.0.0.1:9/sse",
+      "oauth": { "clientId": "cc-client", "callbackPort": 8765 }
+    },
     "orden": { "type": "stdio", "command": "C:\\Program Files\\Orden\\orden.exe", "args": ["mcp"], "env": {} }
   }
 }

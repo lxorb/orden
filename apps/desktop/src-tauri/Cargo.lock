@@ -3492,7 +3492,9 @@ dependencies = [
 name = "orden-mcp-client"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "dirs",
+ "getrandom 0.3.4",
  "libc",
  "orden-base",
  "orden-secrets",
@@ -3502,6 +3504,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "tauri",
+ "tauri-plugin-opener",
  "tempfile",
  "tokio",
  "toml 1.1.5+spec-1.1.0",

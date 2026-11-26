@@ -162,6 +162,8 @@ macro_rules! desktop_commands {
             orden_mcp_client::commands::mcp_server_remove,
             orden_mcp_client::commands::mcp_server_restart,
             orden_mcp_client::commands::mcp_server_save,
+            orden_mcp_client::commands::mcp_server_sign_in,
+            orden_mcp_client::commands::mcp_server_sign_out,
             orden_mcp_client::commands::mcp_server_switch,
             orden_mcp_client::commands::mcp_servers,
             orden_mcp_client::commands::mcp_tool_permission,

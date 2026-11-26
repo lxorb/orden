@@ -4,14 +4,17 @@ use std::sync::{Arc, Condvar, Mutex, MutexGuard, Weak};
 use std::time::{Duration, Instant};
 
 use orden_base::Held as _;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::client::{Client, Heard};
 use crate::exposed::exposed;
 use crate::import::{self, Place};
 use crate::kept;
+use crate::oauth::{self, Auth, Grant, SIGN_IN};
 use crate::types::{
-    Found, Offered, Permission, Pick, Secrets, Server, ServerView, State, ToolInfo, Transport,
+    Found, Offered, Permission, Pick, Secrets, Server, ServerView, SignIn, State, ToolInfo,
+    Transport,
 };
 
 pub const CALLING: Duration = Duration::from_secs(120);
@@ -24,6 +27,35 @@ pub trait Host: Send + Sync + 'static {
     fn secret(&self, name: &str) -> Result<Option<String>, String>;
     fn keep(&self, name: &str, secret: Option<&str>) -> Result<(), String>;
     fn said(&self, id: &str, state: State);
+    fn open(&self, url: &str) -> Result<(), String>;
+}
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+struct Stored {
+    #[serde(flatten)]
+    secrets: Secrets,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    oauth: Option<Grant>,
+}
+impl Stored {
+    fn is_empty(&self) -> bool {
+        self.secrets.is_empty() && self.oauth.is_none()
+    }
+    fn hide(&self, text: &str) -> String {
+        let mut hidden = self.secrets.hide(text);
+        for value in self.oauth.iter().flat_map(Grant::values).filter(|value| value.len() >= 3) {
+            hidden = hidden.replace(value, "[hidden]");
+        }
+        hidden
+    }
+    fn grant_for(&self, transport: &Transport) -> Option<Grant> {
+        let Transport::Http { url, .. } = transport else {
+            return None;
+        };
+        self.oauth.clone().filter(|grant| grant.belongs_to(url))
+    }
+}
+fn own_header(transport: &Transport) -> bool {
+    transport.names().iter().any(|name| name.eq_ignore_ascii_case("authorization"))
 }
 #[derive(Default)]
 struct Run {
@@ -35,6 +67,8 @@ struct Run {
     crashes: u32,
     ready_at: Option<Instant>,
     offered: bool,
+    sign_in: bool,
+    challenge: Option<String>,
 }
 impl Run {
     fn now(&self) -> State {
@@ -111,7 +145,7 @@ impl Hub {
         kept::write(&path, &servers)?;
         Ok(done)
     }
-    fn secrets(&self, id: &str) -> Secrets {
+    fn stored(&self, id: &str) -> Stored {
         self.host
             .secret(&account(id))
             .ok()
@@ -119,19 +153,28 @@ impl Hub {
             .and_then(|text| serde_json::from_str(&text).ok())
             .unwrap_or_default()
     }
-    fn keep_secrets(&self, id: &str, secrets: &Secrets) -> Result<(), String> {
-        if secrets.is_empty() {
+    fn keep_stored(&self, id: &str, stored: &Stored) -> Result<(), String> {
+        if stored.is_empty() {
             return self.host.keep(&account(id), None);
         }
-        let text = serde_json::to_string(secrets).map_err(|error| error.to_string())?;
+        let text = serde_json::to_string(stored).map_err(|error| error.to_string())?;
         self.host.keep(&account(id), Some(&text))
+    }
+    fn keep_grant(&self, id: &str, grant: Grant) {
+        let _held = self.editing.held();
+        if self.server(id).is_err() {
+            return;
+        }
+        let mut stored = self.stored(id);
+        stored.oauth = Some(grant);
+        let _ = self.keep_stored(id, &stored);
     }
     fn live(&self, id: &str) -> Arc<Live> {
         Arc::clone(self.live.held().entry(id.to_owned()).or_default())
     }
     pub fn view(&self, server: Server) -> ServerView {
-        let secrets = self.secrets(&server.id);
-        let held = secrets.for_transport(&server.transport);
+        let stored = self.stored(&server.id);
+        let held = stored.secrets.for_transport(&server.transport);
         let secrets_set = server
             .transport
             .names()
@@ -140,17 +183,33 @@ impl Hub {
             .cloned()
             .collect();
         let live = self.live.held().get(&server.id).cloned();
-        let (state, error, tools) = live.map_or((State::Off, None, Vec::new()), |live| {
-            let run = live.run.held();
-            (run.now(), run.error.clone(), run.tools.clone())
-        });
+        let (state, error, tools, needed) =
+            live.map_or((State::Off, None, Vec::new(), false), |live| {
+                let run = live.run.held();
+                (run.now(), run.error.clone(), run.tools.clone(), run.sign_in)
+            });
         let listed = tools.iter().filter_map(|tool| ToolInfo::of(tool, &server.tools)).collect();
-        ServerView { server, state, error, listed, secrets_set }
+        let sign_in = if needed {
+            SignIn::Needed
+        } else if stored.grant_for(&server.transport).is_some_and(|grant| grant.signed_in()) {
+            SignIn::SignedIn
+        } else {
+            SignIn::None
+        };
+        ServerView { server, state, error, listed, secrets_set, sign_in }
     }
     pub fn views(&self) -> Result<Vec<ServerView>, String> {
         Ok(self.servers()?.into_iter().map(|server| self.view(server)).collect())
     }
-    pub fn save(&self, mut server: Server, secrets: Option<Secrets>) -> Result<ServerView, String> {
+    pub fn save(&self, server: Server, secrets: Option<Secrets>) -> Result<ServerView, String> {
+        self.saved(server, secrets, None)
+    }
+    fn saved(
+        &self,
+        mut server: Server,
+        secrets: Option<Secrets>,
+        oauth: Option<Grant>,
+    ) -> Result<ServerView, String> {
         let name = server.name.trim().to_owned();
         server.name = name;
         match &mut server.transport {
@@ -168,11 +227,15 @@ impl Hub {
                 server.id = kept::new_id(&server.name, |id| servers.iter().any(|one| one.id == id));
             }
             kept::checked(&server)?;
-            let before = self.secrets(&server.id);
-            let after = before.clone().merged(secrets, &server.transport);
+            let before = self.stored(&server.id);
+            let mut after = Stored {
+                secrets: before.secrets.clone().merged(secrets, &server.transport),
+                oauth: oauth.or_else(|| before.oauth.clone()),
+            };
+            after.oauth = after.grant_for(&server.transport);
             let changed = after != before;
             if changed {
-                self.keep_secrets(&server.id, &after)?;
+                self.keep_stored(&server.id, &after)?;
             }
             let old = servers
                 .iter_mut()
@@ -240,7 +303,40 @@ impl Hub {
         self.stop(id);
         if server.on {
             self.start(id, true);
+            if self.live(id).settled_within(RESTARTING).sign_in {
+                return self.sign_in(id);
+            }
+        }
+        Ok(self.view(server))
+    }
+    pub fn sign_in(&self, id: &str) -> Result<ServerView, String> {
+        let server = self.server(id)?;
+        let Transport::Http { url, .. } = &server.transport else {
+            return Err("only a server reached over the web signs in".to_owned());
+        };
+        let grant =
+            self.stored(id).grant_for(&server.transport).unwrap_or_else(|| Grant::preset(url));
+        let challenge = self.live(id).run.held().challenge.clone();
+        let grant = oauth::sign_in(url, grant, challenge, &|link| self.host.open(link))?;
+        self.keep_grant(id, grant);
+        self.stop(id);
+        if server.on {
+            self.start(id, true);
             drop(self.live(id).settled_within(RESTARTING));
+        }
+        Ok(self.view(server))
+    }
+    pub fn sign_out(&self, id: &str) -> Result<ServerView, String> {
+        let server = self.server(id)?;
+        {
+            let _held = self.editing.held();
+            let mut stored = self.stored(id);
+            stored.oauth = stored.oauth.map(Grant::signed_out);
+            self.keep_stored(id, &stored)?;
+        }
+        self.stop(id);
+        if server.on {
+            self.start(id, true);
         }
         Ok(self.view(server))
     }
@@ -305,8 +401,8 @@ impl Hub {
                 }
             }
         };
-        let secrets = self.secrets(id);
-        client.call(tool, args, CALLING).map_err(|why| secrets.hide(&why))
+        let stored = self.stored(id);
+        client.call(tool, args, CALLING).map_err(|why| stored.hide(&why))
     }
     pub fn stop_all(&self) {
         let all: Vec<Arc<Live>> = self.live.held().values().cloned().collect();
@@ -359,7 +455,7 @@ impl Hub {
                 tools: BTreeMap::new(),
                 from: Some(pick.source.clone()),
             };
-            views.push(self.save(server, Some(entry.values))?);
+            views.push(self.saved(server, Some(entry.values), entry.oauth)?);
         }
         Ok(views)
     }
@@ -392,6 +488,7 @@ impl Hub {
             run.error = None;
             run.crashes = 0;
             run.offered = false;
+            run.sign_in = false;
             run.client.take()
         };
         drop(client);
@@ -414,17 +511,24 @@ impl Hub {
         if live.run.held().round != round {
             return;
         }
-        let secrets = self.secrets(id);
-        let reached = self.server(id).and_then(|server| {
+        let stored = self.stored(id);
+        let server = self.server(id);
+        let auth = Arc::new(self.auth_for(id, &stored, server.as_ref().ok()));
+        let reached = server.as_ref().map_err(Clone::clone).and_then(|server| {
             let (me, named) = (self.me.clone(), id.to_owned());
-            let client = Client::connect(&server.transport, &secrets, move |heard| {
-                if let Some(hub) = me.upgrade() {
-                    hub.heard(&named, round, heard);
-                }
-            })?;
+            let client =
+                Client::connect_signed(&server.transport, &stored.secrets, &auth, move |heard| {
+                    if let Some(hub) = me.upgrade() {
+                        hub.heard(&named, round, heard);
+                    }
+                })?;
             let tools = client.tools()?;
             Ok((client, tools))
         });
+        let needed = auth.challenge().is_some()
+            && server.as_ref().is_ok_and(|server| {
+                matches!(server.transport, Transport::Http { .. }) && !own_header(&server.transport)
+            });
         let mut run = live.run.held();
         if run.round != round {
             drop(run);
@@ -438,16 +542,29 @@ impl Hub {
                 run.client = Some(Arc::new(client));
                 run.ready_at = Some(Instant::now());
                 run.error = None;
+                run.sign_in = false;
             }
             Err(why) => {
                 run.state = Some(State::Failed);
-                run.error = Some(secrets.hide(&why));
+                run.sign_in = needed;
+                run.challenge = auth.challenge().filter(|said| !said.is_empty());
+                run.error = Some(if needed { SIGN_IN.to_owned() } else { stored.hide(&why) });
             }
         }
         let state = run.now();
         drop(run);
         live.settled.notify_all();
         self.host.said(id, state);
+    }
+    fn auth_for(&self, id: &str, stored: &Stored, server: Option<&Server>) -> Auth {
+        let grant = server.and_then(|server| stored.grant_for(&server.transport));
+        let (me, id) = (self.me.clone(), id.to_owned());
+        Auth::new(grant, move |grant| {
+            if let Some(hub) = me.upgrade() {
+                let id = id.clone();
+                std::thread::spawn(move || hub.keep_grant(&id, grant));
+            }
+        })
     }
     fn heard(&self, id: &str, round: u64, heard: Heard) {
         let Some(live) = self.live.held().get(id).cloned() else {
@@ -485,7 +602,7 @@ impl Hub {
         self.host.said(id, State::Ready);
     }
     fn crashed(&self, id: &str, live: &Arc<Live>, round: u64, why: &str) {
-        let secrets = self.secrets(id);
+        let secrets = self.stored(id);
         let (client, next) = {
             let mut run = live.run.held();
             if run.round != round || run.now() != State::Ready {

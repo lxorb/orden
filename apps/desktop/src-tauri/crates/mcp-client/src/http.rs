@@ -5,12 +5,15 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::time::Duration;
 
 use orden_base::Held as _;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
-use reqwest::{Client as Web, Response, StatusCode, Url};
+use reqwest::header::{
+    HeaderMap, HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE, WWW_AUTHENTICATE,
+};
+use reqwest::{Client as Web, RequestBuilder, Response, StatusCode, Url};
 use serde_json::Value;
 use tauri::async_runtime::JoinHandle;
 
 use crate::client::{hello, waited, STARTING};
+use crate::oauth::Auth;
 use crate::rpc::{Peer, Wire};
 
 const SESSION: &str = "mcp-session-id";
@@ -105,10 +108,25 @@ struct Link {
     endpoint: Mutex<Option<mpsc::Sender<Result<(), String>>>>,
     tasks: Mutex<Vec<JoinHandle<()>>>,
     ended: AtomicBool,
+    auth: Arc<Auth>,
+}
+fn bearing(request: RequestBuilder, bearer: Option<&str>) -> RequestBuilder {
+    match bearer {
+        Some(token) => request.bearer_auth(token),
+        None => request,
+    }
 }
 impl Link {
-    fn new(web: Web, fixed: HeaderMap, url: Url, legacy: bool, peer: &Arc<Peer>) -> Arc<Self> {
+    fn new(
+        web: Web,
+        fixed: HeaderMap,
+        url: Url,
+        legacy: bool,
+        peer: &Arc<Peer>,
+        auth: &Arc<Auth>,
+    ) -> Arc<Self> {
         Arc::new(Self {
+            auth: Arc::clone(auth),
             web,
             fixed,
             url,
@@ -134,16 +152,37 @@ impl Link {
         }
         headers
     }
+    async fn asked(&self, build: impl Fn() -> RequestBuilder) -> Result<Response, reqwest::Error> {
+        let own = self.fixed.contains_key(AUTHORIZATION);
+        let bearer = if own { None } else { self.auth.bearer().await };
+        let mut response = bearing(build(), bearer.as_deref()).send().await?;
+        if response.status() != StatusCode::UNAUTHORIZED {
+            return Ok(response);
+        }
+        if let Some(stale) = bearer {
+            if let Some(fresh) = self.auth.renewed(&stale).await {
+                response = bearing(build(), Some(&fresh)).send().await?;
+                if response.status() != StatusCode::UNAUTHORIZED {
+                    return Ok(response);
+                }
+            }
+        }
+        let challenge = response.headers().get(WWW_AUTHENTICATE).and_then(|one| one.to_str().ok());
+        self.auth.refused(challenge);
+        Ok(response)
+    }
     async fn post(self: Arc<Self>, message: Value) -> Result<(), Posted> {
         let to = self.to.held().clone().unwrap_or_else(|| self.url.clone());
+        let body = message.to_string();
         let response = self
-            .web
-            .post(to)
-            .headers(self.headers())
-            .header(CONTENT_TYPE, "application/json")
-            .header(ACCEPT, "application/json, text/event-stream")
-            .body(message.to_string())
-            .send()
+            .asked(|| {
+                self.web
+                    .post(to.clone())
+                    .headers(self.headers())
+                    .header(CONTENT_TYPE, "application/json")
+                    .header(ACCEPT, "application/json, text/event-stream")
+                    .body(body.clone())
+            })
             .await
             .map_err(|error| Posted::Failed(reached(&error)))?;
         if let Some(session) = response.headers().get(SESSION) {
@@ -214,7 +253,9 @@ impl Link {
                 return;
             };
             let gone = matches!(posted, Posted::Refused(StatusCode::NOT_FOUND, _));
-            if gone && link.session.held().is_some() {
+            if matches!(posted, Posted::Refused(StatusCode::UNAUTHORIZED, _)) {
+                link.peer.end(crate::oauth::SIGN_IN);
+            } else if gone && link.session.held().is_some() {
                 link.peer.end("the server ended the session");
             } else if let Some(id) = asked {
                 link.peer.answered(id, Err(posted.said()));
@@ -225,9 +266,10 @@ impl Link {
         let link = Arc::clone(self);
         let task = tauri::async_runtime::spawn(async move {
             loop {
-                let asked =
-                    link.web.get(link.url.clone()).headers(link.headers()).header(ACCEPT, EVENTS);
-                let Ok(response) = asked.send().await else {
+                let asked = link.asked(|| {
+                    link.web.get(link.url.clone()).headers(link.headers()).header(ACCEPT, EVENTS)
+                });
+                let Ok(response) = asked.await else {
                     return;
                 };
                 if !response.status().is_success() {
@@ -281,10 +323,11 @@ impl Drop for Http {
 pub(crate) fn open(
     url: &str,
     headers: &BTreeMap<String, String>,
+    auth: &Arc<Auth>,
     peer: &Arc<Peer>,
 ) -> Result<(Box<dyn Wire>, Value), String> {
     let url = Url::parse(url).map_err(|_| format!("'{url}' is no web address"))?;
-    let link = Link::new(web()?, fixed(headers)?, url, false, peer);
+    let link = Link::new(web()?, fixed(headers)?, url, false, peer, auth);
     let (id, message, answer) = peer.ask("initialize", hello())?;
     let posted = run(Arc::clone(&link).post(message))
         .unwrap_or_else(|| Err(Posted::Failed("the request was dropped".to_owned())));
@@ -309,17 +352,26 @@ pub(crate) fn open(
     Ok((Box::new(wire), init))
 }
 fn legacy(tried: &Link, peer: &Arc<Peer>) -> Result<(Box<dyn Wire>, Value), String> {
-    let link = Link::new(tried.web.clone(), tried.fixed.clone(), tried.url.clone(), true, peer);
+    let link = Link::new(
+        tried.web.clone(),
+        tried.fixed.clone(),
+        tried.url.clone(),
+        true,
+        peer,
+        &tried.auth,
+    );
     let (found, heard) = mpsc::channel();
     *link.endpoint.held() = Some(found.clone());
     let reading = Arc::clone(&link);
     let task = tauri::async_runtime::spawn(async move {
-        let asked = reading
-            .web
-            .get(reading.url.clone())
-            .headers(reading.fixed.clone())
-            .header(ACCEPT, EVENTS);
-        match asked.send().await {
+        let asked = reading.asked(|| {
+            reading
+                .web
+                .get(reading.url.clone())
+                .headers(reading.fixed.clone())
+                .header(ACCEPT, EVENTS)
+        });
+        match asked.await {
             Err(error) => {
                 let _ = found.send(Err(reached(&error)));
             }

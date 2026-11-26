@@ -2,7 +2,10 @@
   "theme": "Default",
   "mcpServers": {
     "streamed": { "httpUrl": "https://stream.example.com/mcp", "headers": { "Authorization": "Bearer g1" } },
-    "events": { "url": "https://events.example.com/sse" },
+    "events": {
+      "url": "https://events.example.com/sse",
+      "oauth": { "enabled": true, "clientId": "g-client", "clientSecret": "g-secret-1", "scopes": ["a", "b"] }
+    },
     "python": { "command": "python", "args": ["-m", "server"], "cwd": "./tools", "env": { "API": "$API_KEY" } }
   }
 }

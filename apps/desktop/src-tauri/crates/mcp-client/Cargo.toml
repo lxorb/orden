@@ -21,6 +21,9 @@ reqwest.workspace = true
 rustls.workspace = true
 tokio.workspace = true
 toml = "1"
+base64.workspace = true
+getrandom.workspace = true
+tauri-plugin-opener.workspace = true
 
 [target.'cfg(all(unix, not(any(target_os = "android", target_os = "ios"))))'.dependencies]
 libc.workspace = true
