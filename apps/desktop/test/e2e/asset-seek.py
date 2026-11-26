@@ -46,6 +46,7 @@ async (rows) => {
     change.oncomplete = done
     change.onerror = () => failed(change.error)
   })
+  new BroadcastChannel('orden:assets').postMessage({ written: rows.map((row) => row.path), gone: [] })
 }
 """
 PLAY = """
@@ -79,17 +80,17 @@ async ([src, tag, at]) => {
 }
 """
 def drive(browser: Browser) -> None:
-    context = browser.new_context(service_workers="allow")
+    context = browser.new_context(service_workers="block")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
     wait_for(page, "window.ordenApp && window.ordenApp.workspace.active", "the app")
-    wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
     files = clips()
     page.evaluate(PUT, [{"path": path, "type": "", "data": base64.b64encode(data).decode(), "modified": 1} for path, data in files.items()])
     for path in files:
         tag = "audio" if path.endswith(".wav") else "video"
-        played = page.evaluate(PLAY, [f"/asset{path}", tag, AT])
+        wait_for(page, f"window.ordenApp.assetUrl({json.dumps(path)}).startsWith('blob:')", f"{path} to be held")
+        played = page.evaluate(PLAY, [page.evaluate("(path) => window.ordenApp.assetUrl(path)", path), tag, AT])
         say(f"{path}: {json.dumps(played)}")
         if played["read"] != "read":
             wrong(f"{path} would not play from the space: {played['read']}")

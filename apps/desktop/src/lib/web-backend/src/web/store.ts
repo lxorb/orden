@@ -1,4 +1,5 @@
-import { breathe } from '../../../platform/src/api'
+import { breathe, fromBase64 } from '../../../platform/src/api'
+import { dropAsset, holdAsset } from './asset-blobs'
 import { databaseName, FORMER_NAME } from './carry-database'
 import type { PlaneMarks } from '@orden/scan/canvas'
 
@@ -257,12 +258,69 @@ const ownAssets = {
     batch(ASSETS_WITH_STATS, (change) => {
       change.objectStore('assets').put(row)
       change.objectStore('stats').put(statOf(row))
-    }),
+    }).then(() => shown(row)),
   remove: (path: string) =>
     batch(ASSETS_WITH_STATS, (change) => {
       change.objectStore('assets').delete(path)
       change.objectStore('stats').delete(path)
-    }),
+    }).then(() => unshown(path)),
+}
+const ASSET_CHANNEL = 'orden:assets'
+const ASSET_SLICE = 16
+let assetChannel: BroadcastChannel | null = null
+let filling: Promise<void> | null = null
+function showsAssets(): boolean {
+  return !native() && typeof document !== 'undefined' && typeof URL.createObjectURL === 'function'
+}
+function assetBus(): BroadcastChannel | null {
+  if (typeof BroadcastChannel !== 'function') return null
+  return (assetChannel ??= new BroadcastChannel(ASSET_CHANNEL))
+}
+async function held(row: AssetRow): Promise<void> {
+  try {
+    await holdAsset(row.path, fromBase64(row.data))
+  } catch {
+    dropAsset(row.path)
+  }
+}
+async function shown(row: AssetRow): Promise<void> {
+  if (!showsAssets()) return
+  await held(row)
+  assetBus()?.postMessage({ written: [row.path], gone: [] } satisfies RowChange)
+}
+function unshown(path: string): void {
+  if (!showsAssets()) return
+  dropAsset(path)
+  assetBus()?.postMessage({ written: [], gone: [path] } satisfies RowChange)
+}
+async function heard(change: RowChange): Promise<void> {
+  for (const path of change.gone) dropAsset(path)
+  for (const path of change.written) {
+    const row = await ownAssets.get(path)
+    if (row) await held(row)
+    else dropAsset(path)
+  }
+}
+async function fillAssets(): Promise<void> {
+  const listening = assetBus()
+  if (listening) {
+    listening.onmessage = (event: MessageEvent<unknown>) => {
+      if (isRowChange(event.data)) void heard(event.data).catch(() => undefined)
+    }
+  }
+  let after: string | null = null
+  for (;;) {
+    const rows: AssetRow[] = await slice<AssetRow>('assets', after, ASSET_SLICE)
+    for (const row of rows) await held(row)
+    const last = rows.at(-1)
+    if (rows.length < ASSET_SLICE || last === undefined) return
+    after = last.path
+    await breathe()
+  }
+}
+export function assetsShown(): Promise<void> {
+  if (!showsAssets()) return Promise.resolve()
+  return (filling ??= fillAssets().catch(() => undefined))
 }
 const ownStats = {
   holds: async (path: string) => {

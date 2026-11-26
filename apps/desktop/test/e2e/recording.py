@@ -61,7 +61,7 @@ PLAYERS = """
   for (const player of document.querySelectorAll('audio')) {
     out.push({
       tag: player.tagName.toLowerCase(),
-      src: new URL(player.src, location.href).pathname,
+      src: player.src,
       ready: player.readyState,
       duration: player.duration,
       wide: Math.round(player.getBoundingClientRect().width),
@@ -121,7 +121,7 @@ class Whisper:
         )
 def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     context = browser.new_context(
-        service_workers="allow",
+        service_workers="block",
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
         color_scheme="light",
         has_touch=finger,
@@ -143,7 +143,6 @@ def fresh(browser: Browser, finger: bool = False) -> tuple[Page, Whisper]:
     page.route("**/v1/ask/heard*", whisper.listen)
     DRIVE.open(page)
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
-    wait_for(page, "navigator.serviceWorker.controller", "the asset worker")
     seeded = page.evaluate(SEED, NOTE)
     say(f"the space {seeded['root']} holds {seeded['name']}")
     wait_for(page, "window.orden && document.querySelector('.cm-content')", "the editor")
@@ -224,8 +223,8 @@ def drive(browser: Browser) -> None:
     for player in players:
         if player["ready"] < 2:
             wrong(f"the player never read the file: {player}")
-        if not player["src"].startswith("/asset/"):
-            wrong(f"the player is not pointed at the space own asset store: {player}")
+        if not player["src"].startswith("blob:"):
+            wrong(f"the player is not pointed at the file the page holds: {player}")
         if player["wide"] < 100:
             wrong(f"the player is drawn {player['wide']}px wide")
     shot(page, "player")

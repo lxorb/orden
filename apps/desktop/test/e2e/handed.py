@@ -182,7 +182,7 @@ def fresh(
     activity: bool = True,
 ) -> Page:
     context = browser.new_context(
-        service_workers="allow",
+        service_workers="block",
         viewport=PHONE if finger else {"width": 1180, "height": 900},
         color_scheme="light",
         has_touch=finger,
@@ -262,7 +262,6 @@ def shared_at_a_cold_start(page: Page) -> str:
         wrong(f"the activity was told {done} times that the copies may go, not once")
     page.reload(wait_until="domcontentloaded")
     started(page)
-    wait_for(page, "navigator.serviceWorker.controller", "the worker to take the page over")
     page.evaluate(
         """() => {
              const ws = window.ordenApp.workspace
@@ -276,12 +275,8 @@ def shared_at_a_cold_start(page: Page) -> str:
              const image = document.querySelector('.cm-content img.orden-image')
              if (!image) return null
 
-             let where = image.getAttribute('src') ?? ''
-             try {
-               where = new URL(image.src, location.href).pathname
-             } catch {}
-
-             return { src: where, complete: image.complete, width: image.naturalWidth }
+             const beside = window.ordenApp.assetUrl(window.ordenApp.workspace.active.path.replace(/[^/]+$/, 'assets/shot.png'))
+             return { src: image.src, beside, complete: image.complete, width: image.naturalWidth }
            }"""
     )
     say(f"[cold] the picture as the editor drew it: {json.dumps(drawn)}")
@@ -289,7 +284,7 @@ def shared_at_a_cold_start(page: Page) -> str:
     if not drawn:
         wrong("the shared picture is not in the note at all")
     else:
-        if "/asset/" not in drawn["src"] or not drawn["src"].endswith("shot.png"):
+        if not drawn["src"].startswith("blob:") or drawn["src"] != drawn["beside"]:
             wrong(f"the picture is not beside the note: {drawn['src']}")
         if not drawn["complete"] or drawn["width"] < 1:
             wrong(f"the shared picture did not draw: {drawn}")

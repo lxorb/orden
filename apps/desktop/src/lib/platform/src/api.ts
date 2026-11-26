@@ -94,6 +94,7 @@ export {
 export {
   assetPath,
   assetUrl,
+  showAssetsFrom,
   closeWindow,
   currentWindow,
   internal,
