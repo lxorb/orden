@@ -1,7 +1,7 @@
 cask "orden" do
-  version "0.22.4"
-  sha256 arm:   "05ab5468aa823f217cc7f7d60b4a4d137323570477a08f08a836e717206f4528",
-         intel: "e92b34d323277ef92ba94495ebf39d62d9ca2413949910a446b382701716354c"
+  version "0.22.5"
+  sha256 arm:   "fc114992dc1dee1ce6d9d1716051f1823c4ee7411439f844dd6c91db1559f315",
+         intel: "d9905a512b507d4467542d850cb2261ee63dcbe9e2f763cc71d4b12d205538ca"
 
   on_arm do
     url "https://github.com/lxorb/orden/releases/download/v#{version}/Orden-#{version}-macos-arm64.dmg",
