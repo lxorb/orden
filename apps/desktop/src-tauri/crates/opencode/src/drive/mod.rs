@@ -1,0 +1,504 @@
+mod mock;
+mod schema;
+
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{self, Receiver};
+use std::sync::Arc;
+use std::thread::JoinHandle;
+use std::time::{Duration, Instant, SystemTime};
+
+use serde_json::{json, Value};
+
+use crate::env::{Dirs, Launch};
+use crate::host::Running;
+use crate::proxy::{call_on, Answer};
+use crate::{feed, http};
+
+const BINARY_VAR: &str = "ORDEN_OPENCODE_BIN";
+const WRITE_VAR: &str = "ORDEN_OPENCODE_SNAPSHOT";
+const WITHIN: Duration = Duration::from_secs(60);
+const GROWS_AT_MOST: f64 = 12.0;
+const EVENTS: [&str; 10] = [
+    "server.connected",
+    "session.created",
+    "session.updated",
+    "session.status",
+    "session.idle",
+    "message.updated",
+    "message.part.updated",
+    "message.part.delta",
+    "permission.asked",
+    "permission.replied",
+];
+const PARTS: [&str; 4] = ["text", "tool", "step-start", "step-finish"];
+const STATES: [&str; 2] = ["completed", "error"];
+const ROLES: [&str; 2] = ["user", "assistant"];
+fn binary() -> Option<PathBuf> {
+    std::env::var_os(BINARY_VAR).filter(|one| !one.is_empty()).map(PathBuf::from)
+}
+fn snapshot_file(name: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("src").join("drive").join(name)
+}
+fn writing() -> bool {
+    std::env::var(WRITE_VAR).is_ok_and(|one| one == "write")
+}
+fn approve() -> Value {
+    json!({
+        "*": "allow",
+        "edit": "ask",
+        "bash": { "*": "ask", "ls *": "allow", "git status*": "allow", "git diff*": "allow", "git log*": "allow" },
+        "webfetch": "ask",
+        "external_directory": "ask",
+        "orden_*": "ask",
+    })
+}
+fn auto() -> Value {
+    json!({
+        "*": "allow",
+        "bash": { "*": "allow", "rm *": "ask", "sudo *": "ask", "git push*": "ask", "git reset --hard*": "ask", "curl *| *sh*": "ask" },
+        "external_directory": "ask",
+    })
+}
+fn full() -> Value {
+    json!("allow")
+}
+fn config(model: u16, mcp: u16, permission: Value) -> Value {
+    json!({
+        "enabled_providers": ["mock"],
+        "provider": { "mock": {
+            "npm": "@ai-sdk/openai-compatible",
+            "name": "Mock",
+            "options": { "baseURL": format!("http://127.0.0.1:{model}/v1"), "apiKey": "none" },
+            "models": { "m": { "name": "Mock", "tool_call": true } },
+        } },
+        "model": "mock/m",
+        "small_model": "mock/m",
+        "permission": permission,
+        "agent": { "plan": { "permission": { "edit": { "*": "deny", ".opencode/plans/*.md": "allow" } } } },
+        "mcp": { "orden": {
+            "type": "remote",
+            "url": format!("http://127.0.0.1:{mcp}/mcp"),
+            "headers": { "Authorization": format!("Bearer {}", mock::TOKEN) },
+            "oauth": false,
+            "timeout": 10000,
+        } },
+    })
+}
+struct Drive {
+    running: Option<Running>,
+    root: PathBuf,
+    _dir: tempfile::TempDir,
+    events: Receiver<Value>,
+    heard: Vec<Value>,
+    stop: Arc<AtomicBool>,
+    follower: Option<JoinHandle<()>>,
+    mcp: mock::Mcp,
+    model: mock::Model,
+}
+impl Drive {
+    fn start(permission: Value) -> Option<Drive> {
+        let binary = binary()?;
+        let (model, mcp) = (mock::model(), mock::mcp());
+        let dir = tempfile::tempdir().expect("a folder");
+        let root = dir.path().join("opencode");
+        let launch = Launch {
+            binary,
+            dirs: Dirs { root: root.clone() },
+            config: config(model.port, mcp.port, permission),
+            auth: None,
+        };
+        let running = Running::start(launch).expect("ready");
+        let stop = Arc::new(AtomicBool::new(false));
+        let (told, events) = mpsc::channel();
+        let follower = {
+            let (stop, line) = (stop.clone(), running.line.clone());
+            std::thread::spawn(move || {
+                feed::follow(&stop, || Some(line.clone()), |event| told.send(event).is_ok());
+            })
+        };
+        let mut drive = Drive {
+            running: Some(running),
+            root,
+            _dir: dir,
+            events,
+            heard: Vec::new(),
+            stop,
+            follower: Some(follower),
+            mcp,
+            model,
+        };
+        drive.until(0, |one| one["type"] == "server.connected");
+        Some(drive)
+    }
+    fn call(&self, method: &str, path: &str, body: Option<&Value>) -> Answer {
+        let running = self.running.as_ref().expect("running");
+        let answer = call_on(&running.line, method, path, body).expect("answered");
+        assert!(answer.status < 300, "{method} {path}: {} {}", answer.status, answer.body);
+        answer
+    }
+    fn mark(&self) -> usize {
+        self.heard.len()
+    }
+    fn until(&mut self, from: usize, what: impl Fn(&Value) -> bool) -> Value {
+        if let Some(found) = self.heard[from.min(self.heard.len())..].iter().find(|one| what(one)) {
+            return found.clone();
+        }
+        let started = Instant::now();
+        loop {
+            let left = WITHIN.saturating_sub(started.elapsed());
+            let event = self.events.recv_timeout(left).unwrap_or_else(|_| {
+                let types: Vec<&Value> = self.heard.iter().map(|one| &one["type"]).collect();
+                panic!("no such event within {} s; heard {types:?}", WITHIN.as_secs())
+            });
+            self.heard.push(event.clone());
+            if what(&event) {
+                return event;
+            }
+        }
+    }
+    fn session(&self) -> String {
+        let made = self.call("POST", "/session", Some(&json!({})));
+        made.body["id"].as_str().expect("a session id").to_owned()
+    }
+    fn prompt(&self, session: &str, agent: Option<&str>, words: &str) {
+        let mut body = json!({ "parts": [{ "type": "text", "text": words }] });
+        if let Some(agent) = agent {
+            body["agent"] = json!(agent);
+        }
+        self.call("POST", &format!("/session/{session}/prompt_async"), Some(&body));
+    }
+    fn asked(&mut self, from: usize, session: &str) -> Value {
+        self.until(from, |one| {
+            one["type"] == "permission.asked" && one["properties"]["sessionID"] == session
+        })
+    }
+    fn reply(&self, asked: &Value, reply: &str, message: Option<&str>) {
+        let id = asked["properties"]["id"].as_str().expect("an id");
+        let mut body = json!({ "reply": reply });
+        if let Some(message) = message {
+            body["message"] = json!(message);
+        }
+        self.call("POST", &format!("/permission/{id}/reply"), Some(&body));
+    }
+    fn idle(&mut self, from: usize, session: &str) {
+        self.until(from, |one| {
+            one["type"] == "session.idle" && one["properties"]["sessionID"] == session
+        });
+    }
+    fn plan_stays_read_only(&mut self) {
+        let session = self.session();
+        let target = self.root.join("planned.txt");
+        let from = self.mark();
+        self.prompt(&session, Some("plan"), &format!("write: {}", target.display()));
+        self.idle(from, &session);
+        assert!(!target.exists(), "the Plan agent wrote a file");
+        assert!(
+            !self.heard[from..].iter().any(|one| one["type"] == "permission.asked"
+                && one["properties"]["sessionID"] == session.as_str()),
+            "the Plan agent asked to edit instead of being refused"
+        );
+        let messages = self.call("GET", &format!("/session/{session}/message"), None).body;
+        let first = messages.as_array().and_then(|all| all.first()).expect("a message");
+        assert_eq!(first["info"]["role"], "user");
+        assert_eq!(first["info"]["agent"], "plan");
+        let place = target.display().to_string();
+        let offered = self.model.asked.lock().expect("asked").iter().any(|body| {
+            body["messages"].to_string().contains(&place)
+                && body["tools"]
+                    .as_array()
+                    .is_some_and(|all| all.iter().any(|tool| tool["function"]["name"] == "write"))
+        });
+        let refused = self.heard[from..].iter().any(|one| {
+            let part = &one["properties"]["part"];
+            part["tool"] == "write" && part["state"]["status"] == "error"
+        });
+        assert!(!offered || refused, "the Plan agent's write was neither withheld nor refused");
+    }
+}
+impl Drop for Drive {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+        if let Some(follower) = self.follower.take() {
+            let _ = follower.join();
+        }
+        if let Some(running) = self.running.take() {
+            let config = running.launch.dirs.own_config();
+            running.stop();
+            std::thread::sleep(Duration::from_millis(500));
+            let _ = std::fs::remove_dir_all(config);
+        }
+    }
+}
+fn walked(path: &Path, into: &mut BTreeMap<PathBuf, Option<SystemTime>>) {
+    let Ok(meta) = std::fs::symlink_metadata(path) else {
+        return;
+    };
+    into.insert(path.to_owned(), meta.modified().ok());
+    if meta.is_dir() {
+        for one in std::fs::read_dir(path).into_iter().flatten().flatten() {
+            walked(&one.path(), into);
+        }
+    }
+}
+fn users_opencode() -> BTreeMap<PathBuf, Option<SystemTime>> {
+    let mut all = BTreeMap::new();
+    let Some(home) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) else {
+        return all;
+    };
+    let home = PathBuf::from(home);
+    for part in [
+        ".opencode",
+        ".config/opencode",
+        ".local/share/opencode",
+        ".local/state/opencode",
+        ".cache/opencode",
+    ] {
+        walked(&home.join(part), &mut all);
+    }
+    all
+}
+fn keys(value: &Value) -> BTreeSet<String> {
+    value.as_object().map(|all| all.keys().cloned().collect()).unwrap_or_default()
+}
+fn shapes(heard: &[Value]) -> Value {
+    let mut kinds: BTreeMap<String, BTreeMap<String, BTreeSet<String>>> = BTreeMap::new();
+    let mut seen = |kind: &str, name: &str, value: &Value| {
+        let found = keys(value);
+        kinds
+            .entry(kind.to_owned())
+            .or_default()
+            .entry(name.to_owned())
+            .and_modify(|kept| kept.retain(|one| found.contains(one)))
+            .or_insert(found);
+    };
+    for one in heard {
+        let kind = one["type"].as_str().unwrap_or_default();
+        if EVENTS.contains(&kind) {
+            seen("events", kind, &one["properties"]);
+        }
+        let part = &one["properties"]["part"];
+        if kind == "message.part.updated"
+            && PARTS.contains(&part["type"].as_str().unwrap_or_default())
+        {
+            seen("parts", part["type"].as_str().unwrap_or_default(), part);
+            let status = part["state"]["status"].as_str().unwrap_or_default();
+            if part["type"] == "tool" && STATES.contains(&status) {
+                seen("states", status, &part["state"]);
+            }
+        }
+        let info = &one["properties"]["info"];
+        if kind == "message.updated" && ROLES.contains(&info["role"].as_str().unwrap_or_default()) {
+            seen("messages", info["role"].as_str().unwrap_or_default(), info);
+        }
+    }
+    json!(kinds)
+}
+fn shapes_missing(was: &Value, now: &Value) -> Vec<String> {
+    let mut missing = Vec::new();
+    for (kind, names) in was.as_object().into_iter().flatten() {
+        for (name, fields) in names.as_object().into_iter().flatten() {
+            let found: BTreeSet<&str> = now[kind][name]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
+            if now[kind].get(name).is_none() {
+                missing.push(format!("{kind} {name} never came"));
+                continue;
+            }
+            for field in fields.as_array().into_iter().flatten().filter_map(Value::as_str) {
+                if !found.contains(field) {
+                    missing.push(format!("{kind} {name} lacks {field}"));
+                }
+            }
+        }
+    }
+    missing
+}
+fn compared(
+    name: &str,
+    now: &Value,
+    text: String,
+    missing: impl Fn(&Value, &Value) -> Vec<String>,
+) {
+    let file = snapshot_file(name);
+    if writing() {
+        std::fs::write(&file, text).expect("snapshot written");
+        return;
+    }
+    let was: Value =
+        serde_json::from_str(&std::fs::read_to_string(&file).expect("snapshot")).expect("json");
+    let broken = missing(&was, now);
+    assert!(broken.is_empty(), "OpenCode no longer matches {name}:\n{}", broken.join("\n"));
+}
+#[test]
+fn the_snapshots_cover_every_route_and_event_orden_uses() {
+    let read = |name: &str| -> Value {
+        serde_json::from_str(&std::fs::read_to_string(snapshot_file(name)).expect("snapshot"))
+            .expect("json")
+    };
+    let routes = read("schema.json");
+    for (method, route) in schema::used() {
+        assert!(routes["routes"].get(format!("{method} {route}")).is_some(), "{method} {route}");
+    }
+    let events = read("events.json");
+    for kind in EVENTS {
+        assert!(events["events"].get(kind).is_some(), "{kind}");
+    }
+    for kind in PARTS {
+        assert!(events["parts"].get(kind).is_some(), "{kind}");
+    }
+}
+#[test]
+fn the_engine_s_schema_still_covers_every_route_orden_uses() {
+    let Some(binary) = binary() else {
+        return;
+    };
+    let dir = tempfile::tempdir().expect("a folder");
+    let dirs = Dirs { root: dir.path().join("opencode") };
+    let launch = Launch {
+        binary,
+        dirs: dirs.clone(),
+        config: json!({ "enabled_providers": [] }),
+        auth: None,
+    };
+    let running = Running::start(launch).expect("ready");
+    let doc = http::request(
+        running.line.port,
+        ("GET", "/doc"),
+        None,
+        Some(&running.line.password),
+        WITHIN,
+    )
+    .expect("doc");
+    running.stop();
+    std::thread::sleep(Duration::from_millis(500));
+    let _ = std::fs::remove_dir_all(dirs.own_config());
+    assert_eq!(doc.status, 200);
+    let now = schema::taken(&serde_json::from_str(&doc.body).expect("json"));
+    compared("schema.json", &now, schema::written(&now), schema::broken);
+}
+#[test]
+fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
+    let before = users_opencode();
+    let Some(mut drive) = Drive::start(approve()) else {
+        return;
+    };
+    let config = drive.call("GET", "/config", None).body;
+    assert_eq!(config["model"], "mock/m");
+    assert_eq!(config["share"], "disabled");
+    assert_eq!(config["autoupdate"], false);
+    assert_eq!(config["permission"]["orden_*"], "ask");
+    assert_eq!(config["permission"]["bash"]["*"], "ask");
+    assert_eq!(config["agent"]["plan"]["permission"]["edit"]["*"], "deny");
+    assert_eq!(config["mcp"]["orden"]["type"], "remote");
+    let mcp = drive.call("GET", "/mcp", None).body;
+    assert_eq!(mcp["orden"]["status"], "connected", "{mcp}");
+    let work = drive.root.join("work");
+    std::fs::create_dir_all(&work).expect("work");
+    let (gone, kept) = (work.join("gone.txt"), work.join("kept.txt"));
+    std::fs::write(&gone, "x").expect("gone");
+    std::fs::write(&kept, "x").expect("kept");
+    let session = drive.session();
+    let from = drive.mark();
+    drive.prompt(&session, None, &format!("bash: rm {}", gone.display()));
+    let asked = drive.asked(from, &session);
+    assert_eq!(asked["properties"]["permission"], "bash");
+    assert!(asked["properties"]["tool"]["callID"].is_string(), "{asked}");
+    let pending = drive.call("GET", "/permission", None).body;
+    assert!(pending
+        .as_array()
+        .is_some_and(|all| all.iter().any(|one| one["id"] == asked["properties"]["id"])));
+    let from = drive.mark();
+    drive.reply(&asked, "once", None);
+    drive.until(from, |one| one["type"] == "permission.replied");
+    drive.idle(from, &session);
+    assert!(!gone.exists(), "a command allowed once did not run");
+    let from = drive.mark();
+    drive.prompt(&session, None, &format!("bash: rm {}", kept.display()));
+    let asked = drive.asked(from, &session);
+    let from = drive.mark();
+    drive.reply(&asked, "reject", Some("not now"));
+    drive.idle(from, &session);
+    assert!(kept.exists(), "a refused command ran");
+    let refused = drive.heard[from..].iter().any(|one| {
+        let part = &one["properties"]["part"];
+        part["type"] == "tool"
+            && part["state"]["status"] == "error"
+            && part["state"]["error"].as_str().is_some_and(|why| why.contains("not now"))
+    });
+    assert!(refused, "the refusal did not reach the tool with its message");
+    let from = drive.mark();
+    drive.prompt(&session, None, &format!("tool: orden_{}", mock::TOOL));
+    let asked = drive.asked(from, &session);
+    assert_eq!(asked["properties"]["permission"], format!("orden_{}", mock::TOOL));
+    let from = drive.mark();
+    drive.reply(&asked, "once", None);
+    drive.idle(from, &session);
+    {
+        let heard = drive.mcp.heard.lock().expect("heard");
+        assert!(heard.iter().any(|(_, method)| method == "tools/list"), "{heard:?}");
+        assert!(heard.iter().any(|(_, method)| method == "tools/call"), "{heard:?}");
+        let bearer = format!("Bearer {}", mock::TOKEN);
+        assert!(
+            heard.iter().all(|(said, _)| said.as_deref() == Some(bearer.as_str())),
+            "{heard:?}"
+        );
+    }
+    drive.plan_stays_read_only();
+    let now = shapes(&drive.heard);
+    let text = format!("{}\n", serde_json::to_string_pretty(&now).expect("json"));
+    compared("events.json", &now, text, shapes_missing);
+    drop(drive);
+    assert_eq!(users_opencode(), before, "the engine wrote into the reader's own OpenCode folders");
+}
+#[test]
+fn the_plan_agent_stays_read_only_under_auto_and_full_permissions() {
+    for preset in [auto(), full()] {
+        let Some(mut drive) = Drive::start(preset) else {
+            return;
+        };
+        drive.plan_stays_read_only();
+    }
+}
+#[test]
+fn the_engine_is_ready_within_a_few_times_its_own_bare_start() {
+    let Some(binary) = binary() else {
+        return;
+    };
+    let bare = || {
+        let started = Instant::now();
+        let done = std::process::Command::new(&binary).arg("--version").output().expect("ran");
+        assert!(done.status.success());
+        started.elapsed()
+    };
+    let dir = tempfile::tempdir().expect("a folder");
+    let dirs = Dirs { root: dir.path().join("opencode") };
+    let launch = Launch {
+        binary: binary.clone(),
+        dirs: dirs.clone(),
+        config: json!({ "enabled_providers": [] }),
+        auth: None,
+    };
+    let ready = || {
+        let started = Instant::now();
+        let running = Running::start(launch.clone()).expect("ready");
+        let spent = started.elapsed();
+        running.stop();
+        std::thread::sleep(Duration::from_millis(500));
+        spent
+    };
+    bare();
+    ready();
+    let least = |measure: &dyn Fn() -> Duration| (0..3).map(|_| measure()).min().expect("measured");
+    let (bare, ready) = (least(&bare), least(&ready));
+    let _ = std::fs::remove_dir_all(dirs.own_config());
+    let ratio = ready.as_secs_f64() / bare.as_secs_f64().max(0.05);
+    assert!(
+        ratio < GROWS_AT_MOST,
+        "ready in {ready:?}, {ratio:.1} times its bare start ({bare:?})"
+    );
+}

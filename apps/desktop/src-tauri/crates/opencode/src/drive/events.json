@@ -1,0 +1,123 @@
+{
+  "events": {
+    "message.part.delta": [
+      "delta",
+      "field",
+      "messageID",
+      "partID",
+      "sessionID"
+    ],
+    "message.part.updated": [
+      "part",
+      "sessionID",
+      "time"
+    ],
+    "message.updated": [
+      "info",
+      "sessionID"
+    ],
+    "permission.asked": [
+      "always",
+      "id",
+      "metadata",
+      "patterns",
+      "permission",
+      "sessionID",
+      "tool"
+    ],
+    "permission.replied": [
+      "reply",
+      "requestID",
+      "sessionID"
+    ],
+    "server.connected": [],
+    "session.created": [
+      "info",
+      "sessionID"
+    ],
+    "session.idle": [
+      "sessionID"
+    ],
+    "session.status": [
+      "sessionID",
+      "status"
+    ],
+    "session.updated": [
+      "info",
+      "sessionID"
+    ]
+  },
+  "messages": {
+    "assistant": [
+      "agent",
+      "cost",
+      "id",
+      "mode",
+      "modelID",
+      "parentID",
+      "path",
+      "providerID",
+      "role",
+      "sessionID",
+      "time",
+      "tokens"
+    ],
+    "user": [
+      "agent",
+      "id",
+      "model",
+      "role",
+      "sessionID",
+      "time"
+    ]
+  },
+  "parts": {
+    "step-finish": [
+      "cost",
+      "id",
+      "messageID",
+      "reason",
+      "sessionID",
+      "tokens",
+      "type"
+    ],
+    "step-start": [
+      "id",
+      "messageID",
+      "sessionID",
+      "type"
+    ],
+    "text": [
+      "id",
+      "messageID",
+      "sessionID",
+      "text",
+      "type"
+    ],
+    "tool": [
+      "callID",
+      "id",
+      "messageID",
+      "sessionID",
+      "state",
+      "tool",
+      "type"
+    ]
+  },
+  "states": {
+    "completed": [
+      "input",
+      "metadata",
+      "output",
+      "status",
+      "time",
+      "title"
+    ],
+    "error": [
+      "error",
+      "input",
+      "status",
+      "time"
+    ]
+  }
+}
