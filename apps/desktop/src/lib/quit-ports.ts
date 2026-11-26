@@ -4,34 +4,35 @@ import { invoke } from './platform/src/api'
 import { ptyOf, runningTabs } from './terminal/src/api'
 import { workspace } from './workspace/src/api'
 
-providePort('quit.terminal', {
-  rows: async (window, idle) => {
-    const live = new Set(runningTabs())
-    const tabs = workspace.tabs.filter((tab) => tab.kind === 'terminal' && live.has(tab.id))
-    const rows = await Promise.all(
-      tabs.map(async (tab): Promise<Stopping | null> => {
-        const id = ptyOf(tab.id)
-        if (id === undefined) return null
-        const busy = await invoke<boolean>('pty_busy', { id }).catch(() => false)
-        if (!busy && !idle) return null
-        return {
-          window,
-          kind: 'terminal',
-          id: tab.id,
-          name: tab.shown,
-          busy,
-          doc: tab.doc,
-          running: tab.running ? { ...tab.running } : null,
-        }
-      }),
-    )
-    return rows.filter((row) => row !== null)
-  },
-  show: (row) => {
-    workspace.activeTabId = row.id
-    return Promise.resolve()
-  },
-})
+if (__ORDEN_APP__ === 'orden')
+  providePort('quit.terminal', {
+    rows: async (window, idle) => {
+      const live = new Set(runningTabs())
+      const tabs = workspace.tabs.filter((tab) => tab.kind === 'terminal' && live.has(tab.id))
+      const rows = await Promise.all(
+        tabs.map(async (tab): Promise<Stopping | null> => {
+          const id = ptyOf(tab.id)
+          if (id === undefined) return null
+          const busy = await invoke<boolean>('pty_busy', { id }).catch(() => false)
+          if (!busy && !idle) return null
+          return {
+            window,
+            kind: 'terminal',
+            id: tab.id,
+            name: tab.shown,
+            busy,
+            doc: tab.doc,
+            running: tab.running ? { ...tab.running } : null,
+          }
+        }),
+      )
+      return rows.filter((row) => row !== null)
+    },
+    show: (row) => {
+      workspace.activeTabId = row.id
+      return Promise.resolve()
+    },
+  })
 if (__AI__)
   providePort('quit.thread', {
     rows: async (window) => {

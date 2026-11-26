@@ -1,3 +1,5 @@
+import left from './left-out.json'
+
 export const ORDEN_APPS = ['orden', 'notes', 'todo', 'chat', 'track'] as const
 export type OrdenApp = (typeof ORDEN_APPS)[number]
 export function ordenApp(said = process.env.ORDEN_APP ?? ''): OrdenApp {
@@ -8,4 +10,7 @@ export function ordenApp(said = process.env.ORDEN_APP ?? ''): OrdenApp {
 }
 export function distOf(app: OrdenApp): string {
   return app === 'orden' ? 'dist' : `dist-${app}`
+}
+export function leftOut(app: OrdenApp): readonly string[] {
+  return (left as Partial<Record<OrdenApp, readonly string[]>>)[app] ?? []
 }

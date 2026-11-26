@@ -59,10 +59,11 @@ export const accountSettings = settingsFollower(
     )
     recovery.receive(remote)
     whenLoaded(spaceArchiving, (archiving) => void archiving.receive(remote))
-    whenLoaded(
-      () => import('./chats-client/src/api'),
-      ({ hush }) => hush.receive(remote),
-    )
+    if (__ORDEN_APP__ === 'orden')
+      whenLoaded(
+        () => import('./chats-client/src/api'),
+        ({ hush }) => hush.receive(remote),
+      )
   },
 )
 export function hearAccountSettings(): () => void {

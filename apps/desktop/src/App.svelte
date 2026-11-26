@@ -370,16 +370,19 @@
         viewport,
         links,
         views,
-        terminals: () => import('./lib/terminal/src/api').then((one) => one.sessions()),
+        ...(__ORDEN_APP__ === 'orden'
+          ? { terminals: () => import('./lib/terminal/src/api').then((one) => one.sessions()) }
+          : {}),
       },
     })
+    const withAi = <T,>(load: () => Promise<T>): Promise<Partial<T>> => (__AI__ ? load() : Promise.resolve({}))
     void Promise.all([
       import('./lib/import/src/api').then((one) => one.importingStore()),
       import('./lib/publishing/src/api'),
-      import('./lib/ai-providers/src/api'),
-      rewritingStore(),
+      withAi(() => import('./lib/ai-providers/src/api')),
+      withAi(rewritingStore),
       import('./lib/sync-client/test/fake-engine.svelte'),
-      import('./lib/agents/src/api').then((one) => one.agentStandIn()),
+      withAi(() => import('./lib/agents/src/api').then((one) => one.agentStandIn())),
       import('./lib/theme-looks/src/api'),
     ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }, { wallpaper, store }]) => {
       Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
@@ -396,12 +399,16 @@
             rows,
             writeFile,
           })),
-        chats: () =>
-          Promise.all([
-            import('./lib/chats-client/src/api').then((one) => one.chatStore()),
-            import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
-          ]).then(([{ chats }, open]) => ({ chats, ...open })),
-        time: () => import('./lib/time/src/api').then(({ time }) => time),
+        ...(__ORDEN_APP__ === 'orden'
+          ? {
+              chats: () =>
+                Promise.all([
+                  import('./lib/chats-client/src/api').then((one) => one.chatStore()),
+                  import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
+                ]).then(([{ chats }, open]) => ({ chats, ...open })),
+              time: () => import('./lib/time/src/api').then(({ time }) => time),
+            }
+          : {}),
         agents: { standIn },
         ai,
         aiChats: () => chatStore().then(({ chat }) => chat),
@@ -417,7 +424,7 @@
         sync2,
         wallpaper,
         themeStore: store,
-        downloads: () => webDownloads().then((one) => one.downloads),
+        ...(__ORDEN_APP__ === 'orden' ? { downloads: () => webDownloads().then((one) => one.downloads) } : {}),
       })
     })
   }

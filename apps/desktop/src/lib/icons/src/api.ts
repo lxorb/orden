@@ -15,3 +15,4 @@ export { refreshSites } from './site-set'
 export { iconRecent } from './icon-recent.svelte'
 export { keptPicture, keptSitePicture } from './kept-picture'
 export const siteMasks = () => import('./site-mask')
+export const siteIconSet = () => import('./site-icons.svelte')

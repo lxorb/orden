@@ -1,5 +1,5 @@
 {
   "name": "icons",
   "layer": "foundation",
-  "dependsOn": ["contracts", "ui-kit", "platform"]
+  "dependsOn": ["contracts", "ui-kit", "platform", "accounts"]
 }

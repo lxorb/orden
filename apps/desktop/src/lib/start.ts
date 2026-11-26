@@ -129,21 +129,31 @@ export function start(): () => void {
   void startup
     .turn('right')
     .then(featureGates)
-    .then(({ whenChatsOn, whenExplorerOn, whenPassOn, whenTimeOn }) => {
+    .then(({ whenChatsOn, whenExplorerOn, whenOn, whenPassOn, whenTimeOn }) => {
       whenPassOn(
-        () => void import('./pass-sync/src/api').then((one) => one.startPassSync()),
-        () => void import('./pass-sync/src/api').then((one) => one.quietPass()),
+        () => {
+          if (__ORDEN_APP__ === 'orden') void import('./pass-sync/src/api').then((one) => one.startPassSync())
+        },
+        () => {
+          if (__ORDEN_APP__ === 'orden') void import('./pass-sync/src/api').then((one) => one.quietPass())
+        },
       )
-      whenChatsOn(() => void import('./chats-client/src/api').then((one) => one.wakeChats()))
-      whenTimeOn(() => void import('./time/src/api').then((one) => one.wakeTime()))
+      whenChatsOn(() => {
+        if (__ORDEN_APP__ === 'orden') void import('./chats-client/src/api').then((one) => one.wakeChats())
+      })
+      whenTimeOn(() => {
+        if (__ORDEN_APP__ === 'orden') void import('./time/src/api').then((one) => one.wakeTime())
+      })
       whenExplorerOn()
+      if (__ORDEN_APP__ !== 'orden') whenOn({ on: () => false, kind: 'terminal', name: () => 'Terminal' })
     })
-  void startup
-    .turn('right')
-    .then(() => import('./chats-client/src/api'))
-    .then((one) => one.retireChats())
-    .then((one) => one.forgetRetiredChatsHere())
-    .catch(() => undefined)
+  if (__ORDEN_APP__ === 'orden')
+    void startup
+      .turn('right')
+      .then(() => import('./chats-client/src/api'))
+      .then((one) => one.retireChats())
+      .then((one) => one.forgetRetiredChatsHere())
+      .catch(() => undefined)
   if (__ORDEN_APP__ === 'orden')
     void startup
       .turn('right')
@@ -173,7 +183,7 @@ export function start(): () => void {
       const { quickShortcuts } = await import('./quick-add/src/api')
       await (await quickShortcuts()).hearShortcuts()
     })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
-    void startup.turn('rooms').then(() => oneWindow())
+    if (__ORDEN_APP__ === 'orden') void startup.turn('rooms').then(() => oneWindow())
   }
   let fetched: Promise<Across> | null = null
   const across = () => (fetched ??= acrossStarting().then(({ startAcross }) => startAcross()))

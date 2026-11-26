@@ -2,32 +2,37 @@ import { providePort } from '@orden/contracts'
 import type { Found } from './mcp-servers/src/api'
 import { isDesktop } from './platform/src/api'
 
-const chatsStore = () => import('./chats-client/src/api').then((one) => one.chatStore()).then(({ chats }) => chats)
-providePort('chats', {
-  list: () =>
-    chatsStore().then((chats) => chats.list.map(({ id, name, unread, mentions }) => ({ id, name, unread, mentions }))),
-  chatAt: (path) => chatsStore().then((chats) => chats.chatAt(path)),
-  part: (chat, wanted) =>
-    import('./chats-client/src/api').then((one) => one.chatContext()).then(({ chatPart }) => chatPart(chat, wanted)),
-  offer: async (chat, text, parent) => {
-    ;(await chatsStore()).offer(chat, text, parent ? { parent } : {})
-  },
-  openLink: async (uri, how) => {
-    const { openChatLink } = await (await import('./chats-client/src/api')).chatOpening()
-    await openChatLink(uri, how)
-  },
-  mayDelete: async (paths) => {
-    const { mayDelete } = await (await import('./chats-client/src/api')).chatDeleting()
-    return mayDelete(paths)
-  },
-  ending: async (paths) => {
-    const { ending } = await (await import('./chats-client/src/api')).chatDeleting()
-    return ending(paths)
-  },
-})
-providePort('chats.demo', {
-  stage: (me) => import('./chats-client/src/api').then((one) => one.chatsDemo()).then(({ demoChats }) => demoChats(me)),
-})
+if (__ORDEN_APP__ === 'orden') {
+  const chatsStore = () => import('./chats-client/src/api').then((one) => one.chatStore()).then(({ chats }) => chats)
+  providePort('chats', {
+    list: () =>
+      chatsStore().then((chats) =>
+        chats.list.map(({ id, name, unread, mentions }) => ({ id, name, unread, mentions })),
+      ),
+    chatAt: (path) => chatsStore().then((chats) => chats.chatAt(path)),
+    part: (chat, wanted) =>
+      import('./chats-client/src/api').then((one) => one.chatContext()).then(({ chatPart }) => chatPart(chat, wanted)),
+    offer: async (chat, text, parent) => {
+      ;(await chatsStore()).offer(chat, text, parent ? { parent } : {})
+    },
+    openLink: async (uri, how) => {
+      const { openChatLink } = await (await import('./chats-client/src/api')).chatOpening()
+      await openChatLink(uri, how)
+    },
+    mayDelete: async (paths) => {
+      const { mayDelete } = await (await import('./chats-client/src/api')).chatDeleting()
+      return mayDelete(paths)
+    },
+    ending: async (paths) => {
+      const { ending } = await (await import('./chats-client/src/api')).chatDeleting()
+      return ending(paths)
+    },
+  })
+  providePort('chats.demo', {
+    stage: (me) =>
+      import('./chats-client/src/api').then((one) => one.chatsDemo()).then(({ demoChats }) => demoChats(me)),
+  })
+}
 const agentsApi = () => import('./agents/src/api')
 if (__AI__)
   providePort('agents.writes', {
@@ -67,25 +72,27 @@ providePort('voice', {
       .then((one) => one.wordsInFile(bytes))
       .then((words) => words.text),
 })
-async function unlending(tab: string) {
-  const { webLending } = await import('./web-tab/src/api')
-  ;(await webLending()).unlend(tab)
-}
-providePort('web.lending', {
-  adopt: (tab, handing) => import('./web-tab/src/api').then(({ pages }) => pages.adopt(tab, handing)),
-  lend: async (tab, as) => {
+if (__ORDEN_APP__ === 'orden') {
+  async function unlending(tab: string) {
     const { webLending } = await import('./web-tab/src/api')
-    await (await webLending()).lend(tab, as)
-  },
-  unlend: (tab) => {
-    void unlending(tab)
-  },
-  readerStore: async () => {
-    const { webDataStores } = await import('./web-tab/src/api')
-    const { webData } = await webDataStores()
-    return webData.store(null)
-  },
-})
+    ;(await webLending()).unlend(tab)
+  }
+  providePort('web.lending', {
+    adopt: (tab, handing) => import('./web-tab/src/api').then(({ pages }) => pages.adopt(tab, handing)),
+    lend: async (tab, as) => {
+      const { webLending } = await import('./web-tab/src/api')
+      await (await webLending()).lend(tab, as)
+    },
+    unlend: (tab) => {
+      void unlending(tab)
+    },
+    readerStore: async () => {
+      const { webDataStores } = await import('./web-tab/src/api')
+      const { webData } = await webDataStores()
+      return webData.store(null)
+    },
+  })
+}
 const importing = () => import('./import/src/api')
 const bringing = () => importing().then((one) => one.bringing())
 providePort('import.bring', {

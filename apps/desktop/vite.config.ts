@@ -8,24 +8,46 @@ import { dirOnWords } from './svelte-dir'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 import { carriesAi } from './ai-build'
-import { distOf, ordenApp } from './app-build'
+import { distOf, leftOut, ordenApp } from './app-build'
 
 const host = process.env.TAURI_DEV_HOST
 const AI_MODULES =
-  /\/src\/lib\/(?:ai-chat|ai-sidebar|ai-providers|agents|mcp-servers|agent-verbs|agent-host|agent-docs|agent-protocol)\/src\//
+  /\/src\/lib\/(ai-chat|ai-sidebar|ai-providers|agents|mcp-servers|agent-verbs|agent-host|agent-docs|agent-protocol)\/src\//
 const NAMES_AI = /ai-chat|ai-sidebar|ai-providers|agents|mcp-servers|agent-verbs|agent-host|agent-docs|agent-protocol/
-const WITHOUT_AI = '\0orden-without-ai'
-function withoutAi(): Plugin {
-  const slashed = (id: string) => id.replace(/\\/g, '/')
+const ABSENT = '\0orden-absent:'
+const LOADED = '?loaded'
+const slashed = (id: string) => id.replace(/\\/g, '/')
+function without(named: RegExp, inside: RegExp, strict: boolean): Plugin {
+  const left = (id: string) => inside.exec(slashed(id))?.[1]
   return {
-    name: 'orden-without-ai',
+    name: 'orden-without',
     enforce: 'pre',
     async resolveId(source, importer, options) {
-      if (!importer || !NAMES_AI.test(source) || AI_MODULES.test(slashed(importer))) return null
+      if (!importer || !named.test(source) || inside.test(slashed(importer))) return null
       const found = await this.resolve(source, importer, { ...options, skipSelf: true })
-      return found && AI_MODULES.test(slashed(found.id)) ? WITHOUT_AI : null
+      const name = found ? left(found.id) : undefined
+      if (!name) return null
+      return ABSENT + name + ((options as { kind?: string }).kind === 'dynamic-import' ? LOADED : '')
     },
-    load: (id) => (id === WITHOUT_AI ? 'export {}' : null),
+    load: (id) => (id.startsWith(ABSENT) ? 'export {}' : null),
+    generateBundle(_options, bundle) {
+      if (!strict) return
+      const chunks = Object.values(bundle).filter((one) => one.type === 'chunk')
+      const live = (ids: readonly string[] = []) =>
+        ids.filter((one) => chunks.some((held) => (held.modules[one]?.renderedLength ?? 0) > 0)).map(slashed)
+      const said: string[] = []
+      for (const chunk of chunks) {
+        for (const [id, { renderedLength }] of Object.entries(chunk.modules)) {
+          const name = id.startsWith(ABSENT) ? left(`/src/lib/${id.slice(ABSENT.length).replace(LOADED, '')}/src/`) : ''
+          if (!name) continue
+          const info = this.getModuleInfo(id)
+          if (id.endsWith(LOADED))
+            said.push(`${name} is loaded by one of\n  ${live(info?.dynamicImporters).join('\n  ')}`)
+          else if (renderedLength > 0) said.push(`${name} is used by one of\n  ${live(info?.importers).join('\n  ')}`)
+        }
+      }
+      if (said.length) this.error(`this app leaves these modules out, yet\n${said.join('\n')}`)
+    },
   }
 }
 function appVersion(): string {
@@ -65,8 +87,16 @@ const everyPage = {
 export default defineConfig(({ command, mode }) => {
   const ai = carriesAi(mode)
   const app = ordenApp()
+  const left = leftOut(app)
+  const names = left.join('|')
   return {
-    plugins: [svelte(), dirOnWords(), emojiOutlines(), ...(ai ? [] : [withoutAi()])],
+    plugins: [
+      svelte(),
+      dirOnWords(),
+      emojiOutlines(),
+      ...(ai ? [] : [without(NAMES_AI, AI_MODULES, false)]),
+      ...(left.length ? [without(new RegExp(names), new RegExp(`/src/lib/(${names})/src/`), true)] : []),
+    ],
     define: {
       __ORDEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
       __APP_VERSION__: JSON.stringify(appVersion()),
@@ -96,7 +126,7 @@ export default defineConfig(({ command, mode }) => {
       outDir: distOf(app),
       sourcemap: !!process.env.TAURI_ENV_DEBUG,
       rollupOptions: {
-        shimMissingExports: !ai,
+        shimMissingExports: !ai || left.length > 0,
         input:
           app === 'orden'
             ? {

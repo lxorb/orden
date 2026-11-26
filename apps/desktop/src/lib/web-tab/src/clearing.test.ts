@@ -15,7 +15,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 const forgotten = vi.hoisted(() => [] as number[])
-vi.mock('./site-icons.svelte', () => ({
+vi.mock('../../icons/src/site-icons.svelte', () => ({
   siteIcons: { forgetSince: (since: number) => void forgotten.push(since) },
 }))
 const { clearData, reach, sinceFor, sitesSince } = await import('./clearing')

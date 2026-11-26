@@ -1,6 +1,6 @@
+import { siteIconSet } from '../../icons/src/api'
 import { invoke } from '../../platform/src/api'
 import { placesForgotten } from './place'
-import { siteIcons } from './site-icons.svelte'
 import { visited } from './visited'
 import { originOf } from './web-data'
 import { ownStore, webData } from './web-data.svelte'
@@ -55,6 +55,6 @@ export async function clearData(asked: Asked, apart: readonly (string | null)[],
   if (asked.history) {
     const gone = new Set(books.flatMap((book) => visited.removeSince(book, since)))
     placesForgotten(since <= 0 ? null : gone)
-    await siteIcons.forgetSince(since)
+    await (await siteIconSet()).siteIcons.forgetSince(since)
   }
 }
