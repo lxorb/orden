@@ -237,6 +237,11 @@ def machine_bundle(fresh: bool) -> None:
     )
     if done.returncode != 0:
         raise SystemExit(f"the machine's bundle failed:\n{done.stdout}\n{done.stderr}")
+def complete_import(page: Any, patience: float = 60) -> None:
+    done = page.locator(".import .actions button", has_text="Complete Import")
+    done.wait_for(state="visible", timeout=patience * 1000)
+    done.click()
+    done.wait_for(state="detached", timeout=patience * 1000)
 def built(into: Path, kind: str) -> bool:
     if not (into / "index.html").exists():
         return False
