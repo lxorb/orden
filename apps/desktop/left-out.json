@@ -1,3 +1,15 @@
 {
-  "notes": ["tasks-views", "pass-ui", "chats-client", "terminal", "explorer", "time", "demo", "web-tab", "pass-sync"]
+  "notes": [
+    "tasks-views",
+    "pass-ui",
+    "chats-client",
+    "terminal",
+    "explorer",
+    "time",
+    "demo",
+    "web-tab",
+    "pass-sync",
+    "tasks-model",
+    "quick-add"
+  ]
 }

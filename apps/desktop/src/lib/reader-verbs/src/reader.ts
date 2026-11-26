@@ -6,10 +6,13 @@ import { placeFor } from './places'
 import { Refused } from './refused'
 import { addTodo, listTodos, todoNamed, todoTitle, updateTodo } from './todos'
 
+function refused(): never {
+  throw new Refused('not_granted', 'this app keeps no todos; they are in Orden')
+}
 export const tasksReader: TasksReaderPort = {
-  listTasks: (args) => Promise.resolve().then(() => listTodos(args)),
-  addTask: async (args) => addTodo(args, todoTitle(args)),
-  updateTask: async (args) => updateTodo(args, todoNamed(args).id),
+  listTasks: (args) => Promise.resolve().then(() => (__ORDEN_APP__ === 'orden' ? listTodos(args) : refused())),
+  addTask: async (args) => (__ORDEN_APP__ === 'orden' ? addTodo(args, todoTitle(args)) : refused()),
+  updateTask: async (args) => (__ORDEN_APP__ === 'orden' ? updateTodo(args, todoNamed(args).id) : refused()),
   queryBase: async (args) => {
     if (!basesOn()) {
       throw new Refused('not_granted', 'databases are turned off; the reader turns it on in Settings, Experimental')

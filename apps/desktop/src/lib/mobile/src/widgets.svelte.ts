@@ -55,6 +55,7 @@ export function watchWidgets(): () => void {
   let gone = false
   let today = $state<TodayRow[]>([])
   const read = async () => {
+    if (__ORDEN_APP__ !== 'orden') return
     const { listed } = await import('../../tasks-model/src/api')
     const { tasks } = await listed()
     today = todayRows(tasks)
@@ -63,7 +64,7 @@ export function watchWidgets(): () => void {
   void read()
   const stop = $effect.root(() => {
     $effect(() => {
-      const held = todos.todos.length
+      const held = __ORDEN_APP__ === 'orden' ? todos.todos.length : 0
       if (!workspace.protection.seen || held < 0) return
       reread()
     })

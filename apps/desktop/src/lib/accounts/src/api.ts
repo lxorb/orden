@@ -36,3 +36,4 @@ export { CLEARS, type Clears, clearsAt, stands } from './status'
 export { farApart } from './zone'
 export { arriving } from './arriving.svelte'
 export { connectors } from './connectors.svelte'
+export const retireChats = () => import('./retired')

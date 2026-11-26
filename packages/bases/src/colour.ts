@@ -46,3 +46,5 @@ export function colourRules(expression: string | undefined): ColourRule[] | null
   }
   return rules
 }
+export const priorityTone = (priority: number): string | undefined =>
+  (({ 1: 'var(--callout-note)', 2: 'var(--callout-warning)', 3: 'var(--danger)' }) as Record<number, string>)[priority]

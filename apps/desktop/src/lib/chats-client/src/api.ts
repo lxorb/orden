@@ -9,7 +9,6 @@ export const chatsDemo = () => import('./demo')
 export const chatDeleting = () => import('./deleting')
 export const chatContext = () => import('./context')
 export const wakeChats = () => import('./start.svelte')
-export const retireChats = () => import('./retired')
 export const chatsCarried = async (path: string, folder: string) =>
   (await import('./leaving')).chatsCarried(path, folder)
 export const loadChatTab = () => import('./view/ChatTab.svelte')

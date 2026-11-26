@@ -9,8 +9,7 @@ export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
   2: 'Medium',
   3: 'High',
 }
-export const priorityTone = (priority: number): string | undefined =>
-  (({ 1: 'var(--callout-note)', 2: 'var(--callout-warning)', 3: 'var(--danger)' }) as Record<number, string>)[priority]
+export { priorityTone } from '@orden/bases'
 interface Subtask {
   readonly id: string
   readonly title: string

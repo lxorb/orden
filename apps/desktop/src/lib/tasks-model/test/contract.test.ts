@@ -223,6 +223,7 @@ describe('tasks-model contract', () => {
           one.startsWith('./') ||
           one === '@orden/contracts' ||
           one === '@orden/sync-core' ||
+          one === '@orden/bases' ||
           one === '../../held-database/src/api' ||
           one === '@orden/markdown/task-line' ||
           one === '@orden/markdown/links'
