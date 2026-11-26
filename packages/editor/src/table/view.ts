@@ -141,6 +141,15 @@ export class TableView {
     this.alignButtons = { left: align('left'), center: align('center'), right: align('right') }
     this.columnBar = this.buildColumnBar()
     this.rowBar = this.buildRowBar()
+    const adding = (className: string, said: string, onPress: () => void) => {
+      const strip = button(className, said, 'M5 1v8M1 5h8', onPress)
+      strip.tabIndex = -1
+      return strip
+    }
+    this.scroller.append(
+      adding('orden-table-add-column', 'Add column', () => this.insertColumnAfter(this.model.header.length - 1)),
+      adding('orden-table-add-row', 'Add row', () => this.growBelow(this.focusedCell()?.at.column ?? 0)),
+    )
     this.dom.append(this.scroller, this.columnBar, this.rowBar)
     this.watchColumnHover()
     this.watchRowHover()

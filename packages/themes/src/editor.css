@@ -1904,3 +1904,38 @@
     border-bottom: 1px solid CanvasText;
   }
 }
+.orden-table-add-row,
+.orden-table-add-column {
+  display: none;
+}
+@media (hover: none) {
+  .orden-table-wrap:focus-within .orden-table-scroll {
+    display: grid;
+    grid-template-columns: max-content 36px;
+    gap: 6px;
+    align-items: stretch;
+  }
+  .orden-table-wrap:focus-within .orden-table-add-row,
+  .orden-table-wrap:focus-within .orden-table-add-column {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px dashed var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--muted-strong);
+  }
+  .orden-table-wrap:focus-within .orden-table-add-row {
+    grid-column: 1;
+    height: 36px;
+  }
+  .orden-table-add-row svg,
+  .orden-table-add-column svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+}
