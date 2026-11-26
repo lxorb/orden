@@ -1,4 +1,4 @@
-import { providePort } from '@orden/contracts'
+import { providePort, workspaceNotes } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 import {
   claimName,
@@ -6,6 +6,7 @@ import {
   localSources,
   remotePath,
   reveal,
+  saveCopy,
   SHEET_POLICY,
   showLabel,
   stemOf,
@@ -14,7 +15,12 @@ import {
 } from '../src/api'
 
 const reached: string[] = []
-vi.mock('../../platform/src/api', async (importOriginal) => ({ ...(await importOriginal<object>()), isDesktop: true }))
+const disk = vi.hoisted(() => new Map<string, string>())
+vi.mock('../../platform/src/api', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  isDesktop: true,
+  fileBytes: (path: string) => Promise.resolve(new TextEncoder().encode(disk.get(path) ?? '')),
+}))
 vi.mock('../../web-backend/src/api', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   diskPathOf: (path: string) => {
@@ -22,6 +28,7 @@ vi.mock('../../web-backend/src/api', async (importOriginal) => ({
     return Promise.resolve(path)
   },
 }))
+vi.mock('../../downloads/src/api', () => ({ downloadStarted: () => undefined }))
 vi.mock('@tauri-apps/plugin-opener', () => ({
   revealItemInDir: (path: string) => {
     reached.push(`system ${path}`)
@@ -148,5 +155,26 @@ describe('a path on another host', () => {
       'explorer /Users/me/a.md',
       'system /Users/me/a.md',
     ])
+  })
+})
+describe('a copy of a note saved right after typing', () => {
+  test('holds the words just typed, as the open notes settle before the file is read', async () => {
+    disk.set('/space/Plan.md', 'as saved')
+    const handed: Blob[] = []
+    vi.stubGlobal('document', { createElement: () => ({ click: () => undefined }) })
+    vi.stubGlobal('window', { setTimeout: () => 0 })
+    const made = vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      handed.push(blob as Blob)
+      return 'blob:copy'
+    })
+    const stop = providePort('workspace.notes', {
+      ...workspaceNotes(),
+      settled: () => Promise.resolve(void disk.set('/space/Plan.md', 'as saved and typed')),
+    })
+    await saveCopy('/space/Plan.md', 'Plan.md')
+    stop()
+    made.mockRestore()
+    vi.unstubAllGlobals()
+    expect(await handed[0]?.text()).toBe('as saved and typed')
   })
 })

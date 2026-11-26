@@ -474,6 +474,7 @@ function spaceCommands(): Command[] {
               busy.start(
                 'Exporting',
                 async () => {
+                  await workspace.savingSettled()
                   const items = workspace.itemMeta.itemsOf(space.root)
                   const metaOf = (path: string) => items[path] ?? null
                   await exportSpace(space.root, space.name, metaOf)

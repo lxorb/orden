@@ -1,3 +1,4 @@
+import { workspaceNotes } from '@orden/contracts'
 import { fileBytes, mimeOfPath, UNKNOWN_TYPE } from '../../platform/src/api'
 import { deliver } from './save'
 
@@ -7,6 +8,7 @@ export function extensionOf(path: string): string {
 export const mimeOf = (path: string): string => mimeOfPath(path) ?? UNKNOWN_TYPE
 export async function saveCopy(path: string, name: string): Promise<string | null> {
   const extension = extensionOf(path)
+  await workspaceNotes().settled()
   return deliver(name, extension, extension.toUpperCase(), {
     bytes: await fileBytes(path),
     mime: mimeOf(path),

@@ -20,6 +20,7 @@ export interface WorkspaceNotesPort {
   leftOut(root: string): readonly string[]
   openAt(path: string, line: number): Promise<void>
   toggleTaskAt(path: string, line: number, hash?: string): Promise<void>
+  settled(): Promise<void>
 }
 export interface WorkspaceSpace {
   readonly id: string
@@ -59,6 +60,7 @@ export const NO_WORKSPACE_NOTES: WorkspaceNotesPort = {
   leftOut: () => [],
   openAt: () => Promise.resolve(),
   toggleTaskAt: () => Promise.resolve(),
+  settled: () => Promise.resolve(),
 }
 export const NO_WORKSPACE_VIEW: WorkspaceViewPort = {
   spaces: [],
