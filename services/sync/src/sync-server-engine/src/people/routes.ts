@@ -52,7 +52,6 @@ people.get('/presence', async (context) => {
   return context.json({ presence })
 })
 const COLUMN: Record<Exclude<keyof ProfileChanges, 'status' | 'hidden'>, string> = {
-  pronouns: 'pronouns',
   bio: 'bio',
   zone: 'zone',
 }
