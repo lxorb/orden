@@ -211,7 +211,7 @@ describe('what Enter does when the bar opens no page', () => {
   test('Orden’s own page opens, as its address is shown', () => {
     expect(webAddress('orden://history')).toBeNull()
     expect(unopened('orden://history')).toBe('own page')
-    expect(unopened('  NIB://history ')).toBe('own page')
+    expect(unopened('  ORDEN://History ')).toBe('own page')
   })
   test('every other address that opens nothing says so', () => {
     for (const said of [

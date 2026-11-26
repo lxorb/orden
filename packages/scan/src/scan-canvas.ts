@@ -8,7 +8,7 @@ function indexed(content: string): string {
   const top = skim(content, ['nodes', 'orden'], undefined, ORDEN_LAST)
   if (!top) return ''
   const nodes = top.get('nodes')
-  const own = top.get('orden') ?? skim(content, ['nib'])?.get('nib')
+  const own = top.get('orden')
   const marks = own ? skim(content, ['icon', 'iconColor'], own, ICON_FIRST) : null
   const worn = [...(marks ?? [])].map(([key, at]) => `"${key}":${content.slice(at.from, at.to)}`)
   return `{"nodes":${nodes ? content.slice(nodes.from, nodes.to) : '[]'},"orden":{${worn.join(',')}}}`

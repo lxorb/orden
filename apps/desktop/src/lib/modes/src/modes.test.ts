@@ -782,11 +782,6 @@ describe('the window’s own frame', () => {
     localStorage.setItem('orden:modes', JSON.stringify({ frame: 'nonsense' }))
     expect((await restarted()).frame).toBe('orden')
   })
-  test('kept under the old name is Orden’s own still', async () => {
-    modes.setFrame('system')
-    localStorage.setItem('orden:modes', JSON.stringify({ frame: 'nib' }))
-    expect((await restarted()).frame).toBe('orden')
-  })
 })
 describe('translucency, a switch older builds kept', () => {
   test('is dropped quietly whichever way it was, and the theme stays as it was (#2162)', async () => {

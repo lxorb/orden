@@ -166,14 +166,6 @@ describe('the welcome note, on its way to an account', () => {
     await push(mirror, 'token', NOBODY)
     expect(held()).toEqual([])
   })
-  test.each(['Nib', 'nibeditor'])('nor the one a device was seeded with as %s', async (name) => {
-    const earlier = ALL_MARKDOWN.replace('# Welcome to Orden', `# Welcome to ${name}`)
-    expect(earlier).not.toBe(WELCOME)
-    fake.disk.set(`${ROOT}/${WELCOME_NAME}`, earlier)
-    const mirror = newMirror('s-one', ROOT)
-    await push(mirror, 'token', NOBODY)
-    expect(held()).toEqual([])
-  })
   test('and not on the next pass either, however many launches there are', async () => {
     fake.disk.set(`${ROOT}/${WELCOME_NAME}`, WELCOME)
     const mirror = newMirror('s-one', ROOT)

@@ -24,6 +24,7 @@ import {
 import { settleShortcuts } from '@orden/scan/settle'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
+import { ASIDE, ASIDES, isAside } from './former-aside'
 import { fileStamp, type Mirror, type Moving, type Tracked, type TrackedFile } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { NotWritten, writeDown } from './write-down'
@@ -368,8 +369,6 @@ function rekey(mirror: Mirror, from: string, to: string) {
   mirror.offered = without(mirror.offered, from)
   if (offered !== undefined) mirror.offered = { ...mirror.offered, [to]: offered }
 }
-const ASIDE = '.orden-moving-'
-const ASIDES = [ASIDE, '.nib-moving-']
 function asidePrefix(id: string, aside = ASIDE): string {
   return `${aside}${hash32(id).toString(36)}-`
 }
@@ -397,9 +396,6 @@ async function asideFound(root: string, path: string, id: string): Promise<strin
     if (await present(joinPath(root, at))) return at
   }
   return null
-}
-function isAside(path: string): boolean {
-  return ASIDES.some((aside) => nameOf(path).startsWith(aside))
 }
 async function present(path: string): Promise<boolean> {
   const read = await invoke<string>('read_note', { path }).then(

@@ -36,7 +36,7 @@ import {
   type ThemeValue,
   valueOf,
 } from './settings'
-import { carriedCss } from './carried'
+import { customSheet, themeSheet } from './carried'
 import { type Stamp, STAMP_LINE, stamped, stampOf } from './stamp'
 
 interface ThemeInfo {
@@ -360,13 +360,7 @@ class Themes {
       await this.loadCustom()
       return
     }
-    const sheets = await Promise.all(
-      found.map((file) =>
-        invoke<string>('read_theme', { path: file.path })
-          .then(carriedCss)
-          .catch(() => ''),
-      ),
-    )
+    const sheets = await Promise.all(found.map((file) => themeSheet(file.path).catch(() => '')))
     const held = this.files
     this.files = found.map((file, at): ThemeInfo => {
       const whole = sheets[at] ?? ''
@@ -389,9 +383,7 @@ class Themes {
     await this.loadCustom()
   }
   private async loadCustom() {
-    const css = await invoke<string>('read_custom_css')
-      .then(carriedCss)
-      .catch(() => '')
+    const css = await customSheet().catch(() => '')
     styleTag(CUSTOM_ID, css.trim() && everySurface(css))
   }
   select(id: string) {
@@ -577,8 +569,7 @@ class Themes {
     else if (!theme.load && !theme.path) this.wear('', kept)
     else {
       if (early !== undefined) this.wear(early, false)
-      void (theme.load ? this.fetched(theme) : invoke<string>('read_theme', { path: theme.path }))
-        .then(carriedCss)
+      void (theme.load ? this.fetched(theme) : themeSheet(theme.path))
         .then((css) => this.wear(applying === this.applied ? css : null, kept))
         .catch(() => this.wear(applying === this.applied ? '' : null, kept))
     }

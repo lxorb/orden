@@ -97,7 +97,6 @@ describe('a link to a settings pane', () => {
   test('opens Import, however it is spelled', () => {
     expect(settingsPane('orden://settings/import')).toBe('import')
     expect(settingsPane(' ORDEN://Settings/Import/ ')).toBe('import')
-    expect(settingsPane(' NIB://Settings/Import/ ')).toBe('import')
   })
   test('and nothing else is one', () => {
     expect(settingsPane('orden://settings/account')).toBeNull()

@@ -6,8 +6,6 @@ describe('what a link target is to a browser', () => {
     'https://x.dev/a?b=1',
     'HTTP://X.DEV',
     'mailto:a@b.dev',
-    'nib://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e',
-    'nib://settings/import',
     'orden://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e/01K6Z8Q3V8A0000000000000AB',
     'orden://settings/import',
   ])('%j passes through', (link) => expect(hrefOf(link)).toBe(link))

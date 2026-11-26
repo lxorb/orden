@@ -85,7 +85,6 @@ export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 export const FRAMES = ['orden', 'system'] as const
 export type Frame = (typeof FRAMES)[number]
 export function frameChoice(value: unknown): Frame | null {
-  if (value === 'nib') return 'orden'
   return FRAMES.find((one) => one === value) ?? null
 }
 interface Saved {

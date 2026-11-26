@@ -4,8 +4,8 @@ import type { HtmlOptions } from './render'
 import { links, pictureBeside, picturePath, picturesOf, picturesWrittenOut } from '../../link-index/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { trustsHtmlIn } from '../../sharing/src/api'
-import { theme, carriedCss } from '../../theme/src/api'
-import { invoke, isNative } from '../../platform/src/api'
+import { customSheet, theme, themeSheet } from '../../theme/src/api'
+import { isNative } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { RunOptions } from './run'
 
@@ -44,16 +44,8 @@ async function look(appearance: Appearance): Promise<Pick<HtmlOptions, 'scheme' 
   if (appearance !== 'app') return { ...chosen, scheme: appearance }
   const file = theme.active.path
   const sheets = await Promise.all([
-    file
-      ? invoke<string>('read_theme', { path: file })
-          .then(carriedCss)
-          .catch(() => '')
-      : '',
-    isNative
-      ? invoke<string>('read_custom_css')
-          .then(carriedCss)
-          .catch(() => '')
-      : '',
+    file ? themeSheet(file).catch(() => '') : '',
+    isNative ? customSheet().catch(() => '') : '',
   ])
   return { ...chosen, scheme: theme.current, css: sheets.filter((css) => css.trim()).join('\n') }
 }

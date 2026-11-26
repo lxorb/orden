@@ -27,17 +27,11 @@ export interface NoteChanges {
   removed: number
 }
 const AGENT = 'orden-'
-const FORMER_AGENT = 'nib-'
 export function agentOf(provider: string): string {
   return `${AGENT}${rightsKey(provider)}`
 }
-export function agentsOf(provider: string): string[] {
-  const key = rightsKey(provider)
-  return [`${AGENT}${key}`, `${FORMER_AGENT}${key}`]
-}
 export function providerOf(agent: string): string | null {
-  const prefix = [AGENT, FORMER_AGENT].find((one) => agent.startsWith(one))
-  return prefix ? rightsHolder(agent.slice(prefix.length)) : null
+  return agent.startsWith(AGENT) ? rightsHolder(agent.slice(AGENT.length)) : null
 }
 export function linesOf(words: string): number {
   if (!words) return 0

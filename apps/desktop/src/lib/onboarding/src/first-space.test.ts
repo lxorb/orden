@@ -136,18 +136,11 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, WELCOME)).toBe(true)
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${WELCOME}mine\n`)).toBe(false)
   })
-  test.each([
-    ['Nib', true],
-    ['Orden', false],
-    ['Nib', false],
-    ['nibeditor', false],
-  ])('nor is the one an earlier version wrote, called %s (in a browser: %s)', (name, browser) => {
+  test('nor is the one an earlier version wrote', () => {
     const earlier = [
-      `# Welcome to ${name}`,
+      '# Welcome to Orden',
       '',
-      browser
-        ? 'This is the browser version. Your notes live in this browser until you sign in'
-        : 'Your notes live on this device until you sign in',
+      'Your notes live on this device until you sign in',
       'and turn on syncing, and then they follow you everywhere.',
       '',
       '- Everything is markdown, and nothing else',
@@ -160,7 +153,7 @@ describe('the welcome note, untouched', () => {
       '',
       '| What | Where |',
       '| ---- | ----- |',
-      `| Notes | ${browser ? 'this browser' : 'this device'} |`,
+      '| Notes | this device |',
       '| Synced notes | your account |',
       '',
     ].join('\n')
@@ -182,10 +175,6 @@ describe('the welcome note, untouched', () => {
     const linked = `${WELCOME}\n[Import from Obsidian or Notion](orden://settings/import)\n`
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
     expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${linked}mine\n`)).toBe(false)
-  })
-  test('nor the one seeded before the rename, whose link said nib://', () => {
-    const linked = `${WELCOME}\n[Import from Obsidian or Notion](nib://settings/import)\n`
-    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
   })
   test('suggests no import', () => {
     expect(WELCOME).not.toMatch(/import/i)

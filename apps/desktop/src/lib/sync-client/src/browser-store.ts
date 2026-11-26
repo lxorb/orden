@@ -14,7 +14,7 @@ import {
   type SyncStore,
   type TableName,
 } from './store'
-import { databaseName } from '../../web-backend/src/api'
+import { carriedName, formerDatabase } from '../../web-backend/src/api'
 import { keptForGood } from '../../kept-for-good/src/api'
 
 const SCHEMA = 1
@@ -22,7 +22,6 @@ const NAMES = Object.keys(TABLES) as TableName[]
 const BY_SPACE = 'space'
 const BY_AGE = 'age'
 const nameOf = (account: string) => `orden-sync:${account}`
-const formerNameOf = (account: string) => `nib-sync:${account}`
 export async function openWeb(account: string, made?: string): Promise<SyncStore> {
   const db = await database(account)
   db.onversionchange = () => db.close()
@@ -42,7 +41,7 @@ export async function openWeb(account: string, made?: string): Promise<SyncStore
   }
 }
 export async function deviceWeb(account: string): Promise<string | null> {
-  return (await deviceIn(nameOf(account))) ?? deviceIn(formerNameOf(account))
+  return (await deviceIn(nameOf(account))) ?? deviceIn(await formerDatabase(nameOf(account)))
 }
 function deviceIn(name: string): Promise<string | null> {
   return new Promise((resolve) => {
@@ -72,7 +71,7 @@ function deviceIn(name: string): Promise<string | null> {
   })
 }
 export async function forgetWeb(account: string): Promise<void> {
-  await forget(formerNameOf(account))
+  await forget(await formerDatabase(nameOf(account)))
   await forget(nameOf(account))
 }
 function forget(name: string): Promise<void> {
@@ -83,7 +82,7 @@ function forget(name: string): Promise<void> {
   })
 }
 async function database(account: string): Promise<IDBDatabase> {
-  const name = await databaseName(formerNameOf(account), nameOf(account))
+  const name = await carriedName(nameOf(account))
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(name, SCHEMA)
     request.onupgradeneeded = () => made(request.result)

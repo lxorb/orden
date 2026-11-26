@@ -21,9 +21,8 @@ describe('the module stands on its own', () => {
   })
 })
 describe('the notes handed over from the old address', () => {
-  test('a handoff is what either name of the app sent, and nothing else', () => {
+  test('a handoff is what the app sent, and nothing else', () => {
     expect(isHandoff({ kind: 'orden-handoff', databases: [], local: [] })).toBe(true)
-    expect(isHandoff({ kind: 'nib-handoff', databases: [], local: [] })).toBe(true)
     expect(isHandoff({ kind: 'other', databases: [], local: [] })).toBe(false)
     expect(isHandoff(null)).toBe(false)
   })

@@ -121,5 +121,7 @@ describe('a carry that does not finish', () => {
     holding.close()
     expect(name).toBe('stuck-from')
     expect(await names()).toContain('stuck-from')
+    const { recentLog } = await import('../../../platform/src/api')
+    expect(recentLog().at(-1)).toContain('could not carry the database stuck-from to stuck-to')
   })
 })

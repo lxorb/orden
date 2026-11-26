@@ -104,7 +104,7 @@ describe('the AI sidebar’s own agents', () => {
   it('are told apart by the name the crate gives them, and ask as their thread’s mode says', () => {
     expect(sidebars(ownGrant('orden-anthropic', 'Orden Claude', 1))).toBe(true)
     expect(sidebars(own())).toBe(false)
-    expect(sidebars(ownGrant('orden-notes', 'Nib Notes', 1))).toBe(false)
+    expect(sidebars(ownGrant('orden-notes', 'Notes', 1))).toBe(false)
   })
 })
 describe('the rest of a grant', () => {

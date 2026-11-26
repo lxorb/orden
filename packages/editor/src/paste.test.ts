@@ -139,7 +139,7 @@ describe('an address pasted over a selection', () => {
     expect(pasted('$«x^2»$', URL)).toBeNull()
   })
   test('gives a bare www. the scheme a browser would', () => {
-    expect(pasted('«site»', 'www.nib.ch')).toBe('[site](https://www.nib.ch)')
+    expect(pasted('«site»', 'www.orden.ch')).toBe('[site](https://www.orden.ch)')
   })
   test('links words with markup in them, but not half of the markup', () => {
     expect(pasted('«some **bold** words»', URL)).toBe(`[some **bold** words](${URL})`)

@@ -16,7 +16,6 @@ describe('a tool from an MCP server', () => {
   })
   test('is not one of Orden’s own, nor a name of another shape', () => {
     expect(outsideTool('mcp__orden__edit_note')).toBeNull()
-    expect(outsideTool('mcp__nib__edit_note')).toBeNull()
     expect(outsideTool('read_note')).toBeNull()
     expect(outsideTool('orden__read_note')).toBeNull()
     expect(outsideTool('mcp____x')).toBeNull()

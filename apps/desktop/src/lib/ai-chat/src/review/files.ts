@@ -5,7 +5,7 @@ export type FileChange =
   | { id: string; kind: 'trashed'; path: string; space?: string }
 type Tool = Extract<Part, { kind: 'tool' }>
 export function verbOf(name: string): string {
-  return name.replace(/^mcp__(?:orden|nib)__/, '')
+  return name.replace(/^mcp__orden__/, '')
 }
 export function answerOf(part: Tool): Record<string, unknown> | null {
   try {

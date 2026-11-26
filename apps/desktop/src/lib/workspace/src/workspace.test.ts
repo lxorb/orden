@@ -2236,7 +2236,7 @@ describe('a note writes itself, wherever it is', () => {
     sheet.asked = []
     sheet.answer = 'cancel'
     sent.length = 0
-    notes[WELCOME] = '# Welcome to Nib'
+    notes[WELCOME] = '# Welcome to Orden'
   })
   afterEach(async () => {
     await workspace.writesSettled()
@@ -2428,7 +2428,7 @@ describe('the welcome note, once there are real notes', () => {
   const WELCOME = '/Notes/Read me.md'
   beforeEach(() => {
     noTabs()
-    notes[WELCOME] = '# Welcome to Nib'
+    notes[WELCOME] = '# Welcome to Orden'
   })
   afterEach(() => {
     vi.restoreAllMocks()

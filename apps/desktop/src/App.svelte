@@ -93,6 +93,7 @@
     shareSheet,
     signInSheet,
     undoToastNotice,
+    formerLeftNotice,
     keysMovedNotice,
     outsideNotice,
     crashAsk,
@@ -124,6 +125,9 @@
     }, 3000)
   }
   if (isDesktop && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
+  if ((globalThis as { __ORDEN_FORMER__?: { left?: unknown[] } | null }).__ORDEN_FORMER__?.left?.length) {
+    void formerLeftNotice.ask()
+  }
   if (isDesktop && crashAskDue()) {
     void startup.turn('rooms').then(() => crashAsk.ask())
   }
@@ -790,6 +794,11 @@
       {#if outsideNotice.asked}
         {#await outsideNotice.asked then OutsideFolder}
           <OutsideFolder />
+        {/await}
+      {/if}
+      {#if formerLeftNotice.asked}
+        {#await formerLeftNotice.asked then FormerLeft}
+          <FormerLeft />
         {/await}
       {/if}
       {#if renamed.showing && renameNotice.asked}

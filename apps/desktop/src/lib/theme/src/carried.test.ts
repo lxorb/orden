@@ -1,5 +1,21 @@
-import { expect, test } from 'vitest'
-import { carriedCss, carriedToken } from './carried'
+import { expect, test, vi } from 'vitest'
+
+const files = vi.hoisted(() => new Map<string, string>())
+vi.mock('../../platform/src/api', async (real) => ({
+  ...(await real<object>()),
+  invoke: (command: string, args?: { path?: string }) =>
+    Promise.resolve(files.get(command === 'read_custom_css' ? 'custom.css' : (args?.path ?? '')) ?? ''),
+}))
+import { carriedCss, customSheet, themeSheet } from './carried'
+
+test('a theme file and the custom sheet written for the old names are read under the new ones, the files untouched', async () => {
+  files.set('/themes/mine.css', '.nib-row { color: var(--nib-dim) }')
+  files.set('custom.css', '#nib-frame { color: red }')
+  expect(await themeSheet('/themes/mine.css')).toBe('.orden-row { color: var(--orden-dim) }')
+  expect(await customSheet()).toBe('#orden-frame { color: red }')
+  expect(files.get('/themes/mine.css')).toBe('.nib-row { color: var(--nib-dim) }')
+  expect(files.get('custom.css')).toBe('#nib-frame { color: red }')
+})
 
 test('a sheet written for the old names styles the app under the new ones', () => {
   const old = '.nib-row, #nib-frame, [class*=" nib-glyph"] { color: var(--nib-dim) }'
@@ -12,8 +28,4 @@ test("the editor's carets and selection are reached under their old names", () =
 test('only a class, an id or a variable is renamed, never a word or another attribute', () => {
   const kept = 'a.my-nib-row, [data-x="nib-row"], .nibble'
   expect(carriedCss(kept)).toBe(kept)
-})
-test('a palette token under the old name is read under the new one', () => {
-  expect(carriedToken('--nib-glow')).toBe('--orden-glow')
-  expect(carriedToken('--bg')).toBe('--bg')
 })

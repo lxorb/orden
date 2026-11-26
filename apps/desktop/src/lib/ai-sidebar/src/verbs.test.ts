@@ -9,7 +9,7 @@ describe('a tool row', () => {
     expect(bareName('mcp__orden__create_note')).toBe('create_note')
   })
   test('gives another server’s tool no Orden verb, even under an Orden tool’s name (#2227)', () => {
-    expect(verbOf('mcp__nib__read_note')).toBe('Read')
+    expect(verbOf('mcp__orden__read_note')).toBe('Read')
     expect(bareName('mcp__notes__read_note')).toBe('mcp__notes__read_note')
     expect(verbOf('mcp__notes__read_note')).toBeNull()
     expect(verbOf('mcp__orden_extra__read_note')).toBeNull()

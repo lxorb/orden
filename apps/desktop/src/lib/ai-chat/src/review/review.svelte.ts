@@ -12,7 +12,7 @@ import { readOutside, SUMMED_OUTSIDE } from '../chat/transcript'
 import type { Thread, Turn } from '../../../ai-providers/src/api'
 import { cutForEdit, switchBranch as switchTail } from './branches'
 import {
-  agentsOf,
+  agentOf,
   type Change,
   byNote,
   changesOf,
@@ -118,7 +118,7 @@ class Review {
     return edits
   }
   changes(thread: Reviewed, deleted = true): Change[] {
-    const agents = thread.helpers?.length ? undefined : providersOf(thread).flatMap(agentsOf)
+    const agents = thread.helpers?.length ? undefined : providersOf(thread).map(agentOf)
     return changesOf(thread, this.edits(agents, deleted), answeringAt, this.kept)
   }
   notes(thread: Reviewed): NoteChanges[] {

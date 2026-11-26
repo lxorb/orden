@@ -13,7 +13,7 @@ import {
   windows,
   isRecord,
 } from '../../platform/src/api'
-import { MIRRORS_KEY, mirrorsFor, notePass } from '../../sync-mirror/src/api'
+import { isAside, MIRRORS_KEY, mirrorsFor, notePass } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import { calledAlso, revived } from './revived'
 import { type SyncFileDoer, type SyncFileOp, type SyncPairing, whenPortProvided } from '@orden/contracts'
@@ -100,8 +100,7 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
   return out
 }
 async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
-  const waiting = (path: string) => /^\.(orden|nib)-moving-/.test(path.split('/').pop() ?? '')
-  if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
+  if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(isAside))) return v1
   const { asidesBack } = await notePass()
   return {
     cursor: v1.cursor,
