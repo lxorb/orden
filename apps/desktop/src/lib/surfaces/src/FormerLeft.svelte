@@ -6,9 +6,7 @@
   type Held = Awaited<ReturnType<typeof formerLeftDoor>>['formerLeft']
   let held = $state<Held | null>(null)
   void formerLeftDoor().then((one) => (held = one.formerLeft))
-  const words = $derived(
-    `Orden could not move everything out of the folder it used before. Nothing was lost. What is left is still in ${(held?.left ?? []).join(', ')}.`,
-  )
+  const words = $derived(held?.said.toast ?? '')
   const Toast = $derived(toastDoor.one)
   void toastDoor.ask()
 </script>

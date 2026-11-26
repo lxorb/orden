@@ -16,27 +16,12 @@ import type { Field, Group, Pane } from './fields'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 import { keptForGood } from '../../kept-for-good/src/api'
+import { formerGroups } from './former-group'
 import { leftBehind } from './former-left.svelte'
 
-function formerGroups(): Group[] {
+function leftGroups(): Group[] {
   void leftBehind.ask()
-  if (leftBehind.left.length === 0) return []
-  return [
-    {
-      title: 'Old folder',
-      caption: {
-        text: 'Orden could not move everything out of the folder it used before. Nothing was lost. What is left is still there.',
-      },
-      fields: leftBehind.left.map((path): Field => ({
-        kind: 'value',
-        label: path,
-        words: ['old', 'folder', 'moved', 'left', 'former', 'data'],
-        get: () => 'Show',
-        does: 'Show this folder',
-        press: () => void import('../../files-out/src/api').then(({ reveal }) => reveal(path)),
-      })),
-    },
-  ]
+  return formerGroups(leftBehind.left, leftBehind.said)
 }
 
 export function relockField(): Field {
@@ -312,7 +297,7 @@ export function generalPane(): Pane {
       },
       ...(isDesktop && ['linux', 'windows'].includes(platform()) ? [gpuGroup()] : []),
       ...(isDesktop ? [privacyGroup()] : []),
-      ...(isDesktop ? formerGroups() : []),
+      ...(isDesktop ? leftGroups() : []),
       {
         title: 'Updates',
         fields: [
