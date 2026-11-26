@@ -39,10 +39,10 @@ class Viewport {
   private glass: MediaQueryList | null = null
   private tallest = 0
   private atWidth = 0
+  private told = 0
   start() {
     if (this.started || typeof window === 'undefined') return
     this.started = true
-    startInsets()
     const shape = () => this.shape()
     this.glass = window.matchMedia(FINGER)
     this.glass.addEventListener('change', shape)
@@ -50,8 +50,16 @@ class Viewport {
     window.addEventListener('resize', shape)
     window.addEventListener('orientationchange', shape)
     const seen = window.visualViewport
-    if (!seen) return
+    if (!seen) {
+      startInsets()
+      return
+    }
     const measure = () => this.measure(seen)
+    startInsets((height) => {
+      this.told = height
+      if (!height) this.tallest = 0
+      measure()
+    })
     measure()
     seen.addEventListener('resize', measure)
     seen.addEventListener('scroll', measure)
@@ -86,17 +94,18 @@ class Viewport {
       this.panned++
     }
     const layout = document.documentElement.clientHeight
-    const hidden = layout - (seen.height + (slid ? 0 : seen.offsetTop))
-    this.keyboard = Math.max(0, Math.round(hidden))
-    this.height = Math.round(seen.height)
-    document.documentElement.style.setProperty('--keyboard', `${this.keyboard}px`)
-    const full = this.height + this.keyboard
+    const hidden = Math.max(0, Math.round(layout - (seen.height + (slid ? 0 : seen.offsetTop))))
+    const full = Math.round(seen.height) + hidden
     if (seen.width !== this.atWidth) {
       this.atWidth = seen.width
       this.tallest = 0
     }
     this.tallest = Math.max(this.tallest, full)
-    const shorter = isMobile ? this.tallest - full : 0
+    const gone = this.tallest - full
+    this.keyboard = Math.max(hidden, Math.round(this.told) - gone)
+    this.height = full - this.keyboard
+    document.documentElement.style.setProperty('--keyboard', `${this.keyboard}px`)
+    const shorter = isMobile ? gone : 0
     this.typing = Math.max(this.keyboard, shorter) > KEYBOARD_THRESHOLD
   }
 }

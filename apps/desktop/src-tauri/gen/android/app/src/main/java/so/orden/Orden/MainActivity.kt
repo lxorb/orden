@@ -65,7 +65,7 @@ class MainActivity : TauriActivity() {
 
   override val handleBackNavigation = true
 
-  @Volatile private var edges = "{\"top\":0,\"right\":0,\"bottom\":0,\"left\":0}"
+  @Volatile private var edges = "{\"top\":0,\"right\":0,\"bottom\":0,\"left\":0,\"keyboard\":0}"
 
   @Volatile private var command = ""
   @Volatile private var opening = ""
@@ -133,7 +133,6 @@ class MainActivity : TauriActivity() {
 
     ViewCompat.setOnApplyWindowInsetsListener(webView) { _: View, insets: WindowInsetsCompat ->
       val keys = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-      webView.setPadding(0, 0, 0, keys)
 
       val bars =
         insets.getInsets(
@@ -144,7 +143,8 @@ class MainActivity : TauriActivity() {
 
       edges =
         "{\"top\":${css(bars.top)},\"right\":${css(bars.right)}," +
-          "\"bottom\":${css(maxOf(0, bars.bottom - keys))},\"left\":${css(bars.left)}}"
+          "\"bottom\":${css(maxOf(0, bars.bottom - keys))},\"left\":${css(bars.left)}," +
+          "\"keyboard\":${css(keys)}}"
       webView.evaluateJavascript("window.__ordenInsets?.()", null)
       insets
     }

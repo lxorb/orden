@@ -74,11 +74,11 @@
   .float.sheet {
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: var(--keyboard, 0px);
     width: auto;
     max-width: none;
-    max-height: 70dvh;
-    padding-bottom: var(--inset-bottom);
+    max-height: min(70dvh, calc(100dvh - var(--keyboard, 0px) - var(--inset-top)));
+    padding-bottom: max(0px, calc(var(--inset-bottom) - var(--keyboard, 0px)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 </style>

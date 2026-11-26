@@ -320,9 +320,9 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: var(--keyboard, 0px);
     z-index: var(--z-menu);
-    max-height: 70dvh;
+    max-height: min(70dvh, calc(100dvh - var(--keyboard, 0px) - var(--inset-top)));
     display: flex;
     flex-direction: column;
     padding-bottom: var(--touch-bottom);
