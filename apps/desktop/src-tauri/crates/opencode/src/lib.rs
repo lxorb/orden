@@ -1,5 +1,7 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
 pub mod commands;
+#[cfg(test)]
+mod drive;
 pub mod env;
 mod feed;
 pub mod host;
