@@ -12,6 +12,10 @@ function declared(css: string, selector: string): Record<string, string> {
 }
 const editing = read('editor.css')
 const reading = read('base.css')
+test('on a touch screen the bars that add a row and a column are a finger wide', () => {
+  expect(declared(editing, '.orden-table-add-row').height).toBe('36px')
+  expect(declared(editing, '.orden-table-add-column').width).toBe('36px')
+})
 describe('one table looks the same while it is edited and while it is read', () => {
   const cell = declared(editing, '#write .orden-table td')
   const read = { ...declared(reading, '#write td'), ...declared(reading, '#write .reading-table td') }

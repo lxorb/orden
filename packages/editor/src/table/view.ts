@@ -179,12 +179,14 @@ export class TableView {
         else this.moveColumnBy(from, to - from)
       },
       add: (axis) => {
+        const column = this.focusedCell()?.at.column ?? 0
         this.range = null
         this.claims = true
-        if (axis === 'row') this.insertRowAfter(this.model.rows.length - 1)
+        if (axis === 'row') this.apply(insertedRow(this.current(), this.model.rows.length - 1, column))
         else this.insertColumnAfter(this.model.header.length - 1)
       },
       chose: (axis, index, grip) => this.chose(axis, index, grip),
+      resized: () => this.editor.requestMeasure(),
       lift: (axis, index) => {
         for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
           const at = addressOf(cell)
@@ -966,9 +968,6 @@ export class TableView {
   }
   private moveRowBy(row: number, step: number) {
     this.apply(movedRow(this.current(), row, step, this.focusedCell() ?? undefined))
-  }
-  private insertRowAfter(row: number) {
-    this.apply(insertedRow(this.current(), row))
   }
   private apply(edit: Edit) {
     this.commit(edit.next, edit.focus)
