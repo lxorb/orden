@@ -12,7 +12,6 @@ cask "orden" do
         verified: "github.com/lxorb/orden/"
   end
   name "Orden"
-  name "nibeditor"
   desc "Markdown editor that styles formatting in place instead of showing syntax"
   homepage "https://orden.so/"
 

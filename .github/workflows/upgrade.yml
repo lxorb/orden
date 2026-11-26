@@ -29,9 +29,8 @@ permissions:
   contents: read
 
 env:
-  NIB: '0.11.0'
-  NIBEDITOR: '0.13.0'
-  ORDEN: '0.21.1'
+  FIRST: '0.14.0'
+  ORDEN: '0.22.4'
   NEW: '0.99.0'
 
 jobs:
@@ -87,7 +86,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        from: [nib, nibeditor, nib-then-nibeditor, orden-in-nib]
+        from: [FIRST, ORDEN]
         scenario: [updater, silent, elsewhere, msi]
     runs-on: windows-latest
     steps:
@@ -101,30 +100,23 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          OLD_VERSION: ${{ env[matrix.from] }}
         run: |
-          for version in "$NIB" "$NIBEDITOR" "$ORDEN"; do
-            gh release download "v$version" --repo "$GITHUB_REPOSITORY" --dir "old-$version" \
-              --pattern "*-$version-windows-x64-setup.exe" --pattern "*-$version-windows-x64.msi"
-          done
+          gh release download "v$OLD_VERSION" --repo "$GITHUB_REPOSITORY" --dir old \
+            --pattern "*-$OLD_VERSION-windows-x64-setup.exe" --pattern "*-$OLD_VERSION-windows-x64.msi"
           curl -fsSL -o SFTA.ps1 \
             https://raw.githubusercontent.com/DanysysTeam/PS-SFTA/22a32292e576afc976a1167d92b50741ef523066/SFTA.ps1
           echo '3eb6f6dee3fd8c91604042060b9d658f08ec85d3fd0a14769119dfd78bc30851  SFTA.ps1' | sha256sum -c
-          find new old-* -type f
+          find new old -type f
 
-      - name: ${{ matrix.from }}, ${{ matrix.scenario }}
+      - name: From ${{ env[matrix.from] }}, ${{ matrix.scenario }}
         shell: pwsh
         run: |
           $setup = Get-ChildItem new -Recurse -Filter '*-setup.exe' | Select-Object -First 1
           $msi = Get-ChildItem new -Recurse -Filter '*.msi' | Select-Object -First 1
           New-Item -ItemType Directory -Force flat | Out-Null
           Copy-Item $setup.FullName, $msi.FullName flat
-          $from = switch ('${{ matrix.from }}') {
-            'nib' { @{ Old = "old-$env:NIB"; OldName = 'Nib' } }
-            'nibeditor' { @{ Old = "old-$env:NIBEDITOR"; OldName = 'nibeditor' } }
-            'nib-then-nibeditor' { @{ Old = "old-$env:NIB"; OldName = 'Nib'; Via = "old-$env:NIBEDITOR"; ViaName = 'nibeditor' } }
-            'orden-in-nib' { @{ Old = "old-$env:NIB"; OldName = 'Nib'; Via = "old-$env:ORDEN"; ViaName = 'Orden' } }
-          }
-          ./scripts/windows-upgrade.ps1 -Scenario ${{ matrix.scenario }} @from -New flat -Sfta ./SFTA.ps1
+          ./scripts/windows-upgrade.ps1 -Scenario ${{ matrix.scenario }} -Old old -New flat -Sfta ./SFTA.ps1
 
   windows-arm64:
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
@@ -157,10 +149,10 @@ jobs:
       matrix:
         include:
           - old: Nib
-            version: NIB
+            version: '0.11.0'
             cask: nib
           - old: nibeditor
-            version: NIBEDITOR
+            version: '0.13.0'
             cask: orden
     runs-on: macos-latest
     env:
@@ -175,7 +167,7 @@ jobs:
       - name: The old release
         env:
           GH_TOKEN: ${{ github.token }}
-          OLD_VERSION: ${{ env[matrix.version] }}
+          OLD_VERSION: ${{ matrix.version }}
         run: |
           gh release download "v$OLD_VERSION" --repo "$GITHUB_REPOSITORY" --dir old \
             --pattern "*-$OLD_VERSION-macos-universal.dmg"

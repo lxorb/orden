@@ -16,10 +16,10 @@
     <projectSourceUrl>https://github.com/lxorb/orden</projectSourceUrl>
     <docsUrl>https://github.com/lxorb/orden#readme</docsUrl>
     <bugTrackerUrl>https://github.com/lxorb/orden/issues</bugTrackerUrl>
-    <tags>orden nibeditor nib markdown markdown-editor editor wysiwyg notes note-taking writing typora-alternative obsidian-alternative tauri foss cross-platform</tags>
+    <tags>orden markdown markdown-editor editor wysiwyg notes note-taking writing typora-alternative obsidian-alternative tauri foss cross-platform</tags>
     <summary>A simple, lightweight markdown editor offering all the features you could ever need.</summary>
     <description><![CDATA[
-Orden, formerly nibeditor, is a markdown editor that shows the formatting instead of the syntax. Headings,
+Orden is a markdown editor that shows the formatting instead of the syntax. Headings,
 bold, lists, tables, code and math are styled in place as you type, so there is no split
 pane and no preview pane to keep in sync.
 
@@ -37,9 +37,6 @@ at [orden.so](https://orden.so).
 * Runs on Windows, macOS, Linux, and in the browser
 
 ### Notes on this package
-
-This package was called `nib` until 0.15.0. `nib` is now an empty package that depends on
-this one, so `choco upgrade nib` brings this package in and upgrades Orden in place.
 
 This package installs the machine-wide MSI build, so Orden lands in `Program Files`
 and is available to every user on the machine. x64 and ARM64 are both supported; 32-bit

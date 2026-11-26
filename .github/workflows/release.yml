@@ -352,8 +352,7 @@ jobs:
           mkdir installers
           find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) |
             while read -r file; do
-              name=$(basename "$file")
-              cp "$file" "installers/Orden-${name#Nib-}"
+              cp "$file" installers/
             done
           ls -l installers
           gh release upload "$TAG" installers/* --clobber

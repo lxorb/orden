@@ -4,7 +4,7 @@ base: core24
 version: '0.22.4'
 summary: Markdown editor with live preview
 description: |
-  Orden, formerly nibeditor, is a small markdown editor that formats what you
+  Orden is a small markdown editor that formats what you
   write as you write it.
 
   There is no split screen and no preview pane: headings, emphasis, lists,
@@ -84,7 +84,7 @@ parts:
       Terminal=false
       Categories=Office;TextEditor;Utility;
       MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;
-      Keywords=markdown;md;editor;notes;writing;wysiwyg;nib;nibeditor;
+      Keywords=markdown;md;editor;notes;writing;wysiwyg;orden;
       StartupWMClass=orden
       StartupNotify=true
       DESKTOP

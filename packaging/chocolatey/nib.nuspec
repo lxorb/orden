@@ -18,8 +18,8 @@
     <tags>orden nib deprecated</tags>
     <summary>Renamed: Orden is the orden package now.</summary>
     <description><![CDATA[
-This package is deprecated. Orden, formerly nibeditor, is published as
-[orden](https://community.chocolatey.org/packages/orden) since 0.15.0.
+This package is deprecated. Orden is published as
+[orden](https://community.chocolatey.org/packages/orden).
 
 Installing or upgrading `nib` installs `orden`, which upgrades Orden in place, with
 its settings and notes where they were. `choco uninstall nib` afterwards removes this

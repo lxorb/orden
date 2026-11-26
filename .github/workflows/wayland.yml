@@ -99,8 +99,6 @@ jobs:
       - name: The .deb runs as orden only
         run: |
           test -x /usr/bin/orden
-          test ! -e /usr/bin/nib
-          test ! -e /usr/share/Orden/nib
       - name: The .deb gives no file type an icon or a definition, Orden owning none
         run: |
           if dpkg-deb -c packages/deb/*.deb | grep -E '/mimetypes/|/mime/packages/'; then
@@ -597,8 +595,6 @@ jobs:
       - name: The .rpm runs as orden only
         run: |
           test -x /usr/bin/orden
-          test ! -e /usr/bin/nib
-          test ! -e /usr/share/Orden/nib
       - name: The .rpm gives no file type an icon or a definition, Orden owning none
         run: |
           if rpm -qlp packages/rpm/*.rpm | grep -E '/mimetypes/|/mime/packages/'; then

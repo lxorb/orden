@@ -70,10 +70,10 @@ jobs:
         env:
           ARCH_IMAGE: archlinux:base-devel@sha256:61f7de2dd88cc4ba1fe36c24cfe1a503c3936984492d6405eeab013ce6ac68c5
         run: |
-          docker run --rm -v "$PWD/packaging/aur/nib-bin:/pkg:ro" "$ARCH_IMAGE" bash -c '
+          docker run --rm -v "$PWD/packaging/aur/orden-bin:/pkg:ro" "$ARCH_IMAGE" bash -c '
             useradd -m builduser && cp -r /pkg /build && chown -R builduser: /build &&
             cd /build && su builduser -c "makepkg --printsrcinfo"' >SRCINFO
-          diff -u packaging/aur/nib-bin/.SRCINFO SRCINFO
+          diff -u packaging/aur/orden-bin/.SRCINFO SRCINFO
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

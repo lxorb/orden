@@ -8,8 +8,7 @@ $packageArgs = @{
   validExitCodes = @(0, 3010, 1605, 1614, 1641)
 }
 
-[array]$keys = @($packageArgs.softwareName, 'nibeditor', 'Nib') |
-  ForEach-Object { Get-UninstallRegistryKey -SoftwareName $_ } |
+[array]$keys = Get-UninstallRegistryKey -SoftwareName $packageArgs.softwareName |
   Where-Object { $_.PSChildName -match '^\{[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}\}$' }
 
 if ($keys.Count -eq 0) {

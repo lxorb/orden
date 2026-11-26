@@ -39,10 +39,7 @@ modules:
         json.dump(conf, open(path, 'w'), indent=2)"
       - pnpm --filter @orden/desktop build
       - cargo build --offline --release --manifest-path apps/desktop/src-tauri/Cargo.toml
-      - |
-        built=apps/desktop/src-tauri/target/release
-        if [ -f "$built/orden" ]; then program="$built/orden"; else program="$built/nib"; fi
-        install -Dm755 "$program" /app/bin/orden
+      - install -Dm755 apps/desktop/src-tauri/target/release/orden /app/bin/orden
       - install -Dm644 so.orden.Orden.desktop /app/share/applications/so.orden.Orden.desktop
       - install -Dm644 so.orden.Orden.metainfo.xml /app/share/metainfo/so.orden.Orden.metainfo.xml
       - |

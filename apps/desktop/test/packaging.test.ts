@@ -27,7 +27,7 @@ describe('the snap', () => {
   test('and names the same version in the URL as it publishes', () => {
     const version = /^version: '([^']+)'$/m.exec(snap)?.[1]
     expect(version).toMatch(/^\d+\.\d+\.\d+$/)
-    const urls = [...snap.matchAll(/releases\/download\/v([^/]+)\/(?:Nib|Orden)-([^-]+)-linux-/g)]
+    const urls = [...snap.matchAll(/releases\/download\/v([^/]+)\/Orden-([^-]+)-linux-/g)]
     expect(urls).toHaveLength(2)
     for (const [, tag, named] of urls) {
       expect(tag).toBe(version)
@@ -68,7 +68,7 @@ describe('the release', () => {
     const at = mkdtempSync(join(tmpdir(), 'orden-release-'))
     mkdirSync(join(at, 'bin'))
     mkdirSync(join(at, 'artifacts'))
-    const bundles = ['Nib-1.0.0-linux-x64.AppImage', 'Nib-1.0.0-windows-x64-setup.exe', 'Nib-1.0.0-linux-x64.rpm']
+    const bundles = ['Orden-1.0.0-linux-x64.AppImage', 'Orden-1.0.0-windows-x64-setup.exe', 'Orden-1.0.0-linux-x64.rpm']
     for (const name of bundles) writeFileSync(join(at, 'artifacts', name), 'bytes')
     writeFileSync(
       join(at, 'latest.json'),
@@ -112,15 +112,15 @@ esac
   }
   describe.skipIf(process.platform === 'win32')('uploads', () => {
     test('a refused installer stops the step, before the manifest that names it', () => {
-      const { status, calls } = upload({ refuse: 'updates artifacts/Nib-1.0.0-linux-x64.AppImage' })
+      const { status, calls } = upload({ refuse: 'updates artifacts/Orden-1.0.0-linux-x64.AppImage' })
       expect(status).not.toBe(0)
       expect(calls).not.toContain('latest.json')
     })
     test('a manifest naming a file the release does not hold is not uploaded', () => {
-      const { status, calls, said } = upload({ drop: 'Nib-1.0.0-windows-x64-setup.exe' })
+      const { status, calls, said } = upload({ drop: 'Orden-1.0.0-windows-x64-setup.exe' })
       expect(status).not.toBe(0)
       expect(calls).not.toContain('latest.json')
-      expect(said).toContain('Nib-1.0.0-windows-x64-setup.exe')
+      expect(said).toContain('Orden-1.0.0-windows-x64-setup.exe')
     })
     test('with everything up, the manifest goes last', () => {
       const { status, calls } = upload({})
@@ -143,13 +143,13 @@ esac
       mkdirSync(join(at, 'artifacts'))
       mkdirSync(join(at, 'installers'))
       mkdirSync(join(at, 'uploads'), { recursive: true })
-      for (const name of gh.built ?? ['Nib-1.0.1-1-linux-x64.rpm']) {
+      for (const name of gh.built ?? ['Orden-1.0.1-1-linux-x64.rpm']) {
         writeFileSync(join(at, into, name), 'bytes')
       }
       const held = join(at, 'held')
       writeFileSync(
         held,
-        `${(gh.held ?? ['Nib-1.0.1-1-linux-x64.rpm', 'Nib-1.0.1-0-linux-x64.rpm', 'latest.json']).join('\n')}\n`,
+        `${(gh.held ?? ['Orden-1.0.1-1-linux-x64.rpm', 'Orden-1.0.1-0-linux-x64.rpm', 'latest.json']).join('\n')}\n`,
       )
       const tried = join(at, 'tried')
       writeFileSync(tried, '')
@@ -192,8 +192,8 @@ esac
     test('a 500 over a file that went is the file gone', () => {
       const { status, held, tried, said } = prune({ failFirst: true })
       expect(status, said).toBe(0)
-      expect(held).not.toContain('Nib-1.0.1-0-linux-x64.rpm')
-      expect(tried.trim().split('\n')).toEqual(['Nib-1.0.1-0-linux-x64.rpm'])
+      expect(held).not.toContain('Orden-1.0.1-0-linux-x64.rpm')
+      expect(tried.trim().split('\n')).toEqual(['Orden-1.0.1-0-linux-x64.rpm'])
     })
     test('a file that will not go fails the step, after trying again', () => {
       const { status, tried } = prune({ stuck: true })
@@ -239,7 +239,7 @@ esac
     ] as const) {
       mkdirSync(join(at, `orden-linux-${arch}`))
       for (const kind of kinds) {
-        writeFileSync(join(at, `orden-linux-${arch}`, `Nib-1.0.0-linux-${arch}.${kind}.sig`), `sig ${arch} ${kind}`)
+        writeFileSync(join(at, `orden-linux-${arch}`, `Orden-1.0.0-linux-${arch}.${kind}.sig`), `sig ${arch} ${kind}`)
       }
     }
     const ran = spawnSync('node', [join(HERE, 'scripts', 'update-manifest.mjs'), 'updates', '1.0.0', at], {
@@ -249,17 +249,17 @@ esac
     const platforms = (JSON.parse(ran.stdout) as { platforms: Record<string, { url: string; signature: string }> })
       .platforms
     for (const [key, file, signature] of [
-      ['linux-x86_64', 'Nib-1.0.0-linux-x64.AppImage', 'sig x64 AppImage'],
-      ['linux-x86_64-deb', 'Nib-1.0.0-linux-x64.deb', 'sig x64 deb'],
-      ['linux-x86_64-rpm', 'Nib-1.0.0-linux-x64.rpm', 'sig x64 rpm'],
-      ['linux-aarch64-deb', 'Nib-1.0.0-linux-arm64.deb', 'sig arm64 deb'],
-      ['linux-aarch64-rpm', 'Nib-1.0.0-linux-arm64.rpm', 'sig arm64 rpm'],
+      ['linux-x86_64', 'Orden-1.0.0-linux-x64.AppImage', 'sig x64 AppImage'],
+      ['linux-x86_64-deb', 'Orden-1.0.0-linux-x64.deb', 'sig x64 deb'],
+      ['linux-x86_64-rpm', 'Orden-1.0.0-linux-x64.rpm', 'sig x64 rpm'],
+      ['linux-aarch64-deb', 'Orden-1.0.0-linux-arm64.deb', 'sig arm64 deb'],
+      ['linux-aarch64-rpm', 'Orden-1.0.0-linux-arm64.rpm', 'sig arm64 rpm'],
     ] as const) {
-      expect(platforms[key]?.url, key).toBe(`https://github.com/lxorb/nibeditor/releases/download/updates/${file}`)
+      expect(platforms[key]?.url, key).toBe(`https://github.com/lxorb/orden/releases/download/updates/${file}`)
       expect(platforms[key]?.signature, key).toBe(signature)
     }
   })
-  test('names the bundles of every artifact the build uploads, Nib- for the updaters that read only that', () => {
+  test('names the bundles of every artifact the build uploads Orden-', () => {
     const uploaded = [...workflow.matchAll(/name: ([\w-]+)-\$\{\{ matrix\.label \}\}$/gm)].map((one) => one[1])
     expect(uploaded.length).toBeGreaterThan(0)
     expect(new Set(uploaded)).toEqual(new Set(['orden']))
@@ -271,15 +271,15 @@ esac
     const ran = spawnSync('node', [join(HERE, 'scripts', 'name-assets.mjs'), at, 'v1.0.0'], { encoding: 'utf8' })
     expect(ran.status, ran.stderr).toBe(0)
     expect(readdirSync(join(at, 'orden-linux-x64')).sort()).toEqual([
-      'Nib-1.0.0-linux-x64.deb',
-      'Nib-1.0.0-linux-x64.deb.sig',
+      'Orden-1.0.0-linux-x64.deb',
+      'Orden-1.0.0-linux-x64.deb.sig',
     ])
   })
   describe.skipIf(process.platform === 'win32')('puts on the release the app downloads from', () => {
     test('the .deb and the .rpm beside the setups', () => {
       const { status, calls } = upload({})
       expect(status).toBe(0)
-      expect(calls).toContain('release upload updates artifacts/Nib-1.0.0-linux-x64.rpm --clobber')
+      expect(calls).toContain('release upload updates artifacts/Orden-1.0.0-linux-x64.rpm --clobber')
     })
   })
   test('the managers built from edge take its Orden- packages, one each', () => {
@@ -385,7 +385,7 @@ esac
     expect(job).not.toContain('main ·')
     expect(job).toContain('--title "$GITHUB_REF_NAME · $VERSION"')
     expect(upload).not.toContain('ROLLING')
-    expect(upload).toContain('cp "$file" "installers/Orden-${name#Nib-}"')
+    expect(upload).toContain('cp "$file" installers/')
   })
   test('and no other job writes', () => {
     const writing = [...workflow.matchAll(/\n {2}([a-z-]+):\n[\s\S]*?(?=\n {2}[a-z-]+:\n|$)/g)]
@@ -582,7 +582,7 @@ describe('what Orden claims to open', () => {
     expect(script).toContain(String.raw`DeleteRegKey SHCTX "Software\Classes\Nib.markdown"`)
   })
   const desktops = {
-    'aur/nib-bin/nib.desktop': read('aur', 'nib-bin', 'nib.desktop'),
+    'aur/orden-bin/nib.desktop': read('aur', 'orden-bin', 'nib.desktop'),
     'flathub/so.orden.Orden.desktop': read('flathub', 'so.orden.Orden.desktop'),
     'nix/orden.desktop': read('nix', 'orden.desktop'),
     'snap/snapcraft.yaml': read('snap', 'snapcraft.yaml'),
@@ -596,18 +596,21 @@ describe('what Orden claims to open', () => {
     }
   })
   test('and the AUR holds the digest of the entry it ships', () => {
-    const digest = createHash('sha256').update(desktops['aur/nib-bin/nib.desktop']).digest('hex')
-    expect(read('aur', 'nib-bin', 'PKGBUILD')).toContain(`sha256sums=('${digest}')`)
-    expect(read('aur', 'nib-bin', '.SRCINFO')).toContain(`sha256sums = ${digest}`)
+    const digest = createHash('sha256').update(desktops['aur/orden-bin/nib.desktop']).digest('hex')
+    expect(read('aur', 'orden-bin', 'PKGBUILD')).toContain(`sha256sums=('${digest}')`)
+    expect(read('aur', 'orden-bin', '.SRCINFO')).toContain(`sha256sums = ${digest}`)
   })
   test('no package manager lists a file type', () => {
     expect(read('chocolatey', 'orden.nuspec')).not.toMatch(/file association/i)
   })
 })
-describe('the old names', () => {
+describe('the package that was nib', () => {
   const orden = read('chocolatey', 'orden.nuspec')
   const nib = read('chocolatey', 'nib.nuspec')
   const versionOf = (nuspec: string) => /<version>([^<]+)<\/version>/.exec(nuspec)?.[1]
+  const publish = repo('.github', 'workflows', 'publish.yml')
+  const job = (name: string) =>
+    new RegExp(`\n {2}${name}:\n([\\s\\S]*?)(?=\n {2}[a-z-]+:\n|$)`).exec(publish)?.[1] ?? ''
   test('orden is the package Orden is in', () => {
     expect(orden).toContain('<id>orden</id>')
     expect(orden).toContain('<file src="tools\\**" target="tools" />')
@@ -621,6 +624,14 @@ describe('the old names', () => {
   })
   test('and its version is the release the two were bumped to', () => {
     expect(versionOf(nib)).toBe(versionOf(orden))
+  })
+  test('Chocolatey pushes orden, and nib once more: after orden is listed, until nib is listed as deprecated', () => {
+    const chocolatey = job('chocolatey')
+    expect(chocolatey).toContain("if ! listed orden | grep -q '<entry>'; then")
+    expect(chocolatey).toContain("if listed nib | grep -q '<d:Title>\\[Deprecated\\]'; then")
+    expect(chocolatey).toContain('echo "PACKAGES=orden:$VERSION" >> "$GITHUB_ENV"')
+    expect(chocolatey).toContain('echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"')
+    expect(chocolatey).toMatch(/409 \\\(Conflict\\\)/)
   })
   test("Scoop's orden takes over what nib kept, once", () => {
     const scoop = JSON.parse(read('scoop', 'orden.json')) as { installer: { script: string[] } }
@@ -638,49 +649,16 @@ describe('the old names', () => {
     expect(install).toContain("if ($item.LinkType -eq 'Junction') {\n        # The link alone")
     expect(install).toContain('$item.Delete()')
   })
-  test("Scoop's nib is orden's without the five lines that take over from nib", () => {
-    const scoop = JSON.parse(read('scoop', 'orden.json')) as { installer: { script: string[] } }
-    const lines = scoop.installer.script
-    const at = lines.findIndex((one) => one.startsWith('# Up to 0.15.0'))
-    expect(at).toBeGreaterThan(-1)
-    expect(lines.slice(at, at + 5)).toEqual([
-      expect.stringMatching(/^# Up to 0\.15\.0/),
-      "$was = Join-Path (Split-Path $persist_dir) 'nib'",
-      expect.stringMatching(/^if \(\(Test-Path \$was\)/),
-      expect.stringMatching(/^ {4}Get-ChildItem -LiteralPath \$was/),
-      '}',
-    ])
-    const nib = [...lines.slice(0, at), ...lines.slice(at + 5)].join('\n')
-    expect(nib).not.toContain('$was')
-    expect(nib).toContain('New-Item -Path $appdata -ItemType Junction')
-  })
-})
-describe('the rename, held back', () => {
-  const publish = repo('.github', 'workflows', 'publish.yml')
-  const job = (name: string) =>
-    new RegExp(`\n {2}${name}:\n([\\s\\S]*?)(?=\n {2}[a-z-]+:\n|$)`).exec(publish)?.[1] ?? ''
-  test('is on only when the variable says true', () => {
-    expect(job('gate')).toContain('PACKAGE_RENAME: ${{ vars.PACKAGE_RENAME }}')
-    expect(job('gate')).toContain('if [[ "$PACKAGE_RENAME" == true ]]; then')
-    for (const name of ['scoop', 'chocolatey']) {
-      expect(job(name)).toContain('RENAME: ${{ needs.gate.outputs.rename }}')
-    }
-  })
-  test('Scoop bumps nib where it is, and deprecates it only with the rename', () => {
+  test('Scoop publishes orden and moves the nib it finds to the deprecated folder, as it is', () => {
     const scoop = job('scoop')
-    expect(scoop).toContain('mv nib.json bucket/nib.json')
-    expect(scoop).toContain('> bucket/deprecated/nib.json')
-    expect(scoop).toContain('First scoop update nib, then scoop uninstall nib')
-    expect(scoop).not.toContain('git mv bucket/nib.json')
+    expect(scoop).toContain('mv orden.json bucket/orden.json')
+    expect(scoop).toContain('if [ -f bucket/nib.json ]; then')
+    expect(scoop).toContain('bucket/nib.json > deprecated/nib.json')
+    expect(scoop).toContain('git rm -q bucket/nib.json')
+    expect(scoop).toContain('git add -A bucket deprecated')
   })
-  test('Chocolatey pushes nib alone, as Orden, without the rename', () => {
-    const chocolatey = job('chocolatey')
-    expect(chocolatey).toContain('echo "PACKAGES=nib:$VERSION" >> "$GITHUB_ENV"')
-    expect(chocolatey).toContain('echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"')
-    expect(chocolatey).toMatch(/409 \\\(Conflict\\\)/)
-    expect(read('chocolatey', 'orden.nuspec')).toMatch(
-      /\nThis package was called `nib` until 0\.15\.0\. `nib` is now an empty package that depends on\n[^\n]+\n\n/,
-    )
+  test('no switch holds the new names back', () => {
+    expect(publish).not.toContain('RENAME')
   })
 })
 describe('the apt repository', () => {
@@ -840,15 +818,6 @@ describe('the engine a Linux package runs', () => {
     expect(repo('.github', 'workflows', 'release.yml')).toContain('scripts/linux-cef.sh tauri build')
   })
 })
-describe('the recipes that unpack a .deb', () => {
-  test("take Orden's layout as the .deb holds it, with no way back to nib's", () => {
-    for (const path of ['aur/nib-bin/PKGBUILD', 'aur/nib-bin/.SRCINFO', 'snap/snapcraft.yaml', 'nix/flake.nix']) {
-      expect(read(...path.split('/')), path).not.toMatch(
-        /nib\.(?:deb|png)|\/nib(?![\w.-])|ln -s nib|Nib\.desktop|nibeditor\.desktop|icon=nib|\bnib = /,
-      )
-    }
-  })
-})
 describe('the Nix edge', () => {
   const release = repo('.github', 'workflows', 'release.yml')
   const job = /\n {2}nix-edge:\n([\s\S]*?)\n {2}\S/.exec(`${release}\n  .`)?.[1] ?? ''
@@ -898,8 +867,8 @@ describe('the packaging bump', () => {
   ]
   const moved = [
     'nix/flake.nix',
-    'aur/nib-bin/PKGBUILD',
-    'aur/nib-bin/.SRCINFO',
+    'aur/orden-bin/PKGBUILD',
+    'aur/orden-bin/.SRCINFO',
     'snap/snapcraft.yaml',
     'scoop/orden.json',
     'chocolatey/orden.nuspec',
@@ -953,8 +922,8 @@ describe('the packaging bump', () => {
       const debArm = hex(version, 'linux-arm64.deb')
       expect(text('nix/flake.nix')).toContain(sri(deb))
       expect(text('nix/flake.nix')).toContain(sri(debArm))
-      expect(text('aur/nib-bin/PKGBUILD')).toContain(deb)
-      expect(text('aur/nib-bin/.SRCINFO')).toContain(debArm)
+      expect(text('aur/orden-bin/PKGBUILD')).toContain(deb)
+      expect(text('aur/orden-bin/.SRCINFO')).toContain(debArm)
       expect(text('snap/snapcraft.yaml')).toContain(`on amd64: sha256/${deb}`)
       expect(text('snap/snapcraft.yaml')).toContain(`on arm64: sha256/${debArm}`)
       expect(text('snap/snapcraft.yaml')).toContain(`source-checksum: sha256/${deb}`)

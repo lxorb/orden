@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
-const REPO = 'lxorb/nibeditor'
+const REPO = 'lxorb/orden'
 const PLATFORMS = [
   { key: 'windows-x86_64', match: (path) => /windows-x64/.test(path) && path.endsWith('.exe.sig') },
   {

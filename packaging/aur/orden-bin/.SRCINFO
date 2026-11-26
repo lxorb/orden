@@ -27,16 +27,14 @@ pkgbase = orden-bin
 	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
 	optdepends = xdg-utils: open links and attachments in the desktop default application
 	provides = orden=0.22.4
-	provides = nib=0.22.4
-	conflicts = nib
-	conflicts = nib-bin
-	conflicts = nibeditor
+	conflicts = orden
+	conflicts = orden-git
 	noextract = orden.deb
 	options = !strip
 	options = !debug
 	options = !emptydirs
 	source = nib.desktop
-	sha256sums = 9275d5003e0f6d336c2159c3900e535512c6e9bf63309c2a7c85144b85902e63
+	sha256sums = 97b71dc18c0ba5e62758d568c29abd4d7f2d270d6019e2816e849a6d114ea2db
 	source_x86_64 = orden.deb::https://github.com/lxorb/orden/releases/download/v0.22.4/Orden-0.22.4-linux-x64.deb
 	sha256sums_x86_64 = 861136c1fd86eb68766a02bd164de9f3c28ca421e50b00df688dafdfc033dcad
 	source_aarch64 = orden.deb::https://github.com/lxorb/orden/releases/download/v0.22.4/Orden-0.22.4-linux-arm64.deb

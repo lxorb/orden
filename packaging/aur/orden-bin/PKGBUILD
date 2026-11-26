@@ -1,7 +1,6 @@
 # Maintainer: Emil Vinu <101118850+lxorb@users.noreply.github.com>
 
 pkgname=orden-bin
-_pkgname=nib
 pkgver=0.22.4
 pkgrel=1
 pkgdesc="Lightweight markdown editor with realtime inline preview"
@@ -13,8 +12,8 @@ depends=('gtk4>=4.14' 'nss' 'nspr' 'alsa-lib' 'libcups' 'at-spi2-core' 'libdrm' 
          'cairo' 'dbus' 'expat' 'hicolor-icon-theme')
 optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
-provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
-conflicts=("${_pkgname}" 'nib-bin' 'nibeditor')
+provides=("orden=${pkgver}")
+conflicts=('orden' 'orden-git')
 options=('!strip' '!debug' '!emptydirs')
 
 _url="https://github.com/lxorb/orden/releases/download/v${pkgver}"
@@ -22,7 +21,7 @@ source=('nib.desktop')
 source_x86_64=("orden.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
 source_aarch64=("orden.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('orden.deb')
-sha256sums=('9275d5003e0f6d336c2159c3900e535512c6e9bf63309c2a7c85144b85902e63')
+sha256sums=('97b71dc18c0ba5e62758d568c29abd4d7f2d270d6019e2816e849a6d114ea2db')
 sha256sums_x86_64=('861136c1fd86eb68766a02bd164de9f3c28ca421e50b00df688dafdfc033dcad')
 sha256sums_aarch64=('b1f70b41d69a0ce75188fcc5b2c78249e790fb90b4121e4c6936588dde5f6f37')
 
@@ -32,7 +31,7 @@ package() {
   chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
   install -Dm644 "${srcdir}/nib.desktop" \
-    "${pkgdir}/usr/share/applications/${_pkgname}.desktop"
+    "${pkgdir}/usr/share/applications/nib.desktop"
   rm -f "${pkgdir}/usr/share/applications/Orden.desktop"
 
   install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/orden.png" \
