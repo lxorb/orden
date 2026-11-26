@@ -24,7 +24,7 @@ const compose = (text: string) => {
 export function talkScene(you: () => Pointer): LoopScene {
   const reply = keysOf(REPLY, 63)
   const sent = TIMES.typing + reply.took + 700
-  const during = duringOf(`${location.origin}${BASE}demo/lan-party.png`, sent)
+  const during = duringOf(`${location.origin}${BASE}demo/peeps/boys.svg`, sent)
   const reactions = reactionsOf(sent)
   let chats: ChatsDemo | null = null
   let crew: Room | null = null
@@ -103,7 +103,7 @@ export function talkScene(you: () => Pointer): LoopScene {
           ? chats.picture(ride.path, line.from, line.picture, {
               width: 320,
               height: 200,
-              name: 'lan-party.png',
+              name: 'boys.svg',
               caption: line.body,
             })
           : chats.say(ride.path, line.from, line.body)

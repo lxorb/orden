@@ -357,3 +357,13 @@ describe('the drawn pointer', () => {
     expect(shapeOf('auto', null)).toBe('arrow')
   })
 })
+describe('the chat picture', () => {
+  test('is Open Peeps art shipped with its CC0 dedication and credit', () => {
+    const folder = join(import.meta.dirname, '../../../../public/demo/peeps')
+    const art = readFileSync(join(folder, 'boys.svg'), 'utf8')
+    expect(art.startsWith('<svg')).toBe(true)
+    expect(art).toContain('<rect')
+    expect(readFileSync(join(folder, 'LICENSE'), 'utf8')).toContain('CC0 1.0 Universal')
+    expect(readFileSync(join(folder, 'CREDITS'), 'utf8')).toContain('Open Peeps by Pablo Stanley')
+  })
+})
