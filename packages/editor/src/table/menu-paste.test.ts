@@ -4,7 +4,7 @@ import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import { createEditor } from '../editor'
 import { selectIn } from './caret'
-import { editableCellAt, pasteIntoCell } from './view'
+import { editableCellAt, pasteIntoCell } from './widget'
 import { flushTableEdits } from './widget'
 import { noRects } from '../../test/views'
 

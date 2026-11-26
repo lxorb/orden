@@ -8,6 +8,12 @@ export function selectionIn(element: HTMLElement): { from: number; to: number } 
     to: offsetOf(element, range.endContainer, range.endOffset),
   }
 }
+export function focusOffset(element: HTMLElement): number | null {
+  const selection = window.getSelection()
+  const node = selection?.focusNode
+  if (!selection || !node || !element.contains(node)) return null
+  return offsetOf(element, node, selection.focusOffset)
+}
 export const caretOffset = (element: HTMLElement): number => selectionIn(element)?.to ?? 0
 function offsetOf(element: HTMLElement, node: Node, offset: number): number {
   const measured = document.createRange()

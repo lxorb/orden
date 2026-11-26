@@ -1,7 +1,7 @@
 import type { EditorView } from '@codemirror/view'
-import { pressedByKey } from '../press'
 import { selectionIn } from './caret'
 import { renderInline } from './inline'
+import type { TableModel } from './model'
 import type { CellAddress, Side } from './navigation'
 
 export function showRendered(cell: HTMLElement) {
@@ -28,25 +28,50 @@ export function element<K extends keyof HTMLElementTagNameMap>(tag: K, className
   if (className) node.className = className
   return node
 }
-function icon(path: string): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('viewBox', '0 0 10 10')
-  const shape = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-  shape.setAttribute('d', path)
-  svg.append(shape)
-  return svg
-}
-export function button(className: string, said: string, path: string, onPress: () => void) {
-  const node = document.createElement('button')
-  node.className = className
-  node.type = 'button'
-  node.title = said
-  node.setAttribute('aria-label', said)
-  node.append(icon(path))
-  node.addEventListener('mousedown', (event) => {
-    event.preventDefault()
-    onPress()
+export const PASTE_TEXT = 'orden:paste-text'
+export const WINDOWED = 150
+export const AROUND = 40
+export const GUESSED_ROW = 32
+export function drawStill(wrap: HTMLElement, model: TableModel) {
+  const cell = (tag: 'th' | 'td', text: string, row: number, column: number) => {
+    const one = element(tag)
+    one.dataset.row = String(row)
+    one.dataset.column = String(column)
+    one.dataset.source = text
+    showRendered(one)
+    const align = model.align[column]
+    if (align) one.style.textAlign = align
+    return one
+  }
+  const head = element('tr')
+  model.header.forEach((text, column) => {
+    const th = cell('th', text, -1, column)
+    const width = model.pixels?.[column]
+    if (width != null) th.style.width = `${width}px`
+    head.append(th)
   })
-  pressedByKey(node, onPress)
-  return node
+  const body = element('tbody')
+  const rows = model.rows.length
+  const drawn = rows > WINDOWED ? 2 * AROUND : rows
+  model.rows.slice(0, drawn).forEach((cells, row) => {
+    const tr = element('tr')
+    tr.dataset.row = String(row)
+    tr.append(...cells.map((text, column) => cell('td', text, row, column)))
+    body.append(tr)
+  })
+  if (drawn < rows) {
+    const gap = element('tr', 'orden-table-gap')
+    const td = element('td')
+    td.colSpan = Math.max(1, model.header.length)
+    td.style.height = `${(rows - drawn) * GUESSED_ROW}px`
+    gap.append(td)
+    body.append(gap)
+  }
+  const top = element('thead')
+  top.append(head)
+  const table = element('table', 'orden-table')
+  table.append(top, body)
+  const scroller = element('div', 'orden-table-scroll')
+  scroller.append(table)
+  wrap.replaceChildren(scroller)
 }

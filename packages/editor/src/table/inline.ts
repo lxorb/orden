@@ -91,6 +91,8 @@ function walk(
     } else if (child.name === 'URL') {
       if (linkAddress(node)?.from !== child.from)
         out.push(address(words(source.slice(child.from, child.to), child.from), node))
+    } else if (child.name === 'HTMLTag' && /^<br\s*\/?>$/i.test(source.slice(child.from, child.to))) {
+      out.push({ tag: 'br', children: [] })
     } else if (bracketed && child.name === 'LinkMark') {
       out.push(words(source.slice(child.from, child.to), child.from))
     } else if (child.name === 'Link' && !linkAddress(child)) {

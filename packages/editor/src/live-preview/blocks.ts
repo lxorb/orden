@@ -25,7 +25,7 @@ import { keptCover, keptCoverChanged } from './kept-cover'
 import { drawnAsLink, embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
-import { standsAlone, tableWrite } from '../table/navigation'
+import { selectedOver, standsAlone, tableWrite } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
 import { noReveal, overlaps } from './reveal'
@@ -200,7 +200,7 @@ function scan(state: EditorState, reveals: boolean, region: Span, equations: Equ
         case 'Table': {
           if (!standsAlone(state, node.from)) return true
           const span = found(node.from, node.to)
-          if (span.revealed) return true
+          if (span.revealed && !selectedOver(state, span)) return true
           ranges.push(
             Decoration.replace({
               widget: new TableWidget(doc.sliceString(span.from, span.to), span.from, span.to, !state.readOnly),

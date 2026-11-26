@@ -11,11 +11,42 @@ import {
 import type { Command, EditorView } from '@codemirror/view'
 import { linkOpener, modifier } from '../links'
 import { redoEdit, undoEdit } from '../shared'
-import { attached, button, collapsedAt, element, posOnRow, sameCell, showRendered, showSource } from './cells'
+import {
+  AROUND,
+  attached,
+  collapsedAt,
+  element,
+  GUESSED_ROW,
+  PASTE_TEXT,
+  posOnRow,
+  sameCell,
+  showRendered,
+  showSource,
+  WINDOWED,
+} from './cells'
+import { type Axis, TableChrome } from './chrome'
+import { cellEntries, columnEntries, rowEntries, type TableActs, type TableEntry } from './menu'
+import {
+  type CellRange,
+  clamped,
+  columnRange,
+  coversTable,
+  extended,
+  filled,
+  gridHtml,
+  gridIn,
+  gridText,
+  inRect,
+  rectOf,
+  rowRange,
+  type Way,
+  wholeTable,
+} from './range'
 import {
   caretAtEdge,
   caretOffset,
   caretRect,
+  focusOffset,
   offsetAtPoint,
   selectAtPoint,
   selectIn,
@@ -26,9 +57,10 @@ import {
   type Align,
   columnWidth,
   columnWidths,
+  duplicateColumn,
+  duplicateRow,
   afterRow,
   paddedWidth,
-  type Order,
   parseTable,
   sameModel,
   serializeRow,
@@ -65,6 +97,7 @@ import {
   removedRow,
 } from './edits'
 import { sourceOffset } from './inline'
+import { edited } from './widget'
 import { inlineShortcut, runInCell } from './shortcuts'
 
 export interface TableSource {
@@ -74,29 +107,25 @@ export interface TableSource {
 }
 export type Placement = 'start' | 'end' | 'all' | { x: number; edge: 'top' | 'bottom' }
 export type Landing = 'start' | 'end' | { x: number }
-const WINDOWED = 150
-const AROUND = 40
 const STEP = 20
-const GUESSED_ROW = 32
-let active: TableView | null = null
-export function flushTableEdits() {
-  active?.flush()
+const WAYS: Record<string, Way> = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }
+const addressOf = (cell: HTMLElement): CellAddress => ({
+  row: Number(cell.dataset.row),
+  column: Number(cell.dataset.column),
+})
+export interface TableMenu {
+  entries: TableEntry[]
+  cell: HTMLElement | null
+  picked: boolean
 }
-function holdsEdit(table: TableView) {
-  active = table
-}
-const ALIGN_PATHS = {
-  left: 'M0 2h10M0 5h6M0 8h10',
-  center: 'M0 2h10M2 5h6M0 8h10',
-  right: 'M0 2h10M4 5h6M0 8h10',
-} as const
 export class TableView {
   readonly dom: HTMLElement
   private readonly scroller: HTMLElement
   private readonly table: HTMLTableElement
-  private readonly columnBar: HTMLElement
-  private readonly rowBar: HTMLElement
-  private readonly alignButtons: Record<'left' | 'center' | 'right', HTMLButtonElement>
+  private readonly chrome: TableChrome
+  private readonly box = element('div', 'orden-table-pick')
+  private range: CellRange | null = null
+  private claims = false
   private model: TableModel
   private source: string
   private pending: { at: CellAddress; value: string } | null = null
@@ -106,9 +135,6 @@ export class TableView {
   private focusAfter: Focus | null = null
   private composing = false
   private sizing: { column: number; width: number } | null = null
-  private barColumn = -1
-  private barRow = -1
-  private sortedAs: { column: number; order: Order } | null = null
   private dragging: (() => void) | null = null
   private editable: boolean
   private body: HTMLTableSectionElement | null = null
@@ -125,24 +151,47 @@ export class TableView {
     readonly editor: EditorView,
     text: TableSource,
     model: TableModel,
+    dom: HTMLElement,
   ) {
     this.model = model
     this.source = text.source
     this.start = text.from
     this.editable = !editor.state.readOnly
-    this.dom = element('div', 'orden-table-wrap')
-    this.dom.contentEditable = 'false'
+    this.dom = dom
+    dom.replaceChildren()
     this.scroller = element('div', 'orden-table-scroll')
     this.table = element('table', 'orden-table')
-    this.scroller.append(this.table)
-    const align = (side: 'left' | 'center' | 'right') =>
-      this.columnButton(`Align ${side}`, ALIGN_PATHS[side], (column) => this.toggleAlign(column, side))
-    this.alignButtons = { left: align('left'), center: align('center'), right: align('right') }
-    this.columnBar = this.buildColumnBar()
-    this.rowBar = this.buildRowBar()
-    this.dom.append(this.scroller, this.columnBar, this.rowBar)
-    this.watchColumnHover()
-    this.watchRowHover()
+    this.scroller.append(this.table, this.box)
+    this.dom.append(this.scroller)
+    this.chrome = new TableChrome({
+      dom: this.dom,
+      scroller: this.scroller,
+      table: this.table,
+      rows: () => this.model.rows.length,
+      columns: () => this.model.header.length,
+      writable: () => this.editable,
+      focused: () => this.focusedCell()?.at ?? null,
+      rowBox: (row) => this.drawn.get(row)?.getBoundingClientRect() ?? null,
+      columnBox: (column) => this.headerCell(column)?.getBoundingClientRect() ?? null,
+      move: (axis, from, to) => {
+        this.range = null
+        if (axis === 'row') this.moveRowBy(from, to - from)
+        else this.moveColumnBy(from, to - from)
+      },
+      add: (axis) => {
+        this.range = null
+        this.claims = true
+        if (axis === 'row') this.insertRowAfter(this.model.rows.length - 1)
+        else this.insertColumnAfter(this.model.header.length - 1)
+      },
+      chose: (axis, index, grip) => this.chose(axis, index, grip),
+      lift: (axis, index) => {
+        for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
+          const at = addressOf(cell)
+          cell.classList.toggle('is-lifted', index !== null && (axis === 'row' ? at.row : at.column) === index)
+        }
+      },
+    })
     this.render()
   }
   span(): TableSpan | null {
@@ -156,6 +205,9 @@ export class TableView {
   }
   get tracked(): number | null {
     return this.start
+  }
+  get length(): number {
+    return this.source.length
   }
   track(changes: ChangeSet, doc: Text) {
     const { start } = this
@@ -261,6 +313,7 @@ export class TableView {
     this.clearPending()
     this.sizing = null
     this.dragging?.()
+    this.chrome.destroy()
     this.unfollow()
   }
   flush() {
@@ -275,6 +328,7 @@ export class TableView {
   }
   focusCell(at: CellAddress, placement: Placement | number): boolean {
     if (this.editor.state.readOnly) return false
+    if (this.range) this.pick(null)
     const { model } = this
     const row = Math.min(at.row, model.rows.length - 1)
     this.reach(row)
@@ -393,7 +447,7 @@ export class TableView {
   }
   private clearPending() {
     this.pending = null
-    if (active === this) active = null
+    if (edited.table === this) edited.table = null
   }
   private shownText(at: CellAddress, text: string): string {
     const { pending } = this
@@ -410,11 +464,14 @@ export class TableView {
     if (this.fitted?.length !== model.header.length) this.fitted = null
     model.header.forEach((text, column) => {
       const at = { row: -1, column }
-      const th = this.cell(this.shownText(at, text), at, 'th', sameCell(at, focus?.at))
+      const th = this.cell(this.shownText(at, text), at, 'th', !this.range && sameCell(at, focus?.at))
       const grip = element('span', 'orden-table-resize')
       grip.contentEditable = 'false'
-      grip.title = 'Drag to resize'
+      grip.title = 'Drag to resize, double click to fit'
       grip.addEventListener('mousedown', (event) => this.startResize(event, th, column))
+      grip.addEventListener('dblclick', () => {
+        if (this.pixels(column) !== null) this.commit(setPixels(this.current(), column, null))
+      })
       th.append(grip)
       const width = this.pixels(column) ?? (windowed ? this.fitted?.[column] : undefined)
       if (width != null) th.style.width = `${width}px`
@@ -433,19 +490,20 @@ export class TableView {
     this.fill(focus?.at)
     this.table.replaceChildren(head, this.body)
     this.fitWidth()
-    if (this.rowBar.classList.contains('is-shown')) {
-      const tr = this.bodyRow(this.barRow)
-      if (tr) this.showRowBar(tr)
-      else this.hideRowBar()
-    }
     if (windowed) this.follow()
     else this.unfollow()
     if (focus) {
+      const claims = this.claims
       queueMicrotask(() => {
-        if (document.activeElement === this.editor.contentDOM) return
-        this.focusCell(focus.at, focus.offset)
+        if (!claims && document.activeElement === this.editor.contentDOM) return
+        if (this.range) this.pick(this.range)
+        else this.focusCell(focus.at, focus.offset)
       })
     }
+    this.claims = false
+    this.range = this.range && clamped(model, this.range)
+    this.paint()
+    this.chrome.place()
   }
   private fitWidth() {
     const { fitted } = this
@@ -479,7 +537,7 @@ export class TableView {
     tr.dataset.row = String(index)
     const cells = (this.model.rows[index] ?? []).map((text, column) => {
       const at = { row: index, column }
-      return this.cell(this.shownText(at, text), at, 'td', sameCell(at, editing))
+      return this.cell(this.shownText(at, text), at, 'td', !this.range && sameCell(at, editing))
     })
     tr.append(...cells)
     this.drawn.set(index, tr)
@@ -532,6 +590,7 @@ export class TableView {
       this.gaps.disconnect()
       for (const one of wanted) if (one.classList.contains('orden-table-gap')) this.gaps.observe(one)
     }
+    if (this.range) this.paint()
   }
   private reach(row: number) {
     if (!this.windowed() || row < 0 || this.drawn.has(row)) return
@@ -636,20 +695,44 @@ export class TableView {
     cell.addEventListener('mousedown', (event) => {
       if (this.followedLink(event)) return
       if (this.editor.state.readOnly) return
-      if (event.button !== 0 || document.activeElement === cell) return
-      const source = cell.dataset.source ?? ''
-      const shown = offsetAtPoint(cell, event.clientX, event.clientY)
-      const drawn = cell.textContent !== source
-      event.preventDefault()
-      cell.focus()
-      if (shown === null) selectAtPoint(cell, event.clientX, event.clientY)
-      else selectIn(cell, drawn ? sourceOffset(source, shown) : shown)
+      if (event.target instanceof Element && event.target.closest('.orden-table-resize')) return
+      if (event.button !== 0) {
+        if (this.range && !inRect(rectOf(this.range), at)) this.pick(null)
+        return
+      }
+      const from = event.shiftKey ? (this.range?.anchor ?? this.focusedCell()?.at) : undefined
+      if (from && !sameCell(from, at)) {
+        event.preventDefault()
+        this.pick({ anchor: from, head: at })
+        return
+      }
+      if (this.range) this.pick(null)
+      let pressed: number | null = null
+      if (document.activeElement !== cell) {
+        const source = cell.dataset.source ?? ''
+        const shown = offsetAtPoint(cell, event.clientX, event.clientY)
+        const drawn = cell.textContent !== source
+        event.preventDefault()
+        cell.focus()
+        if (shown === null) selectAtPoint(cell, event.clientX, event.clientY)
+        else selectIn(cell, drawn ? sourceOffset(source, shown) : shown)
+        pressed = caretOffset(cell)
+      }
+      this.trackPress(cell, at, pressed)
     })
-    cell.addEventListener('focus', () => showSource(cell))
+    cell.addEventListener('focus', () => {
+      if (!this.range) showSource(cell)
+    })
     cell.addEventListener('blur', () => {
       this.composing = false
-      queueMicrotask(() => this.left(cell, at))
+      queueMicrotask(() => {
+        this.left(cell, at)
+        const now = document.activeElement
+        if (this.range && now && !this.dom.contains(now) && this.editor.dom.contains(now)) this.pick(null)
+      })
     })
+    cell.addEventListener('copy', (event) => this.copied(event, false))
+    cell.addEventListener('cut', (event) => this.copied(event, true))
     cell.addEventListener('input', (event) => {
       if (!(event as InputEvent).isComposing) this.edited(cell, at)
     })
@@ -673,7 +756,7 @@ export class TableView {
       return
     }
     this.pending = { at, value: cell.textContent }
-    holdsEdit(this)
+    edited.table = this
     this.typeIn(at)
   }
   private left(cell: HTMLElement, at: CellAddress) {
@@ -686,18 +769,44 @@ export class TableView {
   private keyInCell(event: KeyboardEvent, cell: HTMLElement, at: CellAddress) {
     // eslint-disable-next-line @typescript-eslint/no-deprecated -- the one sign Safari gives
     if (event.isComposing || event.keyCode === 229) return
+    if (this.range && this.keyInRange(event, this.range)) return
     const mod = event.ctrlKey || event.metaKey
     const key = event.key
+    const way = WAYS[key]
+    if (way && event.shiftKey && !mod && !event.altKey) {
+      const caret = focusOffset(cell)
+      const length = cell.textContent.length
+      const atEdge =
+        way === 'left'
+          ? caret === 0
+          : way === 'right'
+            ? caret === length
+            : caretAtEdge(cell, way === 'up' ? 'top' : 'bottom')
+      if (!atEdge) return
+      event.preventDefault()
+      this.pick(extended(this.current(), { anchor: at, head: at }, way))
+      return
+    }
+    if ((way === 'up' || way === 'down') && event.altKey && !mod && !event.shiftKey) {
+      event.preventDefault()
+      event.stopPropagation()
+      if (at.row >= 0) this.moveRowBy(at.row, way === 'up' ? -1 : 1)
+      return
+    }
     if (key === 'Tab' && !mod && !event.altKey) {
       event.preventDefault()
       const next = event.shiftKey ? cellBefore(this.model, at) : cellAfter(this.model, at)
       if (next === 'below') this.growBelow(0)
       else if (next === 'above') this.leave('above', 'end')
-      else this.focusCell(next, event.shiftKey ? 'end' : 'start')
+      else this.focusCell(next, 'all')
       return
     }
     if (key === 'Enter') {
       event.preventDefault()
+      if (event.shiftKey) {
+        this.typeInCell('<br>', cell, at)
+        return
+      }
       const next = cellBelow(this.model, at)
       if (next === 'below') this.growBelow(at.column)
       else this.focusCell(next, 'end')
@@ -720,7 +829,10 @@ export class TableView {
       }
       if (lower === 'a' && !event.shiftKey) {
         event.preventDefault()
-        selectIn(cell, 0, cell.textContent.length)
+        const chosen = selectionIn(cell)
+        const length = cell.textContent.length
+        if (chosen?.from === 0 && chosen.to === length) this.pick(wholeTable(this.current()))
+        else selectIn(cell, 0, length)
         return
       }
     }
@@ -805,7 +917,12 @@ export class TableView {
   }
   private pasted(html: string, text: string, cell: HTMLElement, at: CellAddress) {
     if (this.editor.state.readOnly) return
-    if (!text.includes('\t') && !/<table\b/i.test(html) && !text.includes('|')) {
+    const plain = !text.includes('\t') && !/<table\b/i.test(html) && !text.includes('|')
+    if (plain && this.range) {
+      this.commit(filled(this.current(), rectOf(this.range), text.trim()))
+      return
+    }
+    if (plain) {
       this.typeInCell(text, cell, at)
       return
     }
@@ -814,8 +931,12 @@ export class TableView {
       .catch(() => null)
       .then((grid) => {
         if (!attached(cell) || this.editor.state.readOnly) return
-        if (grid) this.apply(grid(this.current(), at))
-        else this.typeInCell(text, cell, at)
+        const rect = this.range && rectOf(this.range)
+        if (!grid) this.typeInCell(text, cell, at)
+        else {
+          this.range = null
+          this.apply(grid(this.current(), rect ? { row: rect.top, column: rect.left } : at))
+        }
       })
   }
   private typeInCell(said: string, cell: HTMLElement, at: CellAddress) {
@@ -834,23 +955,6 @@ export class TableView {
   private toggleAlign(column: number, align: NonNullable<Align>) {
     this.apply(alignedColumn(this.current(), column, align, this.focusedCell() ?? undefined))
   }
-  private sortBy(column: number) {
-    const current = this.current()
-    const focus = this.focusedCell() ?? undefined
-    const asked = this.sortedAs?.column === column && this.sortedAs.order === 'up' ? 'down' : 'up'
-    const other = asked === 'up' ? 'down' : 'up'
-    const drawn = this.model
-    void import('./sort').then(({ sortedColumn }) => {
-      if (drawn !== this.model) return
-      for (const order of [asked, other] as const) {
-        const edit = sortedColumn(current, column, order, focus)
-        if (edit.next === current) continue
-        this.sortedAs = { column, order }
-        this.apply(edit)
-        return
-      }
-    })
-  }
   private moveColumnBy(column: number, step: number) {
     const current = this.current()
     const edit = movedColumn(current, column, step, this.focusedCell() ?? undefined)
@@ -860,146 +964,181 @@ export class TableView {
   private insertColumnAfter(column: number) {
     this.apply(insertedColumn(this.current(), column))
   }
-  private deleteColumn(column: number) {
-    const current = this.current()
-    const edit = removedColumn(current, column, this.focusedCell() ?? undefined)
-    if (edit.next === current) return
-    this.apply(edit)
-  }
   private moveRowBy(row: number, step: number) {
     this.apply(movedRow(this.current(), row, step, this.focusedCell() ?? undefined))
   }
   private insertRowAfter(row: number) {
     this.apply(insertedRow(this.current(), row))
   }
-  private deleteRow(row: number) {
-    this.apply(removedRow(this.current(), row, this.focusedCell() ?? undefined))
-  }
   private apply(edit: Edit) {
     this.commit(edit.next, edit.focus)
   }
-  private buildRowBar(): HTMLElement {
-    const bar = element('div', 'orden-table-rows')
-    bar.contentEditable = 'false'
-    bar.append(
-      button('orden-table-btn', 'Move row up', 'M1 6l4-4 4 4', () => this.moveRowBy(this.barRow, -1)),
-      button('orden-table-btn', 'Move row down', 'M1 4l4 4 4-4', () => this.moveRowBy(this.barRow, 1)),
-      button('orden-table-btn', 'Insert row', 'M5 1v8M1 5h8', () => this.insertRowAfter(this.barRow)),
-      button('orden-table-btn orden-table-btn-danger', 'Delete row', 'M1 1l8 8M9 1l-8 8', () =>
-        this.deleteRow(this.barRow),
-      ),
+  private chose(axis: Axis, index: number, grip: HTMLElement) {
+    const model = this.current()
+    this.pick(axis === 'row' ? rowRange(model, index) : columnRange(model, index))
+    const box = grip.getBoundingClientRect()
+    grip.dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: box.left, clientY: box.bottom + 4 }),
     )
-    return bar
   }
-  private buildColumnBar(): HTMLElement {
-    const bar = element('div', 'orden-table-columns')
-    bar.contentEditable = 'false'
-    bar.append(
-      this.alignButtons.left,
-      this.alignButtons.center,
-      this.alignButtons.right,
-      this.columnButton('Move column left', 'M6 1L2 5l4 4', (column) => this.moveColumnBy(column, -1)),
-      this.columnButton('Move column right', 'M4 1l4 4-4 4', (column) => this.moveColumnBy(column, 1)),
-      this.columnButton('Sort by this column', 'M2 2h6M2 5h4M2 8h2', (column) => this.sortBy(column)),
-      this.columnButton('Insert column', 'M5 1v8M1 5h8', (column) => this.insertColumnAfter(column)),
-      this.columnButton('Delete column', 'M1 1l8 8M9 1l-8 8', (column) => this.deleteColumn(column), true),
-    )
-    return bar
+  menuAt(target: EventTarget | null): TableMenu | null {
+    if (!this.editable || this.editor.state.readOnly) return null
+    const acts = this.acts()
+    const grip = this.chrome.indexOf(target)
+    if (grip) {
+      const entries = grip.axis === 'row' ? rowEntries(acts, grip.index) : columnEntries(acts, grip.index)
+      return { entries, cell: null, picked: true }
+    }
+    const cell = target instanceof Element ? target.closest<HTMLElement>('[data-row][data-column]') : null
+    if (!cell || !this.table.contains(cell)) return null
+    return { entries: cellEntries(acts, addressOf(cell)), cell, picked: this.range !== null }
   }
-  private columnButton(
-    said: string,
-    path: string,
-    onPress: (column: number) => void,
-    danger = false,
-  ): HTMLButtonElement {
-    const className = danger ? 'orden-table-btn orden-table-btn-danger' : 'orden-table-btn'
-    return button(className, said, path, () => onPress(this.barColumn))
+  private acts(): TableActs {
+    const whole = (next: TableModel, at: CellAddress) => {
+      this.claims = true
+      this.range = null
+      this.commit(next, { at, offset: 0 })
+    }
+    const emptied = (range: CellRange) => this.commit(filled(this.current(), rectOf(range), ''))
+    const shaped = (edit: Edit) => {
+      this.claims = true
+      this.range = null
+      this.apply(edit)
+    }
+    return {
+      model: () => this.current(),
+      insertRow: (at) => shaped(insertedRow(this.current(), at - 1)),
+      duplicateRow: (row) => whole(duplicateRow(this.current(), row), { row: row + 1, column: 0 }),
+      clearRow: (row) => emptied(rowRange(this.current(), row)),
+      deleteRow: (row) => shaped(removedRow(this.current(), row, this.focusedCell() ?? undefined)),
+      insertColumn: (at) => shaped(insertedColumn(this.current(), at - 1)),
+      duplicateColumn: (column) => whole(duplicateColumn(this.current(), column), { row: -1, column: column + 1 }),
+      clearColumn: (column) => emptied(columnRange(this.current(), column)),
+      deleteColumn: (column) => shaped(removedColumn(this.current(), column, this.focusedCell() ?? undefined)),
+      align: (column, side) => this.toggleAlign(column, side),
+      sort: (column, order) => {
+        const drawn = this.model
+        const focus = this.focusedCell() ?? undefined
+        void import('./sort').then(({ sortedColumn }) => {
+          if (drawn === this.model) shaped(sortedColumn(this.current(), column, order, focus))
+        })
+      },
+    }
   }
-  private watchColumnHover() {
-    this.dom.addEventListener('pointerover', (event) => {
-      if (event.pointerType !== 'mouse') return
-      const target = event.target as Element
-      const th = target.closest('th')
-      if (th && this.table.contains(th)) this.showColumnBar(th)
-      else if (!this.columnBar.contains(target)) this.hideColumnBar()
-    })
-    this.dom.addEventListener('pointerleave', (event) => {
-      if (event.pointerType === 'mouse') this.hideColumnBar()
-    })
-    this.table.addEventListener('focusin', (event) => {
-      const th = (event.target as Element).closest('th')
-      if (th) this.showColumnBar(th)
-    })
-    this.table.addEventListener('focusout', (event) => {
-      const next = (event.relatedTarget as Element | null)?.closest('th')
-      if (next && this.table.contains(next)) this.showColumnBar(next)
-      else this.hideColumnBar()
-    })
-    this.scroller.addEventListener('scroll', () => {
-      const th = this.headerCell(this.barColumn)
-      if (th && this.columnBar.classList.contains('is-shown')) this.showColumnBar(th)
-    })
+  covered(on: boolean) {
+    this.dom.classList.toggle('is-covered', on)
   }
-  private watchRowHover() {
-    this.dom.addEventListener('pointerover', (event) => {
-      if (event.pointerType !== 'mouse') return
-      const target = event.target as Element
-      const tr = target.closest('tr')
-      if (tr?.dataset.row !== undefined && this.table.tBodies[0]?.contains(tr)) this.showRowBar(tr)
-      else if (!this.rowBar.contains(target)) this.hideRowBar()
-    })
-    this.dom.addEventListener('pointerleave', (event) => {
-      if (event.pointerType === 'mouse') this.hideRowBar()
-    })
-    this.table.addEventListener('focusin', (event) => {
-      const tr = (event.target as Element).closest('td')?.closest('tr')
-      if (tr) this.showRowBar(tr)
-    })
-    this.table.addEventListener('focusout', (event) => {
-      const next = event.relatedTarget as Element | null
-      if (next && this.rowBar.contains(next)) return
-      const tr = next?.closest('td')?.closest('tr')
-      if (tr && this.table.contains(tr)) this.showRowBar(tr)
-      else this.hideRowBar()
-    })
-    this.table.addEventListener('input', (event) => {
-      const tr = (event.target as Element).closest('td')?.closest('tr')
-      if (tr) this.showRowBar(tr)
-    })
+  private pick(range: CellRange | null) {
+    const was = this.range
+    if (range) this.flush()
+    this.range = range && clamped(this.current(), range)
+    if (this.range) {
+      const { head } = this.range
+      this.reach(head.row)
+      const cell = this.cellAt(head)
+      if (cell) {
+        if (document.activeElement !== cell) cell.focus({ preventScroll: true })
+        cell.dataset.source = this.textOf(head)
+        showRendered(cell)
+        selectIn(cell, 0)
+      }
+    } else if (was) {
+      const focused = document.activeElement
+      if (focused instanceof HTMLElement && this.table.contains(focused) && focused.dataset.row !== undefined) {
+        showSource(focused)
+      }
+    }
+    this.paint()
   }
-  private bodyRow(row: number): HTMLTableRowElement | undefined {
-    return this.drawn.get(row)
+  private paint() {
+    const rect = this.range && rectOf(this.range)
+    this.dom.classList.toggle('is-picking', rect !== null)
+    for (const cell of this.table.querySelectorAll<HTMLElement>('[data-row][data-column]')) {
+      cell.classList.toggle('is-picked', rect !== null && inRect(rect, addressOf(cell)))
+    }
+    const first = rect && this.cellAt({ row: rect.top, column: rect.left })?.getBoundingClientRect()
+    const last = rect && this.cellAt({ row: rect.bottom, column: rect.right })?.getBoundingClientRect()
+    this.box.classList.toggle('is-shown', !!first && !!last)
+    if (!first || !last) return
+    const frame = this.scroller.getBoundingClientRect()
+    this.box.style.left = `${first.left - frame.left + this.scroller.scrollLeft}px`
+    this.box.style.top = `${first.top - frame.top + this.scroller.scrollTop}px`
+    this.box.style.width = `${last.right - first.left}px`
+    this.box.style.height = `${last.bottom - first.top}px`
   }
-  private showRowBar(tr: HTMLTableRowElement) {
-    this.barRow = Number(tr.dataset.row)
-    const bar = this.rowBar
-    bar.classList.add('is-shown')
-    const wrap = this.dom.getBoundingClientRect()
-    const row = tr.getBoundingClientRect()
-    bar.style.top = `${row.top - wrap.top + row.height / 2}px`
+  private trackPress(cell: HTMLElement, at: CellAddress, pressed: number | null) {
+    const move = (moved: MouseEvent) => {
+      const under = document.elementFromPoint(moved.clientX, moved.clientY)
+      const found = under?.closest<HTMLElement>('[data-row][data-column]')
+      if (!found || !this.table.contains(found)) return
+      const over = addressOf(found)
+      if (!this.range && sameCell(over, at)) {
+        const offset = pressed === null ? null : offsetAtPoint(cell, moved.clientX, moved.clientY)
+        if (pressed !== null && offset !== null) selectIn(cell, Math.min(pressed, offset), Math.max(pressed, offset))
+        return
+      }
+      moved.preventDefault()
+      if (!sameCell(over, this.range?.head)) this.pick({ anchor: at, head: over })
+    }
+    const done = () => {
+      document.removeEventListener('mousemove', move)
+      document.removeEventListener('mouseup', done)
+      this.dragging = null
+    }
+    this.dragging?.()
+    document.addEventListener('mousemove', move)
+    document.addEventListener('mouseup', done)
+    this.dragging = done
   }
-  private hideRowBar() {
-    const focused = document.activeElement?.closest('td')?.closest('tr')
-    if (focused && this.table.contains(focused)) this.showRowBar(focused)
-    else this.rowBar.classList.remove('is-shown')
+  private copied(event: ClipboardEvent, taken: boolean) {
+    const held = event.clipboardData
+    if (!this.range || !held) return
+    event.preventDefault()
+    const rect = rectOf(this.range)
+    const grid = gridIn(this.current(), rect)
+    held.setData('text/plain', gridText(grid))
+    held.setData('text/html', gridHtml(grid))
+    if (taken) this.commit(filled(this.current(), rect, ''))
   }
-  private showColumnBar(th: HTMLTableCellElement) {
-    const column = Number(th.dataset.column)
-    this.barColumn = column
-    const bar = this.columnBar
-    bar.classList.add('is-shown')
-    const wrap = this.dom.getBoundingClientRect()
-    const cell = th.getBoundingClientRect()
-    const left = Math.max(0, Math.min(cell.left - wrap.left, wrap.width - bar.offsetWidth))
-    bar.style.left = `${left}px`
-    const align = this.model.align[column]
-    for (const [name, element] of Object.entries(this.alignButtons))
-      element.classList.toggle('is-active', name === align)
+  private keyInRange(event: KeyboardEvent, range: CellRange): boolean {
+    const mod = event.ctrlKey || event.metaKey
+    const key = event.key
+    const way = WAYS[key]
+    if (way && !mod && !event.altKey) {
+      event.preventDefault()
+      if (event.shiftKey) this.pick(extended(this.current(), range, way))
+      else this.focusCell(range.head, 'end')
+      return true
+    }
+    if (key === 'Escape' || key === 'Enter') {
+      event.preventDefault()
+      this.focusCell(range.head, key === 'Enter' ? 'all' : 'end')
+      return true
+    }
+    if (key === 'Backspace' || key === 'Delete') {
+      event.preventDefault()
+      this.commit(filled(this.current(), rectOf(range), ''))
+      return true
+    }
+    if (mod && !event.altKey && key.toLowerCase() === 'a') {
+      event.preventDefault()
+      if (coversTable(this.current(), range)) this.selectNote()
+      else this.pick(wholeTable(this.current()))
+      return true
+    }
+    if (key === 'Tab') this.pick(null)
+    else if (!mod && !event.altKey && key.length === 1) {
+      const rect = rectOf(range)
+      this.focusCell({ row: rect.top, column: rect.left }, 'all')
+    }
+    return false
   }
-  private hideColumnBar() {
-    const focused = document.activeElement?.closest('th')
-    if (focused && this.table.contains(focused)) this.showColumnBar(focused)
-    else this.columnBar.classList.remove('is-shown')
+  private selectNote() {
+    this.pick(null)
+    this.flush()
+    const { editor } = this
+    editor.dispatch({ selection: { anchor: 0, head: editor.state.doc.length }, userEvent: 'select' })
+    editor.focus()
   }
   private startResize(event: MouseEvent, header: HTMLTableCellElement, column: number) {
     event.preventDefault()
@@ -1106,15 +1245,4 @@ function lineChanges(from: number, before: string, after: string): ChangeSpec[] 
     at += line.length + 1
   })
   return changes
-}
-const PASTE_TEXT = 'orden:paste-text'
-export function editableCellAt(view: EditorView, target: EventTarget | null): HTMLElement | null {
-  if (!(target instanceof Element)) return null
-  const cell = target.closest('td, th')
-  if (!(cell instanceof HTMLElement) || cell.contentEditable !== 'true') return null
-  return view.contentDOM.contains(cell) ? cell : null
-}
-export function pasteIntoCell(cell: HTMLElement, text: string): void {
-  cell.focus()
-  cell.dispatchEvent(new CustomEvent(PASTE_TEXT, { detail: text }))
 }

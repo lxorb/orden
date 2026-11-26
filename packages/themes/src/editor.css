@@ -627,6 +627,7 @@
   container-type: inline-size;
 }
 .orden-table-scroll {
+  position: relative;
   width: max-content;
   min-width: calc(100% + var(--space-5));
   max-width: calc(100% + max(var(--space-5), (100cqi - 100%) / 2 - var(--block-room)));
@@ -688,9 +689,6 @@
 .orden-table tr {
   position: relative;
 }
-.orden-table tbody tr:hover td {
-  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
-}
 #write .orden-table.orden-table-windowed {
   table-layout: fixed;
 }
@@ -702,91 +700,163 @@
 .orden-table th:focus,
 .orden-table td:focus {
   box-shadow: inset 0 0 0 2px var(--accent);
-  background: var(--accent-soft);
 }
 .cm-content .orden-table ::selection {
   background: var(--selection);
 }
-.orden-table-columns,
-.orden-table-rows {
-  gap: 1px;
+.orden-table-wrap.is-picking,
+.orden-table-wrap.is-moving {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.orden-table-wrap.is-picking .orden-table th,
+.orden-table-wrap.is-picking .orden-table td {
+  caret-color: transparent;
+}
+.orden-table-wrap.is-moving .orden-table th:focus,
+.orden-table-wrap.is-moving .orden-table td:focus,
+.orden-table-wrap.is-picking .orden-table th:focus,
+.orden-table-wrap.is-picking .orden-table td:focus {
+  box-shadow: none;
+  background: none;
+}
+#write .orden-table-wrap .orden-table th.is-picked,
+#write .orden-table-wrap .orden-table td.is-picked {
+  background-image: linear-gradient(var(--selection), var(--selection));
+}
+#write .orden-table-wrap.is-covered .orden-table th {
+  background: none;
+}
+.cm-content .orden-table-wrap.is-covered .orden-table ::selection {
+  background: transparent;
+}
+.orden-table .is-lifted {
+  opacity: 0.4;
+}
+.orden-table-pick {
+  position: absolute;
+  display: none;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.orden-table-pick.is-shown {
+  display: block;
+}
+.orden-table-grip {
+  position: absolute;
+  display: flex;
+  width: 15px;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  cursor: grab;
   opacity: 0;
   pointer-events: none;
   transition:
     opacity var(--dur-fast) var(--ease-out),
-    transform var(--dur-base) var(--ease-out);
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
-.orden-table-columns {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  padding-bottom: 3px;
-  transform: translateY(calc(-100% + 4px));
-}
-.orden-table-columns.is-shown {
+.orden-table-grip.is-shown {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(-100%);
 }
-.orden-table-rows {
-  position: absolute;
-  inset-inline-end: 100%;
-  top: 0;
-  padding-inline-end: 4px;
-  display: grid;
-  grid-template-columns: repeat(2, 17px);
-  transform: translate(4px, -50%);
-}
-.orden-table-rows.is-shown,
-.orden-table-rows:focus-within {
-  opacity: 1;
-  pointer-events: auto;
-  transform: translate(0, -50%);
-}
-@media (hover: none) {
-  .orden-table-rows {
-    grid-template-columns: 17px;
-  }
-}
-.orden-table-btn {
-  width: 17px;
-  height: 17px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 4px;
+.orden-table-grip:hover,
+.orden-table-wrap.is-picking .orden-table-grip:active {
   background: var(--surface-2);
-  color: var(--muted-strong);
-  cursor: pointer;
-  transition:
-    background var(--dur-instant) var(--ease-out),
-    color var(--dur-instant) var(--ease-out),
-    transform var(--dur-fast) var(--ease-spring);
+  color: var(--text-strong);
 }
-.orden-table-btn.is-active {
-  background: var(--accent-soft);
-  border-color: var(--accent-line);
-  color: var(--accent);
+.orden-table-grip:active {
+  cursor: grabbing;
 }
-.orden-table-btn:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  transform: scale(1.14);
-}
-.orden-table-btn-danger:hover {
-  background: var(--danger);
-  border-color: var(--danger);
-}
-.orden-table-btn svg {
-  width: 9px;
-  height: 9px;
+.orden-table-grip svg {
+  width: 10px;
+  height: 14px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.3;
+  stroke-width: 2.2;
   stroke-linecap: round;
+}
+.orden-table-grip-row {
+  inset-inline-end: 100%;
+  margin-top: -10px;
+  margin-inline-end: 3px;
+}
+.orden-table-grip-row::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 100%;
+  width: 4px;
+}
+.orden-table-grip-column {
+  top: -20px;
+  margin-inline-start: -8px;
+  transform: rotate(90deg);
+}
+.orden-table-add {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.orden-table-wrap.is-near .orden-table-add {
+  opacity: 1;
+  pointer-events: auto;
+}
+.orden-table-wrap.is-moving .orden-table-add {
+  opacity: 0;
+}
+.orden-table-add:hover {
+  background: var(--surface-2);
+  color: var(--text-strong);
+}
+.orden-table-add-row {
+  left: 0;
+  height: 16px;
+  margin-top: 4px;
+}
+.orden-table-add-column {
+  top: 0;
+  width: 16px;
+  margin-inline-start: 4px;
+}
+.orden-table-add svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.orden-table-drop {
+  position: absolute;
+  display: none;
+  background: var(--accent);
+  border-radius: 1px;
+  pointer-events: none;
+}
+.orden-table-drop.is-shown {
+  display: block;
 }
 .orden-table-resize {
   position: absolute;
@@ -832,8 +902,8 @@
 .orden-read-only .orden-fence-language {
   pointer-events: none;
 }
-.orden-read-only .orden-table-rows,
-.orden-read-only .orden-table-columns,
+.orden-read-only .orden-table-grip,
+.orden-read-only .orden-table-add,
 .orden-read-only .orden-table-resize,
 .orden-read-only .orden-image-size,
 .orden-read-only .orden-image-source,

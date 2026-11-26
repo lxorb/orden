@@ -4,7 +4,7 @@ import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { createEditor } from '../editor'
 import { SharedDoc } from '../shared'
-import { flushTableEdits } from './view'
+import { flushTableEdits } from './widget'
 
 const TABLE = 'words\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nend'
 const TYPED = 'words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2   |\n\nend'

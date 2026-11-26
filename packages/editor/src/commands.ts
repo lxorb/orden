@@ -884,8 +884,8 @@ export const insertPageBreak = insertBlock(() => ({
   text: '<div style="page-break-after: always;"></div>\n',
   caret: 45,
 }))
-export function insertTable(rows = 2, columns = 2): StateCommand {
-  const header = `| ${Array.from({ length: columns }, (_, i) => `Column ${i + 1}`).join(' | ')} |`
+export function insertTable(rows = 2, columns = 2, named = true): StateCommand {
+  const header = `| ${Array.from({ length: columns }, (_, i) => (named ? `Column ${i + 1}` : '   ')).join(' | ')} |`
   const divider = `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`
   const body = Array.from({ length: rows }, () => `| ${Array.from({ length: columns }, () => '   ').join(' | ')} |`)
   const block = insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }), {

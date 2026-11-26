@@ -164,6 +164,23 @@ export function insertRow(model: TableModel, at: number): TableModel {
   const names = model.names && withInserted(model.names, at, null)
   return { ...model, rows: withInserted(model.rows, at, blank), names }
 }
+export function duplicateRow(model: TableModel, at: number): TableModel {
+  const copied = model.rows[at]
+  if (!copied) return model
+  const names = model.names && withInserted(model.names, at + 1, null)
+  return { ...model, rows: withInserted(model.rows, at + 1, [...copied]), names }
+}
+export function duplicateColumn(model: TableModel, at: number): TableModel {
+  if (at < 0 || at >= model.header.length) return model
+  const twice = <T>(list: T[]): T[] => withInserted(list, at + 1, list[at] as T)
+  return {
+    header: twice(model.header),
+    align: twice(model.align),
+    rows: model.rows.map(twice),
+    names: model.names,
+    pixels: model.pixels && twice(model.pixels),
+  }
+}
 export function removeRow(model: TableModel, at: number): TableModel {
   if (at < 0 || at >= model.rows.length) return model
   const names = model.names && withRemoved(model.names, at)

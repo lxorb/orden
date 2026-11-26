@@ -3,9 +3,11 @@ import { syntaxTree } from '@codemirror/language'
 import type { Command, EditorView } from '@codemirror/view'
 import { insertTable } from '../commands'
 import type { BindingSpec } from '../shortcuts'
-import { lineBeside, renderedTables, type Side, tableAt, tableCrossed } from './navigation'
+import { stillOn } from '../shared'
+import { parseTable, serializeTable } from './model'
+import { lineBeside, renderedTables, type Side, tableAt, tableCrossed, tableWrite } from './navigation'
 import type { Landing } from './view'
-import { tableViewAt } from './widget'
+import { tableViewAt, withTableView } from './widget'
 
 function walkInto(
   side: Side,
@@ -50,16 +52,45 @@ const down = (view: EditorView, range: SelectionRange) => view.moveVertically(ra
 const up = (view: EditorView, range: SelectionRange) => view.moveVertically(range, false)
 const forward = (view: EditorView, range: SelectionRange) => view.moveByChar(range, true)
 const backward = (view: EditorView, range: SelectionRange) => view.moveByChar(range, false)
-export const insertTableToEdit: Command = (view) => {
-  if (!insertTable()(view)) return false
-  const span = tableAt(view.state, view.state.selection.main.head)
-  if (!span) return true
+function editAt(view: EditorView, from: number, row: number) {
+  const span = tableAt(view.state, from)
+  if (!span) return
   const line = lineBeside(view.state, span, 'below')
   view.dispatch({ changes: line.changes, selection: { anchor: line.from } })
-  tableViewAt(view, span.from)?.focusCell({ row: -1, column: 0 }, 'all')
+  const still = stillOn(view)
+  withTableView(() => {
+    if (still()) tableViewAt(view, span.from)?.focusCell({ row, column: 0 }, 'all')
+  })
+}
+export const insertTableToEdit: Command = (view) => {
+  if (!insertTable(2, 3, false)(view)) return false
+  editAt(view, view.state.selection.main.head, -1)
+  return true
+}
+const A_ROW = /^\s*\|.*[^\s|].*\|\s*$/
+const beginTable: Command = (view) => {
+  const { state } = view
+  const range = state.selection.main
+  if (state.readOnly || state.selection.ranges.length > 1 || !range.empty) return false
+  const line = state.doc.lineAt(range.head)
+  if (range.head !== line.to || !A_ROW.test(line.text)) return false
+  const node = syntaxTree(state).resolveInner(line.from, 1)
+  if (node.name !== 'Paragraph' || node.from !== line.from || node.to !== line.to) return false
+  const model = parseTable(`${line.text}\n| - |`)
+  if (!model) return false
+  const written = serializeTable({ ...model, rows: [model.header.map(() => '')] })
+  const under = line.number < state.doc.lines && state.doc.line(line.number + 1).text.trim() ? '\n' : ''
+  view.dispatch({
+    changes: { from: line.from, to: line.to, insert: written + under },
+    selection: { anchor: line.from + written.length },
+    userEvent: 'input',
+    annotations: tableWrite.of(true),
+  })
+  editAt(view, line.from + 1, 0)
   return true
 }
 export const tableBindings: BindingSpec[] = [
+  { id: 'table.begin', key: 'Enter', run: beginTable, contextual: true },
   { id: 'table.below', key: 'ArrowDown', run: walkInto('above', down, caretX), contextual: true },
   { id: 'table.above', key: 'ArrowUp', run: walkInto('below', up, caretX), contextual: true },
   {
