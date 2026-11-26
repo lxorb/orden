@@ -72,4 +72,15 @@ describe('the apps one project builds (#2286)', () => {
     }
     expect(existsSync(join(TAURI, 'tauri.notes.conf.json'))).toBe(true)
   })
+  test('Orden Notes is checked for the modules it leaves out, on every push', () => {
+    const guard = read(APP, '..', '..', 'scripts', 'app-modules.mjs')
+    const kept = guard.slice(guard.indexOf('const AI = ['), guard.indexOf('export async function check'))
+    const config = read(APP, 'vite.config.ts')
+    const ai = /const NAMES_AI = \/([^/]+)\//.exec(config)?.[1]?.split('|') ?? []
+    expect(ai.length).toBeGreaterThan(5)
+    expect(kept).toContain('notes: [...AI,')
+    for (const name of [...ai, 'tasks-views', 'pass-ui']) expect(kept, name).toContain(`'${name}'`)
+    const workflow = read(APP, '..', '..', '.github', 'workflows', 'check.yml')
+    expect(workflow).toContain('node scripts/app-modules.mjs --check notes')
+  })
 })
