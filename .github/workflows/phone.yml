@@ -1,0 +1,86 @@
+name: phone
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['tmp/ci-phone*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phone-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  notes-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+
+      - name: The NDK the crate is cross-compiled with
+        run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >>"$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+          targets: x86_64-linux-android
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          env-vars: ImageVersion
+          workspaces: apps/desktop/src-tauri
+          shared-key: android-debug
+          cache-on-failure: true
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pip install websocket-client playwright
+
+      - name: Build Orden Notes, driveable, against a server on this machine
+        env:
+          ORG_GRADLE_PROJECT_ordenApp: notes
+        run: |
+          pnpm --filter @orden/desktop exec tauri android build --debug --apk --target x86_64 \
+            --config src-tauri/tauri.notes.conf.json \
+            --config '{"build":{"beforeBuildCommand":"ORDEN_APP=notes VITE_ORDEN_API=http://127.0.0.1:8799 pnpm exec vite build --mode drive"}}'
+          mkdir -p out
+          cp "$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*debug*.apk' | head -1)" out/notes.apk
+
+      - name: Let the emulator use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Write, sign in and sync on an emulator, every field above the keyboard
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: python3 apps/desktop/test/e2e/notes-phone.py
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: notes-phone
+          path: apps/desktop/test/e2e/shots/notes-phone/
