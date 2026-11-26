@@ -72,10 +72,10 @@ describe('another account signing in while Settings is open', () => {
   test('starts without the address the last account was typing', async () => {
     draw(Addresses)
     await answer('ada')
-    target.querySelector<HTMLButtonElement>('button[aria-label="Change email"]')?.click()
+    target.querySelector<HTMLButtonElement>('button[aria-label="Edit email"]')?.click()
     flushSync()
-    expect(target.querySelector('form.adding')).not.toBeNull()
+    await vi.waitFor(() => expect(document.querySelector('form.fields input')).not.toBeNull())
     as('bo')
-    await vi.waitFor(() => expect(target.querySelector('form.adding')).toBeNull())
+    await vi.waitFor(() => expect(document.querySelector('form.fields input')).toBeNull())
   })
 })

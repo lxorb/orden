@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dropOver, Cross, message, portal, viewport, menu } from '../../ui-kit/src/api'
+  import { dropOver, message, portal, viewport, menu } from '../../ui-kit/src/api'
   import { account } from '../../accounts/src/api'
   import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
   import { type Box, Glyph } from '../../chat-kit/src/api'
@@ -9,7 +9,7 @@
   import type { Status } from '../../accounts/src/api'
   import { changeProfile, removeFace } from '../../accounts/src/api'
   import { CLEARS, type Clears, clearsAt, stands } from '../../accounts/src/api'
-  import { Hint } from '../../ui-controls/src/api'
+  import { EditRow, EditSheet, Hint } from '../../ui-controls/src/api'
   import { Switch } from '../../ui-controls/src/api'
   import type { Snippet } from 'svelte'
 
@@ -72,6 +72,14 @@
       { title: 'Picture' },
     )
   }
+  let editing = $state<'bio' | 'status' | null>(null)
+  const draft = $state({ bio: '', emoji: '', text: '' })
+  function open(which: 'bio' | 'status') {
+    draft.bio = user?.bio ?? ''
+    draft.emoji = status?.emoji ?? ''
+    draft.text = status?.text ?? ''
+    editing = which
+  }
   function pickEmoji(from: HTMLElement) {
     const box = from.getBoundingClientRect()
     picking = { left: box.left, top: box.top, right: box.right, bottom: box.bottom }
@@ -116,94 +124,20 @@
   {@render children?.()}
 
   <div class="card">
-    <label class="orden-setting setting">
-      <span class="name"
-        ><span class="orden-named">Pronouns<Hint text="Shown to the others beside your name, such as she/her." /></span
-        ></span
-      >
-      <input
-        class="orden-field is-value is-plain"
-        value={user.pronouns ?? ''}
-        placeholder="Optional"
-        maxlength="40"
-        spellcheck="false"
-        onchange={(event) => void kept(() => changeProfile({ pronouns: event.currentTarget.value }))}
-      />
-    </label>
-
-    <label class="orden-setting setting is-tall">
-      <span class="name"><span class="orden-named">Bio</span></span>
-      <textarea
-        class="orden-field is-value"
-        rows="3"
-        maxlength="190"
-        placeholder="A few words about you"
-        value={user.bio ?? ''}
-        onchange={(event) => void kept(() => changeProfile({ bio: event.currentTarget.value }))}></textarea>
-    </label>
-
-    <div class="orden-setting setting is-tall">
-      <span class="name"><span class="orden-named">Status</span></span>
-      <span class="orden-field is-value">
-        <button
-          type="button"
-          class="orden-glyph"
-          aria-label="Emoji"
-          title="Emoji"
-          onclick={(event) => pickEmoji(event.currentTarget)}
-          >{#if status?.emoji}{status.emoji}{:else}<Glyph name="smile" />{/if}</button
-        >
-        <input
-          value={status?.text ?? ''}
-          maxlength="100"
-          aria-label="Status"
-          placeholder="What’s happening?"
-          onchange={(event) => withStatus({ text: event.currentTarget.value })}
-        />
-        {#if [status?.emoji, status?.text].some(Boolean)}
-          <button
-            type="button"
-            class="orden-glyph"
-            aria-label="Clear"
-            title="Clear"
-            onclick={() => withStatus({ emoji: '', text: '' })}><Cross /></button
-          >
-        {/if}
-      </span>
-    </div>
-
-    {#if picking}
-      {#await Promise.all([import('../../chat-kit/src/api'), import('../../emoji/src/api')]) then [float, picker]}
-        <div use:portal>
-          <float.Float at={picking} label="Emoji" onclose={() => (picking = null)}>
-            <picker.EmojiPicker
-              onpick={(emoji: string) => {
-                picking = null
-                withStatus({ emoji })
-              }}
-            />
-          </float.Float>
-        </div>
-      {/await}
-    {/if}
-
-    {#if status}
-      <div class="orden-setting setting">
-        <span class="name"><span class="orden-named">Clear after</span></span>
-        <div class="orden-setting-value">
-          <Select
-            value={clears}
-            options={CLEARS.map((one) => ({ value: one, label: CLEAR_WORDS[one] }))}
-            label="Clear after"
-            plain
-            onchange={(value: string) => {
-              clears = value as Clears
-              withStatus({})
-            }}
-          />
-        </div>
-      </div>
-    {/if}
+    <EditRow
+      label="Bio"
+      value={user.bio?.trim() ? user.bio : null}
+      empty="None"
+      hint="A few words about you that the others see on your profile."
+      onedit={() => open('bio')}
+    />
+    <EditRow
+      label="Status"
+      value={status && (status.emoji || status.text) ? [status.emoji, status.text].filter(Boolean).join(' ') : null}
+      empty="None"
+      hint="What you are up to, shown to the others beside your name until it clears."
+      onedit={() => open('status')}
+    />
 
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-setting setting pressable" onclick={() => withStatus({ quiet: !(status?.quiet ?? false) })}>
@@ -236,6 +170,89 @@
 
   {#if source}
     <AvatarSheet {source} onclose={() => (source = null)} />
+  {/if}
+
+  <EditSheet
+    open={editing === 'bio'}
+    title="Bio"
+    ready={draft.bio !== (user.bio ?? '')}
+    onsave={() => {
+      editing = null
+      void kept(() => changeProfile({ bio: draft.bio.trim() }))
+    }}
+    onclose={() => (editing = null)}
+  >
+    <label
+      >Bio<textarea
+        class="orden-field"
+        rows="4"
+        maxlength="190"
+        placeholder="A few words about you"
+        bind:value={draft.bio}
+        data-lands></textarea></label
+    >
+  </EditSheet>
+
+  <EditSheet
+    open={editing === 'status'}
+    title="Status"
+    onsave={() => {
+      editing = null
+      withStatus({ emoji: draft.emoji, text: draft.text.trim() })
+    }}
+    onclose={() => (editing = null)}
+  >
+    <div class="said">
+      <button
+        type="button"
+        class="orden-glyph"
+        aria-label="Emoji"
+        title="Emoji"
+        onclick={(event) => pickEmoji(event.currentTarget)}
+        >{#if draft.emoji}{draft.emoji}{:else}<Glyph name="smile" />{/if}</button
+      >
+      <input
+        class="orden-field"
+        bind:value={draft.text}
+        maxlength="100"
+        aria-label="Status"
+        placeholder="What’s happening?"
+        data-lands
+      />
+    </div>
+    <label
+      >Clear after<Select
+        value={clears}
+        options={CLEARS.map((one) => ({ value: one, label: CLEAR_WORDS[one] }))}
+        label="Clear after"
+        onchange={(value: string) => (clears = value as Clears)}
+      /></label
+    >
+    {#if status && (status.emoji || status.text)}
+      <button
+        type="button"
+        class="orden-chip is-quiet clear"
+        onclick={() => {
+          editing = null
+          withStatus({ emoji: '', text: '' })
+        }}>Clear status</button
+      >
+    {/if}
+  </EditSheet>
+
+  {#if picking}
+    {#await Promise.all([import('../../chat-kit/src/api'), import('../../emoji/src/api')]) then [float, picker]}
+      <div use:portal>
+        <float.Float at={picking} label="Emoji" onclose={() => (picking = null)}>
+          <picker.EmojiPicker
+            onpick={(emoji: string) => {
+              picking = null
+              draft.emoji = emoji
+            }}
+          />
+        </float.Float>
+      </div>
+    {/await}
   {/if}
 {/if}
 
@@ -303,6 +320,17 @@
     inset-inline-end: 0;
     height: 1px;
     background: var(--line);
+  }
+  .said {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .said input {
+    flex: 1;
+  }
+  .clear {
+    align-self: flex-start;
   }
   .pressable {
     cursor: default;

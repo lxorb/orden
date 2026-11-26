@@ -57,7 +57,7 @@ describe('a setting', () => {
         .filter((tag) => !NOT_VALUES.some((reason) => reason.test(tag)))
         .map((tag) => `${path}: ${tag.trim().split(/\s+/).slice(0, 3).join(' ')}`),
     )
-    expect(bare).toEqual([expect.stringMatching(/^accounts-ui\/src\/ProfileRows\.svelte: value=\{status/)])
+    expect(bare).toEqual([])
   })
 })
 describe('the value box', () => {
@@ -81,16 +81,19 @@ describe('Settings > Account', () => {
       expect(field).toMatch(/placeholder=/)
     }
   })
-  test('keeps a status in one field, the emoji pressed inside it', () => {
-    const status = /<span class="orden-field is-value">([\s\S]*?)<\/span>\n/.exec(markup)?.[1]
+  test('keeps a status in one line of its sheet, the emoji pressed beside the words (#2328)', () => {
+    const status = /<div class="said">([\s\S]*?)<\/div>/.exec(markup)?.[1]
     expect(status).toMatch(/aria-label="Emoji"/)
     expect(status).toMatch(/aria-label="Status"/)
   })
-  test('asks when a status clears only while there is one', () => {
-    expect(markup).toMatch(/\{#if status\}\s*<div class="orden-setting setting">[\s\S]*?Clear after/)
+  test('shows each value as words with an Edit button, and asks when a status clears in its sheet (#2328)', () => {
+    expect(markup).toMatch(/<EditRow\s+label="Bio"/)
+    expect(markup).toMatch(/<EditRow\s+label="Status"/)
+    expect(markup).toMatch(/title="Status"[\s\S]*?Clear after/)
+    expect(markup).not.toMatch(/onchange=\{\(event\) => void kept\(\(\) => changeProfile\(\{ bio/)
   })
   test('changes a picture with a chip and removes it with a danger chip', () => {
-    const picture = markup.slice(markup.indexOf('class="profile"'), markup.indexOf('>Pronouns<'))
+    const picture = markup.slice(markup.indexOf('class="profile"'), markup.indexOf('{@render children'))
     const kinds = new Set([...picture.matchAll(/<button\s+class="([^"]+)"/g)].map((hit) => hit[1]))
     expect([...kinds]).toEqual(['orden-chip', 'orden-chip is-danger'])
   })

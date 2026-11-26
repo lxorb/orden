@@ -30,7 +30,6 @@ export interface Account {
   readonly name: string | null
   readonly syncVersion?: number
   readonly avatar?: Avatar | null
-  readonly pronouns?: string | null
   readonly bio?: string | null
   readonly status?: Status | null
   readonly zone?: string | null

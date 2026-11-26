@@ -54,12 +54,12 @@ describe('a person', () => {
       id: 'u1',
       name: 'Ada',
       avatar: { s: hash, l: hash },
-      pronouns: null,
       bio: null,
       status: { emoji: 'x', text: 'away', until: null, quiet: false },
       zone: null,
       presence: 'offline',
     })
+    expect(read).not.toHaveProperty('pronouns')
     expect(readPerson({ id: 'u1' })).toBeNull()
     expect(readPerson({ id: 'u2', name: 'B', avatar: { s: 'short', l: hash } })?.avatar).toBeNull()
   })

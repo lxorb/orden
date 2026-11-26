@@ -2,10 +2,9 @@
   import { untrack } from 'svelte'
   import { account } from '../../accounts/src/api'
   import { api, type RemoteSession, type SecondState } from '../../accounts/src/api'
-  import { Copyable, QrCode } from '../../ui-controls/src/api'
+  import { Copyable, EditRow, EditSheet, QrCode } from '../../ui-controls/src/api'
   import { CopyButton } from '../../ui-controls/src/api'
   import { localDate } from '../../platform/src/api'
-  import { dur, fade } from '../../platform/src/api'
 
   let factor = $state<SecondState | null>(null)
   let sessions = $state<RemoteSession[]>([])
@@ -14,6 +13,7 @@
   let secret = $state<{ holding: string; secret: string; uri: string } | null>(null)
   let code = $state('')
   let codes = $state<string[] | null>(null)
+  let twofa = $state(false)
   const still = (token: string) => account.accountToken === token
   async function look() {
     const token = account.accountToken
@@ -78,6 +78,7 @@
       if (!still(token)) return false
       code = ''
       codes = null
+      twofa = false
       return true
     }, 'That code is not right.')
   const freshCodes = () =>
@@ -110,41 +111,33 @@
   <p class="hint">This service cannot keep a second factor.</p>
 {:else}
   <div class="card">
-    <div class="orden-setting setting">
-      <span class="name">Two-factor authentication</span>
-      {#if factor?.on}
-        <span class="text">On</span>
-      {:else}
-        <button class="orden-chip" disabled={busy} onclick={() => void begin()}>Turn on</button>
-      {/if}
-    </div>
+    <EditRow
+      label="Two-factor authentication"
+      value={factor?.on ? 'On' : 'Off'}
+      word={factor?.on ? 'Edit' : 'Turn on'}
+      onedit={() => {
+        code = ''
+        wrong = null
+        twofa = true
+      }}
+    />
   </div>
 
-  {#if secret}
-    <div class="card" transition:fade={{ duration: dur(130) }}>
-      <p class="hint">Scan this with your authenticator app, then type its code.</p>
-      <div class="square">
-        <QrCode value={secret.uri} label="QR code for your authenticator app" />
-      </div>
-      <Copyable value={secret.secret} label="Secret" />
-      <div class="orden-setting setting">
-        <span class="name">Code from the app</span>
-        <input
-          class="orden-field is-value narrow"
-          bind:value={code}
-          placeholder="000000"
-          aria-label="Code from the app"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          spellcheck="false"
-        />
-        <button class="orden-chip" disabled={busy} onclick={() => void confirm()}>Confirm</button>
-      </div>
-    </div>
-  {/if}
-
-  {#if codes}
-    <div class="card" transition:fade={{ duration: dur(130) }}>
+  <EditSheet
+    open={twofa}
+    title="Two-factor authentication"
+    {busy}
+    {wrong}
+    word={secret ? 'Confirm' : 'Turn on'}
+    ready={secret ? !!code.trim() : true}
+    onsave={codes || (factor?.on && !secret) ? undefined : () => void (secret ? confirm() : begin())}
+    onclose={() => {
+      twofa = false
+      secret = null
+      codes = null
+    }}
+  >
+    {#if codes}
       <p class="note">Keep these somewhere safe. Each works once, and they are not shown again.</p>
       <ul class="codes" dir="ltr">
         {#each codes as one (one)}
@@ -152,31 +145,53 @@
         {/each}
       </ul>
       <CopyButton value={codes.join('\n')} wide />
-    </div>
-  {/if}
-
-  {#if factor?.on}
-    <div class="card">
-      <div class="orden-setting setting">
-        <span class="name">Recovery codes left</span>
-        <span class="text">{factor.codesLeft}</span>
+    {:else if secret}
+      <p class="hint">Scan this with your authenticator app, then type its code.</p>
+      <div class="square">
+        <QrCode value={secret.uri} label="QR code for your authenticator app" />
       </div>
-      <div class="orden-setting setting">
-        <span class="name">Code to change sign-in</span>
-        <input
-          class="orden-field is-value"
+      <Copyable value={secret.secret} label="Secret" />
+      <label
+        >Code from the app<input
+          class="orden-field"
+          bind:value={code}
+          placeholder="000000"
+          aria-label="Code from the app"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          spellcheck="false"
+          data-lands
+        /></label
+      >
+    {:else if factor?.on}
+      <p class="hint">{factor.codesLeft} recovery codes left. A code from your app is needed for either change.</p>
+      <label
+        >Code from the app<input
+          class="orden-field"
           bind:value={code}
           placeholder="000000"
           aria-label="Code to change sign-in"
           inputmode="numeric"
           autocomplete="one-time-code"
           spellcheck="false"
-        />
+          data-lands
+        /></label
+      >
+      <div class="acts">
+        <button type="button" class="orden-chip" disabled={busy || !code.trim()} onclick={() => void freshCodes()}
+          >New recovery codes</button
+        >
+        <button
+          type="button"
+          class="orden-chip is-quiet danger"
+          disabled={busy || !code.trim()}
+          onclick={() => void turnOff()}>Turn off</button
+        >
       </div>
-      <button class="orden-action" disabled={busy} onclick={() => void freshCodes()}> New recovery codes </button>
-      <button class="orden-action is-danger" disabled={busy} onclick={() => void turnOff()}> Turn off </button>
-    </div>
-  {/if}
+    {:else}
+      <p class="hint">Signing in will also ask for a code from an authenticator app.</p>
+    {/if}
+  </EditSheet>
 {/if}
 
 {#if wrong}
@@ -241,9 +256,12 @@
     font-size: var(--text-xs);
     color: var(--text-strong);
   }
-  .setting > .narrow {
-    flex: none;
-    inline-size: 8rem;
+  .acts {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .danger {
+    color: var(--danger);
   }
   .note {
     margin: 0;

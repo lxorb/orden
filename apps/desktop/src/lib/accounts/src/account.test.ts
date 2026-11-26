@@ -159,9 +159,9 @@ describe('a name given to the account', () => {
   test('keeps the picture and the rest of the profile the account already had', async () => {
     await account.verify('123456')
     const face = { s: 'a'.repeat(64), l: 'b'.repeat(64) }
-    if (account.user) account.user = { ...account.user, avatar: face, pronouns: 'she/her' }
+    if (account.user) account.user = { ...account.user, avatar: face, bio: 'Writes things' }
     await account.rename('Ada')
-    expect(account.user).toMatchObject({ name: 'Ada', avatar: face, pronouns: 'she/her' })
+    expect(account.user).toMatchObject({ name: 'Ada', avatar: face, bio: 'Writes things' })
   })
 })
 describe('a code that is refused', () => {

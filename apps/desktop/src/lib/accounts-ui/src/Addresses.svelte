@@ -2,7 +2,7 @@
   import { untrack } from 'svelte'
   import { account, request } from '../../accounts/src/api'
   import { message } from '../../ui-kit/src/api'
-  import { dur, fade } from '../../platform/src/api'
+  import { EditRow, EditSheet } from '../../ui-controls/src/api'
 
   interface Held {
     email: string
@@ -81,126 +81,94 @@
       adding = null
     }, 'that code is not right')
   const promote = () =>
-    run(async () => took(await asked<Held>('/second/primary', { method: 'POST' })), 'that did not work')
-  const remove = () => run(async () => took(await asked<Held>('/second', { method: 'DELETE' })), 'that did not work')
+    run(async () => {
+      took(await asked<Held>('/second/primary', { method: 'POST' }))
+      adding = null
+    }, 'that did not work')
+  const remove = () =>
+    run(async () => {
+      took(await asked<Held>('/second', { method: 'DELETE' }))
+      adding = null
+    }, 'that did not work')
 </script>
 
-<div class="orden-setting setting">
-  <span class="name">Email</span>
-  <span class="orden-field is-value is-read">{account.user?.email}</span>
-  {#if !adding}
-    <button class="orden-chip" aria-label="Change email" onclick={() => start('primary')}>Change</button>
-  {/if}
-</div>
-<div class="orden-setting setting">
-  <span class="name">Second email</span>
-  {#if second}
-    <span class="orden-field is-value is-read">{second}</span>
-    {#if !adding}
-      <button class="orden-chip" disabled={busy} onclick={() => void promote()}>Make primary</button>
-      <button class="orden-chip is-danger" disabled={busy} onclick={() => void remove()}>Remove</button>
-    {/if}
-  {:else if !adding}
-    <button class="orden-chip" aria-label="Add a second email" onclick={() => start('second')}>Add</button>
-  {/if}
-</div>
+<EditRow label="Email" value={account.user?.email ?? null} onedit={() => start('primary')} />
+<EditRow label="Second email" value={second} empty="None" onedit={() => start('second')} />
 
-{#if adding}
-  <form
-    class="adding"
-    transition:fade={{ duration: dur(130) }}
-    onsubmit={(event) => {
-      event.preventDefault()
-      void (sent ? confirm() : mail())
-    }}
+<EditSheet
+  open={adding !== null}
+  title={adding === 'primary' ? 'Change email' : second ? 'Second email' : 'Add a second email'}
+  {busy}
+  {wrong}
+  word={sent ? 'Confirm' : 'Send code'}
+  ready={!!address.trim() && (!sent || !!code.trim())}
+  onsave={() => void (sent ? confirm() : mail())}
+  onclose={() => (adding = null)}
+>
+  {#if adding === 'second' && second}
+    <div class="current">
+      <span class="what">{second}</span>
+      <button type="button" class="orden-chip" disabled={busy} onclick={() => void promote()}>Make primary</button>
+      <button type="button" class="orden-chip is-danger" disabled={busy} onclick={() => void remove()}>Remove</button>
+    </div>
+  {/if}
+  <label
+    >{adding === 'primary' ? 'New email' : second ? 'Another second email' : 'Second email'}<input
+      class="orden-field"
+      type="email"
+      bind:value={address}
+      placeholder="you@example.com"
+      spellcheck="false"
+      disabled={sent}
+      data-lands
+    /></label
   >
-    <label class="orden-setting setting">
-      <span class="name">{adding === 'primary' ? 'New email' : 'Second email'}</span>
-      <!-- svelte-ignore a11y_autofocus -->
-      <input
-        class="orden-field is-value"
-        type="email"
-        bind:value={address}
-        placeholder="you@example.com"
-        aria-label={adding === 'primary' ? 'New email' : 'Second email'}
+  {#if sent}
+    <label
+      >Code sent to {address}<input
+        class="orden-field"
+        bind:value={code}
+        placeholder="000000"
+        aria-label="Code"
+        inputmode="numeric"
+        autocomplete="one-time-code"
         spellcheck="false"
-        autofocus
-        disabled={sent}
-      />
-    </label>
-    {#if sent}
-      <label class="orden-setting setting" transition:fade={{ duration: dur(130) }}>
-        <span class="name">Code sent to <strong>{address}</strong></span>
-        <input
-          class="orden-field is-value code"
-          bind:value={code}
+      /></label
+    >
+    {#if asksApp}
+      <label
+        >App code<input
+          class="orden-field"
+          bind:value={fromApp}
           placeholder="000000"
-          aria-label="Code"
+          aria-label="App code"
           inputmode="numeric"
           autocomplete="one-time-code"
           spellcheck="false"
-        />
-      </label>
-      {#if asksApp}
-        <label class="orden-setting setting" transition:fade={{ duration: dur(130) }}>
-          <span class="name">App code</span>
-          <input
-            class="orden-field is-value code"
-            bind:value={fromApp}
-            placeholder="000000"
-            aria-label="App code"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            spellcheck="false"
-          />
-        </label>
-      {/if}
-      {#if adding === 'primary'}
-        <p class="hint">
-          Your account will sign in with the new address. The old one gets a link to undo it for 7 days.
-        </p>
-      {/if}
+        /></label
+      >
     {/if}
-    <div class="orden-setting setting">
-      <button type="button" class="orden-chip" onclick={() => (adding = null)}>Cancel</button>
-      <button type="submit" class="orden-chip" disabled={busy || !address.trim() || (sent && !code.trim())}>
-        {sent ? 'Confirm' : 'Send code'}
-      </button>
-    </div>
-  </form>
-{/if}
-
-{#if wrong}
-  <p class="hint bad" transition:fade={{ duration: dur(130) }}>{wrong}</p>
-{/if}
+  {/if}
+  {#if adding === 'primary'}
+    <p class="note">You will sign in with the new address. The old one gets a link to undo it for 7 days.</p>
+  {/if}
+</EditSheet>
 
 <style>
-  .adding {
+  .current {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
   }
-  .setting .name {
+  .current .what {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .name strong {
-    font-weight: var(--weight-strong);
-    color: var(--text-strong);
-  }
-  .setting > .code {
-    flex: none;
-    inline-size: 8rem;
-  }
-  .adding .setting:last-child {
-    justify-content: flex-end;
-  }
-  .hint {
-    margin: var(--space-1) 0;
-    padding: 0 var(--space-3);
+  .note {
+    margin: 0;
     font-size: var(--text-sm);
     color: var(--muted);
-    line-height: 1.5;
-  }
-  .hint.bad {
-    color: var(--danger);
   }
 </style>

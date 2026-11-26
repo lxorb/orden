@@ -30,17 +30,17 @@ beforeEach(() => {
 })
 describe('what this account says of itself', () => {
   test('is worn the moment the account takes it', async () => {
-    await changeProfile({ pronouns: 'she/her' })
-    expect(account.user?.pronouns).toBe('she/her')
+    await changeProfile({ bio: 'Writes things' })
+    expect(account.user?.bio).toBe('Writes things')
   })
   test('is never worn by the next account when the last one asked', async () => {
     const free = hold()
-    const changing = changeProfile({ pronouns: 'she/her' })
+    const changing = changeProfile({ bio: 'Writes things' })
     account.signInAs('b')
     free()
     await changing
     expect(account.user?.id).toBe('b')
-    expect(account.user?.pronouns).toBeUndefined()
+    expect(account.user?.bio).toBeUndefined()
   })
   test('as a name in a space is never worn by the next account when the last one asked', async () => {
     const free = hold()

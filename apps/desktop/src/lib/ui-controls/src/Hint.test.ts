@@ -53,7 +53,7 @@ describe('where the panel draws it', () => {
     expect(panel).toContain('{#if field.hint}<Hint text={field.hint} />{/if}')
     expect(drawn.filter((one) => one === '<Hint text={entry.why()} />')).toHaveLength(1)
     const written = drawn.filter((one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />')
-    expect(written.length).toBeGreaterThan(1)
+    expect(written.length).toBeGreaterThan(0)
     for (const one of written) expect(one).toMatch(/^<Hint text="[^"]+\." \/>$/)
   })
   test('through the snippet every kind of row renders its name with', () => {

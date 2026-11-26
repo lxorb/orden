@@ -10,7 +10,6 @@ export interface Account {
   name: string | null
   syncVersion?: number
   avatar?: Avatar | null
-  pronouns?: string | null
   bio?: string | null
   status?: Status | null
   zone?: string | null

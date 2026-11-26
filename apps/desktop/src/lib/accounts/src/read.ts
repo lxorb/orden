@@ -6,7 +6,6 @@ export interface Person {
   id: string
   name: string
   avatar: Avatar | null
-  pronouns: string | null
   bio: string | null
   status: Status | null
   zone: string | null
@@ -39,7 +38,6 @@ export function readPerson(value: unknown): Person | null {
     id: value.id,
     name: value.name,
     avatar: readAvatar(value.avatar),
-    pronouns: textOrNull(value.pronouns),
     bio: textOrNull(value.bio),
     status: readStatus(value.status),
     zone: textOrNull(value.zone),

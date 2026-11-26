@@ -15,7 +15,6 @@ class People {
       id: user.id,
       name: account.name ?? '',
       avatar: user.avatar ?? null,
-      pronouns: user.pronouns ?? null,
       bio: user.bio ?? null,
       status: user.status ?? null,
       zone: user.zone ?? null,

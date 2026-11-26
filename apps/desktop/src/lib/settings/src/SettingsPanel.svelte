@@ -5,7 +5,6 @@
     closeOnBack,
     arrive,
     segmented,
-    message,
     whileHere,
     scrollbar,
     showCombination,
@@ -24,7 +23,7 @@
   import { Outward } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
   import { localDate } from '../../platform/src/api'
-  import { Addresses, Security } from '../../accounts-ui/src/api'
+  import { Addresses, NameRow, Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { holdScroll } from '../../panes/src/api'
@@ -147,14 +146,6 @@
   function goTo(section: SettingsSectionId, label: string) {
     go(section)
     landing.label = label || null
-  }
-  async function rename(name: string) {
-    settings.error = null
-    try {
-      await account.rename(name)
-    } catch (error) {
-      settings.error = message(error, 'that did not work')
-    }
   }
   const fraction = (field: Extract<Field, { kind: 'slider' }>, value: number) =>
     ((value - field.min) / (field.max - field.min)) * 100
@@ -703,16 +694,7 @@
     {:else if account.guest}
       <h3>Account</h3>
       <div class="card">
-        <label class="orden-setting setting">
-          <span class="name">Your name</span>
-          <input
-            class="orden-field is-value is-plain"
-            value={account.guest.name}
-            placeholder="Your name"
-            spellcheck="false"
-            onchange={(event) => void rename(event.currentTarget.value)}
-          />
-        </label>
+        <NameRow label="Your name" />
       </div>
       <p class="hint caption">What the others in this space see.</p>
 
@@ -745,19 +727,7 @@
 
 {#snippet accountCard()}
   <div class="card">
-    <label class="orden-setting setting">
-      <span class="name"
-        ><span class="what">Display name<Hint text="The name the others see on what you share and in chats." /></span
-        ></span
-      >
-      <input
-        class="orden-field is-value is-plain"
-        value={account.user?.name ?? ''}
-        placeholder="Your name"
-        spellcheck="false"
-        onchange={(event) => void rename(event.currentTarget.value)}
-      />
-    </label>
+    <NameRow />
     <Addresses />
   </div>
 {/snippet}

@@ -56,7 +56,7 @@ test('the space section is headed by the space, shows its parts in their order, 
   await vi.waitFor(() => {
     flushSync()
     expect(pane?.querySelectorAll('.part')).toHaveLength(2)
-    expect(pane?.querySelector('.part input[aria-label="Space name"]')).not.toBeNull()
+    expect(pane?.querySelector('.part button[aria-label="Edit name"]')).not.toBeNull()
     expect(pane?.querySelectorAll('.part')[1]?.textContent).toBe('Members part')
   })
   expect(pane?.querySelector('h2')?.textContent).toBe('Plans')

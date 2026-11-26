@@ -4,7 +4,6 @@ import type { Avatar, Presence, Status } from './face'
 import { type Person, readPerson, readPresence } from './read'
 
 export interface ProfileChanges {
-  pronouns?: string | null
   bio?: string | null
   status?: Status | null
   zone?: string | null
@@ -12,7 +11,6 @@ export interface ProfileChanges {
 }
 export interface OwnProfile {
   avatar: Avatar | null
-  pronouns: string | null
   bio: string | null
   status: Status | null
   zone: string | null
