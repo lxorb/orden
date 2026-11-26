@@ -6,6 +6,7 @@ pub mod env;
 mod feed;
 pub mod host;
 mod http;
+pub mod preset;
 pub mod proxy;
 mod shell;
 

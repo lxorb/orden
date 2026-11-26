@@ -8,7 +8,6 @@ use serde_json::Value;
 
 use crate::host::{self, Line};
 use crate::http;
-use crate::proxy::hidden;
 
 const TICK: Duration = Duration::from_secs(1);
 const QUIET: Duration = Duration::from_secs(60);
@@ -33,7 +32,7 @@ pub(crate) fn follow(
                 return quiet.elapsed() < QUIET && lookup().is_some_and(|now| now == line);
             };
             quiet = Instant::now();
-            let Ok(event) = serde_json::from_str::<Value>(&hidden(data, &line.password)) else {
+            let Ok(event) = serde_json::from_str::<Value>(&line.hidden(data)) else {
                 return true;
             };
             if send(event) {
@@ -115,7 +114,7 @@ mod tests {
                 }
             }
         });
-        let line = Line { port, password: "secret-pw-123456".to_owned() };
+        let line = Line { port, password: "secret-pw-123456".to_owned(), token: None };
         let stop = Arc::new(AtomicBool::new(false));
         let (told, events) = mpsc::channel();
         let stopped = stop.clone();
@@ -154,7 +153,7 @@ mod tests {
         let mut count = 0;
         follow(
             &stop,
-            || Some(Line { port, password: "pw".to_owned() }),
+            || Some(Line { port, password: "pw".to_owned(), token: None }),
             |_| {
                 count += 1;
                 false
@@ -175,6 +174,7 @@ mod tests {
                 Some(Line {
                     port: if asked.get() < 3 { closed } else { port },
                     password: "pw".to_owned(),
+                    token: None,
                 })
             },
             |event| {

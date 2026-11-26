@@ -13,6 +13,7 @@ fn the_server_lives_in_ordens_folder_and_says_its_state_plainly() {
         dirs: Dirs { root: root.clone() },
         config: json!({}),
         auth: None,
+        orden: None,
     };
     let env = env_of(&launch, "pw", |_| None);
     for var in MOVED {

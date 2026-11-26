@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use serde_json::{json, Value};
 
 pub const TOKEN: &str = "drive-mcp-token";
-pub const TOOL: &str = "add_todo";
+pub const TOOLS: [&str; 4] = ["add_task", "read_note", "files", "run_agent"];
 pub struct Asked {
     pub method: String,
     pub path: String,
@@ -175,11 +175,11 @@ fn answered(body: &Value) -> Option<Value> {
             "capabilities": { "tools": { "listChanged": false } },
             "serverInfo": { "name": "orden-drive", "version": "1.0.0" },
         }),
-        "tools/list" => json!({ "tools": [{
-            "name": TOOL,
-            "description": "Adds a to-do",
+        "tools/list" => json!({ "tools": TOOLS.map(|name| json!({
+            "name": name,
+            "description": format!("Orden's {name}"),
             "inputSchema": { "type": "object", "properties": { "text": { "type": "string" } }, "required": ["text"] },
-        }] }),
+        })) }),
         "tools/call" => json!({ "content": [{ "type": "text", "text": "Added Milk" }] }),
         "ping" => json!({}),
         _ => {
@@ -197,7 +197,10 @@ pub fn mcp() -> Mcp {
             reply(stream, "405 Method Not Allowed", "{}");
             return;
         }
-        let method = one.body["method"].as_str().unwrap_or_default().to_owned();
+        let mut method = one.body["method"].as_str().unwrap_or_default().to_owned();
+        if let Some(tool) = one.body["params"]["name"].as_str().filter(|_| method == "tools/call") {
+            method = format!("{method}:{tool}");
+        }
         kept.held().push((one.header("authorization").map(str::to_owned), method));
         match answered(&one.body) {
             Some(answer) => reply(stream, "200 OK", &answer.to_string()),

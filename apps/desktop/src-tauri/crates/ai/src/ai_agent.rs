@@ -116,7 +116,22 @@ struct Lent {
     chat: Chat,
     token: String,
     hash: String,
+    hard_only: bool,
 }
+pub const ENGINE_KEPT_OUT: [&str; 2] = ["run_agent", "agent_result"];
+const ENGINE_LEAVES: [Category; 11] = [
+    Category::Sending,
+    Category::Deleting,
+    Category::Settings,
+    Category::Terminal,
+    Category::Files,
+    Category::Writing,
+    Category::Trashing,
+    Category::Unread,
+    Category::Showing,
+    Category::Tools,
+    Category::Pairing,
+];
 static LENT: Mutex<Vec<Lent>> = Mutex::new(Vec::new());
 fn lent_now() -> std::sync::MutexGuard<'static, Vec<Lent>> {
     LENT.held()
@@ -130,22 +145,41 @@ fn token_for(all: &mut Vec<Lent>, grant: String, chat: Chat) -> Result<String, S
         return Ok(one.token.clone());
     }
     let token = fresh_token()?;
-    all.push(Lent { grant, chat, hash: hashed(&token), token: token.clone() });
+    all.push(Lent { grant, chat, hash: hashed(&token), token: token.clone(), hard_only: false });
     Ok(token)
+}
+pub fn lend_engine(grant: String, mode: Mode) -> Result<String, String> {
+    let hard_only = mode == Mode::Approve;
+    let mode = if hard_only { Mode::Auto } else { mode };
+    let chat = Chat { without: ENGINE_KEPT_OUT.map(str::to_owned).to_vec(), ..Chat::of(mode) };
+    let token = fresh_token()?;
+    lent_now().push(Lent { grant, chat, hash: hashed(&token), token: token.clone(), hard_only });
+    Ok(token)
+}
+pub fn unlend(token: &str) {
+    let said = hashed(token);
+    lent_now().retain(|one| !same(&said, &one.hash));
+}
+fn hard_only(mut grant: Grant) -> Grant {
+    for category in ENGINE_LEAVES {
+        grant.asks.insert(category, false);
+    }
+    grant
 }
 pub fn lent(app: &AppHandle, token: &str) -> Option<Grant> {
     let said = hashed(token);
-    let (grant, chat) = {
+    let (grant, chat, only_hard) = {
         let all = lent_now();
         let mut found = None;
         for one in all.iter() {
             if same(&said, &one.hash) && found.is_none() {
-                found = Some((one.grant.clone(), one.chat.clone()));
+                found = Some((one.grant.clone(), one.chat.clone(), one.hard_only));
             }
         }
         found?
     };
-    state(app).grants.by_id(app, &grant).map(|grant| supervised(grant, &chat))
+    let grant = state(app).grants.by_id(app, &grant).map(|grant| supervised(grant, &chat))?;
+    Some(if only_hard { hard_only(grant) } else { grant })
 }
 pub fn in_mode(mode: Mode, name: &str, reads_only: bool) -> bool {
     match mode {
@@ -578,6 +612,38 @@ mod tests {
         assert_eq!(approve.mode, GrantMode::Confirm);
         for category in ASKED {
             assert!(approve.asks(category), "{category:?}");
+        }
+    }
+    #[test]
+    fn an_engine_token_is_fresh_each_time_keeps_helpers_out_and_under_approve_asks_only_the_hard_things(
+    ) {
+        let first = lend_engine("built-in:engine-test".into(), Mode::Approve).expect("token");
+        let second = lend_engine("built-in:engine-test".into(), Mode::Approve).expect("token");
+        assert_ne!(first, second);
+        let found = |token: &str| {
+            let said = hashed(token);
+            lent_now()
+                .iter()
+                .find(|one| same(&said, &one.hash))
+                .map(|one| (one.chat.clone(), one.hard_only))
+        };
+        let (chat, only_hard) = found(&first).expect("lent");
+        assert!(only_hard);
+        assert_eq!(chat.mode, Mode::Auto);
+        assert_eq!(chat.without, ENGINE_KEPT_OUT.map(str::to_owned).to_vec());
+        let full = lend_engine("built-in:engine-test".into(), Mode::Full).expect("token");
+        assert_eq!(found(&full).map(|(chat, hard)| (chat.mode, hard)), Some((Mode::Full, false)));
+        for token in [&first, &second, &full] {
+            unlend(token);
+            assert!(found(token).is_none());
+        }
+        let laid = hard_only(supervised(grant(), &Chat::of(Mode::Auto)));
+        for category in ASKED {
+            let hard = matches!(
+                category,
+                Category::Paying | Category::SigningIn | Category::Takeover | Category::Publishing
+            );
+            assert_eq!(laid.asks(category), hard, "{category:?}");
         }
     }
     #[test]

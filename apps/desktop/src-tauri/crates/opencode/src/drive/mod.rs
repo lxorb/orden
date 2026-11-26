@@ -11,8 +11,9 @@ use std::time::{Duration, Instant, SystemTime};
 
 use serde_json::{json, Value};
 
-use crate::env::{Dirs, Launch};
+use crate::env::{env_of, Dirs, Launch};
 use crate::host::Running;
+use crate::preset::{self, Preset};
 use crate::proxy::{call_on, Answer};
 use crate::{feed, http};
 
@@ -44,27 +45,7 @@ fn snapshot_file(name: &str) -> PathBuf {
 fn writing() -> bool {
     std::env::var(WRITE_VAR).is_ok_and(|one| one == "write")
 }
-fn approve() -> Value {
-    json!({
-        "*": "allow",
-        "edit": "ask",
-        "bash": { "*": "ask", "ls *": "allow", "git status*": "allow", "git diff*": "allow", "git log*": "allow" },
-        "webfetch": "ask",
-        "external_directory": "ask",
-        "orden_*": "ask",
-    })
-}
-fn auto() -> Value {
-    json!({
-        "*": "allow",
-        "bash": { "*": "allow", "rm *": "ask", "sudo *": "ask", "git push*": "ask", "git reset --hard*": "ask", "curl *| *sh*": "ask" },
-        "external_directory": "ask",
-    })
-}
-fn full() -> Value {
-    json!("allow")
-}
-fn config(model: u16, mcp: u16, permission: Value) -> Value {
+fn config(model: u16, mcp: u16, preset: Preset) -> Value {
     json!({
         "enabled_providers": ["mock"],
         "provider": { "mock": {
@@ -75,8 +56,8 @@ fn config(model: u16, mcp: u16, permission: Value) -> Value {
         } },
         "model": "mock/m",
         "small_model": "mock/m",
-        "permission": permission,
-        "agent": { "plan": { "permission": { "edit": { "*": "deny", ".opencode/plans/*.md": "allow" } } } },
+        "permission": preset::permission(preset),
+        "agent": { "plan": { "permission": preset::plan() } },
         "mcp": { "orden": {
             "type": "remote",
             "url": format!("http://127.0.0.1:{mcp}/mcp"),
@@ -98,7 +79,7 @@ struct Drive {
     model: mock::Model,
 }
 impl Drive {
-    fn start(permission: Value) -> Option<Drive> {
+    fn start(preset: Preset) -> Option<Drive> {
         let binary = binary()?;
         let (model, mcp) = (mock::model(), mock::mcp());
         let dir = tempfile::tempdir().expect("a folder");
@@ -106,8 +87,9 @@ impl Drive {
         let launch = Launch {
             binary,
             dirs: Dirs { root: root.clone() },
-            config: config(model.port, mcp.port, permission),
+            config: config(model.port, mcp.port, preset),
             auth: None,
+            orden: None,
         };
         let running = Running::start(launch).expect("ready");
         let stop = Arc::new(AtomicBool::new(false));
@@ -187,7 +169,57 @@ impl Drive {
             one["type"] == "session.idle" && one["properties"]["sessionID"] == session
         });
     }
+    fn calls(&self) -> usize {
+        self.mcp.heard.lock().expect("heard").len()
+    }
+    fn called(&self, tool: &str, since: usize) -> bool {
+        let call = format!("tools/call:{tool}");
+        self.mcp.heard.lock().expect("heard")[since..].iter().any(|(_, method)| *method == call)
+    }
+    fn asked_none(&self, from: usize, session: &str) -> bool {
+        !self.heard[from..].iter().any(|one| {
+            one["type"] == "permission.asked" && one["properties"]["sessionID"] == session
+        })
+    }
+    fn runs_unasked(&mut self, tool: &str) {
+        let session = self.session();
+        let since = self.calls();
+        let from = self.mark();
+        self.prompt(&session, None, &format!("tool: orden_{tool}"));
+        self.idle(from, &session);
+        assert!(self.asked_none(from, &session), "orden_{tool} asked");
+        assert!(self.called(tool, since), "orden_{tool} did not reach Orden");
+        let answered = self.heard[from..].iter().any(|one| {
+            let part = &one["properties"]["part"];
+            part["tool"] == format!("orden_{tool}")
+                && part["state"]["status"] == "completed"
+                && part["state"]["output"].as_str().is_some_and(|out| out.contains("Added Milk"))
+        });
+        assert!(answered, "orden_{tool}'s answer did not come back");
+    }
+    fn asks_first(&mut self, tool: &str) {
+        let session = self.session();
+        let since = self.calls();
+        let from = self.mark();
+        self.prompt(&session, None, &format!("tool: orden_{tool}"));
+        let asked = self.asked(from, &session);
+        assert_eq!(asked["properties"]["permission"], format!("orden_{tool}"));
+        let from = self.mark();
+        self.reply(&asked, "reject", None);
+        self.idle(from, &session);
+        assert!(!self.called(tool, since), "a refused orden_{tool} reached Orden");
+    }
+    fn never_reaches(&mut self, tool: &str, agent: Option<&str>) {
+        let session = self.session();
+        let since = self.calls();
+        let from = self.mark();
+        self.prompt(&session, agent, &format!("tool: orden_{tool}"));
+        self.idle(from, &session);
+        assert!(self.asked_none(from, &session), "orden_{tool} asked instead of being refused");
+        assert!(!self.called(tool, since), "orden_{tool} reached Orden");
+    }
     fn plan_stays_read_only(&mut self) {
+        self.never_reaches("add_task", Some("plan"));
         let session = self.session();
         let target = self.root.join("planned.txt");
         let from = self.mark();
@@ -364,6 +396,7 @@ fn the_engine_s_schema_still_covers_every_route_orden_uses() {
         dirs: dirs.clone(),
         config: json!({ "enabled_providers": [] }),
         auth: None,
+        orden: None,
     };
     let running = Running::start(launch).expect("ready");
     let doc = http::request(
@@ -384,14 +417,17 @@ fn the_engine_s_schema_still_covers_every_route_orden_uses() {
 #[test]
 fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
     let before = users_opencode();
-    let Some(mut drive) = Drive::start(approve()) else {
+    let Some(mut drive) = Drive::start(Preset::Approve) else {
         return;
     };
     let config = drive.call("GET", "/config", None).body;
     assert_eq!(config["model"], "mock/m");
     assert_eq!(config["share"], "disabled");
     assert_eq!(config["autoupdate"], false);
-    assert_eq!(config["permission"]["orden_*"], "ask");
+    assert_eq!(config["permission"]["orden_add_task"], "ask");
+    assert_eq!(config["permission"]["orden_read_note"], "allow");
+    assert_eq!(config["permission"]["orden_run_agent"], "deny");
+    assert_eq!(config["agent"]["plan"]["permission"]["orden_add_task"], "deny");
     assert_eq!(config["permission"]["bash"]["*"], "ask");
     assert_eq!(config["agent"]["plan"]["permission"]["edit"]["*"], "deny");
     assert_eq!(config["mcp"]["orden"]["type"], "remote");
@@ -432,16 +468,19 @@ fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
     });
     assert!(refused, "the refusal did not reach the tool with its message");
     let from = drive.mark();
-    drive.prompt(&session, None, &format!("tool: orden_{}", mock::TOOL));
+    let since = drive.calls();
+    drive.prompt(&session, None, "tool: orden_add_task");
     let asked = drive.asked(from, &session);
-    assert_eq!(asked["properties"]["permission"], format!("orden_{}", mock::TOOL));
+    assert_eq!(asked["properties"]["permission"], "orden_add_task");
     let from = drive.mark();
     drive.reply(&asked, "once", None);
     drive.idle(from, &session);
+    assert!(drive.called("add_task", since), "a tool allowed once did not reach Orden");
+    drive.runs_unasked("read_note");
+    drive.never_reaches("run_agent", None);
     {
         let heard = drive.mcp.heard.lock().expect("heard");
         assert!(heard.iter().any(|(_, method)| method == "tools/list"), "{heard:?}");
-        assert!(heard.iter().any(|(_, method)| method == "tools/call"), "{heard:?}");
         let bearer = format!("Bearer {}", mock::TOKEN);
         assert!(
             heard.iter().all(|(said, _)| said.as_deref() == Some(bearer.as_str())),
@@ -456,24 +495,25 @@ fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
     assert_eq!(users_opencode(), before, "the engine wrote into the reader's own OpenCode folders");
 }
 #[test]
-fn the_plan_agent_stays_read_only_under_auto_and_full_permissions() {
-    for preset in [auto(), full()] {
+fn auto_asks_only_the_risky_tools_full_none_and_plan_stays_read_only_under_both() {
+    for preset in [Preset::Auto, Preset::Full] {
         let Some(mut drive) = Drive::start(preset) else {
             return;
         };
         drive.plan_stays_read_only();
+        drive.runs_unasked("add_task");
+        drive.never_reaches("run_agent", None);
+        if preset == Preset::Auto {
+            drive.asks_first("files");
+        } else {
+            drive.runs_unasked("files");
+        }
     }
 }
 #[test]
-fn the_engine_is_ready_within_a_few_times_its_own_bare_start() {
+fn the_engine_is_ready_within_a_few_times_what_reading_its_config_takes() {
     let Some(binary) = binary() else {
         return;
-    };
-    let bare = || {
-        let started = Instant::now();
-        let done = std::process::Command::new(&binary).arg("--version").output().expect("ran");
-        assert!(done.status.success());
-        started.elapsed()
     };
     let dir = tempfile::tempdir().expect("a folder");
     let dirs = Dirs { root: dir.path().join("opencode") };
@@ -482,6 +522,7 @@ fn the_engine_is_ready_within_a_few_times_its_own_bare_start() {
         dirs: dirs.clone(),
         config: json!({ "enabled_providers": [] }),
         auth: None,
+        orden: None,
     };
     let ready = || {
         let started = Instant::now();
@@ -491,14 +532,25 @@ fn the_engine_is_ready_within_a_few_times_its_own_bare_start() {
         std::thread::sleep(Duration::from_millis(500));
         spent
     };
-    bare();
+    let read = || {
+        let started = Instant::now();
+        let done = std::process::Command::new(&binary)
+            .args(["debug", "config"])
+            .current_dir(&dirs.root)
+            .envs(env_of(&launch, "unused", |_| None))
+            .output()
+            .expect("ran");
+        assert!(done.status.success(), "{}", String::from_utf8_lossy(&done.stderr));
+        started.elapsed()
+    };
     ready();
+    read();
     let least = |measure: &dyn Fn() -> Duration| (0..3).map(|_| measure()).min().expect("measured");
-    let (bare, ready) = (least(&bare), least(&ready));
+    let (read, ready) = (least(&read), least(&ready));
     let _ = std::fs::remove_dir_all(dirs.own_config());
-    let ratio = ready.as_secs_f64() / bare.as_secs_f64().max(0.05);
+    let ratio = ready.as_secs_f64() / read.as_secs_f64().max(0.05);
     assert!(
         ratio < GROWS_AT_MOST,
-        "ready in {ready:?}, {ratio:.1} times its bare start ({bare:?})"
+        "ready in {ready:?}, {ratio:.1} times reading its config ({read:?})"
     );
 }

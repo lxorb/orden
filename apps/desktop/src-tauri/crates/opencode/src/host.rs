@@ -5,10 +5,11 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use orden_agents::family::{self, Family};
+use orden_ai::ai_agent;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::env::{env_of, Launch};
+use crate::env::{env_of, Launch, MCP_TOKEN_VAR};
 use crate::{http, shell};
 
 const READY_WITHIN: Duration = Duration::from_secs(30);
@@ -24,6 +25,7 @@ pub struct Running {
 pub(crate) struct Line {
     pub(crate) port: u16,
     pub(crate) password: String,
+    pub(crate) token: Option<String>,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -43,6 +45,18 @@ fn free_port() -> Result<u16, String> {
     listener.local_addr().map(|one| one.port()).map_err(|why| why.to_string())
 }
 impl Line {
+    pub(crate) fn hidden(&self, text: &str) -> String {
+        let mut text = text.replace(&self.password, "");
+        if let Some(token) = self.token.as_deref().filter(|one| !one.is_empty()) {
+            text = text.replace(token, "");
+        }
+        text
+    }
+    fn unlent(&self) {
+        if let Some(token) = &self.token {
+            ai_agent::unlend(token);
+        }
+    }
     fn asked(&self, path: &str) -> Option<http::Said> {
         http::get(self.port, path, Some(&self.password)).ok()
     }
@@ -55,7 +69,12 @@ impl Line {
 impl Running {
     pub fn start(launch: Launch) -> Result<Running, String> {
         shell::prepare(&launch.dirs).map_err(|why| format!("OpenCode's folders: {why}"))?;
-        let line = Line { port: free_port()?, password: orden_agents::grants::fresh_token()? };
+        let (port, password) = (free_port()?, orden_agents::grants::fresh_token()?);
+        let token = match &launch.orden {
+            Some(orden) => Some(ai_agent::lend_engine(orden.grant.clone(), orden.preset.mode())?),
+            None => None,
+        };
+        let line = Line { port, password, token };
         let mut command = Command::new(&launch.binary);
         command
             .args(["serve", "--hostname", "127.0.0.1", "--port", &line.port.to_string()])
@@ -64,8 +83,13 @@ impl Running {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
-        let (child, family) = family::spawn(&mut command)
-            .map_err(|why| format!("OpenCode would not start: {why}"))?;
+        if let Some(token) = &line.token {
+            command.env(MCP_TOKEN_VAR, token);
+        }
+        let (child, family) = family::spawn(&mut command).map_err(|why| {
+            line.unlent();
+            format!("OpenCode would not start: {why}")
+        })?;
         let mut running = Running { child, family, line, launch };
         match running.ready() {
             Ok(()) => Ok(running),
@@ -95,6 +119,7 @@ impl Running {
         self.line.busy()
     }
     pub fn stop(self) {
+        self.line.unlent();
         self.family.end();
         let mut child = self.child;
         let _ = child.kill();
@@ -220,6 +245,7 @@ mod tests {
             dirs: Dirs { root: dir.path().join("opencode") },
             config: json!({}),
             auth: None,
+            orden: None,
         };
         assert!(Running::start(launch).is_err_and(|why| why.contains("would not start")));
     }
@@ -235,6 +261,7 @@ mod tests {
             dirs: dirs.clone(),
             config: json!({ "enabled_providers": [] }),
             auth: None,
+            orden: None,
         };
         let running = Running::start(launch).expect("ready");
         assert_eq!(
