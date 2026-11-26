@@ -14,6 +14,7 @@ export default defineConfig({
     __APP_COMMIT__: JSON.stringify('c0ffee1'),
     __CLAUDE_CODE__: 'true',
     __AI__: 'true',
+    __ORDEN_APP__: JSON.stringify('orden'),
   },
   test: {
     fsModuleCache: true,

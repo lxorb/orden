@@ -20,12 +20,25 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+val ordenApp = (findProperty("ordenApp") as String?) ?: "orden"
+val ordenApps = mapOf(
+    "orden" to Triple("so.orden.Orden", "Orden", "orden"),
+    "notes" to Triple("so.orden.Orden", "Orden Notes", "orden"),
+    "todo" to Triple("so.orden.todo", "Orden Todo", "orden-todo"),
+    "chat" to Triple("so.orden.chat", "Orden Chat", "orden-chat"),
+    "track" to Triple("so.orden.track", "Orden Track", "orden-track"),
+)
+val (ordenId, ordenLabel, ordenScheme) = ordenApps[ordenApp] ?: error("ordenApp=$ordenApp is not an Orden app")
+
 android {
     compileSdk = 36
     namespace = "so.orden.Orden"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "so.orden.Orden"
+        manifestPlaceholders["ordenScheme"] = ordenScheme
+        applicationId = ordenId
+        resValue("string", "app_name", ordenLabel)
+        resValue("string", "main_activity_title", ordenLabel)
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
@@ -61,6 +74,14 @@ android {
                     .plus(getDefaultProguardFile("proguard-android-optimize.txt"))
                     .toList().toTypedArray()
             )
+        }
+    }
+    sourceSets {
+        for (kind in listOf("debug", "release")) {
+            getByName(kind) {
+                manifest.srcFile("src/$ordenApp/AndroidManifest.xml")
+                res.srcDir("src/$ordenApp/res")
+            }
         }
     }
     kotlinOptions {

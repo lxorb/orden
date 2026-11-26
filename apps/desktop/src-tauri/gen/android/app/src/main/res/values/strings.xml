@@ -1,7 +1,4 @@
 <resources>
-    <string name="app_name">"Orden"</string>
-    <string name="main_activity_title">"Orden"</string>
-
     <string name="tile_new">New note</string>
     <string name="tile_search">Search</string>
     <string name="tile_record">Record</string>

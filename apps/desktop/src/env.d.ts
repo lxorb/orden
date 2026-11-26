@@ -6,6 +6,7 @@ declare const __ORDEN_RELEASE__: boolean
 declare const __APP_COMMIT__: string
 declare const __CLAUDE_CODE__: boolean
 declare const __AI__: boolean
+declare const __ORDEN_APP__: 'orden' | 'notes' | 'todo' | 'chat' | 'track'
 interface ImportMetaEnv {
   readonly VITE_ORDEN_API?: string
   readonly VITE_ORDEN_THEMES?: string

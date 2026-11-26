@@ -18,7 +18,7 @@ import {
 } from '../../workspace/src/api'
 import { modes } from '../../modes/src/api'
 import { commandRows, commandRowsLoaded, searching, runCommand, settingsWindow, showQuickAdd } from '@orden/contracts'
-import { chatsOn, explorerOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
+import { chatsOn, explorerOn, hiddenKinds, passOn, timeOn, todosOn } from '../../gates/src/api'
 import { stepSpace, toggleSpacePicker } from '../../spaces/src/api'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
 import type { Platform } from '../../ui-kit/src/api'
@@ -379,6 +379,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-y',
     run: () => void runCommand('views.todos'),
+    shown: () => todosOn(),
   } satisfies Shortcut,
   app('view', 'app.chats', 'Chats', 'Mod-Shift-u', () => revealPanel('chats'), {
     shown: () => chatsOn(),

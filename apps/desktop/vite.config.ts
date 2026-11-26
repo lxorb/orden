@@ -8,6 +8,7 @@ import { dirOnWords } from './svelte-dir'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 import { carriesAi } from './ai-build'
+import { distOf, ordenApp } from './app-build'
 
 const host = process.env.TAURI_DEV_HOST
 const AI_MODULES =
@@ -63,6 +64,7 @@ const everyPage = {
 }
 export default defineConfig(({ command, mode }) => {
   const ai = carriesAi(mode)
+  const app = ordenApp()
   return {
     plugins: [svelte(), dirOnWords(), emojiOutlines(), ...(ai ? [] : [withoutAi()])],
     define: {
@@ -71,6 +73,7 @@ export default defineConfig(({ command, mode }) => {
       __ORDEN_RELEASE__: JSON.stringify(process.env.ORDEN_RELEASE === 'true'),
       __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
       __AI__: JSON.stringify(ai),
+      __ORDEN_APP__: JSON.stringify(app),
       __CLAUDE_CODE__: JSON.stringify(!['off', '0', 'false'].includes(process.env.ORDEN_CLAUDE_CODE ?? '')),
       __DRIVEABLE__: JSON.stringify(command === 'serve' || mode === 'drive' || mode === 'development'),
     },
@@ -90,16 +93,20 @@ export default defineConfig(({ command, mode }) => {
     envPrefix: ['VITE_', 'TAURI_ENV_*'],
     build: {
       target: 'esnext',
+      outDir: distOf(app),
       sourcemap: !!process.env.TAURI_ENV_DEBUG,
       rollupOptions: {
         shimMissingExports: !ai,
-        input: {
-          main: resolve(import.meta.dirname, 'index.html'),
-          quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
-          handoff: resolve(import.meta.dirname, 'handoff.html'),
-          passLink: resolve(import.meta.dirname, 'pass-link.html'),
-          pass: resolve(import.meta.dirname, 'pass.html'),
-        },
+        input:
+          app === 'orden'
+            ? {
+                main: resolve(import.meta.dirname, 'index.html'),
+                quickAdd: resolve(import.meta.dirname, 'quick-add.html'),
+                handoff: resolve(import.meta.dirname, 'handoff.html'),
+                passLink: resolve(import.meta.dirname, 'pass-link.html'),
+                pass: resolve(import.meta.dirname, 'pass.html'),
+              }
+            : { main: resolve(import.meta.dirname, 'index.html') },
       },
     },
   }

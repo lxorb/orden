@@ -1,0 +1,7 @@
+{
+  "productName": "Orden Notes",
+  "build": {
+    "beforeBuildCommand": "pnpm build:notes",
+    "frontendDist": "../dist-notes"
+  }
+}

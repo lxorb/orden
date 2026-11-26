@@ -14,7 +14,8 @@ vi.mock('../../accounts/src/client', async (actual) => ({
     },
   },
 }))
-const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./gates.svelte')
+const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, panelHere, PASS_WORD, shownOf } =
+  await import('./gates.svelte')
 const { forgetDeveloper, hiddenOf, locked, mayHide, receive, setCoding, setKind, setWord } =
   await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('../../new-here/src/api')
@@ -219,5 +220,24 @@ describe('somebody who once said they write no code', () => {
         developer: true,
       }),
     )
+  })
+})
+describe('an app that holds one part of Orden (#2286)', () => {
+  test('Orden Notes offers notes, canvases and Pages, whatever else is switched on', () => {
+    token = 'a'
+    hiddenKinds.hidden = [EXPERIMENTAL_WORD, CHATS_WORD, PASS_WORD]
+    expect(kindsHere('orden')).toContain('chat')
+    for (const app of ['notes', 'todo', 'chat', 'track'] as const) {
+      expect(kindsHere(app), app).toEqual(['note', 'canvas', 'pages'])
+    }
+  })
+  test('only the whole Orden has the todos, chats and time panels', () => {
+    for (const panel of ['tasks', 'chats', 'time']) {
+      expect(panelHere(panel, 'orden'), panel).toBe(true)
+      expect(panelHere(panel, 'notes'), panel).toBe(false)
+    }
+    for (const panel of ['tree', 'search', 'outline', 'links']) {
+      expect(panelHere(panel, 'notes'), panel).toBe(true)
+    }
   })
 })
