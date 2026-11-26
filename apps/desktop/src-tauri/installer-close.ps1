@@ -5,7 +5,7 @@ param(
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
-$programs = @('orden.exe', 'nib.exe')
+$programs = @('orden.exe')
 $roots = @($Dirs -split '\|' | Where-Object { $_ } | ForEach-Object { $_.TrimEnd('\') + '\' })
 
 function Running {

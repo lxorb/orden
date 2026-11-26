@@ -36,9 +36,7 @@ echo "running $app"
 running() { pgrep -f "$1/Contents/MacOS/" >/dev/null; }
 
 carried() {
-  for name in Orden.app nibeditor.app; do
-    [ ! -d "$app" ] && [ -d "$folder/$name" ] && app="$folder/$name"
-  done
+  [ ! -d "$app" ] && [ -d "$folder/Orden.app" ] && app="$folder/Orden.app"
   if [ -z "${DRIVEN_ID:-}" ]; then
     now="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist" 2>/dev/null)"
     [ -n "$now" ] && [ "$now" != "$id" ] && { echo "the bundle is now $now, not $id"; id="$now"; known; }

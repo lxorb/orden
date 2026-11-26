@@ -87,7 +87,7 @@ jobs:
 
       - name: The .desktop entries the packaging ships instead
         run: |
-          desktop-file-validate packaging/aur/orden-bin/nib.desktop
+          desktop-file-validate packaging/aur/orden-bin/orden.desktop
           desktop-file-validate packaging/nix/orden.desktop
           desktop-file-validate packaging/flathub/so.orden.Orden.desktop
 
@@ -133,12 +133,12 @@ jobs:
 
           install -d /check
           bsdtar -xf ./*.pkg.tar.zst -C /check
-          test -f /check/usr/share/applications/nib.desktop
+          test -f /check/usr/share/applications/orden.desktop
           test ! -e /check/usr/share/applications/Orden.desktop
           test -f /check/usr/share/icons/hicolor/256x256/apps/orden.png
           test ! -e /check/usr/share/icons/hicolor/256x256@2
           test -x /check/usr/bin/orden
-          desktop-file-validate /check/usr/share/applications/nib.desktop
+          desktop-file-validate /check/usr/share/applications/orden.desktop
           echo 'installed layout ok'
 
           diff -u /repo/packaging/aur/orden-bin/.SRCINFO /repo/out/SRCINFO

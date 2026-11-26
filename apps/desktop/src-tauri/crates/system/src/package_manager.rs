@@ -148,7 +148,7 @@ mod tests {
     #[test]
     fn a_flatpak_is_known_by_its_sandbox_whatever_the_bundle() {
         assert_eq!(
-            on("linux", "/app/bin/nib", None, &[], &["/.flatpak-info"]),
+            on("linux", "/app/bin/orden", None, &[], &["/.flatpak-info"]),
             Some(Manager::Flatpak)
         );
     }
@@ -170,7 +170,7 @@ mod tests {
         let exe = "/nix/store/abc-orden-0.15.0-extracted/usr/bin/orden";
         let vars = [("APPIMAGE", "/nix/store/abc-orden.AppImage")];
         assert_eq!(on("linux", exe, Some(BundleType::AppImage), &vars, &[]), Some(Manager::Nix));
-        assert_eq!(on("linux", "/nix/storefront/nib", None, &[], &[]), None);
+        assert_eq!(on("linux", "/nix/storefront/orden", None, &[], &[]), None);
     }
     #[test]
     fn a_build_of_nobodys_updates_itself() {
@@ -178,9 +178,9 @@ mod tests {
     }
     #[test]
     fn scoop_is_known_by_where_it_unpacks() {
-        let exe = r"C:\Users\A\scoop\apps\nib\current\nib.exe";
+        let exe = r"C:\Users\A\scoop\apps\orden\current\orden.exe";
         assert_eq!(on("windows", exe, Some(BundleType::Nsis), &[], &[]), Some(Manager::Scoop));
-        let exe = r"\\?\D:\Tools\Apps\nib\0.15.0\nib.exe";
+        let exe = r"\\?\D:\Tools\Apps\orden\0.15.0\orden.exe";
         let vars = [("SCOOP", r"D:\Tools\")];
         assert_eq!(on("windows", exe, Some(BundleType::Nsis), &vars, &[]), Some(Manager::Scoop));
     }

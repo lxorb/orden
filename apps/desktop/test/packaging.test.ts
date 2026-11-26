@@ -592,17 +592,16 @@ describe('what Orden claims to open', () => {
     const writes = script.split('\n').filter((line) => line.trim().startsWith('WriteRegStr'))
     expect(writes.length).toBeGreaterThan(0)
     for (const line of writes) {
-      expect(line).not.toMatch(/Nib\.markdown|FileAssociations|Classes\\\.m/)
+      expect(line).not.toMatch(/FileAssociations|Classes\\\.m/)
     }
     expect(install).toContain('!insertmacro ORDEN_FORGET_FILES')
     expect(uninstall).toContain('!insertmacro ORDEN_FORGET_FILES')
     for (const ext of ['md', 'markdown', 'mdown', 'mkd']) {
       expect(script).toContain(`!insertmacro ORDEN_FORGET_EXTENSION "${ext}"`)
     }
-    expect(script).toContain(String.raw`DeleteRegKey SHCTX "Software\Classes\Nib.markdown"`)
   })
   const desktops = {
-    'aur/orden-bin/nib.desktop': read('aur', 'orden-bin', 'nib.desktop'),
+    'aur/orden-bin/orden.desktop': read('aur', 'orden-bin', 'orden.desktop'),
     'flathub/so.orden.Orden.desktop': read('flathub', 'so.orden.Orden.desktop'),
     'nix/orden.desktop': read('nix', 'orden.desktop'),
     'snap/snapcraft.yaml': read('snap', 'snapcraft.yaml'),
@@ -616,7 +615,7 @@ describe('what Orden claims to open', () => {
     }
   })
   test('and the AUR holds the digest of the entry it ships', () => {
-    const digest = createHash('sha256').update(desktops['aur/orden-bin/nib.desktop']).digest('hex')
+    const digest = createHash('sha256').update(desktops['aur/orden-bin/orden.desktop']).digest('hex')
     expect(read('aur', 'orden-bin', 'PKGBUILD')).toContain(`sha256sums=('${digest}')`)
     expect(read('aur', 'orden-bin', '.SRCINFO')).toContain(`sha256sums = ${digest}`)
   })

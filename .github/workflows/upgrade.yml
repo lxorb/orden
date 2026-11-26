@@ -148,17 +148,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - old: Nib
-            version: '0.11.0'
-            cask: nib
-          - old: nibeditor
-            version: '0.13.0'
-            cask: orden
+        from: [FIRST, ORDEN]
     runs-on: macos-latest
-    env:
-      OLD_APP: ${{ matrix.old }}.app
-      CASK: ${{ matrix.cask }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -174,10 +165,10 @@ jobs:
       - name: The old release
         env:
           GH_TOKEN: ${{ github.token }}
-          OLD_VERSION: ${{ matrix.version }}
+          OLD_VERSION: ${{ env[matrix.from] }}
         run: |
           gh release download "v$OLD_VERSION" --repo "$GITHUB_REPOSITORY" --dir old \
-            --pattern "*-$OLD_VERSION-macos-universal.dmg"
+            --pattern "*-$OLD_VERSION-macos-universal.dmg" --pattern "*-$OLD_VERSION-macos-arm64.dmg"
           hdiutil attach -nobrowse -mountpoint /tmp/old old/*.dmg
           find new -type f
           tar -x -z -f "$(find new -name app.tgz | head -1)" -C new
@@ -196,53 +187,30 @@ jobs:
           set -u
           apps="$HOME/Applications"
           mkdir -p "$apps"
-          ditto "/tmp/old/$OLD_APP" "$apps/$OLD_APP"
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$apps/$OLD_APP/Contents/Info.plist"
+          ditto /tmp/old/Orden.app "$apps/Orden.app"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$apps/Orden.app/Contents/Info.plist"
 
-          rm -rf "$apps/$OLD_APP"
-          ditto new/Orden.app "$apps/$OLD_APP"
-          open "$apps/$OLD_APP"
+          rm -rf "$apps/Orden.app"
+          ditto new/Orden.app "$apps/Orden.app"
+          open "$apps/Orden.app"
 
           for _ in $(seq 60); do
             pgrep -fl "$apps/Orden.app/Contents/MacOS/" && break
             sleep 1
           done
           ls "$apps"
-          test -d "$apps/Orden.app" || { echo 'Orden.app is not there'; exit 1; }
-          test ! -e "$apps/$OLD_APP" || { echo "$OLD_APP is still there"; exit 1; }
-          pgrep -fl "$apps/Orden.app/Contents/MacOS/" || { echo 'it did not start again from Orden.app'; exit 1; }
+          pgrep -fl "$apps/Orden.app/Contents/MacOS/" || { echo 'it did not start from Orden.app'; exit 1; }
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$apps/Orden.app/Contents/Info.plist")" = Orden
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$apps/Orden.app/Contents/Info.plist")" = "$NEW"
           osascript -e 'quit app id "so.orden.Orden"' || true
           sleep 3
           . scripts/stop-app.sh && stop_app "$apps/Orden.app/Contents/MacOS/"
 
-      - name: A copy Homebrew put there keeps its name
-        run: |
-          set -u
-          apps="$HOME/Applications"
-          rm -rf "$apps/Orden.app"
-          ditto new/Orden.app "$apps/$OLD_APP"
-          room="$(brew --prefix)/Caskroom/$CASK"
-          mkdir -p "$room"
-          open "$apps/$OLD_APP"
-
-          for _ in $(seq 30); do
-            pgrep -fl "$apps/$OLD_APP/Contents/MacOS/" && break
-            sleep 1
-          done
-          sleep 5
-          ls "$apps"
-          test -d "$apps/$OLD_APP" || { echo "$OLD_APP was renamed under Homebrew"; exit 1; }
-          test ! -e "$apps/Orden.app" || { echo 'Orden.app appeared under Homebrew'; exit 1; }
-          pgrep -fl "$apps/$OLD_APP/Contents/MacOS/" || { echo "it is not running from $OLD_APP"; exit 1; }
-          osascript -e 'quit app id "so.orden.Orden"' || true
-          rmdir "$room"
-
       - name: What happened
         if: failure()
         run: |
-          ps axww | grep -i '[n]ib\|[o]rden' || true
+          ps axww | grep -i '[o]rden' || true
           ls -la "$HOME/Applications" || true
           find "$HOME/Library/Logs" -path '*so.orden.Orden*' -type f -exec sh -c 'echo "== $1"; tail -80 "$1"' sh {} \; || true
           find "$HOME/Library/Logs/DiagnosticReports" -newer /tmp/old -type f -exec sh -c 'echo "== $1"; head -80 "$1"' sh {} \; || true
-          log show --last 5m --predicate 'process == "orden" OR process == "nib" OR eventMessage CONTAINS "Orden.app"' --style compact 2>/dev/null | tail -80 || true
+          log show --last 5m --predicate 'process == "orden" OR eventMessage CONTAINS "Orden.app"' --style compact 2>/dev/null | tail -80 || true

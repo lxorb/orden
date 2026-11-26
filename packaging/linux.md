@@ -35,14 +35,14 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 ## What Tauri's .deb gives us, and what it gets wrong
 
 ```
-Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
+Package: orden
 Depends: libgtk-4-1 (>= 4.14), libnss3, libnspr4, ... (`bundle.linux.deb.depends`)
 usr/bin/orden -> ../share/Orden/orden
 usr/share/Orden/orden, libcef.so, icudtl.dat, v8_context_snapshot.bin, *.pak, locales/en-US*.pak
 usr/share/Orden/libvk_swiftshader.so, vk_swiftshader_icd.json, libvulkan.so.1
 usr/share/Orden/chrome-sandbox (setuid root)
-usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop up to 0.13)
-usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/orden.png (nib.png up to 0.20)
+usr/share/applications/Orden.desktop
+usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/orden.png
 ```
 
 The program is beside the engine it runs on, CEF, in `/usr/share/Orden`, where it finds
@@ -301,7 +301,7 @@ the password once through polkit, and then Orden restarts:
 ## AUR - `orden-bin`
 
 `aur/orden-bin/` is the package base as the AUR wants it: `PKGBUILD`, the
-generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
+generated `.SRCINFO`, and the `orden.desktop` that replaces Tauri's. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
 Rust or Node toolchain.
 
 Neither `orden-bin` nor `orden` is in the AUR (checked 2026-11-26), so
@@ -346,7 +346,7 @@ If you would rather do the first push yourself:
 
 ```
 git clone ssh://aur@aur.archlinux.org/orden-bin.git
-cp packaging/aur/orden-bin/{PKGBUILD,.SRCINFO,nib.desktop} orden-bin/
+cp packaging/aur/orden-bin/{PKGBUILD,.SRCINFO,orden.desktop} orden-bin/
 cd orden-bin && git add -A && git commit -m "orden 0.13.1" && git push
 ```
 
