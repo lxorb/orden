@@ -7,6 +7,7 @@ mod http;
 pub mod hub;
 pub mod import;
 pub mod kept;
+pub mod oauth;
 mod rpc;
 mod stdio;
 mod types;
@@ -14,8 +15,8 @@ mod types;
 pub use client::{Client, Heard, PROTOCOL};
 pub use hub::{Host, Hub};
 pub use types::{
-    Found, FoundServer, Offered, Permission, Pick, Secrets, Server, ServerView, State, ToolInfo,
-    Transport,
+    Found, FoundServer, Offered, Permission, Pick, Secrets, Server, ServerView, SignIn, State,
+    ToolInfo, Transport,
 };
 
 use tauri::AppHandle;

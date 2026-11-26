@@ -165,6 +165,14 @@ pub struct ServerView {
     pub error: Option<String>,
     pub listed: Vec<ToolInfo>,
     pub secrets_set: Vec<String>,
+    pub sign_in: SignIn,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SignIn {
+    None,
+    Needed,
+    SignedIn,
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct Offered {

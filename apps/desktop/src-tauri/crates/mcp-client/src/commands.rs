@@ -32,6 +32,9 @@ impl Host for Kept {
     fn said(&self, id: &str, state: State) {
         let _ = self.0.emit(EVENT, serde_json::json!({ "id": id, "state": state }));
     }
+    fn open(&self, url: &str) -> Result<(), String> {
+        tauri_plugin_opener::open_url(url, None::<&str>).map_err(|error| error.to_string())
+    }
 }
 pub fn hub(app: &AppHandle) -> Arc<Hub> {
     Arc::clone(HUB.get_or_init(|| {
@@ -86,4 +89,12 @@ pub async fn mcp_import_scan(app: AppHandle) -> Result<Vec<Found>, String> {
 #[tauri::command]
 pub async fn mcp_import(app: AppHandle, picks: Vec<Pick>) -> Result<Vec<ServerView>, String> {
     off_the_runtime(move || hub(&app).import(&import::here(), &env_var, &picks)).await
+}
+#[tauri::command]
+pub async fn mcp_server_sign_in(app: AppHandle, id: String) -> Result<ServerView, String> {
+    off_the_runtime(move || hub(&app).sign_in(&id)).await
+}
+#[tauri::command]
+pub async fn mcp_server_sign_out(app: AppHandle, id: String) -> Result<ServerView, String> {
+    off_the_runtime(move || hub(&app).sign_out(&id)).await
 }

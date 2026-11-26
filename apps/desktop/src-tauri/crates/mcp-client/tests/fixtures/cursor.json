@@ -5,6 +5,10 @@
       "args": ["-y", "mcp-remote", "https://mcp.linear.app/sse"],
       "env": { "TOKEN": "${env:LINEAR_TOKEN}", "PLAIN": "yes" }
     },
-    "remote": { "url": "https://example.com/mcp", "headers": { "X-Key": "abc" } }
+    "remote": {
+      "url": "https://example.com/mcp",
+      "headers": { "X-Key": "abc" },
+      "auth": { "CLIENT_ID": "cur-1", "CLIENT_SECRET": "cur-secret", "scopes": ["read"] }
+    }
   }
 }

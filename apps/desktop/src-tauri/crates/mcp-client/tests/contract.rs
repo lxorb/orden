@@ -1,6 +1,6 @@
 #![cfg(not(any(target_os = "android", target_os = "ios")))]
 use std::collections::BTreeMap;
-use std::io::{BufRead as _, BufReader};
+use std::io::{BufRead as _, BufReader, Read as _, Write as _};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::{mpsc, Arc, Mutex};
@@ -10,8 +10,8 @@ use orden_mcp_client::exposed::exposed;
 use orden_mcp_client::import::{self, Shape};
 use orden_mcp_client::kept;
 use orden_mcp_client::{
-    Client, Heard, Host, Hub, Permission, Pick, Secrets, Server, ServerView, State, Transport,
-    PROTOCOL,
+    Client, Heard, Host, Hub, Permission, Pick, Secrets, Server, ServerView, SignIn, State,
+    Transport, PROTOCOL,
 };
 use serde_json::{json, Value};
 
@@ -143,9 +143,13 @@ impl Drop for Served {
     }
 }
 fn served(how: &str) -> Served {
+    served_with(how, &[])
+}
+fn served_with(how: &str, env: &[(&str, &str)]) -> Served {
     let node = orden_base::program::which("node").expect("node");
     let mut child = Command::new(node)
         .args([fake(), how.to_owned(), "0".to_owned()])
+        .envs(env.iter().copied())
         .stdout(Stdio::piped())
         .stdin(Stdio::null())
         .spawn()
@@ -194,6 +198,7 @@ fn a_web_server_that_is_not_there_says_so() {
 struct Shared {
     secrets: Mutex<BTreeMap<String, String>>,
     said: Mutex<Vec<(String, State)>>,
+    opened: Mutex<Vec<String>>,
 }
 struct Fake(PathBuf, Arc<Shared>);
 impl Host for Fake {
@@ -214,6 +219,32 @@ impl Host for Fake {
     fn said(&self, id: &str, state: State) {
         self.1.said.lock().expect("said").push((id.to_owned(), state));
     }
+    fn open(&self, url: &str) -> Result<(), String> {
+        self.1.opened.lock().expect("opened").push(url.to_owned());
+        let url = url.to_owned();
+        std::thread::spawn(move || {
+            let (status, back) = fetched("GET", &url);
+            assert_eq!(status, 302, "the sign-in page refused {url}");
+            fetched("GET", &back.expect("a way back"));
+        });
+        Ok(())
+    }
+}
+fn fetched(method: &str, url: &str) -> (u16, Option<String>) {
+    let rest = url.strip_prefix("http://").expect("a plain web address");
+    let (host, path) = rest
+        .split_once('/')
+        .map_or((rest, "/".to_owned()), |(host, path)| (host, format!("/{path}")));
+    let mut stream = std::net::TcpStream::connect(host).expect("reached");
+    write!(stream, "{method} {path} HTTP/1.1\r\nHost: {host}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").expect("asked");
+    let mut said = String::new();
+    let _ = stream.read_to_string(&mut said);
+    let status = said.split_whitespace().nth(1).and_then(|code| code.parse().ok()).unwrap_or(0);
+    let back = said.lines().find_map(|line| {
+        let (name, value) = line.split_once(':')?;
+        name.eq_ignore_ascii_case("location").then(|| value.trim().to_owned())
+    });
+    (status, back)
 }
 fn hub() -> (Arc<Hub>, Arc<Shared>, PathBuf, tempfile::TempDir) {
     let dir = tempfile::tempdir().expect("a folder");
@@ -295,6 +326,7 @@ fn a_view_has_each_key_once_and_its_permissions_come_back_whole() {
         "error",
         "listed",
         "secretsSet",
+        "signIn",
     ]
     .map(str::to_owned);
     expected.sort();
@@ -578,4 +610,134 @@ fn every_source_is_found_where_it_keeps_its_servers_and_imports_once() {
     assert!(events.already);
     assert!(hub.import(&places, &no_env, &picks).expect("imported").is_empty());
     hub.stop_all();
+}
+fn stats(port: u16) -> Value {
+    let rest = format!("127.0.0.1:{port}");
+    let mut stream = std::net::TcpStream::connect(&rest).expect("reached");
+    write!(stream, "GET /stats HTTP/1.1\r\nHost: {rest}\r\nConnection: close\r\n\r\n")
+        .expect("asked");
+    let mut said = String::new();
+    let _ = stream.read_to_string(&mut said);
+    serde_json::from_str(said.split("\r\n\r\n").nth(1).unwrap_or_default()).expect("counts")
+}
+fn signed_server(port: u16) -> Server {
+    new_server(
+        "Signed",
+        Transport::Http { url: format!("http://127.0.0.1:{port}/mcp"), headers: Vec::new() },
+    )
+}
+fn until(what: impl Fn() -> bool) -> bool {
+    let started = Instant::now();
+    while !what() && started.elapsed() < LONG {
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    what()
+}
+fn view_of(hub: &Hub, id: &str) -> ServerView {
+    hub.views().expect("views").into_iter().find(|one| one.server.id == id).expect(id)
+}
+#[test]
+fn an_oauth_server_asks_for_a_sign_in_and_works_once_signed_in() {
+    let server = served("--oauth");
+    let (hub, shared, file, _dir) = hub();
+    hub.save(signed_server(server.1), None).expect("saved");
+    assert_eq!(hub.wait("signed", LONG), State::Failed);
+    let view = view_of(&hub, "signed");
+    assert_eq!(view.sign_in, SignIn::Needed);
+    assert_eq!(view.error.as_deref(), Some(orden_mcp_client::oauth::SIGN_IN));
+    assert!(hub.offered().is_empty());
+    let view = hub.sign_in("signed").expect("signed in");
+    assert_eq!((view.state, view.sign_in), (State::Ready, SignIn::SignedIn));
+    assert_eq!(shared.opened.lock().expect("opened").len(), 1);
+    assert!(shared.secrets.lock().expect("secrets")["mcp-signed"].contains("access-1"));
+    assert!(!std::fs::read_to_string(&file).expect("the list").contains("access-"));
+    assert!(!serde_json::to_string(&view).expect("json").contains("access-"));
+    let echoed = hub.call("signed", "echo", json!({ "text": "in" })).expect("echoed");
+    assert_eq!(said(&echoed), "in");
+    assert_eq!(hub.restart("signed").expect("restarted").state, State::Ready);
+    assert_eq!(stats(server.1), json!({ "registered": 1, "authorized": 1, "refreshed": 0 }));
+    hub.sign_out("signed").expect("signed out");
+    assert_eq!(hub.wait("signed", LONG), State::Failed);
+    assert_eq!(view_of(&hub, "signed").sign_in, SignIn::Needed);
+    assert!(!shared.secrets.lock().expect("secrets")["mcp-signed"].contains("access-"));
+    hub.stop_all();
+}
+#[test]
+fn a_token_that_runs_out_is_refreshed_before_and_after_the_server_says_so() {
+    let server = served_with("--oauth", &[("FAKE_EXPIRES", "63")]);
+    let (hub, shared, _file, _dir) = hub();
+    hub.save(signed_server(server.1), None).expect("saved");
+    assert_eq!(hub.wait("signed", LONG), State::Failed);
+    assert_eq!(hub.sign_in("signed").expect("signed in").state, State::Ready);
+    let refreshed = || stats(server.1)["refreshed"].as_u64().expect("a count");
+    let before = refreshed();
+    std::thread::sleep(Duration::from_secs(4));
+    assert_eq!(said(&hub.call("signed", "echo", json!({ "text": "a" })).expect("a")), "a");
+    assert_eq!(refreshed(), before + 1);
+    fetched("POST", &format!("http://127.0.0.1:{}/expire", server.1));
+    assert_eq!(said(&hub.call("signed", "echo", json!({ "text": "b" })).expect("b")), "b");
+    assert_eq!(refreshed(), before + 2);
+    let latest = format!("access-{}", before + 3);
+    assert!(until(|| shared.secrets.lock().expect("secrets")["mcp-signed"].contains(&latest)));
+    hub.stop_all();
+}
+#[test]
+fn a_revoked_sign_in_asks_again_and_a_restart_signs_in() {
+    let server = served("--oauth");
+    let (hub, shared, _file, _dir) = hub();
+    hub.save(signed_server(server.1), None).expect("saved");
+    assert_eq!(hub.wait("signed", LONG), State::Failed);
+    hub.sign_in("signed").expect("signed in");
+    fetched("POST", &format!("http://127.0.0.1:{}/revoke", server.1));
+    assert!(hub.call("signed", "echo", json!({ "text": "x" })).is_err());
+    assert!(until(|| {
+        let view = view_of(&hub, "signed");
+        view.state == State::Failed && view.sign_in == SignIn::Needed
+    }));
+    let view = hub.restart("signed").expect("restarted");
+    assert_eq!((view.state, view.sign_in), (State::Ready, SignIn::SignedIn));
+    assert_eq!(shared.opened.lock().expect("opened").len(), 2);
+    hub.stop_all();
+}
+#[test]
+fn an_imported_client_signs_in_without_registering_and_keeps_its_secret_apart() {
+    let server = served("--oauth");
+    let dir = tempfile::tempdir().expect("a folder");
+    let (home, config) = (dir.path().join("home"), dir.path().join("config"));
+    std::fs::create_dir_all(&home).expect("a home");
+    let entry = json!({ "mcpServers": { "preset": {
+        "type": "http",
+        "url": format!("http://127.0.0.1:{}/mcp", server.1),
+        "oauth": { "clientId": "orden-preset", "clientSecret": "preset-secret-1" }
+    } } });
+    std::fs::write(home.join(".claude.json"), entry.to_string()).expect("written");
+    let places = import::places(&home, &config, None);
+    let (hub, shared, file, _dir) = hub();
+    let pick = Pick { source: "claude-code".to_owned(), name: "preset".to_owned() };
+    hub.import(&places, &no_env, &[pick]).expect("imported");
+    assert!(!std::fs::read_to_string(&file).expect("the list").contains("preset-secret-1"));
+    assert!(shared.secrets.lock().expect("secrets")["mcp-preset"].contains("preset-secret-1"));
+    assert_eq!(hub.wait("preset", LONG), State::Failed);
+    assert_eq!(hub.sign_in("preset").expect("signed in").state, State::Ready);
+    assert_eq!(stats(server.1)["registered"], 0);
+    hub.stop_all();
+}
+#[test]
+fn oauth_settings_are_kept_when_imported() {
+    let all = parsed(Shape::McpServers, "claude-code.json");
+    let events = entry(&all, "events").oauth.as_ref().expect("a client");
+    assert_eq!((events.client_id.as_deref(), events.port), (Some("cc-client"), Some(8765)));
+    let all = parsed(Shape::McpServers, "gemini.json");
+    let events = entry(&all, "events");
+    let grant = events.oauth.as_ref().expect("a client");
+    assert_eq!(grant.client_secret.as_deref(), Some("g-secret-1"));
+    assert_eq!(grant.scopes, ["a", "b"]);
+    assert!(events.values.headers.is_empty());
+    let all = parsed(Shape::McpServers, "cursor.json");
+    let grant = entry(&all, "remote").oauth.as_ref().expect("a client");
+    assert_eq!(
+        (grant.client_id.as_deref(), grant.scopes.as_slice()),
+        (Some("cur-1"), &["read".to_owned()][..])
+    );
+    assert!(entry(&all, "linear").oauth.is_none());
 }

@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { createServer } from 'node:http'
 import { createInterface } from 'node:readline'
 
@@ -111,8 +112,136 @@ function body(request) {
   })
 }
 const event = (message, name) => `${name ? `event: ${name}\n` : ''}data: ${JSON.stringify(message)}\n\n`
-function streamable(port, sse) {
+const sent = (response, status, value) => {
+  const text = JSON.stringify(value)
+  response
+    .writeHead(status, { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text) })
+    .end(text)
+}
+function authority(base) {
+  const clients = new Map([['orden-preset', null]])
+  const codes = new Map()
+  const access = new Map()
+  const refresh = new Set()
+  const counts = { registered: 0, authorized: 0, refreshed: 0 }
+  const lasts = Number(process.env.FAKE_EXPIRES ?? 3600)
+  let next = 0
+  const issue = () => {
+    next += 1
+    access.set(`access-${next}`, Date.now() + lasts * 1000)
+    refresh.add(`refresh-${next}`)
+    return { access_token: `access-${next}`, refresh_token: `refresh-${next}`, token_type: 'Bearer', expires_in: lasts }
+  }
+  return {
+    allowed(request) {
+      const token = /^Bearer (.+)$/.exec(request.headers.authorization ?? '')?.[1] ?? ''
+      return (access.get(token) ?? 0) > Date.now()
+    },
+    refuse(response) {
+      response
+        .writeHead(401, {
+          'www-authenticate': `Bearer resource_metadata="${base()}/.well-known/oauth-protected-resource/mcp"`,
+        })
+        .end()
+    },
+    async handled(request, response, url) {
+      const asked = url.searchParams
+      switch (`${request.method} ${url.pathname}`) {
+        case 'GET /.well-known/oauth-protected-resource/mcp':
+          sent(response, 200, { resource: `${base()}/mcp`, authorization_servers: [base()], scopes_supported: ['mcp'] })
+          return true
+        case 'GET /.well-known/oauth-authorization-server':
+          sent(response, 200, {
+            issuer: base(),
+            authorization_endpoint: `${base()}/authorize`,
+            token_endpoint: `${base()}/token`,
+            registration_endpoint: `${base()}/register`,
+            code_challenge_methods_supported: ['S256'],
+          })
+          return true
+        case 'POST /register': {
+          const wanted = JSON.parse(await body(request))
+          counts.registered += 1
+          const id = `client-${counts.registered}`
+          clients.set(id, wanted.redirect_uris)
+          sent(response, 201, {
+            client_id: id,
+            redirect_uris: wanted.redirect_uris,
+            token_endpoint_auth_method: 'none',
+          })
+          return true
+        }
+        case 'GET /authorize': {
+          const id = asked.get('client_id')
+          const redirects = clients.get(id)
+          const fits =
+            redirects !== undefined &&
+            (redirects === null || redirects.includes(asked.get('redirect_uri'))) &&
+            asked.get('code_challenge_method') === 'S256' &&
+            asked.get('resource') === `${base()}/mcp` &&
+            asked.get('scope') === 'mcp'
+          if (!fits) {
+            sent(response, 400, { error: 'invalid_request' })
+            return true
+          }
+          counts.authorized += 1
+          const code = `code-${counts.authorized}`
+          codes.set(code, { id, redirect: asked.get('redirect_uri'), challenge: asked.get('code_challenge') })
+          const back = new URL(asked.get('redirect_uri'))
+          back.searchParams.set('code', code)
+          back.searchParams.set('state', asked.get('state'))
+          response.writeHead(302, { location: back.toString() }).end()
+          return true
+        }
+        case 'POST /token': {
+          const form = new URLSearchParams(await body(request))
+          if (form.get('resource') !== `${base()}/mcp`) {
+            sent(response, 400, { error: 'invalid_target' })
+            return true
+          }
+          if (form.get('grant_type') === 'authorization_code') {
+            const kept = codes.get(form.get('code'))
+            codes.delete(form.get('code'))
+            const proved = createHash('sha256')
+              .update(form.get('code_verifier') ?? '')
+              .digest('base64url')
+            const fits =
+              kept &&
+              kept.id === form.get('client_id') &&
+              kept.redirect === form.get('redirect_uri') &&
+              kept.challenge === proved
+            sent(response, fits ? 200 : 400, fits ? issue() : { error: 'invalid_grant' })
+            return true
+          }
+          if (!refresh.delete(form.get('refresh_token'))) {
+            sent(response, 400, { error: 'invalid_grant' })
+            return true
+          }
+          counts.refreshed += 1
+          sent(response, 200, issue())
+          return true
+        }
+        case 'POST /expire':
+          access.clear()
+          sent(response, 200, {})
+          return true
+        case 'POST /revoke':
+          access.clear()
+          refresh.clear()
+          sent(response, 200, {})
+          return true
+        case 'GET /stats':
+          sent(response, 200, counts)
+          return true
+        default:
+          return false
+      }
+    },
+  }
+}
+function streamable(port, sse, signed) {
   const sessions = new Map()
+  const guard = signed ? authority(() => `http://127.0.0.1:${server.address().port}`) : null
   const changed = (session) => () => {
     const kept = sessions.get(session)
     if (!kept) return
@@ -121,6 +250,8 @@ function streamable(port, sse) {
   }
   const server = createServer((request, response) => {
     void (async () => {
+      if (guard && (await guard.handled(request, response, new URL(request.url, 'http://127.0.0.1')))) return
+      if (guard && !guard.allowed(request)) return guard.refuse(response)
       const secret = request.headers['x-fake-secret']
       const session = request.headers['mcp-session-id']
       if (request.method === 'DELETE') {
@@ -196,5 +327,6 @@ function legacy(port) {
 const [how, port = '0'] = process.argv.slice(2)
 if (how === '--http') streamable(Number(port), false)
 else if (how === '--http-sse') streamable(Number(port), true)
+else if (how === '--oauth') streamable(Number(port), false, true)
 else if (how === '--legacy') legacy(Number(port))
 else stdio()

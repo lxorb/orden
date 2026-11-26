@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use serde_json::{json, Value};
 
+use crate::oauth::Auth;
 use crate::rpc::{Answer, Peer, Wire};
 use crate::types::{Secrets, Transport};
 
@@ -81,6 +82,14 @@ impl Client {
         secrets: &Secrets,
         events: impl Fn(Heard) + Send + Sync + 'static,
     ) -> Result<Self, String> {
+        Self::connect_signed(transport, secrets, &Arc::new(Auth::none()), events)
+    }
+    pub(crate) fn connect_signed(
+        transport: &Transport,
+        secrets: &Secrets,
+        auth: &Arc<Auth>,
+        events: impl Fn(Heard) + Send + Sync + 'static,
+    ) -> Result<Self, String> {
         let peer = Peer::new(Box::new(events));
         let (wire, answer) = match transport {
             Transport::Stdio { command, args, cwd, .. } => {
@@ -88,13 +97,15 @@ impl Client {
                 let answer = asked(&peer, &*wire, "initialize", hello(), STARTING);
                 (wire, answer)
             }
-            Transport::Http { url, .. } => match crate::http::open(url, &secrets.headers, &peer) {
-                Ok((wire, answer)) => (wire, Ok(answer)),
-                Err(why) => {
-                    peer.close();
-                    return Err(why);
+            Transport::Http { url, .. } => {
+                match crate::http::open(url, &secrets.headers, auth, &peer) {
+                    Ok((wire, answer)) => (wire, Ok(answer)),
+                    Err(why) => {
+                        peer.close();
+                        return Err(why);
+                    }
                 }
-            },
+            }
         };
         let mut client = Self { peer, wire, protocol: String::new() };
         let answer = answer?;
