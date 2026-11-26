@@ -2,6 +2,7 @@ import {
   counted,
   daysBetween,
   dayOf,
+  releasedVersion,
   USAGE_DAYS_KEPT,
   usageBatchOf,
   type DailyPing,
@@ -34,8 +35,27 @@ interface Captured {
   uuid?: string
   properties: Record<string, unknown>
 }
+const OS_NAMED: Partial<Record<UsageEvent['system']['os'], string>> = {
+  macos: 'Mac OS X',
+  windows: 'Windows',
+  linux: 'Linux',
+  ios: 'iOS',
+  android: 'Android',
+}
+const DEVICE_NAMED: Partial<Record<UsageEvent['system']['form'], string>> = { desktop: 'Desktop', mobile: 'Mobile' }
+function standard(event: DailyPing | UsageDay): Record<string, unknown> {
+  const os = OS_NAMED[event.system.os]
+  const device = DEVICE_NAMED[event.system.form]
+  return {
+    $app_version: event.app.version,
+    ...(os === undefined ? {} : { $os: os }),
+    ...(os === undefined || event.system.osVersion === undefined ? {} : { $os_version: event.system.osVersion }),
+    ...(device === undefined ? {} : { $device_type: device }),
+  }
+}
 function shared(event: DailyPing | UsageDay): Record<string, unknown> {
   return {
+    ...standard(event),
     app_version: event.app.version,
     channel: event.app.channel,
     os: event.system.os,
@@ -104,6 +124,11 @@ async function capturedOf(event: UsageEvent, at: number): Promise<Captured[]> {
   if (event.kind === 'usage') return usageEvents(event, timestamp)
   return [{ event: 'daily install', distinct_id: event.install ?? newId(), timestamp, properties: shared(event) }]
 }
+const RELEASED = /^\d+\.\d+\.\d+$/
+function fromRelease(event: UsageEvent): boolean {
+  const { version, channel } = event.app
+  return channel === 'stable' && RELEASED.test(version) && releasedVersion(version) && counted(event)
+}
 function fresh(event: UsageEvent, today: string): boolean {
   const age = daysBetween(event.day, today)
   return age >= -1 && age <= USAGE_DAYS_KEPT
@@ -130,7 +155,7 @@ usage.post('/', async (context) => {
   if (!allowed) return context.json({ error: TRY_IN_AN_HOUR }, 429)
   const at = now()
   const today = dayOf(at)
-  const kept = batch.events.filter((one) => fresh(one, today) && counted(one))
+  const kept = batch.events.filter((one) => fresh(one, today) && fromRelease(one))
   const key = env.POSTHOG_KEY
   if (!key || kept.length === 0) return context.json({ ok: true, taken: kept.length })
   const captured = (await Promise.all(kept.map((one) => capturedOf(one, at)))).flat()

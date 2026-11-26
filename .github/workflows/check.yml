@@ -478,7 +478,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build the web app
-        run: pnpm --filter @orden/desktop build --mode web
+        run: |
+          git fetch -q --tags --depth=1 origin
+          latest=$(git tag --list 'v*' --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          ORDEN_RELEASE=true ORDEN_VERSION="${latest#v}" pnpm --filter @orden/desktop build --mode web
 
       - name: Build the unstable web app
         id: unstable

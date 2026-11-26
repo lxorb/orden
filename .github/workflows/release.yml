@@ -129,6 +129,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
           ROLLING: ${{ needs.version.outputs.rolling }}
+          ORDEN_RELEASE: ${{ needs.version.outputs.rolling == 'false' && !contains(needs.version.outputs.version, '-') }}
         run: |
           source scripts/edge-profile.sh
           if [ "$RUNNER_OS" = Windows ]; then
@@ -265,6 +266,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
           ROLLING: ${{ needs.version.outputs.rolling }}
+          ORDEN_RELEASE: ${{ needs.version.outputs.rolling == 'false' && !contains(needs.version.outputs.version, '-') }}
         run: |
           source scripts/edge-profile.sh
           bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} \

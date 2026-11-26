@@ -348,6 +348,7 @@ export default tseslint.config(
         __ORDEN_BUILD__: 'readonly',
         __DRIVEABLE__: 'readonly',
         __APP_VERSION__: 'readonly',
+        __ORDEN_RELEASE__: 'readonly',
         __APP_COMMIT__: 'readonly',
         __CLAUDE_CODE__: 'readonly',
         __AI__: 'readonly',

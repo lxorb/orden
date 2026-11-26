@@ -112,25 +112,46 @@ describe('the usage door', () => {
     const ids = forwarded[0]?.body.batch.map((one) => one.distinct_id)
     expect(ids).toEqual(['cd'.repeat(16), 'cd'.repeat(16)])
   })
-  test('a build that is no release is taken and dropped, the web app is counted', async () => {
-    const versions = ['0.0.1', '99.0.0', '0.99.0', '0.16.0-dev', '1.2']
+  test('only a released build on the stable channel is passed on, the web app by its real version', async () => {
+    const web = { os: 'other', arch: 'other', form: 'web', engine: 'chromium' }
     const answer = await send({
       events: [
-        ...versions
-          .filter((version) => /^\d+\.\d+\.\d+(?:-[0-9a-z.]+)?$/.test(version))
-          .map((version) => daily({ app: { version, channel: 'stable' } })),
+        ...['0.0.1', '99.0.0', '0.99.0', '0.16.0-dev', '0.22.3-2240', '0.22.5-2482'].map((version) =>
+          daily({ app: { version, channel: 'stable' } }),
+        ),
+        daily({ app: { version: '0.22.3', channel: 'unstable' } }),
+        daily({ app: { version: '0.0.1', channel: 'stable' }, system: web }),
+        daily({ app: { version: '0.22.5-2482', channel: 'unstable' }, system: web }),
         daily({ app: { version: '0.22.2', channel: 'stable' } }),
-        daily({ app: { version: '0.22.3-2240', channel: 'unstable' } }),
-        daily({
-          app: { version: '0.0.1', channel: 'stable' },
-          system: { os: 'other', arch: 'other', form: 'web', engine: 'chromium' },
-        }),
+        daily({ app: { version: '0.22.5', channel: 'stable' }, system: web }),
       ],
     })
     expect(answer.status).toBe(200)
-    expect(answer.json.taken).toBe(3)
+    expect(answer.json.taken).toBe(2)
     const seen = forwarded[0]?.body.batch.map((one) => (one.properties as { app_version: string }).app_version)
-    expect(seen).toEqual(['0.22.2', '0.22.3-2240', '0.0.1'])
+    expect(seen).toEqual(['0.22.2', '0.22.5'])
+  })
+  test('the version, system and device fill PostHog’s own properties beside ours', async () => {
+    await send({
+      events: [
+        daily(),
+        daily({ system: { os: 'android', osVersion: '15', arch: 'aarch64', form: 'mobile', engine: 'chromium' } }),
+        daily({ system: { os: 'other', arch: 'other', form: 'web', engine: 'gecko' } }),
+      ],
+    })
+    const [mac, phone, web] = (forwarded[0]?.body.batch ?? []).map((one) => one.properties)
+    expect(mac).toMatchObject({
+      $app_version: '0.21.1',
+      $os: 'Mac OS X',
+      $os_version: '15.1',
+      $device_type: 'Desktop',
+      app_version: '0.21.1',
+      os: 'macos',
+    })
+    expect(phone).toMatchObject({ $os: 'Android', $os_version: '15', $device_type: 'Mobile' })
+    expect(web).toMatchObject({ $app_version: '0.21.1' })
+    expect(web).not.toHaveProperty('$os')
+    expect(web).not.toHaveProperty('$device_type')
   })
   test('the same usage day sent twice keeps the same event ids', async () => {
     await send({ events: [usageDay()] })

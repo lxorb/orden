@@ -127,7 +127,7 @@ async function held(): Promise<boolean> {
   }
 }
 export async function watchUsage(sending: boolean): Promise<() => void> {
-  if (!sending || !sendable({ native: isNative, version: __APP_VERSION__, held: await held() })) return () => undefined
+  if (!sending || !sendable({ release: __ORDEN_RELEASE__, held: await held() })) return () => undefined
   if (usageChoice.helping) started(startupOfMs(performance.now()))
   roll()
   const minutes = setInterval(() => idle(tick), A_MINUTE)

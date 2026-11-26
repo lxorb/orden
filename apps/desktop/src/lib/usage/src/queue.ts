@@ -1,4 +1,4 @@
-import { daysBetween, MOST_USAGE_EVENTS, releasedVersion, USAGE_DAYS_KEPT, type UsageEvent } from '@orden/sync-core'
+import { daysBetween, MOST_USAGE_EVENTS, USAGE_DAYS_KEPT, type UsageEvent } from '@orden/sync-core'
 import { ApiError } from '../../accounts/src/api'
 
 export const MOST_QUEUED = 2 * (USAGE_DAYS_KEPT + 1)
@@ -6,9 +6,8 @@ export function pruned(queue: readonly UsageEvent[], today: string, helping: boo
   if (!helping) return []
   return queue.filter((one) => daysBetween(one.day, today) <= USAGE_DAYS_KEPT).slice(-MOST_QUEUED)
 }
-export function sendable(seen: { native: boolean; version: string; held: boolean }): boolean {
-  if (!seen.native) return true
-  return !seen.held && releasedVersion(seen.version)
+export function sendable(build: { release: boolean; held: boolean }): boolean {
+  return build.release && !build.held
 }
 export interface Flushing {
   queue(): UsageEvent[]

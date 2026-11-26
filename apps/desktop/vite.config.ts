@@ -28,6 +28,8 @@ function withoutAi(): Plugin {
   }
 }
 function appVersion(): string {
+  const given = process.env.ORDEN_VERSION?.trim()
+  if (given) return given
   try {
     const given: unknown = JSON.parse(process.env.TAURI_CONFIG ?? '{}')
     const version = (given as { version?: unknown } | null)?.version
@@ -66,6 +68,7 @@ export default defineConfig(({ command, mode }) => {
     define: {
       __ORDEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
       __APP_VERSION__: JSON.stringify(appVersion()),
+      __ORDEN_RELEASE__: JSON.stringify(process.env.ORDEN_RELEASE === 'true'),
       __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
       __AI__: JSON.stringify(ai),
       __CLAUDE_CODE__: JSON.stringify(!['off', '0', 'false'].includes(process.env.ORDEN_CLAUDE_CODE ?? '')),

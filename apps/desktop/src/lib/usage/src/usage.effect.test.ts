@@ -1,5 +1,6 @@
 import { dayOf, usageEventOf, type UsageEvent } from '@orden/sync-core'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { elapse } from '../../../../test/effects/settle'
 
 const HELPING = 'orden:usage-help'
 const INSTALL = 'orden:usage-install'
@@ -192,18 +193,29 @@ describe('what a device says about itself', () => {
   })
 })
 describe('which builds send', () => {
-  test('a release or an unstable install on a user’s machine sends, the web app too', async () => {
+  test('only a build made as a release sends, whatever its version says', async () => {
     const { sendable } = await import('./queue')
-    expect(sendable({ native: true, version: '0.22.2', held: false })).toBe(true)
-    expect(sendable({ native: true, version: '0.22.3-2240', held: false })).toBe(true)
-    expect(sendable({ native: false, version: '0.0.1', held: false })).toBe(true)
+    expect(sendable({ release: true, held: false })).toBe(true)
+    expect(sendable({ release: false, held: false })).toBe(false)
+    expect(sendable({ release: true, held: true })).toBe(false)
   })
-  test('a test, dev or CI build never sends', async () => {
-    const { sendable } = await import('./queue')
-    for (const version of ['0.0.1', '99.0.0', '0.99.0', 'under test', '0.22.0-unstable.4']) {
-      expect(sendable({ native: true, version, held: false }), version).toBe(false)
-    }
-    expect(sendable({ native: true, version: '0.22.2', held: true })).toBe(false)
+  test('a test or dev build is never a release, so it queues and sends nothing even when asked to', async () => {
+    expect(__ORDEN_RELEASE__).toBe(false)
+    localStorage.setItem(HELPING, 'true')
+    const posted = vi.fn()
+    vi.doMock('../../accounts/src/api', async (actual) => ({
+      ...(await actual<typeof import('../../accounts/src/api')>()),
+      request: posted,
+    }))
+    vi.useFakeTimers()
+    const { watchUsage } = await import('./watch.svelte')
+    const stop = await watchUsage(true)
+    await elapse(2 * 60 * 60 * 1000)
+    stop()
+    expect(posted).not.toHaveBeenCalled()
+    expect(localStorage.getItem('orden:usage-queue')).toBe(null)
+    expect(localStorage.getItem('orden:usage-pinged')).toBe(null)
+    vi.doUnmock('../../accounts/src/api')
   })
   test('a build the runner holds back queues and sends nothing', async () => {
     localStorage.setItem(HELPING, 'true')
