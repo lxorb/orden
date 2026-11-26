@@ -352,8 +352,11 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'app.commands.alt', 'Commands', null, (context) => context.palette('commands'), {
     alias: true,
   }),
-  app('file', 'app.quick-add', 'Add task', 'Ctrl-Alt-Space', () => showQuickAdd(), { mac: 'Mod-Ctrl-a' }),
-  panel('file', 'tasks.quick-add', 'Add task', 'q', { alias: true }),
+  app('file', 'app.quick-add', 'Add task', 'Ctrl-Alt-Space', () => showQuickAdd(), {
+    mac: 'Mod-Ctrl-a',
+    shown: () => todosOn(),
+  }),
+  panel('file', 'tasks.quick-add', 'Add task', 'q', { alias: true, shown: () => todosOn() }),
   app('view', 'app.sidebar', 'Left sidebar', 'Mod-Shift-l', () => workspace.toggleSidebar()),
   app('view', 'app.right-sidebar', 'Right sidebar', 'Mod-Alt-b', () => workspace.toggleSidebar('right')),
   app('view', 'app.files', 'Files', 'Mod-Shift-e', () => revealPanel('tree')),
