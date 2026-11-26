@@ -14,16 +14,12 @@ impl Act {
     }
 }
 const HOST: &str = "orden://reminder";
-const OLD_HOST: &str = "nib://reminder";
 #[cfg_attr(not(windows), allow(dead_code))]
 pub fn link(act: Act, id: &str, nonce: &str) -> String {
     format!("{HOST}?act={}&id={id}&n={nonce}", act.word())
 }
 fn host_end(url: &str) -> Option<usize> {
-    [HOST, OLD_HOST]
-        .into_iter()
-        .find(|host| url.get(..host.len()).is_some_and(|start| start.eq_ignore_ascii_case(host)))
-        .map(str::len)
+    url.get(..HOST.len()).filter(|start| start.eq_ignore_ascii_case(HOST)).map(str::len)
 }
 pub fn is_reminder(url: &str) -> bool {
     host_end(url.trim()).is_some()
@@ -68,14 +64,6 @@ mod tests {
             Some((Act::Done, "00ff00ff00ff00ff".to_string(), "abcdef0123456789".to_string()))
         );
         assert_eq!(parsed(&link(Act::Open, "aa", "bb")).map(|(act, _, _)| act), Some(Act::Open));
-    }
-    #[test]
-    fn a_link_a_notice_was_given_before_the_rename_still_reads() {
-        assert_eq!(
-            parsed("nib://reminder?act=done&id=aa&n=bb"),
-            Some((Act::Done, "aa".to_string(), "bb".to_string()))
-        );
-        assert!(is_reminder("NIB://Reminder?act=open"));
     }
     #[test]
     fn anything_else_is_no_reminder() {

@@ -411,8 +411,7 @@ fn ids_come_from_names_and_stay_apart() {
     assert!(long.len() <= 24 && long.ends_with("-2"), "{long}");
     assert!(kept::valid_id(&long));
     assert_eq!(kept::new_id("Orden", |_| false), "orden-2");
-    assert_eq!(kept::new_id("nib", |_| false), "nib-2");
-    assert!(!kept::valid_id("orden") && !kept::valid_id("nib"));
+    assert!(!kept::valid_id("orden"));
 }
 #[test]
 fn a_server_never_takes_the_id_orden_s_own_tools_go_by() {
@@ -420,7 +419,7 @@ fn a_server_never_takes_the_id_orden_s_own_tools_go_by() {
     let mut server = new_server("Orden", stdio(&[]));
     server.on = false;
     assert_eq!(hub.save(server.clone(), None).expect("saved").server.id, "orden-2");
-    server.id = "nib".to_owned();
+    server.id = "orden".to_owned();
     assert!(hub.save(server, None).is_err());
     let imported = new_server(
         "orden",

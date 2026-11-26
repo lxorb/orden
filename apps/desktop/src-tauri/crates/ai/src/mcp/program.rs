@@ -1,10 +1,9 @@
 use std::path::{Component, Path, PathBuf};
 
 const STORE: &str = "/nix/store";
-const NAMES: [&str; 2] = ["orden", "nib"];
-const BUNDLES: [&str; 3] = ["Orden.app", "Nib.app", "nibeditor.app"];
-const FORMER: [&str; 2] = ["nib", "nib.exe"];
-const FORMER_FOLDERS: [&str; 2] = ["nib", "nibeditor"];
+const NAME: &str = "orden";
+const WRAPPED: &str = ".orden-wrapped";
+const BUNDLE: &str = "Orden.app";
 pub fn program() -> Result<PathBuf, String> {
     let exe = std::env::current_exe()
         .map_err(|error| format!("this program cannot find itself: {error}"))?;
@@ -32,7 +31,7 @@ fn chosen(
     let lasting = path
         .iter()
         .filter(|folder| folder.has_root() && !folder.starts_with(STORE))
-        .flat_map(|folder| NAMES.map(|name| folder.join(name)))
+        .map(|folder| folder.join(NAME))
         .find(|candidate| resolve(candidate).is_some_and(|target| target.starts_with(&copy)));
     lasting.unwrap_or_else(|| unwrapped(exe))
 }
@@ -56,52 +55,30 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
         return false;
     }
     let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
-    if FORMER.contains(&name) && path.parent().is_some_and(|folder| Some(folder) == now.parent()) {
-        return true;
-    }
-    if moved_from_former_folder(path, now) {
-        return true;
-    }
-    let ours =
-        |name: &str| NAMES.contains(&name) || name == ".orden-wrapped" || name == ".nib-wrapped";
+    let ours = name == NAME || name == WRAPPED;
     if let Some(copy) = store_copy(path) {
         let package = copy.file_name().and_then(|name| name.to_str()).unwrap_or_default();
-        let named = package
-            .split_once('-')
-            .is_some_and(|(_, rest)| rest.starts_with("orden-") || rest.starts_with("nib-"));
-        return named && ours(name);
+        let named = package.split_once('-').is_some_and(|(_, rest)| rest.starts_with("orden-"));
+        return named && ours;
     }
     if command.starts_with("/tmp/.mount_") {
-        return command.ends_with("/usr/bin/orden") || command.ends_with("/usr/bin/nib");
+        return command.ends_with("/usr/bin/orden");
     }
     let bundle = path
         .parent()
         .filter(|macos| macos.ends_with("Contents/MacOS"))
         .and_then(|macos| macos.parent()?.parent());
-    if let Some(bundle) = bundle.filter(|_| ours(name)) {
+    if let Some(bundle) = bundle.filter(|_| ours) {
         let folder = bundle.file_name().and_then(|name| name.to_str()).unwrap_or_default();
         let lent = bundle.parent().and_then(Path::parent) == Some(Path::new("/Volumes"))
             || command.contains("/AppTranslocation/");
-        return BUNDLES[1..].contains(&folder) || (lent && folder == BUNDLES[0]);
+        return lent && folder == BUNDLE;
     }
     let lower = name.to_ascii_lowercase();
     lower.strip_suffix(".appimage").is_some_and(|stem| {
-        ["orden", "nibeditor", "nib"].iter().any(|product| {
-            stem.strip_prefix(product)
-                .is_some_and(|rest| rest.is_empty() || rest.starts_with(['-', '_', '.']))
-        })
+        stem.strip_prefix(NAME)
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with(['-', '_', '.']))
     })
-}
-fn moved_from_former_folder(path: &Path, now: &Path) -> bool {
-    let name_of =
-        |path: &Path| path.file_name().and_then(|name| name.to_str()).map(str::to_ascii_lowercase);
-    let (Some(was), Some(is)) = (path.parent(), now.parent()) else {
-        return false;
-    };
-    name_of(path).is_some_and(|name| name == "orden.exe" || name == "nib.exe")
-        && was.parent() == is.parent()
-        && name_of(was).is_some_and(|name| FORMER_FOLDERS.contains(&name.as_str()))
-        && name_of(is).as_deref() == Some("orden")
 }
 pub fn command_in(said: &str) -> Option<&str> {
     said.lines().find_map(|line| {
@@ -126,25 +103,25 @@ mod tests {
         if !cfg!(target_os = "linux") {
             assert_eq!(found, std::env::current_exe().expect("this test"));
         }
-        let deb = Path::new("/usr/bin/nib");
+        let deb = Path::new("/usr/bin/orden");
         assert_eq!(chosen(deb, None, &[PathBuf::from("/usr/bin")], links), deb);
     }
-    const NOW: &str = "/nix/store/aaa-orden-0.15.0/bin/.nib-wrapped";
+    const NOW: &str = "/nix/store/aaa-orden-0.15.0/bin/.orden-wrapped";
     fn links(candidate: &Path) -> Option<PathBuf> {
         match candidate.to_str()?.replace('\\', "/").as_str() {
             "/run/current-system/sw/bin/orden" => {
-                Some(PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/nib"))
+                Some(PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/orden"))
             }
-            "/home/e/.nix-profile/bin/nib" => {
-                Some(PathBuf::from("/nix/store/zzz-orden-0.14.0/bin/nib"))
+            "/home/e/.nix-profile/bin/orden" => {
+                Some(PathBuf::from("/nix/store/zzz-orden-0.14.0/bin/orden"))
             }
-            "/usr/bin/nib" => Some(PathBuf::from("/usr/bin/nib")),
+            "/usr/bin/orden" => Some(PathBuf::from("/usr/bin/orden")),
             _ => None,
         }
     }
     #[test]
     fn an_appimage_is_named_and_never_its_mount() {
-        let mount = Path::new("/tmp/.mount_OrdenX1/usr/bin/nib");
+        let mount = Path::new("/tmp/.mount_OrdenX1/usr/bin/orden");
         let image = PathBuf::from("/home/e/Apps/Orden-0.15.0-linux-x64.AppImage");
         assert_eq!(chosen(mount, Some(image.clone()), &[], links), image);
         assert_eq!(chosen(mount, Some(PathBuf::from("Orden.AppImage")), &[], links), mount);
@@ -162,91 +139,47 @@ mod tests {
         );
         assert_eq!(
             chosen(Path::new(NOW), None, &path[..2], links),
-            PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/nib")
+            PathBuf::from("/nix/store/aaa-orden-0.15.0/bin/orden")
         );
     }
     #[test]
     fn an_older_copy_of_this_app_is_known_and_nothing_else_is() {
         let now = Path::new("/run/current-system/sw/bin/orden");
         for older in [
-            "/nix/store/zzz-orden-0.14.0/bin/.nib-wrapped",
             "/nix/store/zzz-orden-0.16.0/bin/.orden-wrapped",
             "/tmp/.mount_OrdenAb/usr/bin/orden",
-            "/nix/store/yyy-nib-0.13.1/bin/nib",
-            "/tmp/.mount_NibAbCd/usr/bin/nib",
-            "/home/e/Apps/Nib-0.13.1-linux-x64.AppImage",
+            "/home/e/Apps/Orden-0.13.1-linux-x64.AppImage",
+            "/opt/orden_0.12.AppImage",
             "\"/home/e/Apps/Orden.AppImage\"",
-            "/opt/nibeditor_0.12.AppImage",
-            "/Volumes/Orden/Orden.app/Contents/MacOS/nib",
-            "/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/Orden.app/Contents/MacOS/nib",
-            "/Volumes/nibeditor/nibeditor.app/Contents/MacOS/nib",
-            "/Applications/Nib.app/Contents/MacOS/nib",
-            "/Applications/nibeditor.app/Contents/MacOS/nib",
+            "/Volumes/Orden/Orden.app/Contents/MacOS/orden",
+            "/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/Orden.app/Contents/MacOS/orden",
         ] {
             assert!(older_copy(older, now), "{older}");
         }
         for theirs in [
             "/run/current-system/sw/bin/orden",
             "/nix/store/xxx-nodejs-22/bin/node",
-            "/nix/store/xxx-nibbler-1.0/bin/nib",
+            "/nix/store/xxx-ordenly-1.0/bin/orden",
             "/usr/bin/python3",
-            "/home/e/Apps/Nibbles.AppImage",
+            "/home/e/Apps/Ordenly.AppImage",
             "/tmp/.mount_Other/usr/bin/other",
-            "/Applications/Orden.app/Contents/MacOS/nib",
-            "/Volumes/Orden/Other.app/Contents/MacOS/nib",
-            "/Volumes/Disk/Apps/Orden.app/Contents/MacOS/nib",
+            "/Applications/Orden.app/Contents/MacOS/orden",
+            "/Volumes/Orden/Other.app/Contents/MacOS/orden",
+            "/Volumes/Disk/Apps/Orden.app/Contents/MacOS/orden",
             "/Volumes/Orden/Orden.app/Contents/MacOS/other",
-            "/Applications/Nibbler.app/Contents/MacOS/nib",
+            "/Applications/Ordenly.app/Contents/MacOS/orden",
             "",
         ] {
             assert!(!older_copy(theirs, now), "{theirs}");
         }
     }
     #[test]
-    fn the_program_under_its_former_name_beside_this_one_is_an_older_copy() {
-        for (older, now) in [
-            ("/usr/share/Orden/nib", "/usr/share/Orden/orden"),
-            (
-                "/Applications/Orden.app/Contents/MacOS/nib",
-                "/Applications/Orden.app/Contents/MacOS/orden",
-            ),
-            ("/home/e/.local/Orden/nib.exe", "/home/e/.local/Orden/orden.exe"),
-        ] {
-            assert!(older_copy(older, Path::new(now)), "{older}");
-        }
-        assert!(!older_copy("/usr/local/bin/nib", Path::new("/usr/share/Orden/orden")));
-        assert!(!older_copy("/usr/share/Orden/nibble", Path::new("/usr/share/Orden/orden")));
-    }
-    #[test]
-    fn the_program_in_the_folder_of_a_former_name_beside_this_one_is_an_older_copy() {
-        let now = Path::new("/c/Users/e/AppData/Local/Orden/orden.exe");
-        for older in [
-            "/c/Users/e/AppData/Local/Nib/orden.exe",
-            "/c/Users/e/AppData/Local/Nib/nib.exe",
-            "\"/c/Users/e/AppData/Local/nibeditor/nib.exe\"",
-        ] {
-            assert!(older_copy(older, now), "{older}");
-        }
-        for theirs in [
-            "/c/Users/e/AppData/Local/Nibbler/orden.exe",
-            "/c/Users/e/AppData/Local/Nib/other.exe",
-            "/c/Users/e/Tools/Nib/orden.exe",
-            "/c/Users/other/AppData/Local/Nib/orden.exe",
-        ] {
-            assert!(!older_copy(theirs, now), "{theirs}");
-        }
-        assert!(!older_copy(
-            "/c/Users/e/AppData/Local/Nib/orden.exe",
-            Path::new("/c/Users/e/AppData/Local/Elsewhere/orden.exe")
-        ));
-    }
-    #[test]
     fn the_command_is_read_off_either_client_s_description() {
         let claude =
-            "orden:\n  Scope: User config\n  Type: stdio\n  Command: /usr/bin/nib\n  Args: mcp\n";
-        assert_eq!(command_in(claude), Some("/usr/bin/nib"));
-        let codex = "orden\n  enabled: true\n  transport: stdio\n  command: /nix/store/a-orden-1/bin/nib\n  args: mcp\n";
-        assert_eq!(command_in(codex), Some("/nix/store/a-orden-1/bin/nib"));
+            "orden:\n  Scope: User config\n  Type: stdio\n  Command: /usr/bin/orden\n  Args: mcp\n";
+        assert_eq!(command_in(claude), Some("/usr/bin/orden"));
+        let codex = "orden\n  enabled: true\n  transport: stdio\n  command: /nix/store/a-orden-1/bin/orden\n  args: mcp\n";
+        assert_eq!(command_in(codex), Some("/nix/store/a-orden-1/bin/orden"));
         assert_eq!(command_in("nothing here"), None);
     }
 }

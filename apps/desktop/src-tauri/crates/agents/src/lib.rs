@@ -4,6 +4,7 @@ pub mod commands;
 pub mod endpoint;
 pub mod family;
 pub mod files;
+mod former_grants;
 pub mod grants;
 pub mod http;
 pub mod keys;

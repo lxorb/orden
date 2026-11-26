@@ -245,7 +245,7 @@ impl Grant {
         self.always.get(site).is_some_and(|categories| categories.contains(&category))
     }
 }
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 struct Kept {
     #[serde(flatten)]
     grant: Grant,
@@ -261,19 +261,13 @@ struct File {
     helpers: bool,
     #[serde(default)]
     orden: bool,
+    #[serde(default)]
+    carried: u32,
 }
+const CARRIED: u32 = 1;
 pub const SIDEBAR: &str = "Orden ";
-const SIDEBAR_BEFORE: &str = "nib \u{b7} ";
 const SIDEBAR_DOTTED: &str = "Orden \u{b7} ";
 pub const BUILT_IN: &str = "orden-";
-pub const BUILT_IN_BEFORE: &str = "nib-";
-fn as_orden(grant: &mut Grant) {
-    for label in [&mut grant.client, &mut grant.name] {
-        if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
-            *label = format!("{SIDEBAR}{rest}");
-        }
-    }
-}
 fn undotted(grant: &mut Grant) {
     let Some(rest) = grant.client.strip_prefix(SIDEBAR_DOTTED) else {
         return;
@@ -282,14 +276,6 @@ fn undotted(grant: &mut Grant) {
     if let Some(rest) = grant.name.strip_prefix(SIDEBAR_DOTTED) {
         grant.name = format!("{SIDEBAR}{rest}");
     }
-}
-fn was_built_in(grant: &Grant) -> bool {
-    grant.id.starts_with(BUILT_IN_BEFORE) && grant.client.starts_with(SIDEBAR)
-}
-fn built_in_id(grant: &Grant, taken: &[String]) -> Option<String> {
-    let rest = grant.id.strip_prefix(BUILT_IN_BEFORE)?;
-    let id = format!("{BUILT_IN}{rest}");
-    (grant.built_in && !taken.contains(&id)).then_some(id)
 }
 fn with_helpers(grant: &mut Grant) {
     if grant.holds(Scope::Context) && !grant.holds(Scope::Agents) {
@@ -318,7 +304,15 @@ impl Grants {
         with: impl FnOnce(&mut Vec<Kept>) -> T,
     ) -> Result<T, String> {
         let loaded = self.0.lock().map_err(|_| BUSY.to_string())?.is_some();
-        let fresh = if loaded { None } else { Some(read(&file(app)?)) };
+        let fresh = if loaded {
+            None
+        } else {
+            let (kept, trouble) = read_carried(&file(app)?);
+            if let Some(trouble) = trouble {
+                orden_base::logs::say(app, "warn", &format!("agents: {trouble}"));
+            }
+            Some(kept)
+        };
         let mut held = self.0.lock().map_err(|_| BUSY.to_string())?;
         if held.is_none() {
             *held = fresh;
@@ -436,40 +430,55 @@ fn known_scopes<'de, D: serde::Deserializer<'de>>(said: D) -> Result<Vec<Scope>,
     let all = Vec::<serde_json::Value>::deserialize(said)?;
     Ok(all.into_iter().filter_map(|one| serde_json::from_value(one).ok()).collect())
 }
+#[cfg(test)]
 fn read(path: &std::path::Path) -> Vec<Kept> {
-    std::fs::read_to_string(path)
+    read_carried(path).0
+}
+fn read_carried(path: &std::path::Path) -> (Vec<Kept>, Option<String>) {
+    let Some((text, file)) = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|text| serde_json::from_str::<File>(&text).ok().map(|file| (text, file)))
+    else {
+        return (Vec::new(), None);
+    };
+    let mut agents = file.agents;
+    if !file.chats {
+        for one in &mut agents {
+            with_chats(&mut one.grant);
+        }
+    }
+    if !file.helpers {
+        for one in &mut agents {
+            with_helpers(&mut one.grant);
+        }
+    }
+    for one in &mut agents {
+        undotted(&mut one.grant);
+    }
+    if file.carried >= CARRIED {
+        return (agents, None);
+    }
+    let mut grants: Vec<&mut Grant> = agents.iter_mut().map(|one| &mut one.grant).collect();
+    crate::former_grants::carried(&mut grants, file.orden);
+    let trouble = kept_carried(path, &text, &agents).err();
+    (agents, trouble)
+}
+fn kept_carried(path: &std::path::Path, before: &str, agents: &[Kept]) -> Result<(), String> {
+    write(path, agents)
+        .map_err(|error| format!("the agents stay under their former ids on disk: {error}"))?;
+    let said = |kept: &[Kept]| serde_json::to_value(kept).ok();
+    let back = std::fs::read_to_string(path)
         .ok()
         .and_then(|text| serde_json::from_str::<File>(&text).ok())
-        .map(|file| {
-            let mut agents = file.agents;
-            if !file.chats {
-                for one in &mut agents {
-                    with_chats(&mut one.grant);
-                }
-            }
-            if !file.helpers {
-                for one in &mut agents {
-                    with_helpers(&mut one.grant);
-                }
-            }
-            if !file.orden {
-                for one in &mut agents {
-                    as_orden(&mut one.grant);
-                }
-            }
-            for one in &mut agents {
-                undotted(&mut one.grant);
-                one.grant.built_in |= was_built_in(&one.grant);
-            }
-            let taken: Vec<String> = agents.iter().map(|one| one.grant.id.clone()).collect();
-            for one in &mut agents {
-                if let Some(id) = built_in_id(&one.grant, &taken) {
-                    one.grant.id = id;
-                }
-            }
-            agents
-        })
-        .unwrap_or_default()
+        .is_some_and(|file| file.carried >= CARRIED && said(&file.agents) == said(agents));
+    if back {
+        return Ok(());
+    }
+    let restored = write_privately(path, before.as_bytes());
+    Err(match restored {
+        Ok(()) => "the agents did not read back as carried, so the file is as it was".to_owned(),
+        Err(error) => format!("the agents did not read back as carried: {error}"),
+    })
 }
 fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     if let Some(dir) = path.parent() {
@@ -480,6 +489,7 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
         chats: true,
         helpers: true,
         orden: true,
+        carried: CARRIED,
     })
     .map_err(|error| format!("could not write the agents: {error}"))?;
     write_privately(path, text.as_bytes())
@@ -500,7 +510,7 @@ fn free_id(client: &str, taken: &[&str]) -> String {
     let stem = if stem.is_empty() { "agent" } else { stem };
     let kept = format!("agent-{stem}");
     let built_in = |prefix: &str| stem == prefix.trim_end_matches('-') || stem.starts_with(prefix);
-    let stem = if built_in(BUILT_IN) || built_in(BUILT_IN_BEFORE) { kept.as_str() } else { stem };
+    let stem = if built_in(BUILT_IN) { kept.as_str() } else { stem };
     if !taken.contains(&stem) {
         return stem.to_string();
     }
@@ -601,6 +611,7 @@ mod tests {
             chats: true,
             helpers: true,
             orden: true,
+            carried: CARRIED,
         })
         .expect("json");
         let back: File = serde_json::from_str(&text).expect("read");
@@ -621,6 +632,7 @@ mod tests {
             chats: true,
             helpers: true,
             orden: true,
+            carried: CARRIED,
         })
         .expect("json");
         let scopes = value["agents"][0]["scopes"].as_array_mut().expect("scopes");
@@ -634,7 +646,7 @@ mod tests {
         assert_eq!(read[0].grant.scopes, Grant::own("a".into(), "A").scopes);
     }
     #[test]
-    fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
+    fn the_file_from_before_the_rename_is_carried_once_and_kept_carried() {
         let kept = |id: &str, client: &str, name: &str| {
             let mut grant = Grant::own(id.into(), client);
             grant.name = name.into();
@@ -642,35 +654,54 @@ mod tests {
         };
         let text = serde_json::json!({
             "agents": [
-                kept("nib-anthropic", "nib · Claude", "nib · Claude"),
-                kept("nib-openai", "nib · OpenAI", "My own OpenAI"),
+                kept("nib-anthropic", "nib \u{b7} Claude", "nib \u{b7} Claude"),
+                kept("nib-openai", "nib \u{b7} OpenAI", "My own OpenAI"),
                 kept("claude-code", "Claude Code", "Claude Code"),
-                kept("x", "nibbler · X", "nib ·X"),
             ],
             "chats": true,
             "helpers": true,
         })
         .to_string();
         let (_dir, path) = written(&text);
-        let read = read(&path);
-        let labels: Vec<(&str, &str)> =
-            read.iter().map(|one| (one.grant.client.as_str(), one.grant.name.as_str())).collect();
+        let (read, trouble) = read_carried(&path);
+        assert_eq!(trouble, None);
+        let said: Vec<(&str, &str, &str)> = read
+            .iter()
+            .map(|one| (one.grant.id.as_str(), one.grant.client.as_str(), one.grant.name.as_str()))
+            .collect();
         assert_eq!(
-            labels,
+            said,
             [
-                ("Orden Claude", "Orden Claude"),
-                ("Orden OpenAI", "My own OpenAI"),
-                ("Claude Code", "Claude Code"),
-                ("nibbler · X", "nib ·X"),
+                ("orden-anthropic", "Orden Claude", "Orden Claude"),
+                ("orden-openai", "Orden OpenAI", "My own OpenAI"),
+                ("claude-code", "Claude Code", "Claude Code"),
             ]
         );
-        assert_eq!(read[0].grant.id, "orden-anthropic");
-        assert_eq!(read[1].grant.id, "orden-openai");
-        assert_eq!(read[3].grant.id, "x");
+        assert!(read[0].grant.built_in && read[1].grant.built_in && !read[2].grant.built_in);
+        let on_disk = std::fs::read_to_string(&path).expect("the file");
+        let file: File = serde_json::from_str(&on_disk).expect("json");
+        assert_eq!(file.carried, CARRIED);
+        assert_eq!(file.agents[0].grant.id, "orden-anthropic");
+        assert_eq!(file.agents[0].token, hashed("t"));
         let mut named = read.clone();
-        named[2].grant.name = "nib · mine".into();
+        named[2].grant.id = "nib-mine".into();
+        named[2].grant.client = "Orden mine".into();
+        named[2].grant.name = "nib \u{b7} mine".into();
         write(&path, &named).expect("write again");
-        assert_eq!(super::read(&path)[2].grant.name, "nib · mine");
+        let again = super::read(&path);
+        assert_eq!(again[2].grant.id, "nib-mine");
+        assert_eq!(again[2].grant.name, "nib \u{b7} mine");
+    }
+    #[test]
+    fn a_file_that_cannot_be_carried_keeps_its_former_words_and_says_so() {
+        let (_dir, path) = written("not json");
+        assert_eq!(read_carried(&path), (Vec::new(), None));
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "not json");
+        let agents = [kept("orden-anthropic", "t")];
+        let behind_a_file = path.join("agents.json");
+        let trouble = kept_carried(&behind_a_file, "before", &agents).expect_err("no folder");
+        assert!(trouble.contains("former ids"), "{trouble}");
+        assert_eq!(std::fs::read_to_string(&path).expect("the file"), "not json");
     }
     #[test]
     fn a_sidebar_grant_named_with_a_dot_loses_the_dot_and_nothing_else() {
@@ -811,38 +842,14 @@ mod tests {
         assert_ne!(one, two);
     }
     #[test]
-    fn a_built_in_grant_from_before_the_rename_goes_by_orden_unless_that_id_is_taken() {
-        let built = |id: &str| {
-            let mut grant = Grant::own(id.into(), "Orden \u{b7} Claude");
-            grant.built_in = true;
-            grant
-        };
-        let none: Vec<String> = Vec::new();
-        assert_eq!(built_in_id(&built("nib-anthropic"), &none).as_deref(), Some("orden-anthropic"));
-        assert_eq!(built_in_id(&built("nib-anthropic"), &["orden-anthropic".to_string()]), None);
-        assert_eq!(built_in_id(&built("orden-anthropic"), &none), None);
-        let mut mine = built("nib-anthropic");
-        mine.built_in = false;
-        assert_eq!(built_in_id(&mine, &none), None);
-    }
-    #[test]
-    fn only_the_apps_label_makes_a_kept_grant_built_in() {
-        let kept = |id: &str, client: &str| Grant::own(id.into(), client);
-        assert!(was_built_in(&kept("nib-anthropic", "Orden Claude")));
-        assert!(!was_built_in(&kept("nib-foo", "nib-foo")));
-        assert!(!was_built_in(&kept("nib-2", "nib")));
-        assert!(!was_built_in(&kept("orden-claude", "Orden Claude")));
-    }
-    #[test]
     fn an_id_comes_from_the_name_and_is_free() {
         assert_eq!(free_id("Claude Code", &[]), "claude-code");
         assert_eq!(free_id("Claude Code", &["claude-code"]), "claude-code-2");
         assert_eq!(free_id("Claude Code", &["claude-code", "claude-code-2"]), "claude-code-3");
         assert_eq!(free_id("  ", &[]), "agent");
-        assert_eq!(free_id("nib-anthropic", &[]), "agent-nib-anthropic");
-        assert_eq!(free_id("nib", &[]), "agent-nib");
-        assert_eq!(free_id("nib", &["agent-nib"]), "agent-nib-2");
-        assert_eq!(free_id("NIB ", &["nib"]), "agent-nib");
+        assert_eq!(free_id("orden-anthropic", &[]), "agent-orden-anthropic");
+        assert_eq!(free_id("orden", &["agent-orden"]), "agent-orden-2");
+        assert_eq!(free_id("ORDEN ", &["orden"]), "agent-orden");
         assert_eq!(free_id("Orden · Claude", &[]), "agent-orden-claude");
         assert_eq!(free_id("orden", &[]), "agent-orden");
         assert_eq!(free_id("ordentlich", &[]), "ordentlich");

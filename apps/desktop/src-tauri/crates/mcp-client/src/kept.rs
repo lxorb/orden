@@ -6,7 +6,7 @@ use crate::types::{Server, Transport};
 
 pub const FILE: &str = "mcp-servers.json";
 const LONGEST_ID: usize = 24;
-const OWN: [&str; 2] = ["orden", "nib"];
+const OWN: [&str; 1] = ["orden"];
 #[derive(Default, Serialize, Deserialize)]
 struct Kept {
     #[serde(default)]

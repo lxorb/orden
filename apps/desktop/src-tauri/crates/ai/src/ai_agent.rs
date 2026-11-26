@@ -10,7 +10,7 @@ use tauri::AppHandle;
 use crate::mcp::host;
 use orden_agents::approvals::{self, Asking};
 use orden_agents::grants::{
-    fresh_token, hashed, same, Grant, Mode as GrantMode, Scope, BUILT_IN, BUILT_IN_BEFORE, SIDEBAR,
+    fresh_token, hashed, same, Grant, Mode as GrantMode, Scope, BUILT_IN, SIDEBAR,
 };
 use orden_agents::verbs::{Answer, Category, Code};
 use orden_agents::{state, Caller};
@@ -37,16 +37,13 @@ fn yes() -> bool {
     true
 }
 fn grant_id(provider: &str) -> Result<String, String> {
-    grant_id_from(BUILT_IN, provider)
-}
-fn grant_id_from(prefix: &str, provider: &str) -> Result<String, String> {
     let fits = !provider.is_empty()
         && provider.len() <= 48
         && provider
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
     if fits {
-        Ok(format!("{prefix}{provider}"))
+        Ok(format!("{BUILT_IN}{provider}"))
     } else {
         Err(format!("{provider} is not a provider"))
     }
@@ -106,10 +103,8 @@ fn supervised(mut grant: Grant, chat: &Chat) -> Grant {
 pub fn grant_for(app: &AppHandle, builtin: &Builtin) -> Result<Grant, String> {
     let id = grant_id(&builtin.id)?;
     let grants = &state(app).grants;
-    for one in [id.clone(), grant_id_from(BUILT_IN_BEFORE, &builtin.id)?] {
-        if let Some(found) = grants.by_id(app, &one).filter(|grant| grant.built_in) {
-            return Ok(found);
-        }
+    if let Some(found) = grants.by_id(app, &id).filter(|grant| grant.built_in) {
+        return Ok(found);
     }
     let client = format!("{SIDEBAR}{}", builtin.name.trim());
     let (grant, _token) =
@@ -723,7 +718,6 @@ mod tests {
     fn a_provider_id_that_is_not_one_makes_no_grant() {
         assert_eq!(grant_id("anthropic").as_deref(), Ok("orden-anthropic"));
         assert_eq!(grant_id("compatible-2").as_deref(), Ok("orden-compatible-2"));
-        assert_eq!(grant_id_from(BUILT_IN_BEFORE, "anthropic").as_deref(), Ok("nib-anthropic"));
         for bad in ["", "a b", "../x", &"x".repeat(49)] {
             assert!(grant_id(bad).is_err(), "{bad:?}");
         }

@@ -199,7 +199,6 @@ struct CanvasFile {
     #[serde(default)]
     nodes: Vec<serde_json::Value>,
     orden: Option<CanvasOwn>,
-    nib: Option<CanvasOwn>,
 }
 #[derive(Default, Deserialize)]
 struct CanvasOwn {
@@ -236,7 +235,7 @@ fn said(value: Option<String>) -> Option<String> {
 }
 fn canvas_note(relative: String, body: &str) -> Note {
     let read: CanvasFile = serde_json::from_str(body).unwrap_or_default();
-    let own = read.orden.or(read.nib).unwrap_or_default();
+    let own = read.orden.unwrap_or_default();
     let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
     let links: Vec<Link> = read.nodes.iter().filter_map(card_link).collect();
     Note {
@@ -269,9 +268,8 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         blocks: Vec::new(),
         links: Vec::new(),
         tags: Vec::new(),
-        icon: key_of(content, "orden-chosen-icon").or_else(|| key_of(content, "nib-chosen-icon")),
-        icon_color: key_of(content, "orden-chosen-color")
-            .or_else(|| key_of(content, "nib-chosen-color")),
+        icon: key_of(content, "orden-chosen-icon"),
+        icon_color: key_of(content, "orden-chosen-color"),
         aliases: Vec::new(),
         url: None,
         favicon: favicon_of(content),
@@ -285,7 +283,7 @@ fn shortcut_note(relative: String, content: &str) -> Note {
     }
 }
 fn favicon_of(content: &str) -> Option<String> {
-    key_of(content, "orden-icon").or_else(|| key_of(content, "nib-icon"))
+    key_of(content, "orden-icon")
 }
 fn address_of(content: &str) -> Option<String> {
     let said = if content.contains("<key>URL</key>") {
@@ -1310,7 +1308,7 @@ mod tests {
             favicon_of("orden-icon=https://a.example/i.png").as_deref(),
             Some("https://a.example/i.png")
         );
-        assert!(favicon_of("Nib-Icon=   ").is_none());
+        assert!(favicon_of("Orden-Icon=   ").is_none());
         assert!(favicon_of("URL=https://a.example/").is_none());
     }
     #[test]
@@ -1634,27 +1632,6 @@ mod tests {
         assert_eq!(read.icon.as_deref(), Some("rocket"));
         assert_eq!(read.name, "Board.canvas");
         assert_eq!(read.path, "boards/Board.canvas");
-    }
-    #[test]
-    fn a_canvas_written_under_the_old_name_still_wears_its_icon() {
-        let old = canvas_note(
-            "Board.canvas".to_string(),
-            r#"{"nodes":[],"nib":{"version":1,"icon":"rocket"}}"#,
-        );
-        assert_eq!(old.icon.as_deref(), Some("rocket"));
-        let both = canvas_note(
-            "Board.canvas".to_string(),
-            r#"{"nodes":[],"orden":{"icon":"star"},"nib":{"icon":"rocket"}}"#,
-        );
-        assert_eq!(both.icon.as_deref(), Some("star"));
-    }
-    #[test]
-    fn a_website_written_under_the_old_name_still_wears_its_icon() {
-        let old = "[InternetShortcut]\nURL=https://a.example/\nNib-Icon=https://a.example/i.png\nNib-Chosen-Icon=rocket\nNib-Chosen-Color=violet\n";
-        assert_eq!(favicon_of(old).as_deref(), Some("https://a.example/i.png"));
-        let read = shortcut_note("A.url".to_string(), old);
-        assert_eq!(read.icon.as_deref(), Some("rocket"));
-        assert_eq!(read.icon_color.as_deref(), Some("violet"));
     }
     #[test]
     fn a_canvas_that_says_nothing_wears_nothing() {

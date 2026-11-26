@@ -871,32 +871,14 @@ exec node '{}' {name} \"$@\"
             on();
             off();
             holds(theirs);
-            for enrolling in [true, false] {
-                start(json!({ "nib": ours() }));
-                for _ in 0..2 {
-                    if enrolling {
-                        on();
-                    } else {
-                        carry();
-                    }
-                }
-                holds(json!({ "orden": ours() }));
-            }
-            start(json!({ "nib": ours(), "orden": ours() }));
+            let aside = json!({ "other": ours() });
+            start(aside.clone());
             carry();
-            holds(json!({ "orden": ours() }));
-            start(json!({ "nib": elsewhere() }));
-            carry();
-            holds(json!({ "nib": elsewhere() }));
+            holds(aside);
             on();
-            holds(json!({ "nib": elsewhere(), "orden": ours() }));
-            let kept_both = json!({ "nib": ours(), "orden": elsewhere() });
-            start(kept_both.clone());
-            on();
-            holds(kept_both);
-            start(json!({ "nib": ours(), "orden": elsewhere() }));
+            holds(json!({ "other": ours(), "orden": ours() }));
             off();
-            holds(json!({ "orden": elsewhere() }));
+            holds(json!({ "other": ours() }));
             std::fs::remove_file(&kept).ok();
         }
     }
