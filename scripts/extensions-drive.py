@@ -26,16 +26,19 @@ def listed():
 def ours(all_of):
     return [one for one in all_of or [] if one.get("name") == NAME]
 def settings_rows():
+    began = time.monotonic()
     run("(orden.settings.show('browser'), 'shown')")
-    for _ in range(40):
+    said = None
+    for _ in range(200):
         said = run(
             "(() => { const head = [...document.querySelectorAll('h3')].find((one) => one.innerText.trim() === 'Extensions');"
             " if (!head) return null; const card = head.nextElementSibling; return 'rows: ' + (card ? card.innerText : '') })()"
         )
-        if said:
+        if said and said.strip() != "rows:":
+            print(f"Settings > Browser > Extensions filled {time.monotonic() - began:.2f} s after it was opened", flush=True)
             return said
-        time.sleep(0.5)
-    return None
+        time.sleep(0.1)
+    return said
 def closed():
     run("(orden.settings.hide ? orden.settings.hide() : (orden.settings.open = false), 'closed')")
     time.sleep(0.5)
