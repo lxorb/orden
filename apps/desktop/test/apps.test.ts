@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { distOf, ORDEN_APPS, ordenApp } from '../app-build'
+import { distOf, leftOut, ORDEN_APPS, ordenApp } from '../app-build'
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const TAURI = join(APP, 'src-tauri')
@@ -78,8 +78,22 @@ describe('the apps one project builds (#2286)', () => {
     const config = read(APP, 'vite.config.ts')
     const ai = /const NAMES_AI = \/([^/]+)\//.exec(config)?.[1]?.split('|') ?? []
     expect(ai.length).toBeGreaterThan(5)
-    expect(kept).toContain('notes: [...AI,')
-    for (const name of [...ai, 'tasks-views', 'pass-ui']) expect(kept, name).toContain(`'${name}'`)
+    expect(kept).toContain('[...AI, ...names]')
+    for (const name of ai) expect(kept, name).toContain(`'${name}'`)
+    expect(guard).toContain("readFileSync(join(DESKTOP, 'left-out.json')")
+    for (const name of [
+      'tasks-views',
+      'pass-ui',
+      'chats-client',
+      'terminal',
+      'explorer',
+      'time',
+      'demo',
+      'web-tab',
+      'pass-sync',
+    ])
+      expect(leftOut('notes'), name).toContain(name)
+    expect(leftOut('orden')).toEqual([])
     const workflow = read(APP, '..', '..', '.github', 'workflows', 'check.yml')
     expect(workflow).toContain('node scripts/app-modules.mjs --check notes')
   })

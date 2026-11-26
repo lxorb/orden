@@ -895,7 +895,9 @@ class Pages {
         if (said.icon && !page.inPrivate) {
           void import('./favicons').then((one) => one.saw(at, said.icon))
           const title = page.title
-          void import('./site-icons.svelte').then((one) => one.siteIcons.saw(at, title, said.icon))
+          void import('../../icons/src/api')
+            .then((one) => one.siteIconSet())
+            .then((one) => one.siteIcons.saw(at, title, said.icon))
         }
         const path = page.path
         if (said.icon && path) {

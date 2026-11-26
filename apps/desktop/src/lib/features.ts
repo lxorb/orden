@@ -108,17 +108,13 @@ registerSurfaces({
   graph: loadGraph,
   settings: () => Promise.all([loadSettingsPanel(), registered()]).then(([one]) => one),
   view: () => import('./views/src/api').then((one) => one.loadViewTab()),
-  terminal: () => import('./terminal/src/api').then((one) => one.loadTerminalTab()),
   reading: () => import('./reading/src/api').then((one) => one.loadReading()),
   'find-bar': () => import('./reading/src/api').then((one) => ({ default: one.FindBar })),
   publish: () => import('./publishing/src/api').then((one) => one.loadPublishSheet()),
   import: () => import('./import/src/api').then((one) => one.loadImportSheet()),
   'recording-pill': () => import('./dictation/src/api').then((one) => one.loadRecordingPill()),
   overview: () => import('./overview/src/api').then((one) => one.loadOverview()),
-  'host-picker': () => import('./terminal/src/api').then((one) => one.loadHostPicker()),
-  'terminal-mark': () => import('./terminal/src/api').then((one) => one.loadTerminalMark()),
   'quick-add': () => import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
-  'private-mark': loadPrivateMark,
   'search-panel': loadSearchPanel,
   links: () => import('./links-panel/src/api').then((one) => one.loadLinksPanel()),
 })
@@ -182,14 +178,18 @@ registerSurfaces({
         time: () => import('./time/src/api').then((one) => one.loadTimeTab()),
         pass: () => import('./pass-ui/src/api').then((one) => one.loadPassTab()),
         'pass-fill': () => import('./pass-ui/src/api').then((one) => one.loadPassFill()),
+        terminal: () => import('./terminal/src/api').then((one) => one.loadTerminalTab()),
+        'host-picker': () => import('./terminal/src/api').then((one) => one.loadHostPicker()),
+        'terminal-mark': () => import('./terminal/src/api').then((one) => one.loadTerminalMark()),
+        explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
+        'private-mark': loadPrivateMark,
+        web: loadWebTab,
       }
     : {}),
   'import-tab': () => import('./import/src/api').then((one) => one.loadImportTab()),
   'import-mark': () => import('./import/src/api').then((one) => one.loadImportMark()),
   pages: () => import('./pages/src/api').then((one) => one.loadPages()),
   'pages-navigator': () => import('./pages/src/api').then((one) => one.loadNavigator()),
-  web: loadWebTab,
-  explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
   ...(__AI__
     ? {
         'takeover-bar': () => import('./agents/src/api').then((one) => one.loadTakeoverBar()),
@@ -223,10 +223,15 @@ if (__AI__) {
 }
 if (__ORDEN_APP__ === 'orden') registerFeature(() => import('./chats-client/src/api'))
 registerFeature(() => import('./crash-reports/src/api'))
-registerFeature(() => import('./terminal/src/api'))
+if (__ORDEN_APP__ === 'orden') registerFeature(() => import('./terminal/src/api'))
 registerFeature(() => import('./auto-tidy/src/api'))
-registerTabKind('terminal', async () => (await import('./terminal/src/api')).terminalTabKind())
-registerCommand('app.new-private', async () => (await (await import('./web-tab/src/api')).privateWindows()).openPrivate)
+if (__ORDEN_APP__ === 'orden')
+  registerTabKind('terminal', async () => (await import('./terminal/src/api')).terminalTabKind())
+if (__ORDEN_APP__ === 'orden')
+  registerCommand(
+    'app.new-private',
+    async () => (await (await import('./web-tab/src/api')).privateWindows()).openPrivate,
+  )
 if (__AI__) {
   registerCommand(
     'app.ask-selection',
@@ -234,35 +239,42 @@ if (__AI__) {
   )
   registerCommand('agents.stop', async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents)
 }
-registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
-registerCommand('explorer.turn', async () => (await import('./explorer/src/api')).turnExplorer)
+if (__ORDEN_APP__ === 'orden') {
+  registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
+  registerCommand('explorer.turn', async () => (await import('./explorer/src/api')).turnExplorer)
+}
 registerCommand('app.handwriting', async () => {
   const { handwrite } = await (await import('./canvas/src/api')).handwriting()
   return () => void handwrite()
 })
-providePort('explorer.show', {
-  offered: () => hiddenKinds.offers('explorer'),
-  show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
-})
-providePort('explorer.carry', {
-  carry: async (paths, into, how) => (await import('./explorer/src/api')).carry(null, paths, into, how),
-})
-providePort('web.sites', {
-  dropped: async (folder, list, html) => {
-    const [{ siteDropped }, { workspace }] = await Promise.all([siteDropping(), import('./workspace/src/api')])
-    return siteDropped(workspace, folder, list, html)
-  },
-  showData: async (path) => (await webDataSheet()).showWebData(path),
-})
+if (__ORDEN_APP__ === 'orden') {
+  providePort('explorer.show', {
+    offered: () => hiddenKinds.offers('explorer'),
+    show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
+  })
+  providePort('explorer.carry', {
+    carry: async (paths, into, how) => (await import('./explorer/src/api')).carry(null, paths, into, how),
+  })
+}
+if (__ORDEN_APP__ === 'orden')
+  providePort('web.sites', {
+    dropped: async (folder, list, html) => {
+      const [{ siteDropped }, { workspace }] = await Promise.all([siteDropping(), import('./workspace/src/api')])
+      return siteDropped(workspace, folder, list, html)
+    },
+    showData: async (path) => (await webDataSheet()).showWebData(path),
+  })
 providePort('archive', { archive, unarchive, show: showArchive })
 providePort('publishing', {
   show: async (space) => (await import('./publishing/src/api')).publish.show(space),
 })
 providePort('web.siteIcons', {
-  held: async () => (await (await import('./web-tab/src/api')).siteIconSet()).siteIcons,
+  held: async () => (await (await import('./icons/src/api')).siteIconSet()).siteIcons,
 })
-if (__ORDEN_APP__ === 'orden') registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
-registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+if (__ORDEN_APP__ === 'orden') {
+  registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
+  registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
+}
 if (__AI__) {
   registerCommand('ai.tab', async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab)
   registerCommand('ai.threads', async () => {
@@ -277,7 +289,8 @@ if (__ORDEN_APP__ === 'orden') {
   registerCommandRows('send', async () => (await import('./chats-client/src/api')).sendRows)
   registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
 }
-registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
+if (__ORDEN_APP__ === 'orden')
+  registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
 registerHearing(async () => (await (await import('./pdf/src/api')).handed()).hearPdfs)
 if (__ORDEN_APP__ === 'orden') registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
 if (__AI__) {

@@ -41,43 +41,45 @@ serveWorkspace({
   readPapers: async (root, files, tree) => (await import('./pdf/src/api')).readPapers(root, files, tree),
   sheets: () => import('./pdf/src/api'),
   pdfPages: pdfTabs,
-  sites: {
-    heldElsewhere: async (path) => (await oneWindow()).heldElsewhere(path),
-    showElsewhere: async (path) => (await oneWindow()).showElsewhere(path),
-    asShortcut: async (ws, path) => (await websiteConverting()).asShortcut(ws, path),
-    convertWebsites: async (ws) => (await websiteConverting()).convertWebsites(ws),
-    webUrlOf: async (text) => (await webNotes()).webUrlOf(text),
-    newSite: async (ws, dir, named) => (await siteMaking()).newSite(ws, dir, named),
-    aimed: async (ws, tab, url) => (await pageAiming()).aimed(ws, tab, url),
-    zoomStep: async (tab, step) => {
-      const { zoomStep } = await pageZoom()
-      zoomStep(tab, pages.of(tab), step)
+})
+if (__ORDEN_APP__ === 'orden') {
+  serveWorkspace({
+    sites: {
+      heldElsewhere: async (path) => (await oneWindow()).heldElsewhere(path),
+      showElsewhere: async (path) => (await oneWindow()).showElsewhere(path),
+      asShortcut: async (ws, path) => (await websiteConverting()).asShortcut(ws, path),
+      convertWebsites: async (ws) => (await websiteConverting()).convertWebsites(ws),
+      webUrlOf: async (text) => (await webNotes()).webUrlOf(text),
+      newSite: async (ws, dir, named) => (await siteMaking()).newSite(ws, dir, named),
+      aimed: async (ws, tab, url) => (await pageAiming()).aimed(ws, tab, url),
+      zoomStep: async (tab, step) => {
+        const { zoomStep } = await pageZoom()
+        zoomStep(tab, pages.of(tab), step)
+      },
     },
-  },
-  webData: webDataStores,
-})
-serveWorkspace({
-  undoOutside: async (action) => (await import('./explorer/src/api')).undoOutside(action),
-  redoOutside: async (action) => (await import('./explorer/src/api')).redoOutside(action),
-  explorerStep: async (tab, by) => {
-    const view = (await import('./explorer/src/api')).viewOf(tab)
-    await (by < 0 ? view.back() : view.forward())
-  },
-  mayEnd: async (closing, every) => (await import('./terminal/src/api')).mayEnd(closing, every),
-  terminalMoved: async (doc, from, to) => {
-    const { moveHistory, readSpec } = await import('./terminal/src/api')
-    const key = readSpec(doc)?.key ?? ''
-    moveHistory({ space: from, key }, { space: to, key })
-  },
-  chatsCarried: async (path, folder) => (await import('./chats-client/src/api')).chatsCarried(path, folder),
-})
-whenPortProvided('workspace.view', (view) =>
-  view.follow((op) => {
-    if (op.op !== 'moved') return
-    return import('./explorer/src/api').then(
-      ({ moved }) => moved(op.from, op.to),
-      () => undefined,
-    )
-  }),
-)
+    webData: webDataStores,
+    undoOutside: async (action) => (await import('./explorer/src/api')).undoOutside(action),
+    redoOutside: async (action) => (await import('./explorer/src/api')).redoOutside(action),
+    explorerStep: async (tab, by) => {
+      const view = (await import('./explorer/src/api')).viewOf(tab)
+      await (by < 0 ? view.back() : view.forward())
+    },
+    mayEnd: async (closing, every) => (await import('./terminal/src/api')).mayEnd(closing, every),
+    terminalMoved: async (doc, from, to) => {
+      const { moveHistory, readSpec } = await import('./terminal/src/api')
+      const key = readSpec(doc)?.key ?? ''
+      moveHistory({ space: from, key }, { space: to, key })
+    },
+    chatsCarried: async (path, folder) => (await import('./chats-client/src/api')).chatsCarried(path, folder),
+  })
+  whenPortProvided('workspace.view', (view) =>
+    view.follow((op) => {
+      if (op.op !== 'moved') return
+      return import('./explorer/src/api').then(
+        ({ moved }) => moved(op.from, op.to),
+        () => undefined,
+      )
+    }),
+  )
+}
 providePort('spaces.archived', { listed: async () => (await spaceArchiving()).listed() })
