@@ -16,8 +16,10 @@ export interface ChromeHost {
   add(axis: Axis): void
   chose(axis: Axis, index: number, grip: HTMLElement): void
   lift(axis: Axis, index: number | null): void
+  resized(): void
 }
 const A_DRAG = 4
+const SCREEN_EDGE = 8
 function glyph(path: string, box: string): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
   svg.setAttribute('viewBox', box)
@@ -44,6 +46,7 @@ export class TableChrome {
   private readonly stands: Record<Axis, number> = { row: -1, column: -1 }
   private hovered: CellAddress | null = null
   private inside = false
+  private near = false
   private carrying: (() => void) | null = null
   constructor(private readonly host: ChromeHost) {
     this.grips = {
@@ -97,7 +100,8 @@ export class TableChrome {
     const focused = host.focused()
     const at = this.hovered ?? focused
     const near = host.writable() && (this.inside || focused !== null)
-    host.dom.classList.toggle('is-near', near)
+    if (host.dom.classList.toggle('is-near', near) !== this.near) host.resized()
+    this.near = near
     const wrap = host.dom.getBoundingClientRect()
     const seen = host.scroller.getBoundingClientRect()
     const table = host.table.getBoundingClientRect()
@@ -118,7 +122,9 @@ export class TableChrome {
     const right = Math.min(table.right, seen.right)
     this.adds.row.style.width = `${Math.max(0, right - table.left)}px`
     this.adds.row.style.top = `${table.bottom - wrap.top}px`
+    const room = (document.documentElement.clientWidth || Infinity) - this.adds.column.offsetWidth - SCREEN_EDGE
     this.adds.column.style.left = `${right - wrap.left}px`
+    this.adds.column.classList.toggle('is-past', table.right > seen.right + 1 || right > room)
     this.adds.column.style.height = `${table.height}px`
   }
   private pressed(event: PointerEvent, axis: Axis) {

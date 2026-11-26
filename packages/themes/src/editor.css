@@ -848,6 +848,30 @@
   stroke-width: 1.4;
   stroke-linecap: round;
 }
+.orden-table-wrap .orden-table-add-column.is-past {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (hover: none) {
+  .orden-table-wrap.is-near {
+    padding-bottom: 28px;
+  }
+  .orden-table-add-row {
+    height: 36px;
+  }
+  .orden-table-add-column {
+    width: 36px;
+  }
+  .orden-table-add svg {
+    width: 14px;
+    height: 14px;
+  }
+  .orden-table-grip::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+}
 .orden-table-drop {
   position: absolute;
   display: none;
