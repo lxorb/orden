@@ -125,7 +125,7 @@
     }, 3000)
   }
   if (isDesktop && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
-  if ((globalThis as { __ORDEN_FORMER__?: { left?: unknown[] } | null }).__ORDEN_FORMER__?.left?.length) {
+  if (isDesktop && (globalThis as { __ORDEN_FORMER__?: { left?: unknown[] } | null }).__ORDEN_FORMER__?.left?.length) {
     void formerLeftNotice.ask()
   }
   if (isDesktop && crashAskDue()) {

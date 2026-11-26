@@ -47,3 +47,23 @@ test('reads what is left again on asking, and keeps what it knew when the app wo
   await one.look()
   expect(one.left).toEqual(['/old/ch.emilvinu.x'])
 })
+test('speaks of one folder as one and of several as several, and the notice counts them without naming a path', async () => {
+  const { leftWords } = await import('./former-left.svelte')
+  expect(leftWords(1)).toEqual({
+    title: 'Old folder',
+    caption:
+      'Orden could not move everything out of the folder it used before. Nothing was lost. What is left is still there.',
+    toast:
+      'Orden could not move everything out of the folder it used before. Nothing was lost. What is left is still in that folder, which Settings shows.',
+  })
+  expect(leftWords(3)).toEqual({
+    title: 'Old folders',
+    caption:
+      'Orden could not move everything out of the folders it used before. Nothing was lost. What is left is still there.',
+    toast:
+      'Orden could not move everything out of the folders it used before. Nothing was lost. What is left is still in 3 folders, which Settings lists.',
+  })
+  const many = await launched(['/old/a', '/old/b'])
+  expect(many.said.toast).toContain('2 folders')
+  expect(many.said.toast).not.toContain('/old/')
+})

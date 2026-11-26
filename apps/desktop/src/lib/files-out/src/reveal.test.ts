@@ -89,7 +89,7 @@ describe('showing a file where it sits', () => {
       'ai-chat/src/store/path-open.ts',
       'commands/src/commands.ts',
       'files-out/src/save.ts',
-      'settings/src/general-pane.ts',
+      'settings/src/former-group.ts',
       'web-tab/src/downloads.svelte.ts',
       'workspace/src/workspace.svelte.ts',
     ])
