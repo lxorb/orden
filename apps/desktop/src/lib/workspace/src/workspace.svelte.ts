@@ -3581,4 +3581,5 @@ providePort('workspace.notes', {
   toggleTaskAt: async (path, line, hash) => {
     await workspace.toggleTaskAt(path, line, hash)
   },
+  settled: () => workspace.savingSettled(),
 })

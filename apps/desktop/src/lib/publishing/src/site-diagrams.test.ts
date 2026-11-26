@@ -1,3 +1,4 @@
+import { providePort, workspaceNotes } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 interface World {
@@ -178,6 +179,19 @@ describe('what a publish sends', () => {
       expect(svg).toContain('<?xml version="1.0"')
       expect(svg).toContain('width="303"')
     }
+  })
+  test('holds a diagram typed into an open note just before, as the open notes settle before any is read', async () => {
+    world.files = { 'One.md': '# One\n' }
+    const stop = providePort('workspace.notes', {
+      ...workspaceNotes(),
+      settled: () => {
+        world.files['One.md'] = `# One\n\n${FENCE}`
+        return Promise.resolve()
+      },
+    })
+    const done = await pushDiagrams('token', SPACE, '/vault/space')
+    stop()
+    expect(done).toEqual({ sent: 2, refused: 0 })
   })
   test('says what each name was hashed from', async () => {
     world.files = { 'One.md': `# One\n\n${FENCE}` }

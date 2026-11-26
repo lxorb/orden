@@ -1,4 +1,4 @@
-import type { Entry } from '@orden/contracts'
+import { type Entry, workspaceNotes } from '@orden/contracts'
 import { codeBlocks } from '@orden/markdown'
 import { DIAGRAM_SCHEMES, type DiagramScheme, diagramKey, isDiagram } from '@orden/markdown/diagrams'
 import { api } from '../../accounts/src/api'
@@ -69,6 +69,7 @@ function alreadySent(spaceId: string): Set<string> {
   return new Set(Array.isArray(held) ? held.filter((one): one is string => typeof one === 'string') : [])
 }
 async function notesIn(root: string): Promise<string[]> {
+  await workspaceNotes().settled()
   const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
   if (!tree) return []
   const paths: string[] = []

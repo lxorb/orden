@@ -18,6 +18,7 @@ providePort('workspace.notes', {
   leftOut: () => ['Archive', 'AGENTS.md'],
   openAt: () => Promise.resolve(),
   toggleTaskAt: () => Promise.resolve(),
+  settled: () => Promise.resolve(),
 })
 const { queryRowsHtml } = await import('./query-block')
 const hit = (over: Partial<Hit> = {}): Hit => ({
