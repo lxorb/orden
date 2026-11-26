@@ -93,6 +93,7 @@ export const scratchpadCard = held(from('scratchpad-card') as Loaded<Component<{
 export const recordingPill = latched(from('recording-pill') as Shown)
 export const joinPending = latched(() => import('../../sharing/src/api').then((one) => one.loadJoinPending()))
 export const renameNotice = latched(() => import('./RenameNotice.svelte'))
+export const webEndingNotice = latched(() => import('./WebEnding.svelte'))
 export const keysMovedNotice = latched(from('keys-moved') as Shown)
 export const formerLeftNotice = latched(() => import('./FormerLeft.svelte'))
 export const outsideNotice = latched(() => {

@@ -96,6 +96,7 @@
     formerLeftNotice,
     keysMovedNotice,
     outsideNotice,
+    webEndingNotice,
     crashAsk,
     crashAskDue,
   } from './lib/surfaces/src/api'
@@ -125,6 +126,7 @@
     }, 3000)
   }
   if (isDesktop && storedText(OUTSIDE_FOLDER) !== null) void outsideNotice.ask()
+  if (!isNative) void webEndingNotice.ask()
   if ((globalThis as { __ORDEN_FORMER__?: { left?: unknown[] } | null }).__ORDEN_FORMER__?.left?.length) {
     void formerLeftNotice.ask()
   }
@@ -799,6 +801,11 @@
       {#if formerLeftNotice.asked}
         {#await formerLeftNotice.asked then FormerLeft}
           <FormerLeft />
+        {/await}
+      {/if}
+      {#if webEndingNotice.asked}
+        {#await webEndingNotice.asked then WebEnding}
+          <WebEnding />
         {/await}
       {/if}
       {#if renamed.showing && renameNotice.asked}
