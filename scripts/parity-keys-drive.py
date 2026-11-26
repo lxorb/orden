@@ -348,6 +348,23 @@ class Windows:
             named = next((pair for pair in names if pair), None)
             found[one.id] = {"kind": "/".join(named) if named else "unnamed", "box": [shape.x, shape.y, shape.x + shape.width, shape.y + shape.height], "owner": 0}
         return found
+    def above(self) -> list[str]:
+        if PLATFORM == "windows":
+            from probe_app import family, look
+            user32 = ctypes.WinDLL("user32", use_last_error=True)
+            return [
+                f"{one.kind} 0x{one.hwnd:X}"
+                for one in look(family(self.pid)).windows
+                if one.visible and one.box[2] - one.box[0] > 1 and one.box[3] - one.box[1] > 1 and user32.GetWindowLongW(one.hwnd, -20) & 0x8
+            ]
+        if MAC:
+            Q = self.Q
+            return [
+                f"{one.get('kCGWindowName', '') or 'unnamed'} layer {int(one.get('kCGWindowLayer', 0))}"
+                for one in Q.CGWindowListCopyWindowInfo(Q.kCGWindowListOptionOnScreenOnly, Q.kCGNullWindowID) or []
+                if int(one.get("kCGWindowOwnerPID", 0)) == self.pid and 0 < int(one.get("kCGWindowLayer", 0)) < 1000
+            ]
+        return []
     def close(self, ids: list[Any]) -> None:
         if PLATFORM == "windows":
             user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -373,6 +390,16 @@ class Windows:
                 if pick is not None:
                     print(f"pressed {titles[buttons.index(pick)]!r} on a window the keys did not close", flush=True)
                     AS.AXUIElementPerformAction(pick, "AXPress")
+NOTICE_WATCH = """
+window.__notices = []
+const said = document.querySelector('.orden-said[role=status]')
+window.__noticeWatch?.disconnect()
+if (said) {
+  window.__noticeWatch = new MutationObserver(() => window.__notices.push(said.textContent))
+  window.__noticeWatch.observe(said, { childList: true, characterData: true, subtree: true })
+}
+return !!said
+"""
 MENU_NOW = """(() => {
   const menu = [...document.querySelectorAll('[role=menu]')].find((one) => one.offsetParent !== null || one.getClientRects().length)
   if (!menu) return { items: [], active: null }
@@ -1306,7 +1333,9 @@ return true
             return
         count = "orden.invoke('web_downloads').then((all) => all.length, () => -1)"
         before = self.js(count)
+        self.js(NOTICE_WATCH)
         got = self.seen(lambda: self.keys.click(*self.in_page(99, 384)), 4.0)
+        above = self.windows.above()
         left = self.dismissed(got)
         after = before
         until = time.monotonic() + 5
@@ -1314,10 +1343,12 @@ return true
             after = self.js(count)
             time.sleep(0.3)
         listed = isinstance(before, int) and isinstance(after, int) and after > before >= 0
-        web = {"drawn": got["drawn"], "windows": sorted({one["kind"] for one in got["windows"]}), "layers": [one["name"] for one in got["layers"]], "listed by Orden": listed}
+        notice = self.js("return window.__notices || []")
+        noticed = isinstance(notice, list) and any("Downloading" in str(one) for one in notice)
+        web = {"drawn": got["drawn"], "windows": sorted({one["kind"] for one in got["windows"]}), "layers": [one["name"] for one in got["layers"]], "listed by Orden": listed, "Orden's notice": notice, "above other apps": above}
         if left:
             web["left open"] = len(left)
-        self.row(7, "a download asks nothing of the system and lands in Orden's list", web, "no note counterpart: Orden keeps its own downloads list", got["drawn"] != "system" and got["drawn"] != "both" and listed)
+        self.row(7, "a download asks nothing of the system, shows no Chromium bubble or window, keeps nothing above other apps, and lands in Orden's list with Orden's own notice", web, "no note counterpart: Orden keeps its own downloads list", got["drawn"] != "system" and got["drawn"] != "both" and not got["windows"] and not above and listed and noticed)
     reader_unsure = ""
     def reader(self) -> None:
         self.reset()
