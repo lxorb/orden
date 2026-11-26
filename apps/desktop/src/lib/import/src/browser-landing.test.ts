@@ -18,7 +18,6 @@ let marksOf: Record<string, string> = {}
 let history: unknown[] = []
 const asked: string[] = []
 const brought: { rows: unknown }[] = []
-const offeredEngines: unknown[] = []
 const written: { root: string; files: Planned[] }[] = []
 const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []
@@ -69,10 +68,6 @@ vi.mock('../../ui-kit/src/busy.svelte', () => ({
 providePort('web.pages', {
   ...webPages(),
   bringHistory: (rows) => Promise.resolve(void brought.push({ rows })),
-  takeEngine: (offered) => {
-    offeredEngines.push(offered)
-    return Promise.resolve('taken')
-  },
 })
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('../../workspace/src/api', () => {
@@ -130,7 +125,6 @@ beforeEach(() => {
   marksOf = {}
   history = []
   brought.length = 0
-  offeredEngines.length = 0
   asked.length = 0
   written.length = 0
   spaces.length = 0
@@ -165,7 +159,6 @@ describe('a Firefox profile brought into Orden', () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
     files.set('search.json.mozlz4', packed(ENGINES))
     await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'search.json.mozlz4'] }, false)
-    expect(offeredEngines).toEqual([])
     expect(asked.some((one) => one.includes('search.json'))).toBe(false)
     expect(said.join(' ')).not.toMatch(/search/i)
   })
@@ -209,7 +202,6 @@ describe('a Chrome profile brought into Orden', () => {
     files.set('Bookmarks', bookmarksFile())
     files.set('Preferences', toBase64(new TextEncoder().encode(JSON.stringify(PREFERENCES))))
     await landBrowser({ ...CHROME, files: [...CHROME.files, 'Preferences'] }, false)
-    expect(offeredEngines).toEqual([])
     expect(asked.some((one) => one.includes('Preferences'))).toBe(false)
     expect(said.join(' ')).not.toMatch(/search/i)
   })

@@ -59,7 +59,7 @@ export function sectionGroups(): Item[][] {
     [
       { id: 'trash', label: 'Recently deleted' },
       { id: 'archived', label: 'Archived spaces' },
-      { id: 'import', label: 'Import' },
+      { id: 'import', label: 'Import files' },
     ],
   ]
 }

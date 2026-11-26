@@ -23,8 +23,6 @@ export interface PressedKey {
   readonly repeat: boolean
   readonly down: boolean
 }
-export type OfferedEngine = { readonly id: string } | { readonly custom: string }
-export type EngineTaken = 'same' | 'taken' | 'kept'
 export interface WebClip {
   readonly url: string
   readonly title: string
@@ -59,7 +57,6 @@ export interface WebPagesPort {
   carryIn(paths: readonly string[]): void
   carriedIn(): void
   bringHistory(rows: readonly unknown[]): Promise<void>
-  takeEngine(engine: OfferedEngine): Promise<EngineTaken>
   searchHome(): Promise<string | null>
   replayKey(key: PressedKey): void
   articleOf(page: WebClip): Promise<string>
@@ -149,7 +146,6 @@ export const NO_WEB_PAGES: WebPagesPort = {
   carryIn: () => undefined,
   carriedIn: () => undefined,
   bringHistory: () => Promise.resolve(),
-  takeEngine: () => Promise.resolve('same'),
   searchHome: () => Promise.resolve(null),
   replayKey: () => undefined,
   articleOf: () => Promise.resolve(''),

@@ -1001,18 +1001,6 @@ providePort('web.pages', {
     const [visited, webData] = await Promise.all([history(), stores()])
     visited.brought(webData.history(), rows)
   },
-  takeEngine: async (engine) => {
-    const { CUSTOM, searchEngine } = await import('./search-engine.svelte')
-    const same =
-      'id' in engine
-        ? searchEngine.id === engine.id
-        : searchEngine.id === CUSTOM && searchEngine.custom === engine.custom
-    if (same) return 'same'
-    if (searchEngine.chosen) return 'kept'
-    if ('id' in engine) searchEngine.choose(engine.id)
-    else searchEngine.setCustom(engine.custom)
-    return 'taken'
-  },
   searchHome: async () => (await import('./search-engine.svelte')).searchEngine.home,
   replayKey: (key) => {
     replay(key)
