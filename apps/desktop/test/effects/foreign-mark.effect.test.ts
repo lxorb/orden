@@ -18,7 +18,7 @@ afterEach(() => {
 })
 test('another sync tool’s copy says which tool, and that it is not synced', () => {
   draw('C:\\Orden\\Work\\Hackathon List (# Name clash 2026-10-05 k3x9qaC #).md')
-  draw('/home/emil/Nib/Plan.sync-conflict-20231012-143052-CEIVOCO.md')
+  draw('/home/emil/Orden/Plan.sync-conflict-20231012-143052-CEIVOCO.md')
   expect(labels()).toEqual(['Proton conflict copy, not synced', 'Syncthing conflict copy, not synced'])
   expect(marks.querySelectorAll('.foreign')).toHaveLength(2)
 })
@@ -37,7 +37,7 @@ test('a foreign copy fades its row’s label and the mark before it itself, with
   const [icon, label] = [...row.children] as [HTMLElement, HTMLElement]
   const one = mount(SyncMark, {
     target: row,
-    props: { path: '/home/emil/Nib/Plan.sync-conflict-20231012-143052-CEIVOCO.md' },
+    props: { path: '/home/emil/Orden/Plan.sync-conflict-20231012-143052-CEIVOCO.md' },
   })
   flushSync()
   expect([icon, label].map((part) => part.style.opacity)).toEqual(['0.5', '0.5'])

@@ -1002,7 +1002,7 @@ def identifier_of(exe: Path, given: str | None = None) -> str | None:
     return None
 def refused(exe: Path, identifier: str | None) -> str:
     local = os.environ.get("LOCALAPPDATA")
-    for installed in ("Nib", "nibeditor", "Orden"):
+    for installed in ("Orden",):
         if local and exe.resolve().is_relative_to((Path(local) / installed).resolve()):
             return f"{exe} is the installed Orden"
     if not identifier:
@@ -1038,7 +1038,7 @@ class Native:
 def needs_of(source: str) -> tuple[str, ...]:
     found = re.search(r"^NEEDS = \(([^)]*)\)", source, re.MULTILINE)
     said = tuple(one.strip().strip("\"'") for one in found.group(1).split(",") if one.strip()) if found else ()
-    if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"(?:orden|nib)\.exe\"", source):
+    if "native" not in said and re.search(r"\bprobe_app\b|\bNative\(DRIVE\b|\"orden\.exe\"", source):
         said = (*said, "native")
     chromium_only = (
         r"\bnew_cdp_session\b|\bconnect_over_cdp\b|use-fake-device-for-media-stream|new Touch\("

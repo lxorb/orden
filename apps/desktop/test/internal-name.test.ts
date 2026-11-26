@@ -17,12 +17,12 @@ const MOVED_PACKAGES: readonly string[] = execFileSync('git', ['ls-files', '*pac
 const SAYING = ['apps/desktop/test/internal-name.test.ts', 'scripts/old-name.ts']
 const MOST: Record<Kind, number> = {
   package: 0,
-  identifier: 6,
-  scheme: 19,
-  key: 56,
+  identifier: 5,
+  scheme: 3,
+  key: 49,
   variable: 2,
-  dashed: 186,
-  word: 970,
+  dashed: 94,
+  word: 402,
 }
 describe('the old name inside the repo', () => {
   test('is looked for in the whole repo, so a checkout without git never passes by finding nothing', () => {
