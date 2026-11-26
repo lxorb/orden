@@ -90,6 +90,7 @@ jobs:
         from: [FIRST, ORDEN]
         scenario: [updater, silent, elsewhere, msi]
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -110,6 +111,17 @@ jobs:
           echo '3eb6f6dee3fd8c91604042060b9d658f08ec85d3fd0a14769119dfd78bc30851  SFTA.ps1' | sha256sum -c
           find new old -type f
 
+      - name: No release is within reach of the copy under test
+        shell: pwsh
+        env:
+          MANIFEST: ${{ github.server_url }}/${{ github.repository }}/releases/latest/download/latest.json
+        run: |
+          Add-Content -LiteralPath "$env:SystemRoot\System32\drivers\etc\hosts" -Value "`n0.0.0.0 $(([uri]$env:MANIFEST).Host)"
+          ipconfig /flushdns | Out-Null
+          $reached = $true
+          try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 30 $env:MANIFEST | Out-Null } catch { $reached = $false }
+          if ($reached) { throw "an old copy could still update itself from $env:MANIFEST" }
+
       - name: From ${{ env[matrix.from] }}, ${{ matrix.scenario }}
         shell: pwsh
         run: |
@@ -123,6 +135,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     needs: build
     runs-on: windows-11-arm
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -137,6 +150,17 @@ jobs:
         run: |
           gh release download "v$ORDEN" --repo "$GITHUB_REPOSITORY" --dir old --pattern "*-$ORDEN-windows-x64-setup.exe"
           find new old -type f
+
+      - name: No release is within reach of the copy under test
+        shell: pwsh
+        env:
+          MANIFEST: ${{ github.server_url }}/${{ github.repository }}/releases/latest/download/latest.json
+        run: |
+          Add-Content -LiteralPath "$env:SystemRoot\System32\drivers\etc\hosts" -Value "`n0.0.0.0 $(([uri]$env:MANIFEST).Host)"
+          ipconfig /flushdns | Out-Null
+          $reached = $true
+          try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 30 $env:MANIFEST | Out-Null } catch { $reached = $false }
+          if ($reached) { throw "an old copy could still update itself from $env:MANIFEST" }
 
       - name: An x64 install on an arm64 machine updates to the arm64 build
         shell: pwsh

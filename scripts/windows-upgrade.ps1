@@ -136,6 +136,25 @@ function Show([string]$when) {
   }
   Write-Host "http: $(Handler 'http' 20)"
   Write-Host "https: $(Handler 'https' 20)"
+  foreach ($one in @($where, $want) | Where-Object { $_ } | Select-Object -Unique) {
+    $at = Program $one
+    if ($at) { Write-Host "program: $at is $((Get-Item $at).VersionInfo.ProductVersion)" }
+  }
+}
+
+function Evidence {
+  Write-Host '--- what else ran a setup, and what the app said'
+  Get-ChildItem -LiteralPath $env:TEMP -Recurse -Filter '*.exe' -ErrorAction SilentlyContinue |
+    Where-Object { $_.VersionInfo.ProductName -eq $product -or $_.FullName -match 'updater|installer|setup' } |
+    ForEach-Object { Write-Host "  staged: $($_.FullName) $($_.VersionInfo.ProductVersion) $($_.LastWriteTime.ToString('HH:mm:ss'))" }
+  if ($dir -ne $want -and (Test-Path -LiteralPath $dir)) {
+    Get-ChildItem -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue | Select-Object -First 40 |
+      ForEach-Object { Write-Host "  left in the old folder: $($_.FullName)" }
+  }
+  Get-ChildItem -LiteralPath "$env:LOCALAPPDATA\so.orden.Orden\logs" -File -ErrorAction SilentlyContinue | ForEach-Object {
+    Write-Host "  == $($_.FullName)"
+    Get-Content -LiteralPath $_.FullName -Tail 60 | ForEach-Object { Write-Host "  $_" }
+  }
 }
 
 function Files([string]$dir) {
@@ -198,7 +217,9 @@ if ($Scenario -ne 'msi') {
 }
 Check "the program is in $want" (Test-Path $exe)
 Check 'and the program under its former name is gone' (-not (Test-Path "$want\nib.exe"))
-Check "and it is $version" ((Test-Path $exe) -and (Get-Item $exe).VersionInfo.ProductVersion -like "$version*")
+$found = if (Test-Path $exe) { (Get-Item $exe).VersionInfo.ProductVersion } else { 'missing' }
+Write-Host "  $exe is $found"
+Check "and it is $version" ($found -like "$version*")
 if ($Scenario -eq 'msi') {
   $entries = @(Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' |
       ForEach-Object { Get-ItemProperty $_.PSPath } |
@@ -289,5 +310,6 @@ $left = @("$programs\$product.lnk", "$desktop\$product.lnk", "$commonPrograms\$p
   Where-Object { Test-Path $_ }
 Check "no shortcut is left $left" (-not $left)
 
+if ($wrong.Count) { Evidence }
 Write-Host "$($wrong.Count) wrong"
 exit $wrong.Count
