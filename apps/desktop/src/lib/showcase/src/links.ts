@@ -75,35 +75,42 @@ function onArm({ userAgent, architecture }: Visitor): boolean {
   return ARM_AGENT.test(userAgent) || /^arm/i.test(architecture ?? '')
 }
 export const DOWNLOAD_ENDINGS = {
-  'windows-x64': '-windows-x64-setup.exe',
-  'windows-arm64': '-windows-arm64-setup.exe',
-  macos: '-macos-universal.dmg',
-  'linux-x64': '-linux-x64.AppImage',
-  'linux-arm64': '-linux-arm64.AppImage',
-  android: '-android.apk',
+  'windows-x64': ['-windows-x64-setup.exe'],
+  'windows-arm64': ['-windows-arm64-setup.exe'],
+  'macos-arm64': ['-macos-arm64.dmg', '-macos-universal.dmg'],
+  'macos-x64': ['-macos-x64.dmg', '-macos-universal.dmg'],
+  macos: ['-macos-universal.dmg', '-macos-x64.dmg'],
+  'linux-x64': ['-linux-x64.AppImage'],
+  'linux-arm64': ['-linux-arm64.AppImage'],
+  android: ['-android.apk'],
 } as const
 export type DownloadPlatform = keyof typeof DOWNLOAD_ENDINGS
 export const DOWNLOAD_PATH = '/download'
 export function isDownloadPlatform(name: unknown): name is DownloadPlatform {
   return typeof name === 'string' && Object.hasOwn(DOWNLOAD_ENDINGS, name)
 }
-function platformOf(system: Exclude<System, 'ios'>, arm: boolean): DownloadPlatform {
-  if (system === 'android' || system === 'macos') return system
-  return `${system}-${arm ? 'arm64' : 'x64'}`
+function platformOf(system: Exclude<System, 'ios'>, visitor: Visitor): DownloadPlatform {
+  if (system === 'android') return system
+  if (system === 'macos') {
+    if (/^arm/i.test(visitor.architecture ?? '')) return 'macos-arm64'
+    return /^x86/i.test(visitor.architecture ?? '') ? 'macos-x64' : 'macos'
+  }
+  return `${system}-${onArm(visitor) ? 'arm64' : 'x64'}`
 }
 export function downloadFor(visitor: Visitor, site = SITE_ORIGIN, app = `${APP_ORIGIN}/`): Download {
   const system = systemOf(visitor)
   if (system === 'ios') return { label: 'Open the web app', href: app }
   if (!system) return { label: 'Download', href: `${site}${DOWNLOAD_PATH}` }
-  return { label: LABELS[system], href: `${site}${DOWNLOAD_PATH}/${platformOf(system, onArm(visitor))}` }
+  return { label: LABELS[system], href: `${site}${DOWNLOAD_PATH}/${platformOf(system, visitor)}` }
 }
 export function assetFor(platform: DownloadPlatform | null, assets: readonly ReleaseAsset[]): string {
   if (!platform) return LATEST_RELEASE
-  const ending = DOWNLOAD_ENDINGS[platform]
-  const asset = assets.find(
-    ({ name, url }) => name.startsWith('Orden-') && name.endsWith(ending) && url.startsWith(ASSET_HOME),
-  )
-  return asset?.url ?? LATEST_RELEASE
+  const ours = assets.filter(({ name, url }) => name.startsWith('Orden-') && url.startsWith(ASSET_HOME))
+  for (const ending of DOWNLOAD_ENDINGS[platform]) {
+    const asset = ours.find(({ name }) => name.endsWith(ending))
+    if (asset) return asset.url
+  }
+  return LATEST_RELEASE
 }
 export function releaseTag(body: unknown): string | null {
   const tag = (body as { tag_name?: unknown } | null)?.tag_name

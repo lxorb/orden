@@ -179,6 +179,8 @@ describe('the download button', () => {
   test('sends each system to its own short link on the site, which the site Worker counts', () => {
     const link = (platform: string) => `${SITE_ORIGIN}/download/${platform}`
     expect(downloadFor({ userAgent: MAC })).toEqual({ label: 'Download for macOS', href: link('macos') })
+    expect(downloadFor({ userAgent: MAC, architecture: 'arm' }).href).toBe(link('macos-arm64'))
+    expect(downloadFor({ userAgent: MAC, architecture: 'x86' }).href).toBe(link('macos-x64'))
     expect(downloadFor({ userAgent: WINDOWS })).toEqual({ label: 'Download for Windows', href: link('windows-x64') })
     expect(downloadFor({ userAgent: WINDOWS, architecture: 'arm' }).href).toBe(link('windows-arm64'))
     expect(downloadFor({ userAgent: LINUX })).toEqual({ label: 'Download for Linux', href: link('linux-x64') })
@@ -270,6 +272,30 @@ describe('the download button', () => {
       assets: [{ name: 'Orden-9.9.9-macos-universal.dmg', browser_download_url: 'https://example.com/x.dmg' }],
     })
     expect(assetFor('macos', elsewhere)).toBe(LATEST_RELEASE)
+    const split = releaseAssets({
+      assets: [
+        'Orden-0.22.4-android.apk',
+        'Orden-0.22.4-linux-arm64.AppImage',
+        'Orden-0.22.4-linux-arm64.deb',
+        'Orden-0.22.4-linux-x64.AppImage',
+        'Orden-0.22.4-linux-x64.rpm',
+        'Orden-0.22.4-macos-arm64.dmg',
+        'Orden-0.22.4-macos-x64.dmg',
+        'Orden-0.22.4-windows-arm64-setup.exe',
+        'Orden-0.22.4-windows-x64-setup.exe',
+        'Orden-0.22.4-windows-x64.msi',
+      ].map((name) => ({
+        name,
+        browser_download_url: `https://github.com/lxorb/orden/releases/download/v0.22.4/${name}`,
+      })),
+    })
+    const split4 = (name: string) => `https://github.com/lxorb/orden/releases/download/v0.22.4/Orden-0.22.4-${name}`
+    expect(assetFor('macos-arm64', split)).toBe(split4('macos-arm64.dmg'))
+    expect(assetFor('macos-x64', split)).toBe(split4('macos-x64.dmg'))
+    expect(assetFor('macos', split)).toBe(split4('macos-x64.dmg'))
+    expect(assetFor('macos-arm64', ASSETS)).toBe(asset('macos-universal.dmg'))
+    for (const platform of Object.keys(DOWNLOAD_ENDINGS))
+      if (isDownloadPlatform(platform)) expect(assetFor(platform, split), platform).not.toBe(LATEST_RELEASE)
     expect(releaseTag({ tag_name: 'v0.21.1' })).toBe('v0.21.1')
     expect(releaseTag(null)).toBe(null)
     expect(releaseAssets({ assets: [{ name: 1 }, null, 'x'] })).toEqual([])
@@ -467,8 +493,9 @@ describe('the download short links on orden.so', () => {
   }
   test('sends each platform to its own file of the latest release', async () => {
     const { click } = world()
-    for (const [platform, ending] of Object.entries(DOWNLOAD_ENDINGS)) {
+    for (const [platform, endings] of Object.entries(DOWNLOAD_ENDINGS)) {
       const answer = await click(`/download/${platform}`)
+      const ending = endings.find((one) => NAMES.some((name) => name.endsWith(one))) ?? ''
       expect(answer.status, platform).toBe(302)
       expect(answer.headers.get('location'), platform).toBe(asset(ending.slice(1)))
       expect(answer.headers.get('cache-control')).toBe('no-store')
