@@ -90,7 +90,11 @@ jobs:
             echo "$KEYSTORE" | base64 -d >release.jks
             store=$PWD/release.jks
             password=$KEYSTORE_PASSWORD
-            alias=${KEY_ALIAS:-nib}
+            if [ -z "$KEY_ALIAS" ]; then
+              echo "::error::ANDROID_KEY_ALIAS is not set: the key in ANDROID_KEYSTORE is found by its alias."
+              exit 1
+            fi
+            alias=$KEY_ALIAS
           else
             store=$PWD/edge.jks
             password=orden-edge
