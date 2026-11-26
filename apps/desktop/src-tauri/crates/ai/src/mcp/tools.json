@@ -1233,7 +1233,7 @@
   },
   {
     "name": "time_tracker",
-    "description": "The time tracker's timer: status (what runs, since when, whether recording is on), start an activity (the latest one if none is named), switch to another activity, or stop.",
+    "description": "The timer: status (what runs, since when, recording on or off), start an activity (the latest if none is named), switch, or stop.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1246,7 +1246,7 @@
   },
   {
     "name": "time_blocks",
-    "description": "The tracker's schedule blocks: list a stretch (today if from and to are not said) with its Not set gaps; add, edit (start, end, activity, note, tags), move, split at a moment, merge two, delete; fill every Not set gap in a stretch with an activity; undo or redo the last schedule change.",
+    "description": "The tracker's schedule blocks: list a stretch (today if no from and to) with its Not set gaps; add, edit (start, end, activity, note, tags), move, split at a moment, merge two, delete; fill every Not set gap in a stretch with an activity; undo or redo the last schedule change.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1271,7 +1271,7 @@
   },
   {
     "name": "time_activities",
-    "description": "The tracker's activities: list, create (name, tint, icon, parent), rename, recolor, archive, unarchive, move (to: 0 for the first), delete.",
+    "description": "The tracker's activities: list, create (name, tint, icon, parent), rename, recolor, archive, unarchive, move (to, 0 is first), delete.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1280,7 +1280,7 @@
           "enum": ["list", "create", "rename", "recolor", "archive", "unarchive", "move", "delete"]
         },
         "activity": { "type": "string", "description": "activity id or name" },
-        "to": { "type": "integer", "description": "the place to move it to, 0 for the first" },
+        "to": { "type": "integer" },
         "name": { "type": "string" },
         "tint": { "type": "string" },
         "icon": { "type": "string" },
@@ -1306,7 +1306,7 @@
   },
   {
     "name": "time_health",
-    "description": "Health readings the tracker holds for a stretch (today if from and to are not said): heart rate, stress, sleep stages, SpO2, breathing and steps, with workouts and a sum.",
+    "description": "Health readings the tracker holds for a stretch (today if no from and to): heart rate, stress, sleep stages, SpO2, breathing and steps, with workouts and a sum.",
     "inputSchema": {
       "type": "object",
       "properties": {
