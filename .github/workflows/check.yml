@@ -251,6 +251,17 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: The module crates, each alone, build
+        if: runner.os != 'Linux'
+        run: |
+          failed=
+          for M in apps/desktop/src-tauri/crates/*/Cargo.toml; do
+            echo "::group::$M"
+            cargo check --manifest-path $M --all-targets || failed="$failed $M"
+            echo "::endgroup::"
+          done
+          [ -z "$failed" ] || { echo "::error::these crates do not build alone:$failed"; exit 1; }
+
       - name: Clippy
         run: |
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
