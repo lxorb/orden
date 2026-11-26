@@ -777,6 +777,7 @@ fn ready(
 }
 #[cfg(desktop)]
 fn kept_listed(handle: &tauri::AppHandle<Engine>) {
+    orden_carry::old_home::say_left(handle);
     orden_system::default_browser::keep_registered(handle);
     orden_ai::ai_cli::keep_enrolled(handle);
     orden_secrets::retired_chats::clear_leftovers(handle);

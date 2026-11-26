@@ -235,9 +235,9 @@ fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
     let kept = config_dir(app)?.join(SPACES_KEPT);
     let said = fs::read_to_string(&kept).ok();
     let fresh = data_dir(app)?.join(SPACES);
-    let nib = documents_nib(app).ok();
-    let outside = outside_folder(said.as_deref(), &[Some(fresh.as_path()), nib.as_deref()]);
-    let old = nib.filter(|dir| dir.is_dir());
+    let former = crate::former_spaces::former_documents(app).ok();
+    let outside = outside_folder(said.as_deref(), &[Some(fresh.as_path()), former.as_deref()]);
+    let old = former.filter(|dir| dir.is_dir());
     if let Some(outside) = outside {
         if let Ok(mut pending) = SPACES_OUTSIDE.lock() {
             *pending = Some(outside);
@@ -255,15 +255,7 @@ fn chosen_spaces(app: &AppHandle) -> Result<PathBuf, String> {
 }
 #[cfg(mobile)]
 fn default_spaces(app: &AppHandle) -> Result<PathBuf, String> {
-    documents_nib(app)
-}
-fn documents_nib(app: &AppHandle) -> Result<PathBuf, String> {
-    let base = app
-        .path()
-        .document_dir()
-        .or_else(|_| app.path().home_dir())
-        .map_err(|error| format!("could not find the documents folder: {error}"))?;
-    Ok(base.join("Nib"))
+    crate::former_spaces::spaces(app)
 }
 #[cfg(desktop)]
 pub(crate) fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: PathBuf) -> PathBuf {
@@ -986,7 +978,7 @@ mod tests {
         };
         let said = folder_named(Some(absolute.as_os_str())).expect("an absolute path");
         assert_eq!(said, absolute);
-        assert!(!said.ends_with("Nib"));
+        assert!(!said.ends_with("Orden"));
     }
     #[cfg(desktop)]
     #[test]
@@ -997,7 +989,7 @@ mod tests {
             path(&all)
         };
         let fresh = root(&["data", "so.orden.Orden", "Spaces"]);
-        let old = root(&["home", "Documents", "Nib"]);
+        let old = root(&["home", "Documents", "Former"]);
         assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
         assert_eq!(super::spaces_folder(None, Some(old.clone()), fresh.clone()), old);
         let kept = fresh.to_string_lossy().to_string();
@@ -1019,20 +1011,20 @@ mod tests {
             path(&all)
         };
         let fresh = root(&["data", "so.orden.Orden", "Spaces"]);
-        let nib = root(&["home", "Documents", "Nib"]);
-        let own = [Some(fresh.as_path()), Some(nib.as_path())];
+        let former = root(&["home", "Documents", "Former"]);
+        let own = [Some(fresh.as_path()), Some(former.as_path())];
         let said = |at: &Path| format!("{}\n", at.to_string_lossy());
         assert_eq!(super::outside_folder(Some(&said(&fresh)), &own), None);
-        assert_eq!(super::outside_folder(Some(&said(&nib)), &own), None);
+        assert_eq!(super::outside_folder(Some(&said(&former)), &own), None);
         assert_eq!(super::outside_folder(Some("Spaces"), &own), None);
         assert_eq!(super::outside_folder(None, &own), None);
         let vault = root(&["home", "Obsidian", "Vault"]);
         assert_eq!(super::outside_folder(Some(&said(&vault)), &own), Some(vault.clone()));
-        let within = root(&["home", "Documents", "Nib", "Work"]);
+        let within = root(&["home", "Documents", "Former", "Work"]);
         assert_eq!(super::outside_folder(Some(&said(&within)), &own), Some(within));
         assert_eq!(
-            super::outside_folder(Some(&said(&nib)), &[Some(fresh.as_path()), None]),
-            Some(nib.clone())
+            super::outside_folder(Some(&said(&former)), &[Some(fresh.as_path()), None]),
+            Some(former.clone())
         );
         assert_eq!(super::spaces_folder(None, None, fresh.clone()), fresh);
     }
@@ -1043,7 +1035,7 @@ mod tests {
         assert!(folder_named(Some(OsStr::new("notes"))).is_none());
         assert!(folder_named(Some(OsStr::new("./notes"))).is_none());
         assert!(folder_named(Some(OsStr::new("../notes"))).is_none());
-        assert!(folder_named(Some(OsStr::new("Documents/Nib"))).is_none());
+        assert!(folder_named(Some(OsStr::new("Documents/Orden"))).is_none());
     }
     #[test]
     fn folds_a_path_down_to_where_it_points() {

@@ -12,7 +12,6 @@ const MAX_BYTES: u64 = 1024 * 1024;
 const MAX_MESSAGE: usize = 2000;
 const MAX_FIELD: usize = 40;
 pub const FILE: &str = "orden.log";
-const FORMER: &str = "nib.log";
 #[tauri::command(async)]
 pub fn log_dir(app: AppHandle) -> Result<String, String> {
     Ok(log_file(&app)?.to_string_lossy().to_string())
@@ -55,7 +54,6 @@ fn append(path: &Path, line: &str) -> Result<(), String> {
     if let Some(dir) = path.parent() {
         made(dir)?;
     }
-    carried(path);
     if fs::metadata(path).map_or(0, |one| one.len()) > MAX_BYTES {
         let _ = fs::rename(path, path.with_extension("log.1"));
     }
@@ -65,12 +63,6 @@ fn append(path: &Path, line: &str) -> Result<(), String> {
         .open(path)
         .map_err(|error| cannot("write", path, &error))?;
     file.write_all(line.as_bytes()).map_err(|error| cannot("write", path, &error))
-}
-fn carried(path: &Path) {
-    let former = path.with_file_name(FORMER);
-    if path.file_name() == Some(FILE.as_ref()) && !path.exists() && former.is_file() {
-        let _ = fs::rename(former, path);
-    }
 }
 #[tauri::command(async)]
 pub fn read_log(app: AppHandle) -> String {
@@ -84,7 +76,7 @@ fn one_line(message: &str, limit: usize) -> String {
 }
 #[cfg(test)]
 mod tests {
-    use super::{append, line, one_line, writer, FILE, FORMER, MAX_BYTES, MAX_MESSAGE};
+    use super::{append, line, one_line, writer, FILE, MAX_BYTES, MAX_MESSAGE};
 
     #[test]
     fn folds_a_message_onto_one_line() {
@@ -124,17 +116,6 @@ mod tests {
         let numbers: Vec<usize> =
             text.lines().filter_map(|one| one.rsplit(' ').next()?.parse().ok()).collect();
         assert_eq!(numbers, (0..200).collect::<Vec<_>>());
-    }
-    #[test]
-    fn the_log_kept_under_the_former_name_goes_on_under_the_new_one() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        std::fs::write(dir.path().join(FORMER), "before\n").expect("the former log");
-        append(&dir.path().join(FILE), "after\n").expect("the line");
-        assert!(!dir.path().join(FORMER).exists());
-        assert_eq!(
-            std::fs::read_to_string(dir.path().join(FILE)).expect("the log"),
-            "before\nafter\n"
-        );
     }
     #[test]
     fn a_full_log_rolls_over() {

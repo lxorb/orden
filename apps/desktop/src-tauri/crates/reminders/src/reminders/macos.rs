@@ -26,7 +26,6 @@ use super::schedule::System;
 use super::{Planned, Words};
 
 const CATEGORY: &str = "orden.reminder";
-const FORMER_CATEGORY: &str = "nib.reminder";
 const DONE: &str = "done";
 const LATER: &str = "snooze-15";
 const HOUR: &str = "snooze-60";
@@ -141,16 +140,14 @@ fn categorise(centre: &UNUserNotificationCenter) {
                 UNNotificationActionOptions::empty(),
             )
         };
-        for id in [CATEGORY, FORMER_CATEGORY] {
-            categories.push(category(
-                id,
-                &[
-                    action(DONE, &words.done),
-                    action(LATER, &format!("{} {}", words.snooze, words.minutes)),
-                    action(HOUR, &format!("{} {}", words.snooze, words.hour)),
-                ],
-            ));
-        }
+        categories.push(category(
+            CATEGORY,
+            &[
+                action(DONE, &words.done),
+                action(LATER, &format!("{} {}", words.snooze, words.minutes)),
+                action(HOUR, &format!("{} {}", words.snooze, words.hour)),
+            ],
+        ));
     }
     if let Some((placeholder, send)) = reply {
         categories.push(category(

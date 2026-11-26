@@ -11,7 +11,6 @@ use orden_base::program::Program;
 
 const SHIPPED: &str = "so.orden.Orden";
 const NAME: &str = "orden";
-const OLD_NAME: &str = "nib";
 const TEST_HOME: &str = "ORDEN_ENROLL_HOME";
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct Kept {
@@ -107,30 +106,16 @@ pub fn carry_over(program: &Program, tool: Tool, folder: &Path, orden: &Path, ho
         remove(program, tool, NAME, folder, home);
         add(program, tool, folder, orden, home);
     }
-    if !matches!(held(program, OLD_NAME, folder, orden, home), Held::Ours | Held::Older) {
-        return;
-    }
-    if held(program, NAME, folder, orden, home) == Held::None {
-        add(program, tool, folder, orden, home);
-    }
-    if held(program, NAME, folder, orden, home) == Held::Ours {
-        remove(program, tool, OLD_NAME, folder, home);
-    }
 }
 pub fn enroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
     carry_over(program, tool, folder, orden, home);
-    if entry(program, NAME, folder, home).is_some()
-        || matches!(held(program, OLD_NAME, folder, orden, home), Held::Ours | Held::Older)
-    {
-        return;
+    if entry(program, NAME, folder, home).is_none() {
+        add(program, tool, folder, orden, home);
     }
-    add(program, tool, folder, orden, home);
 }
 pub fn unenroll(program: &Program, tool: Tool, folder: &Path, orden: &Path, home: Option<&Path>) {
-    for name in [NAME, OLD_NAME] {
-        if matches!(held(program, name, folder, orden, home), Held::Ours | Held::Older) {
-            remove(program, tool, name, folder, home);
-        }
+    if matches!(held(program, NAME, folder, orden, home), Held::Ours | Held::Older) {
+        remove(program, tool, NAME, folder, home);
     }
 }
 fn each(app: &AppHandle, act: fn(&Program, Tool, &Path, &Path, Option<&Path>)) {
@@ -189,9 +174,9 @@ mod tests {
             "mcp add --scope user orden -- C:/Orden/orden.exe mcp"
         );
         assert_eq!(line(add_args(Tool::Codex, orden)), "mcp add orden -- C:/Orden/orden.exe mcp");
-        assert_eq!(line(remove_args(Tool::ClaudeCode, OLD_NAME)), "mcp remove --scope user nib");
+        assert_eq!(line(remove_args(Tool::ClaudeCode, NAME)), "mcp remove --scope user orden");
         assert_eq!(line(remove_args(Tool::Codex, NAME)), "mcp remove orden");
-        assert_eq!(line(get_args(OLD_NAME)), "mcp get nib");
+        assert_eq!(line(get_args(NAME)), "mcp get orden");
     }
     #[test]
     fn the_switch_is_on_unless_turned_off() {

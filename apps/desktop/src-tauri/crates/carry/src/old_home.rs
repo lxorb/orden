@@ -17,6 +17,7 @@ pub struct Former {
     waiting: bool,
     dumped: bool,
     after: Option<String>,
+    left: Vec<String>,
 }
 pub fn carry_home(identifier: &str) {
     if identifier != NEW {
@@ -116,11 +117,43 @@ pub fn former_homes(app: tauri::AppHandle) -> Former {
 }
 fn former(identifier: &str) -> Former {
     if identifier != NEW {
-        return Former { homes: Vec::new(), waiting: false, dumped: false, after: None };
+        return Former {
+            homes: Vec::new(),
+            waiting: false,
+            dumped: false,
+            after: None,
+            left: Vec::new(),
+        };
     }
     let pairs = places();
     let said = after_move().and_then(|file| fs::read_to_string(file).ok());
-    Former { homes: homes_of(pairs), waiting: false, dumped: said.is_some(), after: said }
+    let left = left_behind(&pairs);
+    Former { homes: homes_of(pairs), waiting: false, dumped: said.is_some(), after: said, left }
+}
+fn left_behind(pairs: &[(PathBuf, PathBuf)]) -> Vec<String> {
+    pairs
+        .iter()
+        .filter(|(old, _)| !named(old.parent(), "WebKit") && holds_more_than_profiles(old))
+        .map(|(old, _)| old.to_string_lossy().into_owned())
+        .collect()
+}
+fn holds_more_than_profiles(old: &Path) -> bool {
+    if old.is_file() {
+        return true;
+    }
+    fs::read_dir(old).is_ok_and(|children| {
+        children.flatten().any(|child| !PROFILES.iter().any(|one| child.file_name() == *one))
+    })
+}
+pub fn say_left(app: &tauri::AppHandle) {
+    let left = given().as_ref().map(|former| former.left.clone()).unwrap_or_default();
+    for old in left {
+        orden_base::logs::say(
+            app,
+            "error",
+            &format!("carry: {old} could not be moved whole to {NEW}; what is left stays there"),
+        );
+    }
 }
 #[tauri::command(async)]
 pub fn keep_after_move(text: String) -> Result<(), String> {
@@ -306,6 +339,28 @@ mod tests {
         assert!(merged(&old, &new));
         assert!(new.join("Spaces/web/a.md").is_file());
         assert!(new.join("Spaces/web/b.md").is_file());
+    }
+    #[test]
+    fn what_cannot_move_stays_under_the_old_name_and_is_named() {
+        let root = tempfile::tempdir().unwrap();
+        let (old, new) = (root.path().join(OLD), root.path().join(NEW));
+        fs::create_dir_all(old.join("Spaces")).unwrap();
+        fs::write(old.join("Spaces/a.md"), "old words").unwrap();
+        fs::write(old.join("settings.json"), "{}").unwrap();
+        fs::create_dir_all(new.join("Spaces")).unwrap();
+        fs::write(new.join("Spaces/a.md"), "new words").unwrap();
+        assert!(merged(&old, &new));
+        assert_eq!(fs::read_to_string(new.join("Spaces/a.md")).unwrap(), "new words");
+        assert_eq!(fs::read_to_string(old.join("Spaces/a.md")).unwrap(), "old words");
+        assert!(new.join("settings.json").is_file());
+        let pairs = vec![(old.clone(), new.clone())];
+        assert_eq!(left_behind(&pairs), vec![old.to_string_lossy().into_owned()]);
+        fs::remove_file(old.join("Spaces/a.md")).unwrap();
+        fs::remove_dir(old.join("Spaces")).unwrap();
+        fs::create_dir_all(old.join("EBWebView")).unwrap();
+        assert!(left_behind(&pairs).is_empty());
+        fs::remove_dir_all(&old).unwrap();
+        assert!(left_behind(&pairs).is_empty());
     }
     #[test]
     fn a_kept_space_says_it_came_from_the_folder_where_it_is_now() {

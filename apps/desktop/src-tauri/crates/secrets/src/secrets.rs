@@ -8,6 +8,7 @@ mod store {
     use tauri::AppHandle;
 
     use super::file;
+    use crate::former_keyring::{carried, FORMER_SERVICE};
 
     fn entry(service: &str, account: &str) -> Result<Entry, Error> {
         Entry::new(service, account)
@@ -25,17 +26,21 @@ mod store {
             Err(error) => Err(error),
         }
     }
-    fn kept(account: &str) -> Result<Option<String>, Error> {
-        if let Some(secret) = read(super::SERVICE, account)? {
-            return Ok(Some(secret));
+    fn kept(app: &AppHandle, account: &str) -> Result<Option<String>, Error> {
+        let done = carried(
+            super::SERVICE,
+            |service| read(service, account),
+            |service, secret| entry(service, account)?.set_password(secret),
+            |service| forget(service, account),
+        )?;
+        if let Some(trouble) = done.trouble {
+            orden_base::logs::say(
+                app,
+                "warn",
+                &format!("keys: {account} was not carried to the new keyring name: {trouble}"),
+            );
         }
-        let Some(secret) = read(super::FORMER_SERVICE, account)? else {
-            return Ok(None);
-        };
-        if entry(super::SERVICE, account)?.set_password(&secret).is_ok() {
-            let _ = forget(super::FORMER_SERVICE, account);
-        }
-        Ok(Some(secret))
+        Ok(done.secret)
     }
     fn away(error: &Error) -> bool {
         matches!(error, Error::PlatformFailure(_) | Error::NoStorageAccess(_))
@@ -63,7 +68,7 @@ mod store {
         }
     }
     pub fn get(app: &AppHandle, account: &str) -> Result<Option<String>, String> {
-        let kept = kept(account);
+        let kept = kept(app, account);
         let reachable = matches!(kept, Ok(None));
         let found = either(kept, || file::get(app, account))?;
         if let (true, Some(secret)) = (reachable, &found) {
@@ -81,13 +86,13 @@ mod store {
     pub fn set(app: &AppHandle, account: &str, secret: &str) -> Result<(), String> {
         let written = entry(super::SERVICE, account).and_then(|one| one.set_password(secret));
         if written.is_ok() {
-            let _ = forget(super::FORMER_SERVICE, account);
+            let _ = forget(FORMER_SERVICE, account);
         }
         wrote(written, || file::delete(app, account), || file::set(app, account, secret))
     }
     pub fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
         wrote(
-            forget(super::SERVICE, account).and_then(|()| forget(super::FORMER_SERVICE, account)),
+            forget(super::SERVICE, account).and_then(|()| forget(FORMER_SERVICE, account)),
             || file::delete(app, account),
             || file::delete(app, account),
         )
@@ -183,8 +188,6 @@ pub(crate) fn delete(app: &AppHandle, account: &str) -> Result<(), String> {
 const SHIPPED: &str = "so.orden.Orden";
 #[cfg_attr(target_os = "macos", allow(dead_code))]
 pub(crate) const SERVICE: &str = "orden";
-#[cfg_attr(target_os = "macos", allow(dead_code))]
-const FORMER_SERVICE: &str = "nibeditor";
 fn named(name: &str) -> Result<String, String> {
     let ok = !name.is_empty()
         && name.len() <= 64
