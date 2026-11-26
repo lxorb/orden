@@ -352,6 +352,9 @@ pub fn linger(app: &AppHandle, tab: &str) -> bool {
     }
     true
 }
+pub fn lingers(app: &AppHandle, tab: &str) -> bool {
+    held(app).lingering.lock().is_ok_and(|lingering| lingering.contains(tab))
+}
 pub fn revive(app: &AppHandle, tab: &str) -> bool {
     held(app).lingering.lock().is_ok_and(|mut lingering| lingering.remove(tab))
 }

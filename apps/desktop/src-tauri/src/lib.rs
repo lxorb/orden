@@ -553,6 +553,9 @@ fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
     #[cfg(desktop)]
     let builder = builder.on_page_load(|webview, payload| {
         if payload.event() == tauri::webview::PageLoadEvent::Started {
+            if webview.label() == webview.window().label() {
+                orden_web::web_orphans::app_reloaded(webview.app_handle(), webview.label());
+            }
             orden_pty::terminal::page_started(webview);
             orden_explorer::explorer::watch::window_gone(webview.app_handle(), webview.label());
             if let Some(waiting) = webview.try_state::<orden_agents::endpoint::Waiting>() {

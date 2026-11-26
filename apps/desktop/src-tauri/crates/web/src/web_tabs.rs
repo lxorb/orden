@@ -449,7 +449,10 @@ pub async fn web_open(
     let label = label_of(&tab);
     let app = webview.app_handle().clone();
     if app.get_webview(&label).is_some() {
-        if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
+        if crate::downloads::revive(&app, &tab)
+            || adopted_label(&label)
+            || crate::web_orphans::claim(&label)
+        {
             return Ok(crate::web_cut::layering(&label));
         }
         return Err("that tab already has a page".into());
