@@ -1,0 +1,124 @@
+name: opencode-bump
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: opencode-bump-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.bump.outputs.changed }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: The newest OpenCode
+        id: bump
+        run: |
+          node scripts/opencode.mjs bump
+          if git diff --quiet; then
+            echo "OpenCode is on the newest version already: nothing to change." >>"$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo '```diff'
+              git diff -- apps/desktop/src-tauri/opencode.json
+              echo '```'
+            } >>"$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.bump.outputs.changed == 'true'
+        with:
+          name: opencode
+          path: |
+            apps/desktop/src-tauri/opencode.json
+            apps/desktop/src-tauri/licenses/opencode.txt
+          if-no-files-found: error
+
+  contract:
+    needs: bump
+    if: needs.bump.outputs.changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - platform: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+          - platform: macos-15-intel
+            target: x86_64-apple-darwin
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+          - platform: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: opencode
+          path: apps/desktop/src-tauri
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+          node-cache: ${{ matrix.platform != 'ubuntu-24.04-arm' }}
+
+      - name: The new OpenCode serves
+        run: |
+          node scripts/opencode.mjs fetch ${{ matrix.target }}
+          binary=$(ls "$PWD"/apps/desktop/src-tauri/binaries/opencode-${{ matrix.target }}*)
+          bash scripts/opencode-check.sh "$binary"
+          if [ "$RUNNER_OS" = Windows ]; then binary=$(cygpath -w "$binary"); fi
+          echo "ORDEN_OPENCODE_BIN=$binary" >>"$GITHUB_ENV"
+
+      - name: Orden's contract with it
+        timeout-minutes: 30
+        working-directory: apps/desktop/src-tauri
+        run: cargo test -p orden-opencode -- --test-threads=1
+
+  land:
+    needs: [bump, contract]
+    if: needs.bump.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: opencode
+          path: apps/desktop/src-tauri
+
+      - name: Commit the bump
+        run: |
+          version=$(node -p "require('./apps/desktop/src-tauri/opencode.json').version")
+          git config user.name lxorbs-minion
+          git config user.email 43935334+lxorbs-minion@users.noreply.github.com
+          git add apps/desktop/src-tauri/opencode.json apps/desktop/src-tauri/licenses/opencode.txt
+          git commit -m "chore: OpenCode $version" -m "Co-authored-by: lxorb <101118850+lxorb@users.noreply.github.com>"
+          pushed=
+          for _ in 1 2 3; do
+            if git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; then
+              pushed=yes
+              break
+            fi
+            sleep 10
+          done
+          [ -n "$pushed" ]
+          echo "OpenCode $version landed on $GITHUB_REF_NAME as $(git rev-parse HEAD)." >>"$GITHUB_STEP_SUMMARY"
