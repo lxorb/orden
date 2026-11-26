@@ -7,10 +7,11 @@
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none",
-    "run_worker_first": ["/"],
+    "run_worker_first": ["/", "/download*"],
   },
   "routes": [
     { "pattern": "orden.so/", "zone_name": "orden.so" },
     { "pattern": "orden.so/home/*", "zone_name": "orden.so" },
+    { "pattern": "orden.so/download*", "zone_name": "orden.so" },
   ],
 }

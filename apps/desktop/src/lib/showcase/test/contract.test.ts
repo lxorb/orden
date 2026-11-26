@@ -5,6 +5,15 @@ import {
   ageInWords,
   APP_ORIGIN,
   appHomeAt,
+  assetFor,
+  CAPTURE,
+  counts,
+  DOWNLOAD_ENDINGS,
+  DOWNLOAD_EVENT,
+  downloadAnswer,
+  isDownloadPath,
+  isDownloadPlatform,
+  releaseTag,
   DEMO_LOOP_SCENES,
   DEMO_PHONE_SRC,
   DEMO_SCENES,
@@ -167,42 +176,28 @@ describe('the pool of live displays', () => {
   })
 })
 describe('the download button', () => {
-  test('offers the latest release file for the system the visitor is on, found by its ending', () => {
-    expect(downloadFor({ userAgent: MAC }, ASSETS)).toEqual({
-      label: 'Download for macOS',
-      href: asset('macos-universal.dmg'),
-    })
-    expect(downloadFor({ userAgent: WINDOWS }, ASSETS)).toEqual({
-      label: 'Download for Windows',
-      href: asset('windows-x64-setup.exe'),
-    })
-    expect(downloadFor({ userAgent: WINDOWS, architecture: 'arm' }, ASSETS).href).toBe(asset('windows-arm64-setup.exe'))
-    expect(downloadFor({ userAgent: LINUX }, ASSETS)).toEqual({
-      label: 'Download for Linux',
-      href: asset('linux-x64.AppImage'),
-    })
-    expect(downloadFor({ userAgent: LINUX_ARM }, ASSETS).href).toBe(asset('linux-arm64.AppImage'))
-    expect(downloadFor({ userAgent: ANDROID }, ASSETS)).toEqual({
-      label: 'Download for Android',
-      href: asset('android.apk'),
-    })
+  test('sends each system to its own short link on the site, which the site Worker counts', () => {
+    const link = (platform: string) => `${SITE_ORIGIN}/download/${platform}`
+    expect(downloadFor({ userAgent: MAC })).toEqual({ label: 'Download for macOS', href: link('macos') })
+    expect(downloadFor({ userAgent: WINDOWS })).toEqual({ label: 'Download for Windows', href: link('windows-x64') })
+    expect(downloadFor({ userAgent: WINDOWS, architecture: 'arm' }).href).toBe(link('windows-arm64'))
+    expect(downloadFor({ userAgent: LINUX })).toEqual({ label: 'Download for Linux', href: link('linux-x64') })
+    expect(downloadFor({ userAgent: LINUX_ARM }).href).toBe(link('linux-arm64'))
+    expect(downloadFor({ userAgent: ANDROID })).toEqual({ label: 'Download for Android', href: link('android') })
+    expect(downloadFor({ userAgent: LINUX }, 'http://127.0.0.1:4791').href).toBe(
+      'http://127.0.0.1:4791/download/linux-x64',
+    )
+    for (const platform of Object.keys(DOWNLOAD_ENDINGS)) expect(isDownloadPlatform(platform)).toBe(true)
+    expect(isDownloadPlatform('toString')).toBe(false)
   })
-  test('names the system before the release is known, and links the release page meanwhile', () => {
-    expect(downloadFor({ userAgent: MAC })).toEqual({ label: 'Download for macOS', href: LATEST_RELEASE })
-    expect(downloadFor({ userAgent: LINUX }, releaseAssets(null))).toEqual({
-      label: 'Download for Linux',
-      href: LATEST_RELEASE,
-    })
-  })
-  test('sends anyone it has no file for to the latest release, and an iPhone or iPad to the web app', () => {
-    const latest = { label: 'Download', href: LATEST_RELEASE }
+  test('sends anyone it has no file for to the plain short link, and an iPhone or iPad to the web app', () => {
     const web = { label: 'Open the web app', href: `${APP_ORIGIN}/` }
-    expect(downloadFor({ userAgent: IPHONE }, ASSETS)).toEqual(web)
-    expect(downloadFor({ userAgent: MAC, touchPoints: 5 }, ASSETS)).toEqual(web)
-    expect(downloadFor({ userAgent: IPHONE }, ASSETS, 'https://orden.so/preview/app/').href).toBe(
+    expect(downloadFor({ userAgent: IPHONE })).toEqual(web)
+    expect(downloadFor({ userAgent: MAC, touchPoints: 5 })).toEqual(web)
+    expect(downloadFor({ userAgent: IPHONE }, SITE_ORIGIN, 'https://orden.so/preview/app/').href).toBe(
       'https://orden.so/preview/app/',
     )
-    expect(downloadFor({ userAgent: 'curl/8.0' }, ASSETS)).toEqual(latest)
+    expect(downloadFor({ userAgent: 'curl/8.0' })).toEqual({ label: 'Download', href: `${SITE_ORIGIN}/download` })
   })
   test('tells each real browser its own system, phones and tablets before the desktops their agents name', () => {
     const real: [string, Visitor, string][] = [
@@ -259,14 +254,24 @@ describe('the download button', () => {
       ],
       ['Chromebook, platform said', { userAgent: LINUX, platform: 'Chrome OS' }, 'Download'],
     ]
-    for (const [name, visitor, label] of real) expect(downloadFor(visitor, ASSETS).label, name).toBe(label)
-    expect(downloadFor({ userAgent: ANDROID }, ASSETS).href).toBe(asset('android.apk'))
+    for (const [name, visitor, label] of real) expect(downloadFor(visitor).label, name).toBe(label)
+    expect(downloadFor({ userAgent: ANDROID }).href).toBe(`${SITE_ORIGIN}/download/android`)
   })
-  test('takes nothing from a release but its own files', () => {
+  test('finds the file of each platform in the latest release by its ending, and takes nothing but files of the release', () => {
+    expect(assetFor('macos', ASSETS)).toBe(asset('macos-universal.dmg'))
+    expect(assetFor('windows-x64', ASSETS)).toBe(asset('windows-x64-setup.exe'))
+    expect(assetFor('windows-arm64', ASSETS)).toBe(asset('windows-arm64-setup.exe'))
+    expect(assetFor('linux-x64', ASSETS)).toBe(asset('linux-x64.AppImage'))
+    expect(assetFor('linux-arm64', ASSETS)).toBe(asset('linux-arm64.AppImage'))
+    expect(assetFor('android', ASSETS)).toBe(asset('android.apk'))
+    expect(assetFor(null, ASSETS)).toBe(LATEST_RELEASE)
+    expect(assetFor('macos', [])).toBe(LATEST_RELEASE)
     const elsewhere = releaseAssets({
       assets: [{ name: 'Orden-9.9.9-macos-universal.dmg', browser_download_url: 'https://example.com/x.dmg' }],
     })
-    expect(downloadFor({ userAgent: MAC }, elsewhere).href).toBe(LATEST_RELEASE)
+    expect(assetFor('macos', elsewhere)).toBe(LATEST_RELEASE)
+    expect(releaseTag({ tag_name: 'v0.21.1' })).toBe('v0.21.1')
+    expect(releaseTag(null)).toBe(null)
     expect(releaseAssets({ assets: [{ name: 1 }, null, 'x'] })).toEqual([])
     expect(releaseAssets('not json')).toEqual([])
     expect(LATEST_RELEASE_API).toBe('https://api.github.com/repos/lxorb/orden/releases/latest')
@@ -421,5 +426,128 @@ describe('what the module carries', () => {
     const entry = readFileSync(new URL('../../../home.ts', SOURCE), 'utf8')
     expect(entry).toContain("import './lib/showcase/src/home.css'")
     expect(entry).toContain("import '@fontsource-variable/geist'")
+  })
+})
+describe('the download short links on orden.so', () => {
+  const BROWSER = WINDOWS
+  const release = {
+    tag_name: 'v0.21.1',
+    assets: NAMES.map((name) => ({
+      name,
+      browser_download_url: `https://github.com/lxorb/orden/releases/download/v0.21.1/${name}`,
+    })),
+  }
+  interface Sent {
+    url: string
+    body: unknown
+  }
+  function world(capture: 'ok' | 'fails' | 'throws' = 'ok', github: 'ok' | 'fails' = 'ok') {
+    const sent: Sent[] = []
+    const waited: Promise<unknown>[] = []
+    const fetcher = (url: string, init?: RequestInit) => {
+      if (url === CAPTURE) {
+        sent.push({ url, body: JSON.parse(typeof init?.body === 'string' ? init.body : 'null') as unknown })
+        if (capture === 'throws') return Promise.reject(new Error('down'))
+        return Promise.resolve(new Response('', { status: capture === 'ok' ? 200 : 500 }))
+      }
+      if (github === 'fails') return Promise.reject(new Error('offline'))
+      return Promise.resolve(new Response(JSON.stringify(release)))
+    }
+    const later = { waitUntil: (promise: Promise<unknown>) => void waited.push(promise) }
+    const click = async (path: string, init: RequestInit = {}, key: string | null = 'phc_test') => {
+      const request = new Request(`https://orden.so${path}`, {
+        ...init,
+        headers: { 'user-agent': BROWSER, ...(init.headers as Record<string, string> | undefined) },
+      })
+      const answer = await downloadAnswer(request, { POSTHOG_KEY: key ?? undefined }, later, fetcher)
+      await Promise.all(waited)
+      return answer
+    }
+    return { sent, click }
+  }
+  test('sends each platform to its own file of the latest release', async () => {
+    const { click } = world()
+    for (const [platform, ending] of Object.entries(DOWNLOAD_ENDINGS)) {
+      const answer = await click(`/download/${platform}`)
+      expect(answer.status, platform).toBe(302)
+      expect(answer.headers.get('location'), platform).toBe(asset(ending.slice(1)))
+      expect(answer.headers.get('cache-control')).toBe('no-store')
+    }
+    for (const path of ['/download', '/download/', '/download/ios', '/download/toString'])
+      expect((await click(path)).headers.get('location'), path).toBe(LATEST_RELEASE)
+  })
+  test('counts one click as exactly one event, with no person, no place and no cookie', async () => {
+    const { sent, click } = world()
+    const answer = await click('/download/windows-x64?from=hero')
+    expect(answer.headers.get('set-cookie')).toBe(null)
+    expect(sent).toHaveLength(1)
+    const body = sent[0]?.body as {
+      api_key: string
+      batch: { event: string; distinct_id: string; properties: Record<string, unknown> }[]
+    }
+    expect(body.api_key).toBe('phc_test')
+    expect(body.batch).toHaveLength(1)
+    expect(body.batch[0]?.event).toBe(DOWNLOAD_EVENT)
+    expect(body.batch[0]?.properties).toMatchObject({
+      platform: 'windows-x64',
+      button: 'hero',
+      release: 'v0.21.1',
+      $process_person_profile: false,
+      $geoip_disable: true,
+    })
+    await click('/download?from=footer')
+    await click('/download/android?from=elsewhere')
+    const later = sent
+      .slice(1)
+      .map(({ body: one }) => (one as { batch: { properties: Record<string, unknown> }[] }).batch[0]?.properties)
+    expect(later[0]).toMatchObject({ platform: 'none', button: 'footer' })
+    expect(later[1]).toMatchObject({ platform: 'android', button: 'other' })
+    const ids = sent.map(({ body: one }) => (one as { batch: { distinct_id: string }[] }).batch[0]?.distinct_id)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+  test('still sends the visitor on when counting fails or the release cannot be read', async () => {
+    for (const capture of ['fails', 'throws'] as const) {
+      const answer = await world(capture).click('/download/macos')
+      expect(answer.status, capture).toBe(302)
+      expect(answer.headers.get('location'), capture).toBe(asset('macos-universal.dmg'))
+    }
+    const { sent, click } = world('ok', 'fails')
+    const answer = await click('/download/macos')
+    expect(answer.headers.get('location')).toBe(LATEST_RELEASE)
+    expect((sent[0]?.body as { batch: { properties: Record<string, unknown> }[] }).batch[0]?.properties.release).toBe(
+      'unknown',
+    )
+  })
+  test('counts no bot, no prefetch, no HEAD and nothing without a key, yet sends them on all the same', async () => {
+    const { sent, click } = world()
+    const bots = [
+      'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+      'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
+      'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+      'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)',
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36',
+      'curl/8.5.0',
+      'python-requests/2.32.3',
+      '',
+    ]
+    for (const agent of bots)
+      expect((await click('/download/linux-x64', { headers: { 'user-agent': agent } })).status).toBe(302)
+    expect((await click('/download/linux-x64', { method: 'HEAD' })).status).toBe(302)
+    expect((await click('/download/linux-x64', { headers: { purpose: 'prefetch' } })).status).toBe(302)
+    expect((await click('/download/linux-x64', {}, null)).status).toBe(302)
+    expect(sent).toEqual([])
+    expect((await click('/download/linux-x64', { method: 'POST' })).status).toBe(405)
+    expect(counts(new Request('https://orden.so/download', { headers: { 'user-agent': BROWSER } }))).toBe(true)
+    const asked = (headers: Record<string, string>) =>
+      counts({ method: 'GET', headers: new Headers({ 'user-agent': BROWSER, ...headers }) })
+    expect(asked({})).toBe(true)
+    expect(asked({ 'sec-purpose': 'prefetch;prerender' })).toBe(false)
+    expect(asked({ 'sec-purpose': 'prefetch' })).toBe(false)
+    expect(asked({ purpose: 'prefetch' })).toBe(false)
+  })
+  test('answers only its own paths', () => {
+    for (const path of ['/download', '/download/', '/download/macos']) expect(isDownloadPath(path), path).toBe(true)
+    for (const path of ['/', '/downloads', '/downloadx', '/home/x', '/d'])
+      expect(isDownloadPath(path), path).toBe(false)
   })
 })

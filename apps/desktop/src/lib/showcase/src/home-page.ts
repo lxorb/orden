@@ -5,11 +5,9 @@ import {
   downloadFor,
   LATEST_RELEASE_API,
   originsAt,
-  releaseAssets,
   releasedAt,
   type AppHome,
   type Origins,
-  type ReleaseAsset,
   type Visitor,
 } from './links'
 import { poolOf } from './pool'
@@ -59,11 +57,10 @@ function offerDownload(view: Window, origins: Origins) {
     platform: (navigator as Agent).userAgentData?.platform,
     coarse: view.matchMedia('(pointer: coarse)').matches,
   }
-  let assets: ReleaseAsset[] = []
   const paint = () => {
-    const { label, href } = downloadFor(visitor, assets, `${origins.app}/`)
+    const { label, href } = downloadFor(visitor, origins.site, `${origins.app}/`)
     for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-download]')) {
-      link.href = href
+      link.href = href.startsWith(origins.site) ? `${href}?from=${link.closest('.coda') ? 'footer' : 'hero'}` : href
       const text = link.querySelector('[data-label]')
       if (text) text.textContent = label
     }
@@ -84,8 +81,6 @@ function offerDownload(view: Window, origins: Origins) {
       .fetch(LATEST_RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } })
       .then((answer) => (answer.ok ? answer.json() : null))
       .then((body: unknown) => {
-        assets = releaseAssets(body)
-        paint()
         showAge(view, releasedAt(body))
       })
       .catch(() => undefined)

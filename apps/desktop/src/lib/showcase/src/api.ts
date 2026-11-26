@@ -11,16 +11,21 @@ export {
   type DemoCue,
   type DemoPlay,
 } from './demo-cue'
+export { CAPTURE, counts, DOWNLOAD_EVENT, downloadAnswer, isDownloadPath } from './download'
 export {
   ageInWords,
   APP_ORIGIN,
   appHomeAt,
+  assetFor,
+  DOWNLOAD_ENDINGS,
   downloadFor,
+  isDownloadPlatform,
   LATEST_RELEASE,
   LATEST_RELEASE_API,
   originsAt,
   releaseAssets,
   releasedAt,
+  releaseTag,
   SITE_ORIGIN,
   type Visitor,
 } from './links'
