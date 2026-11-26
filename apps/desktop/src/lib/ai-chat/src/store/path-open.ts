@@ -1,4 +1,4 @@
-import { reveal, showLabel } from '../../../files-out/src/api'
+import { reveal } from '../../../files-out/src/api'
 import { links } from '../../../link-index/src/api'
 import { fileMark } from '../../../marks/src/api'
 import { isDesktop, nameOf, platform, spaceHolding } from '../../../platform/src/api'
@@ -57,9 +57,6 @@ export function pathMenu(event: MouseEvent, root: string | null): boolean {
   if (path === null) return false
   const rows: MenuEntry[] = []
   if (opensHere(path)) rows.push({ label: 'Open in a new tab', run: () => void open(path, 'front') })
-  if (chatHere(root).reveals) {
-    rows.push({ label: showLabel(platform(), false), run: () => void reveal(path, { system: true }) })
-  }
   if (!rows.length) return false
   menu.show(event, rows)
   return true

@@ -88,18 +88,14 @@ describe('a path pressed in a chat', () => {
   })
 })
 describe('the menu of a path', () => {
-  test('offers a new tab for what Orden opens and the file manager for every path', async () => {
+  test('offers a new tab for what Orden opens, and never a row that shows a path in the file manager (#2563)', async () => {
     expect(pathMenu(press(`${ROOT}/plan.md`), ROOT)).toBe(true)
-    expect(pathMenu(press('/tmp/a.zip'), ROOT)).toBe(true)
-    expect(shown.map((rows) => rows.map((one) => one.label))).toEqual([
-      ['Open in a new tab', 'Show in Finder'],
-      ['Show in Finder'],
-    ])
+    expect(pathMenu(press('/tmp/a.zip'), ROOT)).toBe(false)
+    expect(shown.map((rows) => rows.map((one) => one.label))).toEqual([['Open in a new tab']])
     shown[0]?.[0]?.run()
-    shown[1]?.[0]?.run()
     await settled()
     expect(opened).toEqual([[`${ROOT}/plan.md`, { beside: true }]])
-    expect(revealed).toEqual([['/tmp/a.zip', { system: true }]])
+    expect(revealed).toEqual([])
   })
   test('is not ours off a path', () => {
     expect(pathMenu(press(null), ROOT)).toBe(false)

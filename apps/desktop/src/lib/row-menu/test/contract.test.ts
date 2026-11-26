@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { providePort } from '@orden/contracts'
 import { bookmarkAll, iconEntries, rowMenus, shareEntry, webDataEntry } from '../src/api'
@@ -52,5 +54,16 @@ describe('the row menus', () => {
     await removeAsking(['/s/a.md'])
     await removeAsking(['/s/Team.chat'])
     expect(asked).toEqual([['/s/Team.chat']])
+  })
+})
+describe('Show in folder (#2563)', () => {
+  test('is in no menu of Orden: only the downloads list still shows a file in the file manager', () => {
+    const lib = join(import.meta.dirname, '..', '..')
+    const offering = readdirSync(lib, { recursive: true, encoding: 'utf8' })
+      .filter((one) => /\.(ts|svelte)$/.test(one) && !one.endsWith('.test.ts'))
+      .filter((one) => /\bshowLabel\(/.test(readFileSync(join(lib, one), 'utf8')))
+      .map((one) => one.replaceAll('\\', '/'))
+      .filter((one) => !one.startsWith('files-out/'))
+    expect(offering).toEqual(['web-tab/src/WebDownloads.svelte'])
   })
 })

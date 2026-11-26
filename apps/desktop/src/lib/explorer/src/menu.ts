@@ -1,8 +1,6 @@
 import { copyText } from '../../ui-controls/src/api'
 import { fileClipboard, workspace } from '../../workspace/src/api'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
-import { reveal, showLabel } from '../../files-out/src/api'
-import { platform } from '../../platform/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { carry, changeable, duplicate, newFolder, paste, removeForGood, trash } from './changes'
 import { type Entry, openWithSystem } from './commands'
@@ -36,7 +34,6 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
     ...(!entry.folder && ordenOpens(path)
       ? [{ label: 'Open with the system app', run: () => void openWithSystem(path) }]
       : []),
-    { label: showLabel(platform(), false), run: () => void reveal(path, { system: true }) },
     DIVIDER,
     ...(writes
       ? [
@@ -114,7 +111,6 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
   ]
 }
 export function roomMenu(view: ExplorerView): MenuEntry[] {
-  const folder = view.listing?.path
   const writes = changeable(view)
   return [
     ...(writes
@@ -142,14 +138,6 @@ export function roomMenu(view: ExplorerView): MenuEntry[] {
       checked: explorerPrefs.hidden,
       run: () => explorerPrefs.toggleHidden(),
     },
-    ...(folder
-      ? [
-          {
-            label: showLabel(platform(), false),
-            run: () => void reveal(folder, { system: true }),
-          },
-        ]
-      : []),
   ]
 }
 function sortKeysOf(view: ExplorerView): { key: SortKey; label: string }[] {

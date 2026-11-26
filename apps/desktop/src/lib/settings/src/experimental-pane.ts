@@ -83,7 +83,7 @@ function features(): Feature[] {
             key: 'explorer',
             word: EXPLORER_WORD,
             label: 'File explorer',
-            hint: 'Adds a file explorer for the folders on this computer, and Show in folder opens it.',
+            hint: 'Adds a file explorer for the folders on this computer.',
             words: ['explorer', 'files', 'folders', 'finder', 'show in folder'],
           },
         ]

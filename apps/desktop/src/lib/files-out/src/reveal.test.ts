@@ -88,9 +88,7 @@ describe('showing a file where it sits', () => {
     expect(callers).toEqual([
       'ai-chat/src/store/path-open.ts',
       'commands/src/commands.ts',
-      'explorer/src/menu.ts',
       'files-out/src/save.ts',
-      'row-menu/src/row-menu.ts',
       'web-tab/src/downloads.svelte.ts',
       'workspace/src/workspace.svelte.ts',
     ])

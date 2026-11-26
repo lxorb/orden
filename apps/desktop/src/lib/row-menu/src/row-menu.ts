@@ -6,19 +6,9 @@ import { hiddenKinds, type KindName } from '../../gates/src/api'
 import { kindLabel } from '../../new-here/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import { archiveEntry, coverEntries, iconEntries, searchAgainEntry, shareEntry, webDataEntry } from './api'
-import {
-  rowName,
-  folderOf,
-  isMarkdownPath,
-  isPicturePath,
-  relativeTo,
-  isDesktop,
-  joinPath,
-  within,
-} from '../../platform/src/api'
+import { rowName, folderOf, isMarkdownPath, isPicturePath, relativeTo, joinPath, within } from '../../platform/src/api'
 import { canWriteAt, protectEntries } from '../../sharing/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
-import { reveal, showLabel } from '../../files-out/src/api'
 import { workspace, howFor } from '../../workspace/src/api'
 
 export function rowMenu(entry: Entry): MenuEntry[] {
@@ -56,7 +46,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
       hint: shortcuts.hint('tree.duplicate'),
       run: () => void workspace.duplicate(entry.path),
     },
-    ...revealEntry(entry),
     DIVIDER,
     { label: 'Delete', danger: true, run: () => void removeRow(entry, marked, inside) },
   ]
@@ -69,7 +58,6 @@ function readOnlyMenu(entry: Entry, marked: Entry): MenuEntry[] {
     ...searchAgainEntry(entry.path),
     ...protectEntries(entry.path),
     ...shareEntry(marked.path),
-    ...revealEntry(entry),
   ]
 }
 function wallpaperEntry(entry: Entry): MenuEntry[] {
@@ -198,9 +186,6 @@ export async function refuseDeleting(paths: readonly string[]) {
   })
   const archiving = portOf('archive')
   if (show && archiving.ok) await archiving.value.show(null)
-}
-function revealEntry(entry: Entry): MenuEntry[] {
-  return isDesktop ? [{ label: showLabel(), run: () => void reveal(entry.path) }] : []
 }
 const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
   note: (folder) => workspace.createNote(folder),
