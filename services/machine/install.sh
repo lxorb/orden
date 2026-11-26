@@ -80,10 +80,13 @@ files() {
   local ordend="$here/ordend.cjs"
   [ -f "$ordend" ] || ordend="$here/dist/ordend.cjs"
 
-  local opt=/opt/ordend main=ordend state=/var/lib/ordend run=/run/ordend former=
-  if [ ! -d /opt/ordend ] && [ -d /opt/nibd ]; then
-    opt=/opt/nibd main=nibd state=/var/lib/nibd run=/run/nibd former=1
+  local carrying=
+  if [ "$mode" = --files ] && [ -d /opt/nibd ] && { [ ! -e /opt/ordend ] || [ -e /opt/ordend/former-layout.sh ]; }; then
+    bash "$here/former-layout.sh" prepare
+    carrying=1
   fi
+
+  local opt=/opt/ordend state=/var/lib/ordend run=/run/ordend
 
   install -d "$opt"
   local pty
@@ -100,17 +103,15 @@ files() {
   (cd "$opt" && node -e "require('node-pty')")
   local program
   for program in ordend hold; do
-    local built="${ordend%/ordend.cjs}/$program.cjs" kept=$program
-    [ "$program" = ordend ] && kept=$main
-    install -m 644 "$built" "$opt/$kept.cjs.new"
-    mv "$opt/$kept.cjs.new" "$opt/$kept.cjs"
+    local built="${ordend%/ordend.cjs}/$program.cjs"
+    install -m 644 "$built" "$opt/$program.cjs.new"
+    mv "$opt/$program.cjs.new" "$opt/$program.cjs"
   done
 
   install -m 644 "$here/profile.sh" /etc/profile.d/orden.sh
-  rm -f /etc/profile.d/nib.sh
   install -m 755 "$here/agents.sh" /usr/local/bin/orden-agents
   install -m 755 "$here/orden-open" /usr/local/bin/orden-open
-  for name in nib-open xdg-open sensible-browser x-www-browser www-browser; do
+  for name in xdg-open sensible-browser x-www-browser www-browser; do
     ln -sf orden-open "/usr/local/bin/$name"
   done
   mkdir -p "$state" "$run"
@@ -118,13 +119,9 @@ files() {
 
   if [ -d /etc/systemd/system ] && [ "$mode" != image ]; then
     install -m 755 "$here/orden-update" /usr/local/bin/orden-update
-    if [ -n "$former" ]; then
-      ln -sf orden-update /usr/local/bin/nib-update
-      ln -sf orden-agents /usr/local/bin/nib-agents
-    else
-      install -m 644 "$here"/server/*.service /etc/systemd/system/
-    fi
+    install -m 644 "$here"/server/*.service /etc/systemd/system/
   fi
+  if [ -n "$carrying" ]; then bash /opt/ordend/former-layout.sh launch; fi
 }
 
 server() {

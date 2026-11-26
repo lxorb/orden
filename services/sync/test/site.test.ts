@@ -593,25 +593,21 @@ describe('a site behind a password', () => {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-    const read = await page('/plan', { headers: { cookie: `nib_site=0.0; ${ticket}` } })
+    const read = await page('/plan', { headers: { cookie: `__Host-orden_site=0.0; ${ticket}` } })
     expect(read.text).toContain('Words.')
   })
-  test('a ticket from before the cookie was renamed still lets its reader in', async () => {
+  test('a ticket under any other cookie name lets nobody in', async () => {
     const answer = await page('/plan', {
       method: 'POST',
       raw: `password=${encodeURIComponent(PASSWORD)}`,
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
     })
     const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
-    const old = ticket.replace('__Host-orden_site', 'nib_site')
-    const read = await page('/plan', { headers: { cookie: old } })
-    expect(read.text).toContain('Words.')
-    const named = ticket.replace('__Host-orden_site', '__Host-nib_site')
-    expect((await page('/plan', { headers: { cookie: named } })).text).toContain('Words.')
-    const behind = await page('/plan', { headers: { cookie: `nib_site=0.0; ${old}` } })
-    expect(behind.text).toContain('Words.')
-    const forged = `nib_site=${String(Date.now() + 1000)}.${'0'.repeat(64)}`
-    expect((await page('/plan', { headers: { cookie: forged } })).text).toContain('type="password"')
+    expect(ticket.startsWith('__Host-orden_site=')).toBe(true)
+    for (const name of ['orden_site', '__Host-other_site', 'site']) {
+      const other = ticket.replace('__Host-orden_site', name)
+      expect((await page('/plan', { headers: { cookie: other } })).text, name).toContain('type="password"')
+    }
   })
   test('and nothing a site behind a password answers is a shared cache’s', async () => {
     const answer = await page('/plan', {
@@ -627,7 +623,7 @@ describe('a site behind a password', () => {
   })
   test('a ticket somebody made up opens nothing', async () => {
     const read = await page('/plan', {
-      headers: { cookie: `__Host-nib_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
+      headers: { cookie: `__Host-orden_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
     })
     expect(read.text).toContain('type="password"')
   })
@@ -706,7 +702,7 @@ describe('what somebody who is not the owner is told about the site', () => {
     const held = listed.json.spaces.find((one) => one.id === space)
     expect(held?.id).toBe(space)
     expect(held?.blog.dns).toEqual([])
-    expect(JSON.stringify(held)).not.toContain('_nib-verify')
+    expect(JSON.stringify(held)).not.toContain('_orden-verify')
     expect(held?.blog.site.password).toBe(false)
     expect(held?.blog.site.description).toBeUndefined()
   })
@@ -716,6 +712,6 @@ describe('what somebody who is not the owner is told about the site', () => {
     const listed = await call(env, '/v1/spaces', { token: program })
     const held = listed.json.spaces.find((one) => one.id === space)
     expect(held?.blog.dns).toEqual([])
-    expect(JSON.stringify(held)).not.toContain('_nib-verify')
+    expect(JSON.stringify(held)).not.toContain('_orden-verify')
   })
 })

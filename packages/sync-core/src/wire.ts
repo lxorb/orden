@@ -147,7 +147,6 @@ export interface KeepRequest {
   device: string
 }
 export const ROOM_V2 = 'orden.v2'
-export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
 export type RoomNews = { t: 'ack'; seq: number; sv: Uint8Array } | { t: 'epoch'; epoch: number; epochBase: string }
 export const NEW_EPOCH = 4001
 export const NOW_READS = 4002
@@ -160,15 +159,13 @@ export const BEAT = 'beat'
 export const BEAT_ANSWER = 'ok'
 export const TOKEN_PROTOCOL = 'orden.token.'
 export const DEVICE_PROTOCOL = 'orden.device.'
-const DEVICE_PROTOCOLS = ['orden.device.', 'nib.device.']
 export interface OfferedDevice {
   device: string
   protocol: string
 }
 export function deviceOffered(header: string | undefined): OfferedDevice | null {
   for (const protocol of (header ?? '').split(',').map((one) => one.trim())) {
-    const prefix = DEVICE_PROTOCOLS.find((one) => protocol.startsWith(one))
-    if (prefix) return { device: protocol.slice(prefix.length), protocol }
+    if (protocol.startsWith(DEVICE_PROTOCOL)) return { device: protocol.slice(DEVICE_PROTOCOL.length), protocol }
   }
   return null
 }

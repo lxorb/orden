@@ -25,14 +25,12 @@ function numberOf(value: string | undefined, fallback: number): number {
   return value && Number.isSafeInteger(number) && number > 0 ? number : fallback
 }
 function said(name: string): string | undefined {
-  return process.env[`ORDEND_${name}`] ?? process.env[`NIBD_${name}`]
+  return process.env[`ORDEND_${name}`]
 }
 function main(): void {
   const env = process.env
   const secret = said('SECRET') ?? ''
   delete env.ORDEND_SECRET
-  delete env.NIBD_SECRET
-  const former = !existsSync('/opt/ordend') && existsSync('/opt/nibd')
   const root = process.getuid?.() === 0
   const user = root ? userOf(said('USER') ?? 'nib') : null
   const home = user?.home ?? homedir()
@@ -55,7 +53,7 @@ function main(): void {
     if (value) sessionEnv[key] = value
   }
   const ordend = new Ordend({
-    state: said('STATE') ?? (former ? '/var/lib/nibd' : '/var/lib/ordend'),
+    state: said('STATE') ?? '/var/lib/ordend',
     home,
     shell,
     user,
@@ -74,10 +72,7 @@ function main(): void {
   watch()
   const server = serve(ordend, secret)
   server.listen(numberOf(said('PORT'), PORT), said('HOST') ?? '0.0.0.0')
-  listenOpener(
-    serveOpener({ open: (url, session) => ordend.open(url, session) }),
-    said('OPEN') ?? (former ? '/run/nibd/open.sock' : OPEN_SOCKET),
-  )
+  listenOpener(serveOpener({ open: (url, session) => ordend.open(url, session) }), said('OPEN') ?? OPEN_SOCKET)
   let stopping = false
   const stop = (): void => {
     if (stopping) return

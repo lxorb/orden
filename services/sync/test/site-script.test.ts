@@ -18,7 +18,7 @@ describe('the script a site serves', () => {
   })
   test('names the one inline line by its own hash', () => {
     expect(THEME_JS).toContain('orden:site-theme')
-    expect(THEME_JS).toContain('nib:site-theme')
+    expect(THEME_JS.match(/site-theme/g)).toHaveLength(1)
     expect(THEME_JS_HASH).toMatch(/^sha256-[A-Za-z0-9+/=]+$/)
   })
 })

@@ -303,6 +303,19 @@ describe('proving a domain is yours', () => {
     expect((await verify()).status).toBe(200)
     expect((await status()).json.state).not.toBe('unproved')
   })
+  test('a token kept from before the rename still proves its domain, and stays proved when read again', async () => {
+    await publish({ domain: 'notes.example.com' })
+    const kept = `nib-verify=${'a'.repeat(64)}`
+    env.db.prepare('update spaces set blog_domain_token = ? where id = ?').run(kept, space)
+    expect((await wanted()).value).toBe(kept)
+    cloudflare.txt('_nib-verify.notes.example.com', [kept])
+    expect((await verify()).status).toBe(200)
+    const before = proofAge()
+    expect(await recheckDomains(env, before + WEEK + 1)).toBe(0)
+    expect(proofAge()).toBe(before + WEEK + 1)
+    const row = env.db.prepare('select blog_domain_token as token from spaces where id = ?').get(space)
+    expect(row).toEqual({ token: kept })
+  })
   test('is proved with the token among the other records at that name', async () => {
     await publish({ domain: 'notes.example.com' })
     cloudflare.txt(RECORD, ['something else', (await wanted()).value])

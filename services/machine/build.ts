@@ -27,6 +27,7 @@ const BUNDLE: readonly [string, string, boolean][] = [
   ['profile.sh', 'profile.sh', false],
   ['orden-open', 'orden-open', true],
   ['orden-update', 'orden-update', true],
+  ['former-layout.sh', 'former-layout.sh', true],
   ['server/ordend.service', 'server/ordend.service', false],
   ['server/cloudflared.service', 'server/cloudflared.service', false],
   ['server/orden-agents.service', 'server/orden-agents.service', false],

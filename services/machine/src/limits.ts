@@ -58,7 +58,7 @@ export class Cgroups {
   }
   static open(pidsMax: number, root = '/sys/fs/cgroup'): Cgroups | null {
     if (!existsSync(join(root, 'cgroup.controllers'))) return null
-    const base = join(root, existsSync(join(root, 'nibd')) ? 'nibd' : 'ordend')
+    const base = join(root, 'ordend')
     try {
       mkdirSync(base, { recursive: true })
       enable(root, '+pids')

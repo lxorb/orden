@@ -54,11 +54,17 @@ describe('the hub door', () => {
     expect(answer.headers.get('sec-websocket-protocol')).toBe(`orden.device.${DEVICE}`)
     expect(door.asked[0]?.headers.get('x-orden-device')).toBe(DEVICE)
   })
+  test('takes no name from before the rename', async () => {
+    const token = await session('a@example.com')
+    expect((await knock([`nib.token.${token}`, `nib.device.${DEVICE}`])).status).toBe(401)
+    expect((await knock([`orden.token.${token}`, `nib.device.${DEVICE}`])).status).toBe(400)
+    expect(door.asked).toEqual([])
+  })
   test('lets an account in to its own hub, as the device it names', async () => {
     const token = await session('a@example.com')
-    const answer = await knock([subprotocol(token), `nib.device.${DEVICE}`])
+    const answer = await knock([subprotocol(token), `orden.device.${DEVICE}`])
     expect(answer.status).toBe(200)
-    expect(answer.headers.get('sec-websocket-protocol')).toBe(`nib.device.${DEVICE}`)
+    expect(answer.headers.get('sec-websocket-protocol')).toBe(`orden.device.${DEVICE}`)
     const [asked] = door.asked
     expect(asked?.id).toBe(userId('a@example.com'))
     expect(asked?.headers.get('x-orden-hub')).toBe('join')

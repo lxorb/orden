@@ -14,7 +14,7 @@ import {
   WRITTEN_HEADER,
 } from '../../../sync-server/src/api'
 import { subprotocol, tokenOf, tokenProtocolOf } from '@orden/rooms'
-import { deviceOffered, ROOM_V2_NAMES } from '@orden/sync-core'
+import { deviceOffered, ROOM_V2 } from '@orden/sync-core'
 import { boundDevice } from '../hub/devices'
 import { memberSeen } from '../spaces/seen'
 import { SIGNED_IN_AS } from './access'
@@ -123,7 +123,7 @@ rooms.get('/:noteId', async (context) => {
       'x-orden-who': allowed.who,
       'x-orden-login': hash,
       'x-orden-epoch': String(allowed.epoch ?? 0),
-      'x-orden-v2': offers(offered, ROOM_V2_NAMES) ? 'yes' : 'no',
+      'x-orden-v2': offers(offered, ROOM_V2) ? 'yes' : 'no',
       'x-orden-device-id': allowed.guest ? `guest:${allowed.guest}` : (allowed.bound ?? `session:${hash.slice(0, 16)}`),
     },
     context.req.header('cf-ray') ?? null,
@@ -212,8 +212,8 @@ export async function writtenPastRoom(env: Env, noteId: string): Promise<void> {
 function protocolsIn(header: string | undefined): string[] {
   return (header ?? '').split(',').map((one) => one.trim())
 }
-function offers(header: string | undefined, names: readonly string[]): boolean {
-  return protocolsIn(header).some((one) => names.includes(one))
+function offers(header: string | undefined, name: string): boolean {
+  return protocolsIn(header).includes(name)
 }
 const MOST_OPEN = 50
 const MOST_ROUNDS = 20

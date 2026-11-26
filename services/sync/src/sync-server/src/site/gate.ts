@@ -6,7 +6,6 @@ import type { SitePassword } from './site'
 export const PASSWORD_LIMIT = 200
 const LASTS = 30 * 24 * 60 * 60 * 1000
 const TICKET = '__Host-orden_site'
-const OLD_TICKETS = ['__Host-nib_site', 'nib_site']
 export const SITE_ROUNDS = 100_000
 function hex(bytes: Uint8Array): string {
   return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -56,14 +55,12 @@ export function ticketCookie(ticket: string): string {
 }
 function ticketsIn(header: string | null): string[] {
   const current: string[] = []
-  const old: string[] = []
   for (const part of (header ?? '').split(';')) {
     const [name, ...rest] = part.trim().split('=')
     const value = rest.join('=')
     if (name === TICKET && value) current.push(value)
-    if (name && OLD_TICKETS.includes(name) && value) old.push(value)
   }
-  return [...current, ...old]
+  return current
 }
 export async function letIn(held: SitePassword, header: string | null, at: number): Promise<boolean> {
   for (const ticket of ticketsIn(header)) {

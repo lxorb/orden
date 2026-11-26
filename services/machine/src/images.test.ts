@@ -96,10 +96,10 @@ describe('where ordend is the user already', () => {
   })
 })
 describe('where ordend is root', () => {
-  const NIB: User = { name: 'nib', uid: 1000, gid: 1000, home: '', shell: '/bin/bash' }
+  const OWNER: User = { name: 'nib', uid: 1000, gid: 1000, home: '', shell: '/bin/bash' }
   test('the write is a process of the user’s, and root touches nothing in the home', async () => {
     const home = aHome()
-    const user = { ...NIB, home }
+    const user = { ...OWNER, home }
     const asked: { file: string; args: string[]; env: Record<string, string>; input: number[] }[] = []
     const run: Run = (file, args, env, input) => {
       asked.push({ file, args, env, input: [...input] })
@@ -134,7 +134,7 @@ describe('where ordend is root', () => {
       ran = true
       return Promise.resolve({ code: 0, out: '' })
     }
-    const pictures = new Images(home, { ...NIB, home }, { run, has: () => false })
+    const pictures = new Images(home, { ...OWNER, home }, { run, has: () => false })
     expect(await pictures.part(ID, 'png', bytes(1), true)).toBeNull()
     expect(ran).toBe(false)
     expect(existsSync(join(home, '.cache'))).toBe(false)
@@ -145,7 +145,7 @@ describe('where ordend is root', () => {
       (code: number, out: string): Run =>
       () =>
         Promise.resolve({ code, out })
-    const user = { ...NIB, home }
+    const user = { ...OWNER, home }
     const refused = new Images(home, user, { run: said(1, ''), has: () => true })
     expect(await refused.part(ID, 'png', bytes(1), true)).toBeNull()
     const elsewhere = new Images(home, user, { run: said(0, '/etc/passwd'), has: () => true })
@@ -158,7 +158,7 @@ describe('where ordend is root', () => {
         return runChild(args[after] ?? '', args.slice(after + 1), { HOME: home, PATH: '/usr/bin:/bin' }, input)
       }
     }
-    const pictures = (home: string) => new Images(home, { ...NIB, home }, { run: asThisUser(home), has: () => true })
+    const pictures = (home: string) => new Images(home, { ...OWNER, home }, { run: asThisUser(home), has: () => true })
     test('writes the picture, private, and says where', async () => {
       const home = aHome()
       const path = (await pictures(home).part(ID, 'png', bytes(7, 8), true)) ?? ''
