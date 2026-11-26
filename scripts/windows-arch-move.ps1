@@ -76,7 +76,10 @@ $entries = @(Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Unin
 Check 'one Apps & Features entry, the new version' ($entries.Count -eq 1 -and (Get-ItemProperty $uninstall).DisplayVersion -eq $env:NEW)
 Check "what the user had is still there" ((Test-Path -LiteralPath $mark) -and (Get-Content -LiteralPath $mark) -eq 'kept')
 $after = @(Get-ChildItem -LiteralPath $data -Recurse -File | ForEach-Object { $_.FullName })
-$lost = @($before | Where-Object { $after -notcontains $_ -and (Split-Path $_ -Leaf) -ne 'lockfile' })
+$passing = @('\\\.unpacking-\d+-\d+\\', '\\\.[^\\]+\.\d+-\d+\.orden\.tmp$')
+$gone = @($before | Where-Object { $after -notcontains $_ -and (Split-Path $_ -Leaf) -ne 'lockfile' })
+$lost = @($gone | Where-Object { $one = $_; -not ($passing | Where-Object { $one -match $_ }) })
+Write-Host "  $($gone.Count - $lost.Count) files the app was still writing went, as they should"
 $lost | Select-Object -First 10 | ForEach-Object { Write-Host "  lost: $_" }
 Check 'and no file of the profile went' ($lost.Count -eq 0)
 
