@@ -33,7 +33,6 @@ class Viewport {
   device = $state<Device>('desktop')
   portrait = $state(false)
   narrow = $state(false)
-  installed = $state(false)
   touch = $derived(this.device !== 'desktop')
   drawer = $derived(this.device === 'phone' || (this.device === 'tablet' && this.portrait))
   private started = false
@@ -50,9 +49,6 @@ class Viewport {
     this.shape()
     window.addEventListener('resize', shape)
     window.addEventListener('orientationchange', shape)
-    const standalone = window.matchMedia('(display-mode: standalone)')
-    this.installed = isMobile || standalone.matches
-    standalone.addEventListener('change', (event) => (this.installed = isMobile || event.matches))
     const seen = window.visualViewport
     if (!seen) return
     const measure = () => this.measure(seen)

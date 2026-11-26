@@ -157,7 +157,7 @@ describe('Pass under its own name', () => {
   const PASS = {
     ...BOTH,
     '/pass.html': 'stable pass',
-    '/pass.webmanifest': 'stable pass manifest',
+    '/pass.svg': 'stable pass icon',
     '/_unstable/pass.html': 'unstable pass',
   }
   const host = 'pass.orden.so'
@@ -173,7 +173,7 @@ describe('Pass under its own name', () => {
   })
   test('serves its own files as they are', async () => {
     env = testEnv({ ASSETS: assets(PASS) })
-    expect((await onApp('/pass.webmanifest', { host })).text).toBe('stable pass manifest')
+    expect((await onApp('/pass.svg', { host })).text).toBe('stable pass icon')
     expect((await onApp('/sw.js', { host })).text).toBe('stable sw')
   })
   test('follows the channel the browser chose', async () => {

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { builtAt, PARTS, planOf } from '../src/doc'
 import { SHAPES, shapeOf } from '../src/bibata'
 import { holdDatabases } from '../src/held'
@@ -27,7 +27,6 @@ function visitor(search: string, light = false, more: Record<string, unknown> = 
   const deleted: string[] = []
   const fetched: string[] = []
   const queries: string[] = []
-  const registered = vi.fn(() => Promise.resolve())
   const into: Record<string, unknown> = {
     URL,
     URLSearchParams,
@@ -38,7 +37,7 @@ function visitor(search: string, light = false, more: Record<string, unknown> = 
     Date,
     Math: Object.create(Math) as Math,
     location: { href: `https://orden.so/${search}`, search },
-    navigator: { serviceWorker: { register: registered }, userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' },
+    navigator: { userAgent: 'Mozilla/5.0 (X11; Linux x86_64)' },
     document: { documentElement: { dataset: {} as Record<string, string>, style: { background: '#fff' } } },
     localStorage: real,
     caches: { keys: () => Promise.resolve(['visitor']) },
@@ -76,7 +75,7 @@ function visitor(search: string, light = false, more: Record<string, unknown> = 
   const root = (
     into.document as { documentElement: { dataset: Record<string, string>; style: { background: string } } }
   ).documentElement
-  return { into, real, root, opened, deleted, fetched, queries, registered }
+  return { into, real, root, opened, deleted, fetched, queries }
 }
 describe('the demo starts', () => {
   test('only when the address asks for it, and as a phone when it says so', () => {
@@ -137,11 +136,6 @@ describe('a visit to the demo leaves the visitor’s own data alone', () => {
   test('its channels never reach the visitor’s other windows', () => {
     const Channel = visitor('?demo').into.BroadcastChannel as new (name: string) => { name: string }
     expect(new Channel('orden:windows').name).toBe(`${PREFIX}orden:windows`)
-  })
-  test('it registers no service worker', () => {
-    const { into, registered } = visitor('?demo')
-    void (into.navigator as { serviceWorker: { register: () => Promise<unknown> } }).serviceWorker.register()
-    expect(registered).not.toHaveBeenCalled()
   })
   test('it stays off the network, but still reads its own pages and pictures', async () => {
     const { into, fetched } = visitor('?demo')

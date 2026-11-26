@@ -36,7 +36,6 @@ export function show(one: Notice): void {
   try {
     shown = new Notification(one.title, options)
   } catch {
-    shownByTheWorker(one, options)
     return
   }
   shown.onclick = () => {
@@ -53,49 +52,11 @@ export function askToShow(): void {
 export function unshow(tag: string): void {
   up.get(tag)?.close()
   up.delete(tag)
-  if (byWorker.delete(tag)) closeByTheWorker(tag)
   const id = showing.get(tag)
   if (id === undefined) return
   showing.delete(tag)
   answering.delete(id)
   if (isDesktop) void invoke('notice_clear', { tag: plainTag(tag) }).catch(() => undefined)
-}
-const byWorker = new Map<string, Notice>()
-let hearingTheWorker = false
-function worker(): ServiceWorkerContainer | null {
-  return typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? navigator.serviceWorker : null
-}
-function shownByTheWorker(one: Notice, options: NotificationOptions): void {
-  const workers = worker()
-  if (!workers) return
-  const tag = one.tag ?? fresh()
-  byWorker.delete(tag)
-  byWorker.set(tag, one)
-  for (const old of byWorker.keys()) {
-    if (byWorker.size <= KEPT) break
-    byWorker.delete(old)
-  }
-  if (!hearingTheWorker) {
-    hearingTheWorker = true
-    workers.addEventListener('message', (event: MessageEvent) => {
-      const said: unknown = event.data
-      const { ordenNotice: pressed, ordenHolds: asked } =
-        typeof said === 'object' && said !== null ? (said as { ordenNotice?: unknown; ordenHolds?: unknown }) : {}
-      if (typeof asked === 'string') event.ports[0]?.postMessage(byWorker.has(asked))
-      if (typeof pressed === 'string') byWorker.get(pressed)?.opened?.()
-    })
-    workers.startMessages()
-  }
-  void workers.ready
-    .then((held) => held.showNotification(one.title, { ...options, tag, data: { ordenNotice: tag } }))
-    .catch(() => undefined)
-}
-function closeByTheWorker(tag: string): void {
-  void worker()
-    ?.getRegistration()
-    .then((held) => held?.getNotifications({ tag }))
-    .then((shown) => shown?.forEach((one) => one.close()))
-    .catch(() => undefined)
 }
 const LONGEST_TAG = 64
 function plainTag(tag: string): string {

@@ -211,7 +211,6 @@ describe('what the document is told', () => {
     const { viewport, root } = await started({}, 1280, 800)
     expect(viewport.device).toBe('desktop')
     expect(viewport.touch).toBe(false)
-    expect(viewport.installed).toBe(false)
     expect(root.attributes.has('data-touch')).toBe(false)
   })
   test('the width, whichever device it is', async () => {
