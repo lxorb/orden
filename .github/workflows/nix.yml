@@ -233,6 +233,9 @@ jobs:
           for size in 32x32 128x128 256x256; do
             test -s "result/share/icons/hicolor/$size/apps/$pname.png"
           done
+          if [ -e "result/libexec/$pname/opencode" ]; then
+            bash scripts/opencode-check.sh "result/libexec/$pname/opencode"
+          fi
 
       - name: A graphics driver where NixOS keeps it
         env:

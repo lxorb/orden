@@ -207,6 +207,9 @@
                 install -d $out/libexec
                 cp -r usr/share/Orden $out/libexec/${pname}
                 rm -f $out/libexec/${pname}/chrome-sandbox
+                if [ -e $out/libexec/${pname}/opencode ]; then
+                  mv $out/libexec/${pname}/opencode $NIX_BUILD_TOP/opencode
+                fi
               ''
             else
               ''
@@ -238,6 +241,12 @@
                 [ -f "$one" ] && [ ! -L "$one" ] || continue
                 patchelf --add-rpath ${pkgs.lib.makeLibraryPath (openedFor pkgs)} "$one"
               done
+              if [ -e $NIX_BUILD_TOP/opencode ]; then
+                install -m755 $NIX_BUILD_TOP/opencode $out/libexec/${pname}/opencode
+                patchelf --set-interpreter ${pkgs.stdenv.cc.bintools.dynamicLinker} \
+                  ${pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isAarch64 "--page-size 65536"} \
+                  $out/libexec/${pname}/opencode
+              fi
             ''
             + ''
             makeShellWrapper $out/libexec/${pname}/orden $out/bin/${pname} \
