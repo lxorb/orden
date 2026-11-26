@@ -27,6 +27,26 @@ pub fn reads_only(tool: &Tool) -> bool {
         .and_then(Value::as_bool)
         .unwrap_or(false)
 }
+pub struct Hint {
+    pub name: &'static str,
+    pub reads_only: bool,
+    pub destructive: bool,
+}
+pub fn hints() -> Vec<Hint> {
+    tools::table()
+        .iter()
+        .map(|tool| Hint {
+            name: &tool.name,
+            reads_only: reads_only(tool),
+            destructive: tool
+                .annotations
+                .as_ref()
+                .and_then(|one| one.get("destructiveHint"))
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+        })
+        .collect()
+}
 pub fn with_defaults(tool: &str, args: Value) -> Value {
     defaults(tool, args)
 }

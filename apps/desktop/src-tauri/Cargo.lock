@@ -3530,6 +3530,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "orden-agents",
+ "orden-ai",
  "orden-base",
  "serde",
  "serde_json",

@@ -2,6 +2,8 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{json, Value};
 
+use crate::preset::{self, Orden};
+
 pub const USERNAME: &str = "orden";
 pub const PASSWORD_VAR: &str = "OPENCODE_SERVER_PASSWORD";
 pub const USERNAME_VAR: &str = "OPENCODE_SERVER_USERNAME";
@@ -46,12 +48,16 @@ pub struct Launch {
     pub dirs: Dirs,
     pub config: Value,
     pub auth: Option<Value>,
+    pub orden: Option<Orden>,
 }
-pub fn config_of(given: &Value, shell: &Path) -> Value {
+pub fn config_of(given: &Value, shell: &Path, orden: Option<&Orden>) -> Value {
     let mut config = given.as_object().cloned().unwrap_or_default();
     config.insert("autoupdate".into(), json!(false));
     config.insert("share".into(), json!("disabled"));
     config.insert("shell".into(), json!(shell.to_string_lossy()));
+    if let Some(orden) = orden {
+        preset::joined(&mut config, orden);
+    }
     Value::Object(config)
 }
 pub fn user_shell(found: Option<String>) -> String {
@@ -70,7 +76,10 @@ pub fn env_of(
 ) -> Vec<(String, String)> {
     let dirs = &launch.dirs;
     let mut env = vec![
-        (CONFIG_VAR.to_owned(), config_of(&launch.config, &dirs.shell()).to_string()),
+        (
+            CONFIG_VAR.to_owned(),
+            config_of(&launch.config, &dirs.shell(), launch.orden.as_ref()).to_string(),
+        ),
         (PASSWORD_VAR.to_owned(), password.to_owned()),
         (USERNAME_VAR.to_owned(), USERNAME.to_owned()),
     ];
@@ -98,6 +107,7 @@ mod tests {
             dirs: Dirs { root: PathBuf::from("/data/opencode") },
             config: json!({ "enabled_providers": ["anthropic"], "share": "manual", "autoupdate": true }),
             auth: Some(json!({ "anthropic": { "type": "api", "key": "sk-1" } })),
+            orden: None,
         }
     }
     fn named(env: &[(String, String)], name: &str) -> Option<String> {
@@ -143,6 +153,6 @@ mod tests {
         let bare = env_of(&Launch { auth: None, ..launch() }, "x", |_| None);
         assert!(named(&bare, AUTH_VAR).is_none());
         assert!(named(&bare, USER_SHELL_VAR).is_some_and(|shell| !shell.is_empty()));
-        assert_eq!(config_of(&json!("nonsense"), Path::new("/s"))["shell"], "/s");
+        assert_eq!(config_of(&json!("nonsense"), Path::new("/s"), None)["shell"], "/s");
     }
 }

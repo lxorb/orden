@@ -64,11 +64,33 @@ pub fn allowed(method: &str, path: &str) -> bool {
             })
     })
 }
-pub(crate) fn hidden(text: &str, password: &str) -> String {
-    if password.is_empty() {
-        text.to_owned()
-    } else {
-        text.replace(password, "")
+fn without(value: &mut Value, key: &str) {
+    if let Some(fields) = value.as_object_mut() {
+        fields.remove(key);
+    }
+}
+fn redacted(method: &str, path: &str, body: &mut Value) {
+    match (method, path) {
+        ("GET", "/config") => {
+            for server in body["mcp"].as_object_mut().into_iter().flat_map(|all| all.values_mut()) {
+                without(server, "environment");
+                without(server, "headers");
+            }
+            for provider in
+                body["provider"].as_object_mut().into_iter().flat_map(|all| all.values_mut())
+            {
+                without(&mut provider["options"], "apiKey");
+                without(&mut provider["options"], "headers");
+            }
+        }
+        ("GET", "/provider") => {
+            for provider in body["all"].as_array_mut().into_iter().flatten() {
+                without(provider, "key");
+                without(&mut provider["options"], "apiKey");
+                without(&mut provider["options"], "headers");
+            }
+        }
+        _ => {}
     }
 }
 fn body_of(text: &str) -> Value {
@@ -94,7 +116,9 @@ pub(crate) fn call_on(
     let said =
         http::request(line.port, (method, path), body.as_deref(), Some(&line.password), WITHIN)
             .map_err(|why| format!("OpenCode did not answer: {why}"))?;
-    Ok(Answer { status: said.status, body: body_of(&hidden(&said.body, &line.password)) })
+    let mut answer = body_of(&line.hidden(&said.body));
+    redacted(method, path, &mut answer);
+    Ok(Answer { status: said.status, body: answer })
 }
 pub fn call(method: &str, path: &str, body: Option<&Value>) -> Result<Answer, String> {
     if !allowed(method, path) {
@@ -235,7 +259,7 @@ mod tests {
         let (port, heard) = serve(
             b"HTTP/1.1 200 OK\r\ncontent-length: 40\r\n\r\n{\"id\":\"ses_1\",\"echo\":\"secret-pw-123456\"}",
         );
-        let line = Line { port, password: "secret-pw-123456".to_owned() };
+        let line = Line { port, password: "secret-pw-123456".to_owned(), token: None };
         let body = serde_json::json!({ "title": "Notes" });
         let answer = call_on(&line, "PATCH", "/session/ses_1", Some(&body)).expect("answered");
         assert_eq!(answer.status, 200);
@@ -247,7 +271,7 @@ mod tests {
         assert!(asked.ends_with("\r\n\r\n{\"title\":\"Notes\"}"), "{asked}");
         assert!(asked.contains("Authorization: Basic "), "{asked}");
         let (port, heard) = serve(b"HTTP/1.1 204 No Content\r\ncontent-length: 0\r\n\r\n");
-        let line = Line { port, password: "pw".to_owned() };
+        let line = Line { port, password: "pw".to_owned(), token: None };
         let answer = call_on(&line, "POST", "/session/ses_1/abort", None).expect("answered");
         assert_eq!(answer, Answer { status: 204, body: Value::Null });
         let asked = String::from_utf8(heard.join().expect("heard")).expect("utf8");
@@ -255,6 +279,33 @@ mod tests {
         assert!(call_on(&line, "GET", "/session", Some(&body)).is_err());
         assert!(call_on(&line, "GET", "/session/../config", None).is_err());
         assert_eq!(body_of("plain words"), Value::String("plain words".to_owned()));
+    }
+    #[test]
+    fn no_answer_carries_the_lent_token_or_a_provider_s_key() {
+        let config = br#"{"model":"a/b","mcp":{"orden":{"type":"local","command":["/o","mcp"],"environment":{"ORDEN_MCP_TOKEN":"tok-abcdef123456"}},"web":{"type":"remote","url":"u","headers":{"Authorization":"Bearer sk-web"}}},"provider":{"openai":{"options":{"apiKey":"sk-config","baseURL":"b"}}},"note":"tok-abcdef123456"}"#;
+        let mut answer = b"HTTP/1.1 200 OK\r\n\r\n".to_vec();
+        answer.extend_from_slice(config);
+        let (port, _heard) = serve(Box::leak(answer.into_boxed_slice()));
+        let line =
+            Line { port, password: "pw-1".to_owned(), token: Some("tok-abcdef123456".to_owned()) };
+        let said = call_on(&line, "GET", "/config", None).expect("answered").body;
+        let text = said.to_string();
+        for secret in ["tok-abcdef123456", "sk-web", "sk-config"] {
+            assert!(!text.contains(secret), "{secret} in {text}");
+        }
+        assert_eq!(said["model"], "a/b");
+        assert_eq!(said["mcp"]["orden"]["command"], serde_json::json!(["/o", "mcp"]));
+        assert_eq!(said["provider"]["openai"]["options"]["baseURL"], "b");
+        let providers = br#"{"all":[{"id":"openai","key":"sk-env","options":{"apiKey":"sk-opt","x":1},"models":{}}],"connected":["openai"]}"#;
+        let mut answer = b"HTTP/1.1 200 OK\r\n\r\n".to_vec();
+        answer.extend_from_slice(providers);
+        let (port, _heard) = serve(Box::leak(answer.into_boxed_slice()));
+        let line = Line { port, ..line };
+        let said = call_on(&line, "GET", "/provider", None).expect("answered").body;
+        let text = said.to_string();
+        assert!(!text.contains("sk-env") && !text.contains("sk-opt"), "{text}");
+        assert_eq!(said["all"][0]["options"]["x"], 1);
+        assert_eq!(said["connected"][0], "openai");
     }
     #[test]
     fn the_real_server_answers_through_the_proxy_and_its_events_never_carry_the_password() {
@@ -270,6 +321,7 @@ mod tests {
             dirs: dirs.clone(),
             config: serde_json::json!({ "enabled_providers": [] }),
             auth: None,
+            orden: None,
         };
         let running = host::Running::start(launch).expect("ready");
         let line = running.line.clone();
