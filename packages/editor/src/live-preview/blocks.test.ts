@@ -363,7 +363,7 @@ describe('a selection dragged over a rendered block', () => {
       expect(new Set(dragged(doc, inside, outside).steps)).toEqual(new Set([true]))
     })
     test(`${what} settles once, on the way up`, () => {
-      expect(dragged(doc, inside, outside).settled).toBe(false)
+      expect(dragged(doc, inside, outside).settled).toBe(block === TABLE)
     })
   }
   test('a caret moved by the keyboard still reveals as it goes', () => {
@@ -372,7 +372,7 @@ describe('a selection dragged over a rendered block', () => {
     expect(is.decorations.size).toBe(0)
   })
   test('a drag interrupted anywhere leaves nothing held', () => {
-    const doc = `${PROSE}${TABLE}`
+    const doc = `${PROSE}$$\nx = 1\n$$`
     const held = state(doc, 0)
       .update({ effects: setDragging.of(true) })
       .state.update({

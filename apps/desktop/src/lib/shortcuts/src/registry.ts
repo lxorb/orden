@@ -187,6 +187,7 @@ const EDITOR_ENTRIES: Record<string, [Category, string]> = {
   'edit.move-block-up': ['edit', 'Move the block up'],
   'edit.move-block-down': ['edit', 'Move the block down'],
   'edit.follow-link': ['edit', 'Follow the link'],
+  'table.begin': ['table', 'Turn a typed row into a table'],
   'table.below': ['table', 'Into the table below'],
   'table.above': ['table', 'Into the table above'],
   'table.ahead': ['table', 'Forward into the table'],

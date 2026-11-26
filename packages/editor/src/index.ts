@@ -87,7 +87,7 @@ export {
   clearFormatting,
 } from './line-door'
 export { pasteHere, pastePlain } from './paste'
-export { editableCellAt, pasteIntoCell } from './table/view'
+export { editableCellAt, pasteIntoCell } from './table/widget'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
 export { DIAGRAM_LANGUAGES, RENDERED_LANGUAGES } from './live-preview/render'
@@ -149,7 +149,8 @@ export {
   setTypewriterMode,
 } from './modes'
 export { onVimMode, setVim, setVimCommands, type VimCommands, type VimMode } from './vim'
-export { flushTableEdits } from './table/widget'
+export { flushTableEdits, tableMenuAt } from './table/widget'
+export type { TableEntry } from './table/menu'
 export { insertTableToEdit, tableBindings } from './table/keymap'
 export { imageBindings } from './live-preview/image'
 export { itemStartBindings } from './live-preview/item-start'

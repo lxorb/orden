@@ -1,7 +1,7 @@
 import { type EditorState, type StateEffect, Transaction, type TransactionSpec } from '@codemirror/state'
 import { isExternal } from './external'
 import type { DocView, SharedDoc } from './shared'
-import { flushTableEdits } from './table/view'
+import { flushTableEdits } from './table/widget'
 
 export interface StateView extends DocView {
   setState(state: EditorState): void

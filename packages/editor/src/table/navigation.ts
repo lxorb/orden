@@ -2,7 +2,7 @@ import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { Annotation, type ChangeSet, type ChangeSpec, EditorState, type Transaction } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { enclosingNamed } from '../nodes'
-import { overlaps } from '../live-preview/reveal'
+import { noReveal, overlaps } from '../live-preview/reveal'
 import type { TableModel } from './model'
 
 export interface TableSpan {
@@ -20,6 +20,10 @@ const tableSpan = (state: EditorState, from: number, to: number): TableSpan => (
   to: state.doc.lineAt(to).to,
 })
 export const standsAlone = (state: EditorState, from: number): boolean => state.doc.lineAt(from).from === from
+export function selectedOver(state: EditorState, span: TableSpan): boolean {
+  if (state.facet(noReveal)) return false
+  return !state.selection.ranges.some((range) => range.from >= span.from && range.to <= span.to)
+}
 export function renderedTables(state: EditorState): TableSpan[] {
   const spans: TableSpan[] = []
   syntaxTree(state).iterate({
@@ -27,7 +31,7 @@ export function renderedTables(state: EditorState): TableSpan[] {
       if (node.name !== 'Table') return true
       if (!standsAlone(state, node.from)) return false
       const span = tableSpan(state, node.from, node.to)
-      if (!overlaps(state, span.from, span.to)) spans.push(span)
+      if (!overlaps(state, span.from, span.to) || selectedOver(state, span)) spans.push(span)
       return false
     },
   })

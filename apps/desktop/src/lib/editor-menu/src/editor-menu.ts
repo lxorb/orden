@@ -12,6 +12,7 @@ import {
   insertPageBreak,
   calloutSign,
   insertTableToEdit,
+  tableMenuAt,
   editableCellAt,
   pasteHere,
   pasteIntoCell,
@@ -216,9 +217,14 @@ function pasteInto(view: EditorView, cell: HTMLElement | null): void {
     .then((text) => pasteIntoCell(cell, text))
     .catch(() => undefined)
 }
-function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTMLElement | null = null): MenuEntry[] {
+function editorMenu(
+  view: EditorView | undefined,
+  block: MenuEntry[],
+  cell: HTMLElement | null = null,
+  picked = false,
+): MenuEntry[] {
   const selected = cell
-    ? !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
+    ? picked || !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
     : !!view && !view.state.selection.main.empty
   const locked = !!view && view.state.readOnly
   const run = (command: StateCommand) => () => runCommand(view, command)
@@ -244,6 +250,7 @@ function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTML
       },
     },
   ]
+  if (cell && block.length === 0) return clipboard
   if (viewport.touch) return [...clipboard, ...block]
   if (locked) {
     return [
@@ -381,6 +388,12 @@ function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEn
 }
 export function showEditorMenu(event: MouseEvent, view: EditorView | undefined, path?: string | null) {
   const at = view ? view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : null
+  const table = view ? tableMenuAt(event.target) : null
+  if (table) {
+    const clipboard = table.cell ? [DIVIDER, ...editorMenu(view, [], table.cell, table.picked)] : []
+    menu.show(event, [...table.entries, ...clipboard], { near: true, until: unlocks.held })
+    return
+  }
   menu.show(
     event,
     [

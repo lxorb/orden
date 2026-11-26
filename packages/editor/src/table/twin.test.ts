@@ -4,7 +4,7 @@ import type { EditorView } from '@codemirror/view'
 import { afterEach, beforeAll, expect, test } from 'vitest'
 import { createEditor } from '../editor'
 import { SharedDoc } from '../shared'
-import { flushTableEdits } from './view'
+import { flushTableEdits } from './widget'
 
 const TABLE = 'intro\n\n| Column 1 | Column 2 |\n| --- | --- |\n|     |     |\n|     |     |\n\nend'
 const open: EditorView[] = []
