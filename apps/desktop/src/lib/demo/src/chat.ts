@@ -35,7 +35,7 @@ export function duringOf(picture: string, sent: number): readonly Line[] {
     {
       at: 5000,
       from: 'aiko',
-      body: `me and the boys\n\n![Four friends at a LAN party table](${picture})`,
+      body: `me and the boys\n\n![Five friends standing together](${picture})`,
       typing: 3000,
     },
     { at: 12000, from: 'jonas', body: 'The pizza is load-bearing.', typing: 10000 },
