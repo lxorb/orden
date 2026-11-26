@@ -102,6 +102,7 @@ const OWN: Record<string, RegExp> = {
   'settings/src/AskSettings.svelte': /class="(row|link)"/,
   '*': /role="(radio|tab)"/,
   'web-tab/src/ExtensionRows.svelte': /class="name"/,
+  'accounts-ui/src/MemberRows.svelte': /class="name more"/,
   'terminal/src/remote/RemotePane.svelte': /class="open"/,
   'pass-ui/src/SettingsImport.svelte': /class="source"/,
 }

@@ -23,6 +23,7 @@
     if (person.guest) return [person.email, 'Guest']
     return [person.email, person.pending && 'Invited']
   }
+  let opened = $state<string | null>(null)
   function seen(person: Member): (string | null)[] {
     return [
       person.lastSeen ? `Opened ${agoShort(person.lastSeen, 'en')}` : null,
@@ -135,13 +136,26 @@
       <span class="worn" class:pending={person.pending}>
         {@render face(faceOf(person, name(person)), pressFor(person))}
       </span>
-      <span class="name">
-        {name(person)}
-        <small><Facts parts={subtitle(person)} /></small>
-        {#if seen(person).some(Boolean)}
-          <small class="seen"><Facts parts={seen(person)} /></small>
-        {/if}
-      </span>
+      {#if seen(person).some(Boolean)}
+        {@const open = opened === whoIs(person)}
+        <button
+          type="button"
+          class="name more"
+          aria-expanded={open}
+          onclick={() => (opened = open ? null : whoIs(person))}
+        >
+          {name(person)}
+          <small><Facts parts={subtitle(person)} /></small>
+          {#if open}
+            <small class="seen"><Facts parts={seen(person)} /></small>
+          {/if}
+        </button>
+      {:else}
+        <span class="name">
+          {name(person)}
+          <small><Facts parts={subtitle(person)} /></small>
+        </span>
+      {/if}
       <div>
         <Select
           value={roleOf(person)}
@@ -164,6 +178,17 @@
     margin: var(--space-2) 0 0;
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+  .more {
+    all: unset;
+    box-sizing: border-box;
+    min-width: 0;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+  .more:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
   }
   .name > small {
     display: block;
