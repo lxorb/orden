@@ -84,16 +84,16 @@ edit('nix/flake.nix', [
   [/(suffix = "x64";\s*hash = )"[^"]*";/, `$1"${sri(debX64)}";`],
   [/(suffix = "arm64";\s*hash = )"[^"]*";/, `$1"${sri(debArm64)}";`],
 ])
-edit('aur/nib-bin/PKGBUILD', [
+edit('aur/orden-bin/PKGBUILD', [
   [/^pkgver=.*$/m, `pkgver=${version}`],
   [/^pkgrel=.*$/m, 'pkgrel=1'],
   [/^sha256sums_x86_64=.*$/m, `sha256sums_x86_64=('${debX64}')`],
   [/^sha256sums_aarch64=.*$/m, `sha256sums_aarch64=('${debArm64}')`],
 ])
-edit('aur/nib-bin/.SRCINFO', [
+edit('aur/orden-bin/.SRCINFO', [
   [/^(\tpkgver = ).*$/m, `$1${version}`],
   [/^(\tpkgrel = ).*$/m, (_, key) => `${key}1`],
-  [/^(\tprovides = (?:orden|nib)=).*$/m, `$1${version}`, 2],
+  [/^(\tprovides = orden=).*$/m, `$1${version}`],
   [/^(\tsource_x86_64 = orden\.deb::).*$/m, `$1${download}/${file('linux-x64', '.deb')}`],
   [/^(\tsha256sums_x86_64 = ).*$/m, `$1${debX64}`],
   [/^(\tsource_aarch64 = orden\.deb::).*$/m, `$1${download}/${file('linux-arm64', '.deb')}`],

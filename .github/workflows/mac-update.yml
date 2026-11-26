@@ -30,13 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - from: '0.12.0'
+          - from: '0.14.0'
             where: applications
-          - from: '0.12.0'
+          - from: '0.14.0'
             where: home
-          - from: '0.11.0'
-            where: applications
           - from: '0.20.0'
+            where: applications
+          - from: '0.22.4'
             where: applications
     runs-on: macos-latest
     timeout-minutes: 30
@@ -50,8 +50,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "v${{ matrix.from }}" --repo "$GITHUB_REPOSITORY" --dir old --pattern '*-macos-universal.dmg'
-          latest="$(curl -fsSL https://github.com/lxorb/nibeditor/releases/latest/download/latest.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
+          gh release download "v${{ matrix.from }}" --repo "$GITHUB_REPOSITORY" --dir old --pattern '*-macos-universal.dmg' --pattern '*-macos-arm64.dmg'
+          latest="$(curl -fsSL https://github.com/lxorb/orden/releases/latest/download/latest.json | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
           echo "LATEST=$latest" >> "$GITHUB_ENV"
           ls old; echo "the releases offer $latest"
       - name: Updated by itself

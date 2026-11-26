@@ -1,20 +1,14 @@
 param(
   [Parameter(Mandatory)][ValidateSet('updater', 'silent', 'elsewhere', 'msi')][string]$Scenario,
   [Parameter(Mandatory)][string]$Old,
-  [Parameter(Mandatory)][ValidateSet('Nib', 'nibeditor')][string]$OldName,
-  [string]$Via = '',
-  [ValidateSet('', 'nibeditor', 'Orden')][string]$ViaName = '',
   [Parameter(Mandatory)][string]$New,
   [Parameter(Mandatory)][string]$Sfta
 )
 
 $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true') { throw 'this installs and uninstalls for real; it runs on a CI runner only' }
-if (($Via -eq '') -ne ($ViaName -eq '')) { throw '-Via and -ViaName go together' }
 
-$names = @('Nib', 'nibeditor', 'Orden')
 $product = 'Orden'
-$before = if ($ViaName) { $ViaName } else { $OldName }
 
 $wrong = [System.Collections.Generic.List[string]]::new()
 function Check([string]$what, [bool]$held) {
@@ -122,22 +116,22 @@ function Shortcut([string]$path) {
 
 function Show([string]$when) {
   Write-Host "--- $when"
-  $keys = foreach ($name in $names) {
-    "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$name"
-    "HKCU:\Software\Emil Vinu\$name"
-    "HKCU:\Software\Clients\StartMenuInternet\$name\shell\open\command"
-  }
-  foreach ($key in @($keys) + @('HKCU:\Software\Classes\NibURL\shell\open\command', 'HKCU:\Software\RegisteredApplications')) {
+  $keys = @(
+    "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$product"
+    "HKCU:\Software\Emil Vinu\$product"
+    "HKCU:\Software\Clients\StartMenuInternet\$product\shell\open\command"
+  )
+  foreach ($key in $keys + @('HKCU:\Software\Classes\NibURL\shell\open\command', 'HKCU:\Software\RegisteredApplications')) {
     if (Has $key) { Write-Host $key; Get-ItemProperty -LiteralPath $key | Format-List | Out-String | Write-Host }
   }
   Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' |
     ForEach-Object { Get-ItemProperty $_.PSPath } |
     Where-Object { $_.Publisher -eq 'Emil Vinu' } |
     ForEach-Object { Write-Host "HKLM uninstall: $($_.PSChildName) $($_.DisplayName) $($_.DisplayVersion) $($_.InstallLocation)" }
-  $dirs = @($programs, $desktop, $commonPrograms, $commonDesktop, $pinned, $where) + @($names | ForEach-Object { "$commonPrograms\$_" })
+  $dirs = @($programs, $desktop, $commonPrograms, $commonDesktop, $pinned, $where, "$commonPrograms\$product")
   foreach ($dir in $dirs) {
     Get-ChildItem -LiteralPath $dir -Filter '*.lnk' -ErrorAction SilentlyContinue |
-      Where-Object { $_.Name -match '^(Uninstall )?(Nib|nibeditor|Orden)\.lnk$' } |
+      Where-Object { $_.Name -match '^(Uninstall )?Orden\.lnk$' } |
       ForEach-Object { $s = Shortcut $_.FullName; Write-Host "shortcut $($_.FullName) -> $($s.Target) [$($s.Id)]" }
   }
   Write-Host "http: $(Handler 'http' 20)"
@@ -168,49 +162,36 @@ $registered = "$hkcu\RegisteredApplications"
 
 if ($Scenario -eq 'msi') {
   Run 'msiexec.exe' "/i `"$($first.Msi)`" /qn /l*v `"$env:RUNNER_TEMP\old-msi.log`"" | Out-Null
-  $dir = "$env:ProgramFiles\$OldName"
+  $dir = "$env:ProgramFiles\$product"
 } else {
   Run $first.Setup '/S' | Out-Null
-  $dir = "$env:LOCALAPPDATA\$OldName"
+  $dir = "$env:LOCALAPPDATA\$product"
 }
 $where = $dir
-Check "$OldName is installed in $dir" ($null -ne (Program $dir))
-
-if ($Via) {
-  $later = Files $Via
-  if ($Scenario -eq 'msi') {
-    Run 'msiexec.exe' "/i `"$($later.Msi)`" /qn /l*v `"$env:RUNNER_TEMP\via-msi.log`"" | Out-Null
-  } else {
-    Run $later.Setup '/S' | Out-Null
-  }
-  Check "$ViaName is installed in $dir" (($null -ne (Program $dir)) -and $null -eq (Program ($dir -replace '[^\\]+$', $ViaName)))
-}
+Check "the old release is installed in $dir" ($null -ne (Program $dir))
 
 . $Sfta
 foreach ($scheme in 'http', 'https') { Set-PTA -ProgId 'NibURL' -Protocol $scheme }
 $chosen = (Handler 'http' 20) -eq 'NibURL' -and (Handler 'https' 20) -eq 'NibURL'
 if (-not $chosen) { Write-Host '::warning::this runner did not take the default browser; the choice is not checked' }
 Show 'before'
-$hadDesktop = Test-Path "$desktop\$before.lnk"
-$pin = "$pinned\$before.lnk"
+$hadDesktop = Test-Path "$desktop\$product.lnk"
+$pin = "$pinned\$product.lnk"
 if ($Scenario -ne 'msi') {
   New-Item -ItemType Directory -Force $pinned | Out-Null
   $link = (New-Object -ComObject WScript.Shell).CreateShortcut($pin)
-  $link.TargetPath = (Shortcut "$programs\$before.lnk").Target
+  $link.TargetPath = (Shortcut "$programs\$product.lnk").Target
   $link.Save()
 }
 
-$moved = "$env:LOCALAPPDATA\$product"
 if ($Scenario -ne 'msi') { $oldCopy = Started (Program $dir) 1 }
 switch ($Scenario) {
-  'updater' { Updated 'an update while the old copy runs' '/P /UPDATE' @($dir) $oldCopy; $want = $moved }
-  'silent' { Updated 'a silent install while the old copy runs' '/S' @($dir) $oldCopy; $want = $moved }
+  'updater' { Updated 'an update while the old copy runs' '/P /UPDATE' @($dir) $oldCopy; $want = $dir }
+  'silent' { Updated 'a silent install while the old copy runs' '/S' @($dir) $oldCopy; $want = $dir }
   'elsewhere' { $want = 'C:\orden-elsewhere'; Updated 'an install elsewhere while the old copy runs' "/S /D=$want" @($dir) $oldCopy }
   'msi' { Run 'msiexec.exe' "/i `"$($built.Msi)`" /passive /norestart /l*v `"$env:RUNNER_TEMP\new-msi.log`"" | Out-Null; $want = $dir }
 }
 Show 'after'
-
-$olds = @($names | Where-Object { $_ -ne $product })
 
 $exe = "$want\orden.exe"
 if ($Scenario -ne 'msi') {
@@ -221,31 +202,17 @@ Check "the program is in $want" (Test-Path $exe)
 Check 'and the program under its former name is gone' (-not (Test-Path "$want\nib.exe"))
 Check "and it is $version" ((Test-Path $exe) -and (Get-Item $exe).VersionInfo.ProductVersion -like "$version*")
 if ($Scenario -eq 'msi') {
-  Check 'no second folder under the new name' (-not (Test-Path "$env:ProgramFiles\$product"))
   $entries = @(Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' |
       ForEach-Object { Get-ItemProperty $_.PSPath } |
-      Where-Object { $_.Publisher -eq 'Emil Vinu' -and $_.DisplayName -in $names })
+      Where-Object { $_.Publisher -eq 'Emil Vinu' -and $_.DisplayName -eq $product })
   Check 'one entry in Apps & Features' ($entries.Count -eq 1)
   Check "and it is $product $version" ($entries.Count -eq 1 -and $entries[0].DisplayName -ceq $product -and $entries[0].DisplayVersion -eq $version)
   $start = Shortcut "$commonPrograms\$product\$product.lnk"
   Check "the Start menu entry is $product and starts the program" ($start -and $start.Target -eq $exe)
   Check 'and carries the app id' ($start -and $start.Id -eq 'so.orden.Orden')
-  foreach ($name in $olds) {
-    Check "the $name Start menu entry is gone" (-not (Test-Path "$commonPrograms\$name\$name.lnk"))
-    Check "and its folder" (-not (Test-Path "$commonPrograms\$name"))
-    Check "the $name desktop icon is gone" (-not (Test-Path "$commonDesktop\$name.lnk"))
-    Check "the $name uninstall shortcut in the program's folder is gone" (-not (Test-Path "$want\Uninstall $name.lnk"))
-  }
 } else {
-  Check "the old folder $dir is gone" (-not (Test-Path $dir))
   if ($Scenario -eq 'elsewhere') {
-    Check 'no folder under the new name' (-not (Test-Path $moved))
-  }
-  foreach ($name in $olds) {
-    Check "the $name Apps & Features entry is gone" (-not (Has "$uninstall\$name"))
-    Check "the $name remembered folder is gone" (-not (Has "$hkcu\Emil Vinu\$name"))
-    Check "the $name Start menu entry is gone" (-not (Test-Path "$programs\$name.lnk"))
-    Check "the $name desktop icon is gone" (-not (Test-Path "$desktop\$name.lnk"))
+    Check "the folder it was in, $dir, is gone" (-not (Test-Path $dir))
   }
   Check 'the new one is there' ((Value "$uninstall\$product" 'DisplayName') -ceq $product)
   Check "and is $version" ((Value "$uninstall\$product" 'DisplayVersion') -eq $version)
@@ -260,10 +227,6 @@ if ($Scenario -eq 'msi') {
   }
 }
 
-foreach ($name in $olds) {
-  Check "the $name browser client is gone" (-not (Has "$clients\$name"))
-  Check "and its line in RegisteredApplications" ($null -eq (Value $registered $name))
-}
 Check "the browser client is $product and starts the program" ((Starts (Value "$clients\$product\shell\open\command")) -eq $exe)
 Check 'and is listed for Default apps' ((Value $registered $product) -eq "Software\Clients\StartMenuInternet\$product\Capabilities")
 $link = Value "$hkcu\Classes\NibURL\shell\open\command"
@@ -323,14 +286,12 @@ Show 'uninstalled'
 Check 'the program is gone' (-not (Test-Path $exe))
 Check 'and its PDF document icon' (-not (Test-Path -LiteralPath $pdfIcon))
 Check 'nothing in Open with for PDFs' (-not (Has "$hkcu\Classes\NibPDF") -and $null -eq (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
-foreach ($name in $names) {
-  Check "no $name Apps & Features entry is left" (-not (Has "$uninstall\$name"))
-  Check "no $name browser client is left" (-not (Has "$clients\$name"))
-  Check "nothing of $name in RegisteredApplications" ($null -eq (Value $registered $name))
-  $left = @("$programs\$name.lnk", "$desktop\$name.lnk", "$commonPrograms\$name\$name.lnk", "$commonDesktop\$name.lnk") |
-    Where-Object { Test-Path $_ }
-  Check "no $name shortcut is left $left" (-not $left)
-}
+Check 'no Apps & Features entry is left' (-not (Has "$uninstall\$product"))
+Check 'no browser client is left' (-not (Has "$clients\$product"))
+Check 'nothing in RegisteredApplications' ($null -eq (Value $registered $product))
+$left = @("$programs\$product.lnk", "$desktop\$product.lnk", "$commonPrograms\$product\$product.lnk", "$commonDesktop\$product.lnk") |
+  Where-Object { Test-Path $_ }
+Check "no shortcut is left $left" (-not $left)
 
 Write-Host "$($wrong.Count) wrong"
 exit $wrong.Count

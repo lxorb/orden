@@ -5,12 +5,12 @@ on:
     inputs:
       version:
         description: The released version to package
-        default: '0.4.0'
+        default: '0.22.4'
   push:
     branches: ['validate-linux-packaging']
 
 env:
-  VERSION: ${{ inputs.version || '0.4.0' }}
+  VERSION: ${{ inputs.version || '0.22.4' }}
 
 permissions:
   contents: read
@@ -29,10 +29,8 @@ jobs:
         run: |
           mkdir -p dl
           for arch in x64 arm64; do
-            for name in Orden Nib; do
-              curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
-                "https://github.com/lxorb/orden/releases/download/v$VERSION/$name-$VERSION-linux-$arch.deb" && break
-            done
+            curl -fsSL -o "dl/Orden-$VERSION-linux-$arch.deb" \
+              "https://github.com/lxorb/orden/releases/download/v$VERSION/Orden-$VERSION-linux-$arch.deb"
           done
           sha256sum dl/*.deb
 
@@ -44,7 +42,7 @@ jobs:
               *) said=arm64 ;;
             esac
 
-            want="$(sha256sum "dl/Nib-$VERSION-linux-$arch.deb" | cut -d' ' -f1)"
+            want="$(sha256sum "dl/Orden-$VERSION-linux-$arch.deb" | cut -d' ' -f1)"
             held="$(sed -n "s|.*on $said: sha256/\([0-9a-f]*\).*|\1|p" packaging/snap/snapcraft.yaml)"
 
             echo "$said: snapcraft.yaml says $held"
@@ -65,7 +63,7 @@ jobs:
 
       - name: Tauri's own .desktop entry
         run: |
-          dpkg-deb -x "dl/Nib-$VERSION-linux-x64.deb" x
+          dpkg-deb -x "dl/Orden-$VERSION-linux-x64.deb" x
           entry=$(ls x/usr/share/applications/*.desktop | head -1)
           cat "$entry"
           desktop-file-validate "$entry" && echo 'valid' || echo 'invalid'
@@ -78,12 +76,10 @@ jobs:
 
       - name: What the AppImage bundles
         run: |
-          for name in Orden Nib; do
-            curl -fsSL -o Nib.AppImage \
-              "https://github.com/lxorb/orden/releases/download/v$VERSION/$name-$VERSION-linux-x64.AppImage" && break
-          done
-          chmod +x Nib.AppImage
-          ./Nib.AppImage --appimage-extract >/dev/null
+          curl -fsSL -o Orden.AppImage \
+            "https://github.com/lxorb/orden/releases/download/v$VERSION/Orden-$VERSION-linux-x64.AppImage"
+          chmod +x Orden.AppImage
+          ./Orden.AppImage --appimage-extract >/dev/null
           echo "::group::AppDir"
           find squashfs-root -maxdepth 4 -printf '%y %p\n' | sort | head -60
           echo "::endgroup::"
@@ -91,7 +87,7 @@ jobs:
 
       - name: The .desktop entries the packaging ships instead
         run: |
-          desktop-file-validate packaging/aur/nib-bin/nib.desktop
+          desktop-file-validate packaging/aur/orden-bin/nib.desktop
           desktop-file-validate packaging/nix/orden.desktop
           desktop-file-validate packaging/flathub/so.orden.Orden.desktop
 
@@ -114,7 +110,7 @@ jobs:
           echo 'builduser ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builduser
           chmod 440 /etc/sudoers.d/builduser
           install -d /build
-          cp -r /repo/packaging/aur/nib-bin/. /build/
+          cp -r /repo/packaging/aur/orden-bin/. /build/
           chown -R builduser: /build
           cd /build
 
@@ -138,16 +134,14 @@ jobs:
           install -d /check
           bsdtar -xf ./*.pkg.tar.zst -C /check
           test -f /check/usr/share/applications/nib.desktop
-          for tauri in Nib nibeditor Orden; do
-            test ! -e "/check/usr/share/applications/$tauri.desktop"
-          done
+          test ! -e /check/usr/share/applications/Orden.desktop
           test -f /check/usr/share/icons/hicolor/256x256/apps/orden.png
           test ! -e /check/usr/share/icons/hicolor/256x256@2
           test -x /check/usr/bin/orden
           desktop-file-validate /check/usr/share/applications/nib.desktop
           echo 'installed layout ok'
 
-          diff -u /repo/packaging/aur/nib-bin/.SRCINFO /repo/out/SRCINFO
+          diff -u /repo/packaging/aur/orden-bin/.SRCINFO /repo/out/SRCINFO
           echo '.SRCINFO is current'
           SH
           docker run --rm -v "$PWD:/repo" -v /tmp/aur.sh:/aur.sh "$ARCH_IMAGE" bash /aur.sh
@@ -200,8 +194,6 @@ jobs:
           unsquashfs -d /tmp/snapx "${{ steps.build.outputs.snap }}" >/dev/null
           cat /tmp/snapx/meta/snap.yaml
           test -f /tmp/snapx/usr/share/applications/orden.desktop
-          for tauri in Nib nibeditor Orden; do
-            test ! -e "/tmp/snapx/usr/share/applications/$tauri.desktop"
-          done
+          test ! -e /tmp/snapx/usr/share/applications/Orden.desktop
           ls /tmp/snapx/meta/gui/ || true
           find /tmp/snapx -name 'libcef.so' -o -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head

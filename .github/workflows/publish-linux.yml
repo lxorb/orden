@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       - name: Point the PKGBUILD at this release
-        working-directory: packaging/aur/nib-bin
+        working-directory: packaging/aur/orden-bin
         shell: bash
         run: |
           version="${TAG#v}"
@@ -60,7 +60,7 @@ jobs:
           useradd -m builduser
           echo 'builduser ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/builduser
           chmod 440 /etc/sudoers.d/builduser
-          install -d /build && cp -r /repo/packaging/aur/nib-bin/. /build/
+          install -d /build && cp -r /repo/packaging/aur/orden-bin/. /build/
           chown -R builduser: /build
           cd /build
           sudo -u builduser makepkg --printsrcinfo > .SRCINFO
@@ -75,8 +75,8 @@ jobs:
         uses: KSXGitHub/github-actions-deploy-aur@084b0d9b15415bf9cdb65d44dad1efe37a354050
         with:
           pkgname: orden-bin
-          pkgbuild: packaging/aur/nib-bin/PKGBUILD
-          assets: packaging/aur/nib-bin/nib.desktop
+          pkgbuild: packaging/aur/orden-bin/PKGBUILD
+          assets: packaging/aur/orden-bin/nib.desktop
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}

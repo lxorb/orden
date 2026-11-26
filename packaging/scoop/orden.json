@@ -1,6 +1,6 @@
 {
-    "version": "0.22.5",
-    "description": "Orden, formerly nibeditor: a simple, lightweight markdown editor offering all the features you could ever need.",
+    "version": "0.22.4",
+    "description": "Orden: a simple, lightweight markdown editor offering all the features you could ever need.",
     "homepage": "https://orden.so",
     "license": "AGPL-3.0-only",
     "notes": "Themes and note history live in '%APPDATA%\\so.orden.Orden', which is junctioned into Scoop's persist directory, so they survive updates and uninstalls.",

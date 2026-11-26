@@ -112,7 +112,7 @@ say_eval "[...document.querySelectorAll('.notice [class*=\"-button\"]')].at(-1).
 for _ in $(seq 60); do running "$app" || break; sleep 1; done
 back=no
 for _ in $(seq 60); do
-  if running "$app" || pgrep -f "/Contents/MacOS/(nib|orden)" >/dev/null; then back=yes; break; fi
+  if running "$app" || pgrep -f "/Contents/MacOS/orden" >/dev/null; then back=yes; break; fi
   sleep 1
 done
 echo "came back by itself: $back"

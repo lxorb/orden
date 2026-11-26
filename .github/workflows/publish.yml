@@ -25,7 +25,6 @@ jobs:
       winget: ${{ steps.tokens.outputs.winget }}
       packaging: ${{ steps.tokens.outputs.packaging }}
       chocolatey: ${{ steps.tokens.outputs.chocolatey }}
-      rename: ${{ steps.rename.outputs.rename }}
     steps:
       - id: release
         env:
@@ -51,17 +50,6 @@ jobs:
             echo "packaging=$([[ -n $PACKAGING_TOKEN ]] && echo true || echo false)"
             echo "chocolatey=$([[ -n $CHOCOLATEY_API_KEY ]] && echo true || echo false)"
           } >> "$GITHUB_OUTPUT"
-
-      - id: rename
-        env:
-          PACKAGE_RENAME: ${{ vars.PACKAGE_RENAME }}
-        run: |
-          if [[ "$PACKAGE_RENAME" == true ]]; then
-            echo 'rename=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'rename=false' >> "$GITHUB_OUTPUT"
-            echo "::notice::PACKAGE_RENAME is not true - Scoop and Chocolatey publish Orden as nib."
-          fi
 
   winget:
     needs: gate
@@ -111,7 +99,6 @@ jobs:
     env:
       TAG: ${{ needs.gate.outputs.tag }}
       VERSION: ${{ needs.gate.outputs.version }}
-      RENAME: ${{ needs.gate.outputs.rename }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -160,31 +147,20 @@ jobs:
           mv orden.json.next orden.json
           rm -r dl
 
-          jq --indent 4 \
-            '(.installer.script | map(startswith("# Up to 0.15.0")) | index(true)) as $at
-             | if $at == null then error("orden.json no longer says where it takes over from nib") else . end
-             | .installer.script |= .[:$at] + .[$at + 5:]' \
-            orden.json > nib.json
-
-          if [[ "$RENAME" == true ]]; then
-            mv orden.json bucket/orden.json
-            mkdir -p bucket/deprecated
-            git rm -q --ignore-unmatch bucket/nib.json
-            jq --indent 4 '.notes = ["Renamed: Orden is the orden package now. First scoop update nib, then scoop uninstall nib, then scoop install orden; what nib kept in its persist folder comes over."] + ([.notes] | flatten | map(select(. != null)))' \
-              nib.json > bucket/deprecated/nib.json
-            rm nib.json
-          else
-            mv nib.json bucket/nib.json
-            rm orden.json
+          mv orden.json bucket/orden.json
+          if [ -f bucket/nib.json ]; then
+            mkdir -p deprecated
+            jq --indent 4 '.notes = ["Renamed: Orden is the orden package now. Run scoop uninstall nib, then scoop install orden; what nib kept in its persist folder comes over."] + ([.notes] | flatten | map(select(. != null)))' \
+              bucket/nib.json > deprecated/nib.json
+            git rm -q bucket/nib.json
           fi
 
       - name: Commit
         run: |
           git config user.name lxorb
           git config user.email 101118850+lxorb@users.noreply.github.com
-          git add -A bucket
-          name=$([[ "$RENAME" == true ]] && echo orden || echo nib)
-          git diff --quiet --cached || git commit -m "feat: $name $VERSION"
+          git add -A bucket deprecated
+          git diff --quiet --cached || git commit -m "feat: orden $VERSION"
           git push
 
   homebrew:
@@ -216,9 +192,6 @@ jobs:
           cp source/packaging/homebrew/orden.rb Casks/orden.rb
           rm -r source
 
-          git rm -q --ignore-unmatch Casks/nib.rb
-          renames=$(cat cask_renames.json 2>/dev/null || echo '{}')
-          jq --indent 2 '. + {"nib": "orden"}' <<<"$renames" > cask_renames.json
 
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dl --pattern "Orden-$VERSION-macos-*.dmg"
           arm=$(sha256sum "dl/Orden-$VERSION-macos-arm64.dmg" | cut -d' ' -f1)
@@ -234,7 +207,7 @@ jobs:
         run: |
           git config user.name lxorb
           git config user.email 101118850+lxorb@users.noreply.github.com
-          git add Casks/orden.rb cask_renames.json
+          git add Casks/orden.rb
           git diff --quiet --cached || git commit -m "feat: orden $VERSION"
           git push
 
@@ -247,11 +220,10 @@ jobs:
     env:
       TAG: ${{ needs.gate.outputs.tag }}
       VERSION: ${{ needs.gate.outputs.version }}
-      RENAME: ${{ needs.gate.outputs.rename }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - name: Bump orden and nib
+      - name: Bump orden, and nib for its last version
         shell: bash
         working-directory: packaging/chocolatey
         env:
@@ -273,24 +245,23 @@ jobs:
           sed -i -E "s|(orden@v)[0-9][^/]*|\\1$VERSION|" orden.nuspec
           sed -i -E "s|(releases/tag/v)[0-9].*<|\\1$VERSION<|" orden.nuspec
 
-          if [[ "$RENAME" != true ]]; then
-            # shellcheck disable=SC2016
-            grep -q '^This package was called `nib` until 0.15.0. `nib` is now an empty package that depends on$' orden.nuspec
-            # shellcheck disable=SC2016
-            sed -E -e 's|<id>orden</id>|<id>nib</id>|' \
-              -e '/^This package was called `nib` until 0\.15\.0/,/^$/d' orden.nuspec > nib.nuspec
-            grep -E '<id>|<version>|orden@v|releases/tag' nib.nuspec
-            echo "PACKAGES=nib:$VERSION" >> "$GITHUB_ENV"
+          grep -E "releases/download|'[0-9A-Fa-f]{64}'" tools/chocolateyinstall.ps1
+          grep -E '<version>|orden@v|releases/tag' orden.nuspec
+
+          listed() { curl -fsSL "https://community.chocolatey.org/api/v2/Packages()?\$filter=Id%20eq%20'$1'%20and%20IsLatestVersion"; }
+          if ! listed orden | grep -q '<entry>'; then
+            echo "::notice::orden is not listed on the community repository yet, so nib is left as it is. Run this again once orden is approved."
+            echo "PACKAGES=orden:$VERSION" >> "$GITHUB_ENV"
             exit 0
           fi
-
+          if listed nib | grep -q '<d:Title>\[Deprecated\]'; then
+            echo "PACKAGES=orden:$VERSION" >> "$GITHUB_ENV"
+            exit 0
+          fi
           day=$(date -u -d "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json publishedAt --jq .publishedAt)" +%Y%m%d)
           sed -i -E "s|<version>.*</version>|<version>$VERSION.$day</version>|" nib.nuspec
           sed -i -E "s|(<dependency id=\"orden\" version=\")[^\"]*\"|\\1$VERSION\"|" nib.nuspec
           echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"
-
-          grep -E "releases/download|'[0-9A-Fa-f]{64}'" tools/chocolateyinstall.ps1
-          grep -E '<version>|orden@v|releases/tag' orden.nuspec
           grep -E '<version>|<dependency ' nib.nuspec
 
       - name: Pack and push

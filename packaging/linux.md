@@ -9,7 +9,7 @@ them. Not Flathub; see the section of that name.
 | --- | --- | --- | --- |
 | `apt/` | apt (`apt install orden`, from `apt.orden.so`) | the `.deb` | amd64, arm64 |
 | `rpm/` | dnf and zypper (`dnf install orden`, from `rpm.orden.so`) | the `.rpm` | x86_64, aarch64 |
-| `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
+| `aur/orden-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
 
@@ -59,7 +59,7 @@ is still short of two things, which every package here repairs:
 
 - **No `x-scheme-handler/http` or `https` in `MimeType=` and no `%U` on `Exec=`**, so
   nothing offers Orden as a web browser: the entry Tauri writes claims
-  `application/pdf` and `x-scheme-handler/nib` alone. Orden claims `x-scheme-handler/http` and `https`, which is what lets it be
+  `application/pdf` and `x-scheme-handler/orden` alone. Orden claims `x-scheme-handler/http` and `https`, which is what lets it be
   the default browser (see `default_browser.rs`), and of files only
   `application/pdf`, for a file manager's "Open with" (see `handed_pdfs.rs`): it
   opens no note from outside its spaces, so a `.md` in a file manager is never
@@ -300,15 +300,13 @@ the password once through polkit, and then Orden restarts:
 
 ## AUR - `orden-bin`
 
-`aur/nib-bin/` is the package base as the AUR wants it: `PKGBUILD`, the
-generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. The package
-is `orden-bin`; the folder and the desktop entry keep the name `nib`. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
+`aur/orden-bin/` is the package base as the AUR wants it: `PKGBUILD`, the
+generated `.SRCINFO`, and the `nib.desktop` that replaces Tauri's. It unpacks the `.deb` with `bsdtar`, so installing Orden pulls in no
 Rust or Node toolchain.
 
-Neither `orden-bin` nor `orden` is in the AUR (checked 2026-10-12), and neither
-the official repositories nor the AUR has a `nib`, so `provides=nib` and
-`conflicts=nib` are free. (`nib-git` in the AUR is an unrelated, orphaned Python
-static site generator.) The package was never published as `nib-bin`.
+Neither `orden-bin` nor `orden` is in the AUR (checked 2026-11-26), so
+`provides=orden` and `conflicts=orden` are free. The package was never published
+under an older name, so it replaces nothing there.
 
 ### Steps to publish it - needs your account
 
@@ -322,17 +320,17 @@ the key have to be yours.
    cannot type one:
 
    ```
-   ssh-keygen -t ed25519 -N "" -C "aur@nib" -f ~/.ssh/aur_nib
+   ssh-keygen -t ed25519 -N "" -C "aur@orden" -f ~/.ssh/aur_orden
    ```
 
-3. Paste the contents of `~/.ssh/aur_nib.pub` into *SSH Public Key* on
+3. Paste the contents of `~/.ssh/aur_orden.pub` into *SSH Public Key* on
    <https://aur.archlinux.org/account/> and save.
 4. Hand the private key and your account details to the repository:
 
    ```
    gh secret set AUR_USERNAME --repo lxorb/orden --body "<your AUR username>"
    gh secret set AUR_EMAIL    --repo lxorb/orden --body "<the email on the account>"
-   gh secret set AUR_SSH_PRIVATE_KEY --repo lxorb/orden < ~/.ssh/aur_nib
+   gh secret set AUR_SSH_PRIVATE_KEY --repo lxorb/orden < ~/.ssh/aur_orden
    ```
 
 5. Publish the current release:
@@ -348,7 +346,7 @@ If you would rather do the first push yourself:
 
 ```
 git clone ssh://aur@aur.archlinux.org/orden-bin.git
-cp packaging/aur/nib-bin/{PKGBUILD,.SRCINFO,nib.desktop} orden-bin/
+cp packaging/aur/orden-bin/{PKGBUILD,.SRCINFO,nib.desktop} orden-bin/
 cd orden-bin && git add -A && git commit -m "orden 0.13.1" && git push
 ```
 

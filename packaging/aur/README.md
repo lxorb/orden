@@ -3,7 +3,7 @@
 Two packages, which conflict with each other:
 
 - `orden-bin` installs the `.deb` of the newest release. `publish-linux.yml`
-  pushes it when a release is published; its recipe is `nib-bin/`.
+  pushes it when a release is published; its recipe is `orden-bin/`.
 - `orden-git` clones `main` and builds it on the installing machine. Its recipe,
   `orden-git/`, does not change with each push to `main`: AUR helpers find new
   commits themselves, e.g. `yay -Syu --devel`. Its version comes from
