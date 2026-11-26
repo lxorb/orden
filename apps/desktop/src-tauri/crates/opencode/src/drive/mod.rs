@@ -39,6 +39,13 @@ const ROLES: [&str; 2] = ["user", "assistant"];
 fn binary() -> Option<PathBuf> {
     std::env::var_os(BINARY_VAR).filter(|one| !one.is_empty()).map(PathBuf::from)
 }
+fn real(path: &Path) -> PathBuf {
+    if cfg!(windows) {
+        path.to_owned()
+    } else {
+        std::fs::canonicalize(path).expect("a real folder")
+    }
+}
 fn snapshot_file(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("src").join("drive").join(name)
 }
@@ -83,7 +90,7 @@ impl Drive {
         let binary = binary()?;
         let (model, mcp) = (mock::model(), mock::mcp());
         let dir = tempfile::tempdir().expect("a folder");
-        let root = dir.path().join("opencode");
+        let root = real(dir.path()).join("opencode");
         let launch = Launch {
             binary,
             dirs: Dirs { root: root.clone() },
