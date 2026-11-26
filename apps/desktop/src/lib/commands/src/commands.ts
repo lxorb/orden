@@ -53,7 +53,7 @@ import {
 } from '@orden/editor'
 import { account } from '../../accounts/src/api'
 import { busy, prompt, viewport, type MenuItem, DIVIDER, fullscreen } from '../../ui-kit/src/api'
-import { turnedOff, basesOn, hiddenKinds, type KindName, passOn, timeOn } from '../../gates/src/api'
+import { turnedOff, basesOn, hiddenKinds, type KindName, passOn, timeOn, todosOn } from '../../gates/src/api'
 import { composerCommands } from './composer-commands'
 import { paletteName } from '../../highlight/src/api'
 import { links } from '../../link-index/src/api'
@@ -835,12 +835,16 @@ export function appCommands(view?: EditorView): Command[] {
           commanded('pass-new-login', 'New login', 'pass.new-login'),
           commanded('pass-generate', 'Generate password', 'pass.generate'),
         ]),
-    {
-      id: 'todos',
-      label: 'Todos',
-      hint: shortcuts.hint('app.tasks'),
-      run: entry('app.tasks'),
-    },
+    ...(todosOn()
+      ? [
+          {
+            id: 'todos',
+            label: 'Todos',
+            hint: shortcuts.hint('app.tasks'),
+            run: entry('app.tasks'),
+          },
+        ]
+      : []),
     ...(timeOn()
       ? [
           keyed('time-tab', 'Open time tracker', 'time.tab'),

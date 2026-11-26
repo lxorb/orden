@@ -16,9 +16,19 @@ export type KindName =
   | 'pass'
   | 'web'
   | 'private'
-export function kindsHere(): KindName[] {
+export type OrdenApp = typeof __ORDEN_APP__
+const WHOLE = __ORDEN_APP__ === 'orden'
+const APP_PANELS: readonly string[] = ['tasks', 'chats', 'time']
+export function panelHere(panel: string, app: OrdenApp = __ORDEN_APP__): boolean {
+  return app === 'orden' || !APP_PANELS.includes(panel)
+}
+export function todosOn(): boolean {
+  return WHOLE
+}
+export function kindsHere(app: OrdenApp = __ORDEN_APP__): KindName[] {
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
+  if (app !== 'orden') return here
   if (account.accountToken && chatsOn()) here.push('chat')
   if (__AI__ && web) here.push('ai')
   if (isDesktop) here.push('terminal', 'remote')
@@ -67,17 +77,17 @@ export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
 export const BASES_WORD = 'experimental-bases'
 export function chatsOn(): boolean {
-  return tried(CHATS_WORD)
+  return WHOLE && tried(CHATS_WORD)
 }
 export function explorerOn(): boolean {
   return tried(EXPLORER_WORD)
 }
 const passOnly = typeof document !== 'undefined' && document.documentElement.dataset.only === 'pass'
 export function passOn(): boolean {
-  return passOnly || tried(PASS_WORD)
+  return passOnly || (WHOLE && tried(PASS_WORD))
 }
 export function timeOn(): boolean {
-  return tried(TIME_WORD)
+  return WHOLE && tried(TIME_WORD)
 }
 export function basesOn(): boolean {
   return tried(BASES_WORD)

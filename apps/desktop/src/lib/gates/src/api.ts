@@ -13,9 +13,12 @@ export {
   type KindName,
   KINDS_KEY,
   kindsHere,
+  type OrdenApp,
+  panelHere,
   PASS_WORD,
   passOn,
   TIME_WORD,
   timeOn,
+  todosOn,
 } from './gates.svelte'
 export { forgetDeveloper, locked, receive, setCoding, setKind, setWord, turnedOff } from './kind-choice'

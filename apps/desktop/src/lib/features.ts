@@ -125,7 +125,8 @@ registerSurfaces({
 if (__AI__) registerSidebarPart(askPart)
 registerSidebarPart(outlinePart)
 registerSidebarPart(scratchpadPart)
-registerSidebarPart({ id: 'tasks', toTab: () => runCommand('views.todos').then(() => undefined) })
+if (__ORDEN_APP__ === 'orden')
+  registerSidebarPart({ id: 'tasks', toTab: () => runCommand('views.todos').then(() => undefined) })
 registerFeature(() => import('./quick-add/src/api'))
 registerTabKind('view', async () => (await import('./views/src/api')).viewTabKind)
 whenPortProvided('workspace.view', (view) =>
@@ -170,21 +171,25 @@ registerCommandRows('transcribe', async () => (await import('./dictation/src/api
 if (__AI__) registerCommandRows('rewrite', async () => (await rewritingStore()).rewriteRows)
 registerSurfaces({
   canvas: () => import('./canvas/src/api').then((one) => one.loadCanvas()),
-  tasks: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
-  todos: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
-  channel: () => import('./chats-client/src/api').then((one) => one.loadChatTab()),
-  'chat-links': () => import('./chats-client/src/api').then((one) => one.loadChatLinks()),
-  chats: () => import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
-  'time-panel': () => import('./time/src/api').then((one) => one.loadTimePanel()),
-  time: () => import('./time/src/api').then((one) => one.loadTimeTab()),
+  ...(__ORDEN_APP__ === 'orden'
+    ? {
+        tasks: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosPanel })),
+        todos: () => import('./tasks-views/src/api').then((api) => ({ default: api.TodosBoard })),
+        channel: () => import('./chats-client/src/api').then((one) => one.loadChatTab()),
+        'chat-links': () => import('./chats-client/src/api').then((one) => one.loadChatLinks()),
+        chats: () => import('./chats-client/src/api').then((one) => one.loadChatsPanel()),
+        'time-panel': () => import('./time/src/api').then((one) => one.loadTimePanel()),
+        time: () => import('./time/src/api').then((one) => one.loadTimeTab()),
+        pass: () => import('./pass-ui/src/api').then((one) => one.loadPassTab()),
+        'pass-fill': () => import('./pass-ui/src/api').then((one) => one.loadPassFill()),
+      }
+    : {}),
   'import-tab': () => import('./import/src/api').then((one) => one.loadImportTab()),
   'import-mark': () => import('./import/src/api').then((one) => one.loadImportMark()),
   pages: () => import('./pages/src/api').then((one) => one.loadPages()),
   'pages-navigator': () => import('./pages/src/api').then((one) => one.loadNavigator()),
   web: loadWebTab,
   explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
-  pass: () => import('./pass-ui/src/api').then((one) => one.loadPassTab()),
-  'pass-fill': () => import('./pass-ui/src/api').then((one) => one.loadPassFill()),
   ...(__AI__
     ? {
         'takeover-bar': () => import('./agents/src/api').then((one) => one.loadTakeoverBar()),
@@ -206,16 +211,17 @@ registerSurfaces({
   'crash-ask': () => import('./crash-reports/src/api').then((one) => one.loadCrashAsk()),
   'undo-toast': () => import('./workspace/src/api').then((one) => one.loadUndoToast()),
 })
-registerSidebarPart({
-  id: 'time',
-  menu: async () => (await import('./time/src/api')).trackingMenu(),
-  toTab: async () => void (await import('./time/src/api')).openTime(),
-})
+if (__ORDEN_APP__ === 'orden')
+  registerSidebarPart({
+    id: 'time',
+    menu: async () => (await import('./time/src/api')).trackingMenu(),
+    toTab: async () => void (await import('./time/src/api')).openTime(),
+  })
 if (__AI__) {
   registerFeature(() => import('./agents/src/api'))
   registerFeature(() => import('./mcp-servers/src/api'))
 }
-registerFeature(() => import('./chats-client/src/api'))
+if (__ORDEN_APP__ === 'orden') registerFeature(() => import('./chats-client/src/api'))
 registerFeature(() => import('./crash-reports/src/api'))
 registerFeature(() => import('./terminal/src/api'))
 registerFeature(() => import('./auto-tidy/src/api'))
@@ -255,7 +261,7 @@ providePort('publishing', {
 providePort('web.siteIcons', {
   held: async () => (await (await import('./web-tab/src/api')).siteIconSet()).siteIcons,
 })
-registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
+if (__ORDEN_APP__ === 'orden') registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
 registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
 if (__AI__) {
   registerCommand('ai.tab', async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab)
@@ -267,11 +273,13 @@ if (__AI__) {
 registerCommandRows('export', async () => (await import('./export/src/api')).exportCommands)
 registerCommandRows('export-picker', async () => (await import('./export/src/api')).exportPicker)
 if (__AI__) registerCommandRows('agent-undo', async () => (await import('./agent-docs/src/api')).undoRows)
-registerCommandRows('send', async () => (await import('./chats-client/src/api')).sendRows)
-registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
+if (__ORDEN_APP__ === 'orden') {
+  registerCommandRows('send', async () => (await import('./chats-client/src/api')).sendRows)
+  registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
+}
 registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
 registerHearing(async () => (await (await import('./pdf/src/api')).handed()).hearPdfs)
-registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
+if (__ORDEN_APP__ === 'orden') registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
 if (__AI__) {
   registerAgentVerbs(async () => (await import('./agent-host/src/api')).hostVerbs)
   registerAgentVerbs(async () => (await import('./explorer/src/api')).explorerVerbs())

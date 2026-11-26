@@ -352,6 +352,7 @@ export default tseslint.config(
         __APP_COMMIT__: 'readonly',
         __CLAUDE_CODE__: 'readonly',
         __AI__: 'readonly',
+        __ORDEN_APP__: 'readonly',
       },
       parserOptions: {
         projectService: true,

@@ -6,6 +6,10 @@ dist-worker/
 dist-handoff/
 dist-home/
 dist-preview/
+dist-notes/
+dist-todo/
+dist-chat/
+dist-track/
 target/
 **/src-tauri/gen/*
 !**/src-tauri/gen/android/

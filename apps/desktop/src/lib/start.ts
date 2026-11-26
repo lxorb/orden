@@ -143,10 +143,11 @@ export function start(): () => void {
     .then((one) => one.retireChats())
     .then((one) => one.forgetRetiredChatsHere())
     .catch(() => undefined)
-  void startup
-    .turn('right')
-    .then(() => import('./tasks-model/src/api'))
-    .then(({ startTodos }) => startTodos())
+  if (__ORDEN_APP__ === 'orden')
+    void startup
+      .turn('right')
+      .then(() => import('./tasks-model/src/api'))
+      .then(({ startTodos }) => startTodos())
   void startup.turn('right').then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
   void startup.turn('right').then(blankTabs)
   void startup

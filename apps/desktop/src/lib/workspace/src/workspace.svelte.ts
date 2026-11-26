@@ -16,7 +16,7 @@ import {
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@orden/editor'
 import { account, arriving } from '../../accounts/src/api'
 import { seed } from '../../web-backend/src/api'
-import { basesOn, hiddenKinds } from '../../gates/src/api'
+import { basesOn, hiddenKinds, panelHere } from '../../gates/src/api'
 import { keptAway } from '../../away/src/api'
 import {
   blockIds,
@@ -3278,7 +3278,7 @@ class Workspace {
     return panels.panelsOn(this.rightHere, side, every).filter((one) => this.offers(one))
   }
   offers(panel: Panel): boolean {
-    return panel !== 'ask' || (__AI__ && !viewport.touch)
+    return panelHere(panel) && (panel !== 'ask' || (__AI__ && !viewport.touch))
   }
   get nextRight(): Panel | null {
     const last = this.lastRight

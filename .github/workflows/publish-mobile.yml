@@ -114,6 +114,21 @@ jobs:
           pnpm --filter @orden/desktop exec tauri android build --apk \
             --target aarch64 --target x86_64 \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
+          mkdir -p out/orden
+          cp apps/desktop/src-tauri/gen/android/app/build/outputs/apk/*/release/*.apk out/orden/
+
+      - name: Build Orden Notes from the same project
+        env:
+          ORG_GRADLE_PROJECT_ordenApp: notes
+        run: |
+          pnpm --filter @orden/desktop exec tauri android build --apk \
+            --target aarch64 --target x86_64 \
+            --config src-tauri/tauri.notes.conf.json \
+            --config '{"version":"${{ needs.version.outputs.version }}"}'
+          mkdir -p out/notes
+          for apk in apps/desktop/src-tauri/gen/android/app/build/outputs/apk/*/release/*.apk; do
+            cp "$apk" "out/notes/notes-$(basename "$apk")"
+          done
 
       - name: Clippy for the phone
         run: |
@@ -127,7 +142,13 @@ jobs:
         with:
           name: orden-android
           if-no-files-found: error
-          path: apps/desktop/src-tauri/gen/android/app/build/outputs/apk/**/release/*.apk
+          path: out/orden/*.apk
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: orden-notes-android
+          if-no-files-found: error
+          path: out/notes/*.apk
 
   ios:
     needs: version
@@ -223,6 +244,9 @@ jobs:
           find artifacts -type f | while read -r file; do
             name=$(basename "$file")
             case "$name" in
+              notes-*)
+                continue
+                ;;
               app-universal-release.apk)
                 name=android.apk
                 ;;
