@@ -15,17 +15,11 @@ pub(crate) fn lifecycle() -> Option<&'static Lifecycle> {
 }
 const UNSTABLE: &str = "unstable";
 const EDGE: &str = "https://github.com/lxorb/orden/releases/download/edge/latest.json";
-const RELEASES: [&str; 2] = [
-    "https://github.com/lxorb/nibeditor/releases/download/",
-    "https://github.com/lxorb/orden/releases/download/",
-];
+const RELEASES: &str = "https://github.com/lxorb/orden/releases/download/";
 pub(crate) fn offered(channel: &str, version: &str, download: &str) -> Result<(), String> {
-    let Some(file) = RELEASES
-        .iter()
-        .find_map(|releases| download.strip_prefix(releases))
-        .and_then(|rest| rest.rsplit('/').next())
+    let Some(file) = download.strip_prefix(RELEASES).and_then(|rest| rest.rsplit('/').next())
     else {
-        return Err(format!("that version is not served from {}", RELEASES.join(" or ")));
+        return Err(format!("that version is not served from {RELEASES}"));
     };
     if version.is_empty() || !names(file, version) {
         return Err(format!("{file} is not version {version}"));
@@ -35,14 +29,12 @@ pub(crate) fn offered(channel: &str, version: &str, download: &str) -> Result<()
     }
     Ok(())
 }
-const PREFIXES: [&str; 3] = ["Nib-", "nibeditor-", "Orden-"];
+const PREFIX: &str = "Orden-";
 fn names(file: &str, version: &str) -> bool {
-    PREFIXES.iter().any(|prefix| {
-        file.strip_prefix(prefix)
-            .and_then(|rest| rest.strip_prefix(version))
-            .and_then(|rest| rest.strip_prefix('-'))
-            .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
-    })
+    file.strip_prefix(PREFIX)
+        .and_then(|rest| rest.strip_prefix(version))
+        .and_then(|rest| rest.strip_prefix('-'))
+        .is_some_and(|platform| platform.starts_with(|first: char| first.is_ascii_alphabetic()))
 }
 fn moved_target(os: &str, built: &str, native: Option<&str>) -> Option<String> {
     let native = native?;
@@ -142,11 +134,11 @@ pub async fn check_update(webview: Webview, channel: String) -> Result<Option<Fo
 }
 #[cfg(test)]
 mod tests {
-    use super::{endpoints, moved_target, offered, EDGE, PREFIXES, RELEASES, UNSTABLE};
+    use super::{endpoints, moved_target, offered, EDGE, PREFIX, RELEASES, UNSTABLE};
     use tauri::Url;
 
     fn bundle(version: &str) -> String {
-        format!("{}v{version}/Orden-{version}-windows-x64-setup.exe", RELEASES[1])
+        format!("{RELEASES}v{version}/{PREFIX}{version}-windows-x64-setup.exe")
     }
     #[test]
     fn a_release_that_says_what_it_serves_is_installed() {
@@ -166,9 +158,7 @@ mod tests {
     fn a_file_from_anywhere_else_is_no_update() {
         for address in [
             "https://evil.example/Orden-99.0.0-windows-x64-setup.exe",
-            "http://github.com/lxorb/nibeditor/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
             "https://github.com/someone/else/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
-            "https://github.com.evil.example/lxorb/nibeditor/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
             "http://github.com/lxorb/orden/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
             "https://github.com.evil.example/lxorb/orden/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
             "https://github.com/lxorb/ordenx/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
@@ -204,26 +194,20 @@ mod tests {
             "linux-arm64.AppImage",
             "macos-universal.app.tar.gz",
         ] {
-            for releases in RELEASES {
-                for prefix in PREFIXES {
-                    let address = format!("{releases}v0.9.0/{prefix}0.9.0-{platform}");
-                    assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{address}");
-                }
-            }
+            let address = format!("{RELEASES}v0.9.0/{PREFIX}0.9.0-{platform}");
+            assert_eq!(offered("stable", "0.9.0", &address), Ok(()), "{address}");
         }
     }
     #[test]
-    fn a_bundle_is_named_by_either_name_and_nothing_else() {
+    fn a_bundle_is_named_by_the_product_and_nothing_else() {
         for file in [
-            "nib-0.9.0-windows-x64-setup.exe",
-            "Nibeditor0.9.0-windows-x64-setup.exe",
-            "evil-nibeditor-0.9.0-windows-x64-setup.exe",
-            "nibeditor-0.9.0windows-x64-setup.exe",
+            "Other-0.9.0-windows-x64-setup.exe",
+            "Orden-0.9.0windows-x64-setup.exe",
             "orden-0.9.0-windows-x64-setup.exe",
             "Orden0.9.0-windows-x64-setup.exe",
             "evil-Orden-0.9.0-windows-x64-setup.exe",
         ] {
-            let address = format!("{}v0.9.0/{file}", RELEASES[1]);
+            let address = format!("{RELEASES}v0.9.0/{file}");
             assert!(offered("stable", "0.9.0", &address).is_err(), "{file}");
         }
     }
@@ -272,7 +256,7 @@ mod tests {
             config["plugins"]["updater"]["endpoints"][0].as_str(),
             Some("https://github.com/lxorb/orden/releases/latest/download/latest.json")
         );
-        assert!(EDGE.starts_with(RELEASES[1]));
+        assert!(EDGE.starts_with(RELEASES));
     }
     #[test]
     fn an_x64_install_on_an_arm_machine_takes_the_arm_build() {
