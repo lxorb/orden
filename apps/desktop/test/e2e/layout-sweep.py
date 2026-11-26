@@ -29,7 +29,6 @@ USER = {
     "id": "sweep",
     "email": "someone.with.a.longer.address@example.com",
     "name": "Someone",
-    "pronouns": None,
     "bio": None,
     "status": None,
     "accent": None,

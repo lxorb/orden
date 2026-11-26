@@ -78,7 +78,6 @@
       />
       <div class="who">
         <strong class="name">{name}</strong>
-        {#if person?.pronouns}<span class="soft">{person.pronouns}</span>{/if}
       </div>
       {#if status && (status.emoji || status.text)}
         <div class="status">

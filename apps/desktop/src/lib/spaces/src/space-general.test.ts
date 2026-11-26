@@ -35,14 +35,14 @@ function drawn(role: string, admin: boolean) {
     { id: 'remote-team', name: 'Team', role, admin, shared: true, sharedItems: [] },
   ] as unknown as typeof account.spaces
   const body = render(SpaceGeneral, { props: {} }).body
-  const name = /<input[^>]*aria-label="Space name"[^>]*>/.exec(body)?.[0] ?? ''
+  const name = /<button[^>]*aria-label="Edit name"[^>]*>/.exec(body)?.[0] ?? ''
   const icon = /<button[^>]*aria-label="Choose an icon"[^>]*>/.exec(body)?.[0] ?? ''
-  return { body, names: name !== '' && !/\sreadonly/.test(name), icons: icon !== '' && !/\sdisabled/.test(icon) }
+  return { body, names: name !== '' && !/\sdisabled/.test(name), icons: icon !== '' && !/\sdisabled/.test(icon) }
 }
 describe('the General part of a space in Settings', () => {
   test('shows the name and the icon of the space it is about', () => {
     const { body } = drawn('owner', false)
-    expect(body).toContain('value="Team"')
+    expect(body).toMatch(/<span class="text[^"]*">Team<\/span>/)
     expect(body).toContain('aria-label="Choose an icon"')
   })
   test('lets the owner and an admin rename, a writer only choose the icon, and a reader neither', () => {

@@ -547,6 +547,7 @@ describe('the sentence behind a setting', () => {
       'lib/export/src/PdfSheet.svelte',
       'lib/settings/src/SettingsPanel.svelte',
       'lib/settings/src/SyncPane.svelte',
+      'lib/ui-controls/src/EditRow.svelte',
     ])
   })
 })
