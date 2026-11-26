@@ -954,3 +954,70 @@ describe('the packaging bump', () => {
     }
   })
 })
+describe('the OpenCode every desktop installer carries', () => {
+  const pin = JSON.parse(repo('apps', 'desktop', 'src-tauri', 'opencode.json')) as {
+    version: string
+    bun: string
+    sha512: Record<string, string>
+  }
+  const merged = (triple: string) => {
+    const ran = spawnSync(process.execPath, [join(HERE, 'scripts', 'opencode.mjs'), 'config', triple], {
+      encoding: 'utf8',
+    })
+    expect(ran.status, ran.stderr).toBe(0)
+    return JSON.parse(ran.stdout) as { bundle: Record<string, unknown> }
+  }
+  test('is one pinned version, checked by its sha512 on all six platforms', () => {
+    expect(pin.version).toMatch(/^\d+\.\d+\.\d+$/)
+    expect(Object.keys(pin.sha512).sort()).toEqual([
+      'darwin-arm64',
+      'darwin-x64',
+      'linux-arm64',
+      'linux-x64',
+      'windows-arm64',
+      'windows-x64',
+    ])
+    for (const [platform, digest] of Object.entries(pin.sha512))
+      expect(digest, platform).toMatch(/^[A-Za-z0-9+/]{86}==$/)
+  })
+  test('lies beside the program it serves, and never on the PATH', () => {
+    for (const triple of [
+      'aarch64-apple-darwin',
+      'x86_64-apple-darwin',
+      'x86_64-pc-windows-msvc',
+      'aarch64-pc-windows-msvc',
+    ]) {
+      expect(merged(triple).bundle.externalBin, triple).toEqual(['binaries/opencode'])
+    }
+    for (const triple of ['x86_64-unknown-linux-gnu', 'aarch64-unknown-linux-gnu']) {
+      const { bundle } = merged(triple)
+      expect(bundle.externalBin, triple).toBeUndefined()
+      const linux = bundle.linux as Record<string, { files: Record<string, string> }>
+      for (const kind of ['deb', 'rpm']) {
+        expect(linux[kind]?.files['/usr/share/Orden/opencode'], kind).toBe(`binaries/opencode-${triple}`)
+      }
+      expect(linux.appimage, 'quick-sharun runs and wraps every ELF it finds in the AppDir').toBeUndefined()
+      expect(JSON.stringify(bundle)).not.toContain('/usr/bin/')
+    }
+  })
+  test('is fetched before every release build, which takes it in, and a tag is never cut on an older one', () => {
+    const release = repo('.github', 'workflows', 'release.yml')
+    const builds = release.split('bash scripts/linux-cef.sh tauri build').slice(1)
+    expect(builds).toHaveLength(2)
+    for (const build of builds) {
+      expect(build.slice(0, build.indexOf('\n\n'))).toContain(
+        '$(node scripts/opencode.mjs config ${{ matrix.target }})',
+      )
+    }
+    expect(release.match(/node scripts\/opencode\.mjs fetch \$\{\{ matrix\.target \}\}/g)).toHaveLength(2)
+    expect(release).toContain('run: node scripts/opencode.mjs newest')
+    expect(release).toContain('apps/desktop/src-tauri/binaries/opencode-${{ matrix.target }} shared/bin/opencode')
+  })
+  test('ships its licence and the licence of the Bun it runs on, for the pinned versions', () => {
+    const text = repo('apps', 'desktop', 'src-tauri', 'licenses', 'opencode.txt')
+    expect(text).toContain(`OpenCode ${pin.version}`)
+    expect(text).toContain(`Bun ${pin.bun}`)
+    expect(text).toContain('MIT License')
+    expect(text).toMatch(/LGPL/)
+  })
+})
