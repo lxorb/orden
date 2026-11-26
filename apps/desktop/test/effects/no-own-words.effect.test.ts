@@ -23,7 +23,7 @@ function labels(): string[] {
 test('the menu over a misspelled word offers no dictionary to add it to', () => {
   if (!modes.spellcheck) modes.toggleSpellcheck()
   const view = new EditorView({
-    state: EditorState.create({ doc: 'nib and Zug' }),
+    state: EditorState.create({ doc: 'orden and Zug' }),
     parent: document.body,
   })
   view.posAtCoords = () => 1

@@ -4,8 +4,8 @@ import { settle } from './settle'
 const typed: string[] = []
 const carried: Record<string, unknown>[] = []
 let refuse = false
-const PATH = '/home/emil/.cache/nib/images/nib-0011223344556677.png'
-const KEPT = '/home/emil/.cache/so.orden.Orden/images/nib-8899aabbccddeeff.png'
+const PATH = '/home/emil/.cache/orden/images/orden-0011223344556677.png'
+const KEPT = '/home/emil/.cache/so.orden.Orden/images/orden-8899aabbccddeeff.png'
 const kept: Record<string, unknown>[] = []
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/platform/src/tauri')>()),
