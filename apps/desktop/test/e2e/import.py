@@ -2,7 +2,7 @@ import base64
 import tempfile
 import zipfile
 from pathlib import Path
-from harness import Drive
+from harness import complete_import, Drive
 
 DRIVE = Drive(__file__)
 say = DRIVE.say
@@ -137,9 +137,8 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
     )
     shot(f"{tag}-preview")
     page.click("button.orden-button")
-    page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=60000)
+    complete_import(page)
     shot(f"{tag}-done")
-    page.evaluate("() => window.ordenApp.importing.close()")
     page.wait_for_timeout(300)
     return said
 def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger, scheme) -> None:
@@ -222,8 +221,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     shot("table-rows")
     say(f"[{name}] one note per row: {page.evaluate('() => window.ordenApp.importing.counts')}")
     page.click("button.orden-button")
-    page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=30000)
-    page.evaluate("() => window.ordenApp.importing.close()")
+    complete_import(page, 30)
     page.wait_for_timeout(300)
     row = page.evaluate(TEXT_OF, "Dune.md")
     say(f"[{name}] a row reads: {[line for line in (row or '').splitlines() if line][:6]}")

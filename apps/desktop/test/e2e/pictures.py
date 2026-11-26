@@ -6,7 +6,7 @@ import zipfile
 import zlib
 from pathlib import Path
 from playwright.sync_api import Browser, Page
-from harness import Drive
+from harness import complete_import, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
@@ -259,8 +259,7 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
     page.wait_for_function("() => window.ordenApp.importing.stage === 'ready'", timeout=30000)
     say(f"[{where}] the sheet read a {page.evaluate('() => window.ordenApp.importing.format')}")
     page.click("button.orden-button")
-    page.wait_for_function("() => window.ordenApp.importing.stage === 'done'", timeout=60000)
-    page.evaluate("() => window.ordenApp.importing.close()")
+    complete_import(page)
     page.wait_for_timeout(400)
     opened = page.evaluate(OPEN_NAMED, "Kit list")
     if not opened:
@@ -324,7 +323,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(400)
     opened = "window.ordenApp.workspace.active?.path?.endsWith('.canvas')"
     for _try in range(4):
-        page.evaluate("() => window.ordenApp.workspace.createCanvas()")
+        page.evaluate("() => window.ordenApp.workspace.createCanvas(window.ordenApp.workspace.activeSpace.root, 'Board.canvas')")
         page.wait_for_timeout(700)
         if page.evaluate(f"() => !!({opened})"):
             break
