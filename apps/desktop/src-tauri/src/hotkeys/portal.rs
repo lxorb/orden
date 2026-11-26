@@ -20,7 +20,7 @@ const REQUEST: &str = "org.freedesktop.portal.Request";
 const SESSION: &str = "org.freedesktop.portal.Session";
 const REGISTRY: &str = "org.freedesktop.host.portal.Registry";
 const PROPERTIES: &str = "org.freedesktop.DBus.Properties";
-const ENTRIES: [&str; 5] = ["nib", "orden", "Orden", "so.orden.Orden", "ch.emilvinu.nib"];
+const ENTRIES: [&str; 3] = ["orden", "Orden", "so.orden.Orden"];
 enum Ask {
     Want(BTreeMap<Which, String>),
     Change,

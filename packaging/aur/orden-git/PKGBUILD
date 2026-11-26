@@ -42,8 +42,8 @@ package() {
     bsdtar -xf - -C "${pkgdir}" usr
   chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
-  install -Dm644 orden/packaging/aur/orden-bin/nib.desktop \
-    "${pkgdir}/usr/share/applications/nib.desktop"
+  install -Dm644 orden/packaging/aur/orden-bin/orden.desktop \
+    "${pkgdir}/usr/share/applications/orden.desktop"
   rm -f "${pkgdir}/usr/share/applications/Orden.desktop"
 
   install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/orden.png" \

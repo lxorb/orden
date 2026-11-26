@@ -353,14 +353,14 @@ mod tests {
         let (install, uninstall) =
             script.split_once("!macro ORDEN_PDF_FORGET").expect("a macro that forgets");
         for line in [
-            r#"WriteRegStr SHCTX "Software\Classes\NibPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'"#,
-            r#"WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF" """#,
+            r#"WriteRegStr SHCTX "Software\Classes\OrdenPDF\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'"#,
+            r#"WriteRegStr SHCTX "Software\Classes\.pdf\OpenWithProgids" "OrdenPDF" """#,
         ] {
             assert!(install.contains(line), "installer.nsh does not say: {line}");
         }
         for line in [
-            r#"DeleteRegKey SHCTX "Software\Classes\NibPDF""#,
-            r#"DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "NibPDF""#,
+            r#"DeleteRegKey SHCTX "Software\Classes\OrdenPDF""#,
+            r#"DeleteRegValue SHCTX "Software\Classes\.pdf\OpenWithProgids" "OrdenPDF""#,
         ] {
             assert!(uninstall.contains(line), "installer.nsh does not say: {line}");
         }
@@ -372,8 +372,8 @@ mod tests {
         assert!(!script.contains(r#"WriteRegStr SHCTX "Software\Classes\.pdf" """#));
         let fragment = source("wix/pdf.wxs");
         for line in [
-            r#"Key="Software\Classes\NibPDF\shell\open\command" Type="string" Value="&quot;[!Path]&quot; &quot;%1&quot;""#,
-            r#"Key="Software\Classes\.pdf\OpenWithProgids" Name="NibPDF" Type="string" Value="""#,
+            r#"Key="Software\Classes\OrdenPDF\shell\open\command" Type="string" Value="&quot;[!Path]&quot; &quot;%1&quot;""#,
+            r#"Key="Software\Classes\.pdf\OpenWithProgids" Name="OrdenPDF" Type="string" Value="""#,
         ] {
             assert!(fragment.contains(line), "pdf.wxs does not say: {line}");
         }
@@ -383,15 +383,15 @@ mod tests {
             serde_json::from_str(&source("tauri.conf.json")).expect("the config");
         let product = config["productName"].as_str().expect("a product name");
         for line in [
-            format!(r#"Key="Software\Classes\NibPDF" Type="string" Value="{product} PDF""#),
+            format!(r#"Key="Software\Classes\OrdenPDF" Type="string" Value="{product} PDF""#),
             format!(
-                r#"Key="Software\Classes\NibPDF\Application" Name="ApplicationName" Type="string" Value="{product}""#
+                r#"Key="Software\Classes\OrdenPDF\Application" Name="ApplicationName" Type="string" Value="{product}""#
             ),
         ] {
             assert!(fragment.contains(&line), "pdf.wxs does not say: {line}");
         }
         assert!(install
-            .contains(r#"WriteRegStr SHCTX "Software\Classes\NibPDF" "" "${PRODUCTNAME} PDF""#));
+            .contains(r#"WriteRegStr SHCTX "Software\Classes\OrdenPDF" "" "${PRODUCTNAME} PDF""#));
     }
     #[test]
     fn two_files_are_the_same_only_byte_for_byte() {

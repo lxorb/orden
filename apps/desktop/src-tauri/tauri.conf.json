@@ -64,7 +64,7 @@
       "wix": {
         "upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e",
         "fragmentPaths": ["wix/browser.wxs", "wix/pdf.wxs"],
-        "componentRefs": ["OrdenBrowser", "OldNameShortcuts", "OrdenPdf"]
+        "componentRefs": ["OrdenBrowser", "OrdenPdf"]
       }
     },
     "linux": {
@@ -88,8 +88,6 @@
           "libcairo2",
           "libdbus-1-3"
         ],
-        "conflicts": ["nib", "nibeditor"],
-        "replaces": ["nib", "nibeditor"],
         "desktopTemplate": "linux/main.desktop",
         "postInstallScript": "linux/postinst",
         "files": {
@@ -116,7 +114,6 @@
           "libcairo.so.2()(64bit)",
           "libdbus-1.so.3()(64bit)"
         ],
-        "obsoletes": ["nib", "nibeditor"],
         "desktopTemplate": "linux/main.desktop",
         "files": {
           "/usr/share/polkit-1/actions/so.orden.Orden.policy": "linux/so.orden.Orden.policy"

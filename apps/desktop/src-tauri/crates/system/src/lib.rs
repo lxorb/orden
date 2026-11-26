@@ -2,11 +2,14 @@
 pub mod app_icon;
 pub mod app_place;
 pub mod appearance;
-pub mod bundle_name;
 pub mod default_browser;
 mod device;
 pub mod document_window;
 pub mod fonts;
+#[cfg(any(target_os = "linux", test))]
+mod former_desktop;
+#[cfg(windows)]
+mod former_prog_ids;
 #[cfg(target_os = "linux")]
 pub mod front_x;
 pub mod full_screen;

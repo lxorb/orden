@@ -39,7 +39,7 @@ jobs:
           sum() { curl -fsSL "$1" | sha256sum | cut -d' ' -f1; }
           x64=$(sum "$base/Orden-$version-linux-x64.deb")
           arm64=$(sum "$base/Orden-$version-linux-arm64.deb")
-          desktop=$(sha256sum nib.desktop | cut -d' ' -f1)
+          desktop=$(sha256sum orden.desktop | cut -d' ' -f1)
 
           sed -i \
             -e "s/^pkgver=.*/pkgver=$version/" \
@@ -76,7 +76,7 @@ jobs:
         with:
           pkgname: orden-bin
           pkgbuild: packaging/aur/orden-bin/PKGBUILD
-          assets: packaging/aur/orden-bin/nib.desktop
+          assets: packaging/aur/orden-bin/orden.desktop
           commit_username: ${{ secrets.AUR_USERNAME }}
           commit_email: ${{ secrets.AUR_EMAIL }}
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}

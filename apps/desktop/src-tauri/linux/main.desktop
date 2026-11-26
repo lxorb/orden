@@ -7,7 +7,7 @@ Exec={{exec}} %U
 StartupWMClass={{exec}}
 Icon={{icon}}
 Name={{name}}
-Keywords=nib;nibeditor;
+Keywords=markdown;md;editor;notes;writing;wysiwyg;orden;
 Terminal=false
 Type=Application
 {{#if mime_type}}

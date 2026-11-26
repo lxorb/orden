@@ -2,9 +2,7 @@ use tauri::AppHandle;
 
 const SHIPPED: &str = "so.orden.Orden";
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
-const PROG_ID: &str = "NibURL";
-#[cfg_attr(not(any(windows, test)), allow(dead_code))]
-const OLD_NAMES: [&str; 2] = ["Nib", "nibeditor"];
+const PROG_ID: &str = "OrdenURL";
 #[cfg_attr(not(any(windows, test)), allow(dead_code))]
 const DESCRIPTION: &str = "Notes and the web in one window.";
 #[tauri::command]
@@ -26,7 +24,14 @@ pub fn keep_registered(app: &AppHandle) {
             .name("browser registration".into())
             .spawn(move || platform::repair(&name));
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "linux")]
+    if ships(app) {
+        let app = app.clone();
+        let _ = std::thread::Builder::new()
+            .name("desktop entry carried".into())
+            .spawn(move || platform::carry_former(&app));
+    }
+    #[cfg(not(any(windows, target_os = "linux")))]
     let _ = app;
 }
 fn ships(app: &AppHandle) -> bool {
@@ -76,16 +81,8 @@ fn exe_of(command: &str) -> Option<String> {
     Some(rest[..end].to_owned()).filter(|exe| !exe.is_empty())
 }
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
-const ENTRIES: [&str; 8] = [
-    "nib-handler.desktop",
-    "nib.desktop",
-    "nibeditor.desktop",
-    "orden.desktop",
-    "ch.emilvinu.nib.desktop",
-    "nib_nib.desktop",
-    "so.orden.Orden.desktop",
-    "orden_orden.desktop",
-];
+const ENTRIES: [&str; 4] =
+    ["orden.desktop", "orden-handler.desktop", "so.orden.Orden.desktop", "orden_orden.desktop"];
 #[cfg_attr(not(any(target_os = "linux", test)), allow(dead_code))]
 fn kept(
     entry: &str,
@@ -104,7 +101,7 @@ fn is_ours(entry: &str) -> bool {
 }
 #[cfg(windows)]
 mod platform {
-    use super::{exe_of, registration, Value, OLD_NAMES, PROG_ID};
+    use super::{exe_of, registration, Value, PROG_ID};
     use std::path::Path;
     use tauri::AppHandle;
     use windows::core::{PCWSTR, PWSTR};
@@ -135,29 +132,7 @@ mod platform {
         if !whole(CURRENT_USER, name) {
             let _ = write(CURRENT_USER, &registration(name, &exe));
         }
-        for old in OLD_NAMES {
-            forget_old(CURRENT_USER, old, name, &exe);
-        }
-    }
-    pub(super) fn forget_old(root: &Key, old: &str, name: &str, exe: &str) {
-        if old.eq_ignore_ascii_case(name) {
-            return;
-        }
-        let client = format!(r"Software\Clients\StartMenuInternet\{old}");
-        let Some(program) = root
-            .open(format!(r"{client}\shell\open\command"))
-            .and_then(|key| key.get_string(""))
-            .ok()
-            .and_then(|command| exe_of(&command))
-        else {
-            return;
-        };
-        if !program.eq_ignore_ascii_case(exe) && Path::new(&program).is_file() {
-            return;
-        }
-        let _ = root.remove_tree(&client);
-        let _ =
-            root.create(r"Software\RegisteredApplications").and_then(|key| key.remove_value(old));
+        crate::former_prog_ids::forget(CURRENT_USER);
     }
     pub(super) fn whole(root: &Key, name: &str) -> bool {
         let Some(exe) = registered_exe(root) else {
@@ -260,7 +235,7 @@ mod platform {
 }
 #[cfg(target_os = "linux")]
 mod platform {
-    use super::{is_ours, kept};
+    use super::{is_ours, kept, ENTRIES};
     use std::path::PathBuf;
     use std::process::Command;
     use tauri::AppHandle;
@@ -271,18 +246,39 @@ mod platform {
             handler_of(scheme).is_some_and(|entry| is_ours(&entry) && installed(&entry))
         })
     }
-    fn installed(entry: &str) -> bool {
-        if std::env::var_os("FLATPAK_ID").is_some() || std::env::var_os("SNAP").is_some() {
-            return true;
-        }
-        let own = std::env::var_os("XDG_DATA_HOME")
+    fn sandboxed() -> bool {
+        std::env::var_os("FLATPAK_ID").is_some() || std::env::var_os("SNAP").is_some()
+    }
+    fn home_under(variable: &str, fallback: &str) -> Option<PathBuf> {
+        std::env::var_os(variable)
             .filter(|dir| !dir.is_empty())
             .map(PathBuf::from)
-            .or_else(|| {
-                std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share"))
-            });
+            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(fallback)))
+    }
+    fn on_disk(entry: &str) -> bool {
+        let own = home_under("XDG_DATA_HOME", ".local/share");
         let system = std::env::var("XDG_DATA_DIRS").unwrap_or_default();
         kept(entry, own, &system, std::path::Path::is_file)
+    }
+    fn installed(entry: &str) -> bool {
+        sandboxed() || on_disk(entry)
+    }
+    pub fn carry_former(app: &AppHandle) {
+        if sandboxed() {
+            return;
+        }
+        let Some(now) = ENTRIES.into_iter().find(|entry| on_disk(entry)) else {
+            return;
+        };
+        let lists = crate::former_desktop::lists(
+            home_under("XDG_CONFIG_HOME", ".config"),
+            home_under("XDG_DATA_HOME", ".local/share"),
+        );
+        for list in lists {
+            if let Err(trouble) = crate::former_desktop::carried(&list, now) {
+                orden_base::logs::say(app, "warn", &format!("default apps: {trouble}"));
+            }
+        }
     }
     pub fn make_default(app: &AppHandle) -> Result<(), String> {
         for scheme in ["http", "https"] {
@@ -319,7 +315,7 @@ mod platform {
 }
 #[cfg(test)]
 mod tests {
-    use super::{exe_of, is_ours, kept, registration, Value, OLD_NAMES, PROG_ID};
+    use super::{exe_of, is_ours, kept, registration, Value, ENTRIES, PROG_ID};
 
     const EXE: &str = r"C:\Users\me\AppData\Local\Orden\orden.exe";
     fn values_under<'a>(table: &'a [Value], key: &str) -> Vec<&'a Value> {
@@ -358,20 +354,21 @@ mod tests {
     }
     #[test]
     fn a_command_names_its_program_at_the_front() {
-        assert_eq!(exe_of(r#""C:\a b\nib.exe" --url "%1""#).as_deref(), Some(r"C:\a b\nib.exe"));
-        assert_eq!(exe_of(r"C:\nib.exe %1"), None);
+        assert_eq!(
+            exe_of(r#""C:\a b\orden.exe" --url "%1""#).as_deref(),
+            Some(r"C:\a b\orden.exe")
+        );
+        assert_eq!(exe_of(r"C:\orden.exe %1"), None);
         assert_eq!(exe_of(r#""" --url"#), None);
-        assert_eq!(exe_of(r#""C:\nib.exe"#), None);
+        assert_eq!(exe_of(r#""C:\orden.exe"#), None);
     }
     #[test]
     fn a_desktop_entry_is_ours_by_its_known_names() {
-        assert!(is_ours("nib-handler.desktop\n"));
-        assert!(is_ours("Nib.desktop"));
-        assert!(is_ours("nibeditor.desktop"));
+        assert!(is_ours("orden-handler.desktop\n"));
         assert!(is_ours("Orden.desktop"));
         assert!(is_ours("so.orden.Orden.desktop"));
         assert!(!is_ours("firefox.desktop"));
-        assert!(!is_ours("nibbles.desktop"));
+        assert!(!is_ours("orden-bin.desktop"));
         assert!(!is_ours(""));
         assert!(!is_ours("ordenx.desktop"));
     }
@@ -384,30 +381,33 @@ mod tests {
     fn a_desktop_entry_is_looked_for_where_the_system_looks() {
         use std::path::{Path, PathBuf};
         let on_disk = [
-            "/home/a/.local/share/applications/nib-handler.desktop",
+            "/home/a/.local/share/applications/orden-handler.desktop",
             "/usr/share/applications/Orden.desktop",
         ];
         let there = |path: &Path| on_disk.iter().any(|one| Path::new(one) == path);
         let own = || Some(PathBuf::from("/home/a/.local/share"));
-        assert!(kept("nib-handler.desktop\n", own(), "/usr/share", there));
+        assert!(kept("orden-handler.desktop\n", own(), "/usr/share", there));
         assert!(kept("Orden.desktop", own(), "", there), "the default folders");
         assert!(kept("Orden.desktop", None, "/opt/x:/usr/share", there));
-        assert!(!kept("nibeditor.desktop", own(), "/usr/local/share:/usr/share", there));
+        assert!(!kept("so.orden.Orden.desktop", own(), "/usr/local/share:/usr/share", there));
         assert!(!kept("Orden.desktop", own(), "/opt/x", there));
     }
     #[test]
-    fn the_linux_packages_replace_both_old_names() {
+    fn the_linux_packages_install_an_entry_the_app_knows_as_its_own() {
         let parsed: serde_json::Value =
             serde_json::from_str(&source("tauri.conf.json")).expect("the config");
+        let product = parsed["productName"].as_str().expect("a product name");
+        assert!(is_ours(&format!("{product}.desktop")));
+        assert!(ENTRIES.contains(&"orden-handler.desktop"));
         let linux = &parsed["bundle"]["linux"];
-        let both = serde_json::json!(["nib", "nibeditor"]);
-        assert_eq!(linux["deb"]["conflicts"], both);
-        assert_eq!(linux["deb"]["replaces"], both);
-        assert_eq!(linux["rpm"]["obsoletes"], both);
+        for package in ["deb", "rpm"] {
+            for key in ["conflicts", "replaces", "obsoletes"] {
+                assert!(linux[package][key].is_null(), "{package} {key}");
+            }
+        }
         let template = linux["deb"]["desktopTemplate"].as_str().expect("a template");
         assert_eq!(linux["rpm"]["desktopTemplate"].as_str(), Some(template));
         let entry = source(template);
-        assert!(entry.lines().any(|line| line == "Keywords=nib;nibeditor;"));
         assert!(entry.lines().any(|line| line == "Name={{name}}"));
         assert!(entry.lines().any(|line| line == "MimeType={{mime_type}}"));
     }
@@ -470,69 +470,8 @@ mod tests {
             assert!(fragment.contains(&line), "browser.wxs does not say: {line}");
         }
         assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs", "wix/pdf.wxs"]"#));
-        assert!(
-            config.contains(r#""componentRefs": ["OrdenBrowser", "OldNameShortcuts", "OrdenPdf"]"#)
-        );
+        assert!(config.contains(r#""componentRefs": ["OrdenBrowser", "OrdenPdf"]"#));
         assert!(fragment.contains(r#"<Component Id="OrdenBrowser""#));
-    }
-    #[test]
-    fn the_installer_forgets_the_old_names_and_keeps_the_prog_id() {
-        let script = source("installer.nsh");
-        for (at, old) in OLD_NAMES.iter().enumerate() {
-            let define = format!(r#"!define ORDEN_OLD_NAME_{} "{old}""#, at + 1);
-            assert!(script.contains(&define), "installer.nsh does not say: {define}");
-        }
-        assert!(!script.contains("ORDEN_OLD_NAME_3"), "a third old name the app does not know");
-        let product = product_name(&source("tauri.conf.json"));
-        assert!(script.contains(&format!(r#"!define ORDEN_NAME "{product}""#)));
-        for line in [
-            r#"DeleteRegKey SHCTX "Software\Clients\StartMenuInternet\${OLD}""#,
-            r#"DeleteRegValue SHCTX "Software\RegisteredApplications" "${OLD}""#,
-            r#"DeleteRegKey SHCTX "${ORDEN_UNINSTKEYS}\${OLD}""#,
-            r#"DeleteRegKey SHCTX "Software\${MANUFACTURER}\${OLD}""#,
-            r#"!insertmacro ORDEN_RENAME_SHORTCUT "$SMPROGRAMS" "${OLD}""#,
-            r#"!insertmacro ORDEN_RENAME_SHORTCUT "$DESKTOP" "${OLD}""#,
-            r#"!insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_1}""#,
-            r#"!insertmacro ORDEN_FIND_UNDER "${ORDEN_OLD_NAME_2}""#,
-            r#"StrCmp "$R6$R5" "${ORDEN_OLD_NAME_1}${MANUFACTURER}""#,
-            r#"StrCmp "$R6$R5" "${ORDEN_OLD_NAME_2}${MANUFACTURER}""#,
-        ] {
-            assert!(script.contains(line), "installer.nsh does not say: {line}");
-        }
-        let (install, uninstall) =
-            script.split_once("!macro NSIS_HOOK_POSTUNINSTALL").expect("an uninstall hook");
-        let install =
-            install.split_once("!macro NSIS_HOOK_POSTINSTALL").expect("an install hook").1;
-        for at in 1..=OLD_NAMES.len() {
-            let forgotten =
-                format!(r#"!insertmacro ORDEN_FORGET_OLD_NAME "${{ORDEN_OLD_NAME_{at}}}""#);
-            assert!(install.contains(&forgotten), "the install does not say: {forgotten}");
-            let browser =
-                format!(r#"!insertmacro ORDEN_FORGET_OLD_BROWSER "${{ORDEN_OLD_NAME_{at}}}""#);
-            assert!(uninstall.contains(&browser), "the uninstall does not say: {browser}");
-        }
-    }
-    #[test]
-    fn the_msi_replaces_the_one_under_either_old_name() {
-        let config = source("tauri.conf.json");
-        let fragment = source("wix/browser.wxs");
-        assert!(config.contains(r#""upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e""#));
-        let parsed: serde_json::Value = serde_json::from_str(&config).expect("the config");
-        let publisher = parsed["bundle"]["publisher"].as_str().expect("a publisher");
-        let mut last = 0;
-        for old in OLD_NAMES {
-            let key = format!(r#"Key="Software\{publisher}\{old}""#);
-            assert_eq!(fragment.matches(&key).count(), 2, "browser.wxs does not say: {key}");
-            let at = fragment.find(&key).expect("searched");
-            assert!(at > last, "{old} is searched before an older name");
-            last = at;
-            for shortcut in
-                [format!(r#"Name="{old}.lnk""#), format!(r#"Name="Uninstall {old}.lnk""#)]
-            {
-                assert!(fragment.contains(&shortcut), "browser.wxs does not remove {shortcut}");
-            }
-        }
-        assert!(fragment.contains(r#"<SetProperty Id="INSTALLDIR""#));
     }
     #[test]
     fn a_mac_bundle_asks_for_the_two_web_schemes() {
@@ -566,61 +505,8 @@ mod tests {
             .and_then(|key| key.remove_value("https"))
             .expect("a value removed");
         assert!(!whole(&root, "Orden"));
-        write(&root, &registration("Orden", r"C:\nowhere\nib.exe")).expect("written");
+        write(&root, &registration("Orden", r"C:\nowhere\orden.exe")).expect("written");
         assert!(!whole(&root, "Orden"));
-    }
-    #[cfg(windows)]
-    #[test]
-    fn an_old_name_is_forgotten_unless_it_is_another_copy() {
-        use super::platform::{forget_old, write};
-        use windows_registry::{Key, CURRENT_USER};
-
-        struct Scratch(String, std::path::PathBuf);
-        impl Drop for Scratch {
-            fn drop(&mut self) {
-                let _ = CURRENT_USER.remove_tree(&self.0);
-                let _ = std::fs::remove_file(&self.1);
-            }
-        }
-        let id = std::process::id();
-        let scratch = Scratch(
-            format!(r"Software\nib-tests-old-name-{id}"),
-            std::env::temp_dir().join(format!("nib-old-name-{id}.exe")),
-        );
-        let root = CURRENT_USER
-            .options()
-            .read()
-            .write()
-            .access(0x0001_0000)
-            .create()
-            .open(&scratch.0)
-            .expect("a test key");
-        let here = std::env::current_exe().expect("this test's own program");
-        let here = here.to_string_lossy();
-        for old in OLD_NAMES {
-            let client = format!(r"Software\Clients\StartMenuInternet\{old}");
-            let there = |root: &Key| {
-                root.open(&client).is_ok()
-                    && root
-                        .open(r"Software\RegisteredApplications")
-                        .and_then(|key| key.get_string(old))
-                        .is_ok()
-            };
-            std::fs::write(&scratch.1, b"").expect("another copy");
-            let other = scratch.1.to_string_lossy();
-            write(&root, &registration(old, &other)).expect("written");
-            forget_old(&root, old, "Orden", &here);
-            assert!(there(&root), "another copy's was taken");
-            std::fs::remove_file(&scratch.1).expect("the copy removed");
-            forget_old(&root, old, "Orden", &here);
-            assert!(root.open(&client).is_err());
-            assert!(!there(&root));
-            write(&root, &registration(old, &here)).expect("written");
-            forget_old(&root, old, old, &here);
-            assert!(there(&root), "{old} forgot itself");
-            forget_old(&root, old, "Orden", &here);
-            assert!(!there(&root));
-        }
     }
     #[cfg(windows)]
     #[test]
@@ -641,7 +527,7 @@ mod tests {
             CURRENT_USER.create(format!(r"Software\Classes\{scheme}")).expect("a test scheme");
         key.set_string("URL Protocol", "").expect("a protocol");
         key.create(r"shell\open\command")
-            .and_then(|command| command.set_string("", r#""C:\nowhere\nib.exe" "%1""#))
+            .and_then(|command| command.set_string("", r#""C:\nowhere\orden.exe" "%1""#))
             .expect("a command");
         assert_eq!(handler_of(&scheme), Some(scheme.clone()));
         drop(scratch);

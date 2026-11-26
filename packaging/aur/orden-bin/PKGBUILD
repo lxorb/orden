@@ -17,7 +17,7 @@ conflicts=('orden' 'orden-git')
 options=('!strip' '!debug' '!emptydirs')
 
 _url="https://github.com/lxorb/orden/releases/download/v${pkgver}"
-source=('nib.desktop')
+source=('orden.desktop')
 source_x86_64=("orden.deb::${_url}/Orden-${pkgver}-linux-x64.deb")
 source_aarch64=("orden.deb::${_url}/Orden-${pkgver}-linux-arm64.deb")
 noextract=('orden.deb')
@@ -30,8 +30,8 @@ package() {
     bsdtar -xf - -C "${pkgdir}" usr
   chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
-  install -Dm644 "${srcdir}/nib.desktop" \
-    "${pkgdir}/usr/share/applications/nib.desktop"
+  install -Dm644 "${srcdir}/orden.desktop" \
+    "${pkgdir}/usr/share/applications/orden.desktop"
   rm -f "${pkgdir}/usr/share/applications/Orden.desktop"
 
   install -Dm644 "${pkgdir}/usr/share/icons/hicolor/256x256@2/apps/orden.png" \

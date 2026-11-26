@@ -449,8 +449,6 @@ pub fn cef_helper() -> bool {
     true
 }
 pub fn run_on(builder: tauri::Builder<Engine>) {
-    #[cfg(target_os = "macos")]
-    orden_system::bundle_name::carry_over(env!("ORDEN_IDENTIFIER"));
     trace::begin();
     #[cfg(desktop)]
     if orden_placement::foreground::hold() {

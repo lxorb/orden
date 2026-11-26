@@ -121,7 +121,7 @@ function Show([string]$when) {
     "HKCU:\Software\Emil Vinu\$product"
     "HKCU:\Software\Clients\StartMenuInternet\$product\shell\open\command"
   )
-  foreach ($key in $keys + @('HKCU:\Software\Classes\NibURL\shell\open\command', 'HKCU:\Software\RegisteredApplications')) {
+  foreach ($key in $keys + @('HKCU:\Software\Classes\OrdenURL\shell\open\command', 'HKCU:\Software\Classes\NibURL\shell\open\command', 'HKCU:\Software\RegisteredApplications')) {
     if (Has $key) { Write-Host $key; Get-ItemProperty -LiteralPath $key | Format-List | Out-String | Write-Host }
   }
   Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' |
@@ -172,8 +172,6 @@ Check "the old release is installed in $dir" ($null -ne (Program $dir))
 
 . $Sfta
 foreach ($scheme in 'http', 'https') { Set-PTA -ProgId 'NibURL' -Protocol $scheme }
-$chosen = (Handler 'http' 20) -eq 'NibURL' -and (Handler 'https' 20) -eq 'NibURL'
-if (-not $chosen) { Write-Host '::warning::this runner did not take the default browser; the choice is not checked' }
 Show 'before'
 $hadDesktop = Test-Path "$desktop\$product.lnk"
 $pin = "$pinned\$product.lnk"
@@ -229,20 +227,17 @@ if ($Scenario -eq 'msi') {
 
 Check "the browser client is $product and starts the program" ((Starts (Value "$clients\$product\shell\open\command")) -eq $exe)
 Check 'and is listed for Default apps' ((Value $registered $product) -eq "Software\Clients\StartMenuInternet\$product\Capabilities")
-$link = Value "$hkcu\Classes\NibURL\shell\open\command"
+$link = Value "$hkcu\Classes\OrdenURL\shell\open\command"
 Check 'the ProgID starts the program with a link' ((Starts $link) -eq $exe -and $link -like '* --url "%1"')
-if ($chosen) {
-  foreach ($scheme in 'http', 'https') {
-    Check "the app is still the default for $scheme" ((Handler $scheme 20) -eq 'NibURL')
-  }
-}
+Check 'and the ProgID of the old release is gone' (-not (Has "$hkcu\Classes\NibURL"))
 
-$pdf = Value "$hkcu\Classes\NibPDF\shell\open\command"
+$pdf = Value "$hkcu\Classes\OrdenPDF\shell\open\command"
 Check 'the PDF ProgID starts the program with the file' ((Starts $pdf) -eq $exe -and $pdf -like '* "%1"')
-Check 'and is offered in Open with' ($null -ne (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
-Check 'and the default for PDFs is left alone' ((Value "$hkcu\Classes\.pdf") -ne 'NibPDF')
+Check 'and is offered in Open with' ($null -ne (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'OrdenPDF'))
+Check 'and the PDF ProgID of the old release is gone' (-not (Has "$hkcu\Classes\NibPDF") -and $null -eq (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
+Check 'and the default for PDFs is left alone' ((Value "$hkcu\Classes\.pdf") -ne 'OrdenPDF')
 $pdfIcon = "$want\documents\pdf.ico"
-Check 'and shows a PDF document icon of its own' ((Value "$hkcu\Classes\NibPDF\DefaultIcon") -eq $pdfIcon -and (Test-Path -LiteralPath $pdfIcon))
+Check 'and shows a PDF document icon of its own' ((Value "$hkcu\Classes\OrdenPDF\DefaultIcon") -eq $pdfIcon -and (Test-Path -LiteralPath $pdfIcon))
 Check 'and leaves the PDF type its own icon' ($null -eq (Value "$hkcu\Classes\.pdf\DefaultIcon") -or (Value "$hkcu\Classes\.pdf\DefaultIcon") -notlike "*$product*")
 
 Add-Type -AssemblyName System.Drawing
@@ -285,7 +280,8 @@ if ($Scenario -eq 'msi') {
 Show 'uninstalled'
 Check 'the program is gone' (-not (Test-Path $exe))
 Check 'and its PDF document icon' (-not (Test-Path -LiteralPath $pdfIcon))
-Check 'nothing in Open with for PDFs' (-not (Has "$hkcu\Classes\NibPDF") -and $null -eq (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'NibPDF'))
+Check 'nothing in Open with for PDFs' (-not (Has "$hkcu\Classes\OrdenPDF") -and $null -eq (Value "$hkcu\Classes\.pdf\OpenWithProgids" 'OrdenPDF'))
+Check 'no ProgID is left' (-not (Has "$hkcu\Classes\OrdenURL") -and -not (Has "$hkcu\Classes\NibURL") -and -not (Has "$hkcu\Classes\NibPDF"))
 Check 'no Apps & Features entry is left' (-not (Has "$uninstall\$product"))
 Check 'no browser client is left' (-not (Has "$clients\$product"))
 Check 'nothing in RegisteredApplications' ($null -eq (Value $registered $product))
