@@ -104,15 +104,8 @@ describe('the name a reader sees', () => {
     }
     expect(offenders).toEqual([])
   })
-  test('is Orden in the pages the app is served in and on its manifests', () => {
-    for (const name of [
-      'index.html',
-      'quick-add.html',
-      'handoff.html',
-      'pass.html',
-      'public/manifest.webmanifest',
-      'public/pass.webmanifest',
-    ]) {
+  test('is Orden in the pages the app is served in', () => {
+    for (const name of ['index.html', 'quick-add.html', 'handoff.html', 'pass.html']) {
       const text = readFileSync(join(APP, name), 'utf8').replace(/<!--[\s\S]*?-->/g, '')
       expect(oldNames(text), name).toEqual([])
       expect(text, name).toContain('Orden')
@@ -121,14 +114,7 @@ describe('the name a reader sees', () => {
   test('is Orden Pass wherever Pass on the web is named, in every language', () => {
     const page = readFileSync(join(APP, 'pass.html'), 'utf8')
     expect(/<title>([^<]*)<\/title>/.exec(page)?.[1]).toBe('Orden Pass')
-    for (const name of ['apple-mobile-web-app-title', 'application-name']) {
-      expect(new RegExp(`<meta name="${name}" content="([^"]*)"`).exec(page)?.[1], name).toBe('Orden Pass')
-    }
-    const manifest = JSON.parse(readFileSync(join(APP, 'public/pass.webmanifest'), 'utf8')) as {
-      name: string
-      short_name: string
-    }
-    expect([manifest.name, manifest.short_name]).toEqual(['Orden Pass', 'Orden Pass'])
+    expect(/<meta name="application-name" content="([^"]*)"/.exec(page)?.[1]).toBe('Orden Pass')
     const gate = readFileSync(join(SOURCE, 'lib/pass-ui/src/web/PassWeb.svelte'), 'utf8')
     expect(gate).toContain('title="Orden Pass"')
   })

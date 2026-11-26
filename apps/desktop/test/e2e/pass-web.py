@@ -104,24 +104,17 @@ def named_as_pass(page: Page) -> None:
     title = page.title()
     if title != "Orden Pass":
         wrong(f"the page is called {title!r}")
-    link = page.evaluate("() => document.querySelector('link[rel=manifest]')?.getAttribute('href')")
-    if link != "/pass.webmanifest":
-        wrong(f"the page links the manifest {link!r}")
-    manifest = page.evaluate("() => fetch('/pass.webmanifest').then((answer) => answer.json())")
-    if manifest.get("name") != "Orden Pass" or manifest.get("short_name") != "Orden Pass":
-        wrong(f"the manifest names {manifest.get('name')!r} / {manifest.get('short_name')!r}")
-    for icon in manifest.get("icons", []):
-        status = page.evaluate(f"() => fetch({icon['src']!r}).then((answer) => answer.status)")
-        if status != 200:
-            wrong(f"{icon['src']} answers {status}")
-    named = page.evaluate("() => document.querySelector('meta[name=apple-mobile-web-app-title]')?.content")
+    link = page.evaluate("() => document.querySelector('link[rel=manifest]')?.getAttribute('href') ?? null")
+    if link is not None:
+        wrong(f"the page still links a manifest, {link!r}, so a browser offers to install it")
+    named = page.evaluate("() => document.querySelector('meta[name=application-name]')?.content")
     if named != "Orden Pass":
-        wrong(f"an installed page is called {named!r}")
+        wrong(f"the page names its application {named!r}")
     icon = page.evaluate("() => document.querySelector('link[rel=icon]')?.getAttribute('href')")
     if icon != "/pass.svg":
         wrong(f"the tab icon is {icon!r}")
     wait_for(page, has_text(".gate h2", "Orden Pass"), "the sign-in screen called Orden Pass")
-    say("named Orden Pass, with its own manifest and icons")
+    say("named Orden Pass, with its own icon and no manifest")
 SETUP_SEEN = """(() => {
   const look = () => {
     if (document.body?.innerText.includes('Set up Pass')) window.__setupSeen = true

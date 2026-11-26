@@ -1,6 +1,5 @@
 export { carryKeys } from './former-keys'
 export { assetType } from './asset-route'
-export { serveAssets } from './serve-assets'
 export {
   BEAT_EVERY,
   IDLE_AFTER,

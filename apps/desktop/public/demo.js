@@ -109,16 +109,6 @@
       }
     },
   )
-  const workers = into.navigator.serviceWorker
-  if (workers)
-    Object.defineProperty(workers, 'register', {
-      configurable: true,
-      value() {
-        return new Promise(function () {
-          return undefined
-        })
-      },
-    })
   const fetching = into.fetch
   place('fetch', function (input, init) {
     const url = typeof input === 'object' && input !== null && 'url' in input ? input.url : String(input)

@@ -1,5 +1,5 @@
 import './lib/backend-ports'
-import { isDesktop, isMobile, platform, serveAssets, mark, markPainted, watchFirstInput } from './lib/platform/src/api'
+import { isDesktop, isMobile, platform, mark, markPainted, watchFirstInput } from './lib/platform/src/api'
 import './lib/launch/src/renamed.svelte'
 import './lib/sync-base-ports'
 import './lib/sync-ports'
@@ -18,7 +18,6 @@ import { watchPresses } from './lib/downloads/src/api'
 import { holdComposingKeys } from './lib/ui-kit/src/api'
 
 mark('modules evaluated')
-serveAssets()
 Object.assign(window, { ordenBuild: __ORDEN_BUILD__ })
 if (isMobile) {
   const meta = document.querySelector('meta[name="viewport"]')

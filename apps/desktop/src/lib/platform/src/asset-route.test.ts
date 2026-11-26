@@ -1,10 +1,7 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { ASSET_ROUTE, assetRoute, assetStorePath, assetType } from './asset-route'
-import { MIME_TYPES, mimeOfPath, UNKNOWN_TYPE } from './mime'
+import { mimeOfPath, UNKNOWN_TYPE } from './mime'
 
-const SW = join(import.meta.dirname, '../../../../public/sw.js')
 describe('the address a picture has in a browser', () => {
   test('a store path becomes a route under the space it is in', () => {
     expect(assetRoute('/Work/assets/pic.png')).toBe('/asset/Work/assets/pic.png')
@@ -61,27 +58,5 @@ describe('what a stored file says it is', () => {
   test('what was written down answers for a name that cannot', () => {
     expect(assetType('/Work/a.wat', 'application/wat')).toBe('application/wat')
     expect(assetType('/Work/a.wat')).toBe(UNKNOWN_TYPE)
-  })
-})
-describe('the worker and the page agree', () => {
-  const source = readFileSync(SW, 'utf8')
-  test('on the route', () => {
-    expect(source).toContain(`const ROUTE = '${ASSET_ROUTE}'`)
-  })
-  test('on where the rows are', () => {
-    expect(source).toContain(`const DATABASE = 'orden'`)
-    expect(source).toContain(`const STORE = 'assets'`)
-  })
-  test('on every media type there is', () => {
-    for (const [extension, type] of Object.entries(MIME_TYPES)) {
-      expect(source).toContain(`${extension}: '${type}'`)
-    }
-    expect(source).toContain(`const UNKNOWN_TYPE = '${UNKNOWN_TYPE}'`)
-  })
-  test("and it keeps nothing but the app's own page and code, and never all of it at once", () => {
-    const kept = [...source.matchAll(/caches\.(?:open|delete)\(([^)]*)\)/g)].map((one) => one[1])
-    expect(kept.length).toBeGreaterThan(0)
-    for (const name of kept) expect(name).toMatch(/^(PAGES|`\$\{CODE\}.*`|first)$/)
-    expect(source).not.toContain('addAll')
   })
 })
