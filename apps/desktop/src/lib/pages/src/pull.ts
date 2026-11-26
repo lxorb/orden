@@ -1,23 +1,10 @@
 export const LEAST_REACH = 96
 export const MOST_REACH = 160
-const GIVE = 3
-export const FALL = 250
+export const FALL = 260
+export const LET_GO = 360
 export const SETTLE = 300
 export function reachFor(pageOnScreen: number): number {
   return Math.min(MOST_REACH, Math.max(LEAST_REACH, pageOnScreen / 3))
-}
-export function risen(raw: number, reach: number, still = false): number {
-  if (raw <= 0) return 0
-  const most = reach * GIVE
-  if (still) return Math.min(most, raw)
-  return Math.min(most, raw / (1 + raw / most))
-}
-export const armed = (rise: number, reach: number): boolean => rise >= reach
-export function fallen(raw: number, elapsed: number, still = false): number {
-  if (elapsed >= FALL || raw <= 0) return 0
-  if (still || elapsed <= 0) return raw
-  const left = 1 - elapsed / FALL
-  return raw * left * left
 }
 export function startedNearEnd(viewBottom: number, last: { y: number; height: number } | null): boolean {
   if (!last) return false
@@ -35,49 +22,29 @@ export const began = (pull: Pulling, near: boolean, now: number): Pulling => ({
   ...pull,
   raw: 0,
   at: now,
-  allowed: near,
+  allowed: near && now >= pull.quiet,
   holding: false,
-  quiet: pull.quiet,
 })
+export const full = (pull: Pulling, reach: number): boolean => pull.raw >= reach
 export function riseOf(pull: Pulling, reach: number, now: number, still = false): number {
-  const raw = pull.holding ? pull.raw : fallen(pull.raw, now - pull.at, still)
-  return risen(raw, reach, still)
+  const raw = Math.min(reach, Math.max(0, pull.raw))
+  if (pull.holding) return raw
+  const gone = (now - pull.at) / FALL
+  if (still || gone >= 1 || raw <= 0) return 0
+  return raw * (1 - Math.max(0, gone)) ** 3
 }
-export function wheeled(
-  pull: Pulling,
-  said: { delta: number; reach: number; now: number; still?: boolean },
-): { pull: Pulling; makes: boolean } {
-  const { delta, reach, now, still = false } = said
-  if (now < pull.quiet) return { pull: { ...pull, raw: 0, at: now }, makes: false }
-  if (!pull.allowed || delta <= 0) {
-    return { pull: { ...pull, raw: fallen(pull.raw, now - pull.at, still), at: now }, makes: false }
-  }
-  const raw = fallen(pull.raw, now - pull.at, still) + delta
-  if (armed(risen(raw, reach, still), reach)) {
-    return { pull: { ...noPull(), at: now, quiet: now + SETTLE }, makes: true }
-  }
-  return { pull: { ...pull, raw, at: now, holding: false }, makes: false }
+export function dragged(pull: Pulling, said: { raw: number; now: number }): Pulling {
+  if (!pull.allowed) return pull
+  return { ...pull, raw: Math.max(0, said.raw), at: said.now, holding: true }
 }
-export function dragged(
-  pull: Pulling,
-  said: { raw: number; reach: number; now: number; still?: boolean },
-): { pull: Pulling; makes: boolean } {
-  const { raw, reach, now, still = false } = said
-  if (!pull.allowed || now < pull.quiet) return { pull, makes: false }
-  const held = { ...pull, raw: Math.max(0, raw), at: now, holding: true }
-  if (still && armed(risen(held.raw, reach, still), reach)) {
-    return { pull: { ...noPull(), at: now, quiet: now + SETTLE }, makes: true }
-  }
-  return { pull: held, makes: false }
+export function wheeled(pull: Pulling, said: { delta: number; now: number }): Pulling {
+  if (!pull.allowed) return { ...pull, at: said.now }
+  return { ...pull, raw: Math.max(0, pull.raw + said.delta), at: said.now, holding: true }
 }
-export function lifted(
-  pull: Pulling,
-  said: { reach: number; now: number; still?: boolean },
-): { pull: Pulling; makes: boolean } {
-  const { reach, now, still = false } = said
-  if (!pull.holding) return { pull: { ...pull, holding: false }, makes: false }
-  if (pull.allowed && armed(risen(pull.raw, reach, still), reach)) {
-    return { pull: { ...noPull(), at: now, quiet: now + SETTLE }, makes: true }
+export function lifted(pull: Pulling, said: { reach: number; now: number }): { pull: Pulling; makes: boolean } {
+  if (!pull.holding) return { pull, makes: false }
+  if (pull.allowed && full(pull, said.reach)) {
+    return { pull: { ...noPull(), at: said.now, quiet: said.now + SETTLE }, makes: true }
   }
-  return { pull: { ...pull, at: now, holding: false }, makes: false }
+  return { pull: { ...pull, at: said.now, holding: false }, makes: false }
 }

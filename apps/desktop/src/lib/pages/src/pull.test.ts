@@ -1,221 +1,99 @@
 import { describe, expect, test } from 'vitest'
 import {
-  armed,
   began,
   dragged,
   FALL,
-  fallen,
+  full,
   LEAST_REACH,
   lifted,
   MOST_REACH,
   noPull,
   reachFor,
   riseOf,
-  risen,
   SETTLE,
   startedNearEnd,
   wheeled,
 } from './pull'
 
+const atEnd = (now = 1000) => began(noPull(), true, now)
 describe('how far the pull has to come', () => {
-  test('is a third of the page on screen', () => {
+  test('is a third of the page on screen, between a floor and a ceiling', () => {
     expect(reachFor(360)).toBe(120)
-    expect(reachFor(450)).toBe(150)
-  })
-  test('with a floor, so a page seen from far away is not a flick', () => {
     expect(reachFor(60)).toBe(LEAST_REACH)
-    expect(reachFor(0)).toBe(LEAST_REACH)
-  })
-  test('and a ceiling, so it is always reachable', () => {
-    expect(reachFor(1600)).toBe(MOST_REACH)
     expect(reachFor(99999)).toBe(MOST_REACH)
   })
 })
-describe('how far the silhouette rises', () => {
-  test('nothing at all for a pull of nothing, or upwards', () => {
-    expect(risen(0, 120)).toBe(0)
-    expect(risen(-40, 120)).toBe(0)
+describe('where a pull may begin', () => {
+  test('in the lower half of the last page, never above it or with no pages', () => {
+    expect(startedNearEnd(950, { y: 0, height: 1000 })).toBe(true)
+    expect(startedNearEnd(400, { y: 0, height: 1000 })).toBe(false)
+    expect(startedNearEnd(950, null)).toBe(false)
   })
-  test('the reader’s own pixels to begin with', () => {
-    expect(risen(4, 120)).toBeGreaterThan(3.8)
-    expect(risen(4, 120)).toBeLessThanOrEqual(4)
-  })
-  test('and less and less the further it goes', () => {
-    const steps = [40, 80, 120, 160, 200, 240].map((raw) => risen(raw, 120))
-    const gains = steps.slice(1).map((one, at) => one - (steps[at] ?? 0))
-    for (const [at, gain] of gains.entries()) {
-      if (at === 0) continue
-      expect(gain).toBeLessThan(gains[at - 1] ?? 0)
-    }
-  })
-  test('never past three times the threshold, however hard it is pulled', () => {
-    expect(risen(100_000, 120)).toBeLessThanOrEqual(360)
-    expect(risen(100_000, 120)).toBeGreaterThan(355)
-  })
-  test('reaches the threshold at half again the hand’s travel', () => {
-    expect(risen(240, 160)).toBeCloseTo(160, 6)
-    expect(armed(risen(240, 160), 160)).toBe(true)
-    expect(armed(risen(239, 160), 160)).toBe(false)
-  })
-  test('and follows the hand exactly for a reader who asked for no movement', () => {
-    expect(risen(40, 120, true)).toBe(40)
-    expect(risen(200, 120, true)).toBe(200)
-    expect(risen(10_000, 120, true)).toBe(360)
+  test('and not again until the quiet after a page is over', () => {
+    const made = lifted(dragged(atEnd(), { raw: 200, now: 1100 }), { reach: 120, now: 1200 }).pull
+    expect(began(made, true, 1200 + SETTLE / 2).allowed).toBe(false)
+    expect(began(made, true, 1200 + SETTLE).allowed).toBe(true)
   })
 })
-describe('a wheel that has stopped', () => {
-  test('keeps the whole pull for the instant it stopped', () => {
-    expect(fallen(200, 0)).toBe(200)
+describe('the slot fills with the hand', () => {
+  test('pixel for pixel while held', () => {
+    for (const raw of [1, 30, 60, 119]) expect(riseOf(dragged(atEnd(), { raw, now: 1010 }), 120, 1010)).toBe(raw)
   })
-  test('lets it go, fast then slow', () => {
-    const early = 200 - fallen(200, FALL * 0.25)
-    const late = fallen(200, FALL * 0.75) - fallen(200, FALL)
-    expect(early).toBeGreaterThan(late)
+  test('up to full and no further', () => {
+    expect(riseOf(dragged(atEnd(), { raw: 500, now: 1010 }), 120, 1010)).toBe(120)
   })
-  test('and is back to nothing by the end of the fall', () => {
-    expect(fallen(200, FALL)).toBe(0)
-    expect(fallen(200, FALL * 2)).toBe(0)
+  test('and stays where it is for as long as it is held', () => {
+    const held = dragged(atEnd(), { raw: 70, now: 1010 })
+    expect(riseOf(held, 120, 1010 + 10 * FALL)).toBe(70)
   })
-  test('and for a reader who asked for no movement it goes whole rather than easing', () => {
-    expect(fallen(200, 1, true)).toBe(200)
-    expect(fallen(200, FALL / 2, true)).toBe(200)
-    expect(fallen(200, FALL, true)).toBe(0)
+  test('the same for a wheel or a trackpad, whose deltas add up and give back', () => {
+    let pull = atEnd()
+    for (const delta of [20, 20, 20]) pull = wheeled(pull, { delta, now: 1010 })
+    expect(riseOf(pull, 120, 1010)).toBe(60)
+    pull = wheeled(pull, { delta: -45, now: 1020 })
+    expect(riseOf(pull, 120, 1020)).toBe(15)
+    pull = wheeled(pull, { delta: -90, now: 1030 })
+    expect(riseOf(pull, 120, 1030)).toBe(0)
   })
-  test('so a trackpad’s small deltas still add up under reduced motion', () => {
-    let pull = began(noPull(), true, 1000)
-    let pages = 0
-    for (let step = 0; step < 60; step++) {
-      const answer = wheeled(pull, { delta: 5, reach: 160, now: 1000 + step * 8, still: true })
-      pull = answer.pull
-      if (answer.makes) pages++
-    }
-    expect(pages).toBe(1)
+  test('and does nothing where the gesture began away from the end', () => {
+    const far = began(noPull(), false, 1000)
+    expect(riseOf(dragged(far, { raw: 300, now: 1010 }), 120, 1010)).toBe(0)
+    expect(riseOf(wheeled(far, { delta: 300, now: 1010 }), 120, 1010)).toBe(0)
   })
 })
-describe('where a scroll has to start', () => {
-  const last = { y: 2326, height: 1123 }
-  test('the lower half of the last page, which is where somebody at the end is', () => {
-    expect(startedNearEnd(2326 + 600, last)).toBe(true)
-    expect(startedNearEnd(2326 + 1123, last)).toBe(true)
-    expect(startedNearEnd(9999, last)).toBe(true)
+describe('letting go', () => {
+  test('when full adds a page', () => {
+    const pull = dragged(atEnd(), { raw: 120, now: 1010 })
+    expect(full(pull, 120)).toBe(true)
+    expect(lifted(pull, { reach: 120, now: 1020 }).makes).toBe(true)
   })
-  test('and never its upper half, so a fling from the top cannot reach it', () => {
-    expect(startedNearEnd(2326 + 561, last)).toBe(false)
-    expect(startedNearEnd(0, last)).toBe(false)
+  test('short of full adds nothing and eases back to nothing within the fall', () => {
+    const answer = lifted(dragged(atEnd(), { raw: 119, now: 1010 }), { reach: 120, now: 1020 })
+    expect(answer.makes).toBe(false)
+    const seen = [0, FALL / 4, FALL / 2, (3 * FALL) / 4, FALL].map((after) => riseOf(answer.pull, 120, 1020 + after))
+    expect(seen[0]).toBe(119)
+    for (const [at, one] of seen.entries()) if (at > 0) expect(one).toBeLessThan(seen[at - 1] ?? 0)
+    expect(seen.at(-1)).toBe(0)
   })
-  test('nor a note with no pages at all', () => {
-    expect(startedNearEnd(9999, null)).toBe(false)
+  test('and goes back at once for a reader who asked for no movement', () => {
+    const answer = lifted(dragged(atEnd(), { raw: 80, now: 1010 }), { reach: 120, now: 1020 })
+    expect(riseOf(answer.pull, 120, 1020, true)).toBe(0)
   })
-})
-describe('a finger', () => {
-  const reach = 120
-  test('does nothing where the gesture did not begin near the end', () => {
-    const pull = began(noPull(), false, 1000)
-    const { pull: after, makes } = dragged(pull, { raw: 400, reach, now: 1010 })
-    expect(makes).toBe(false)
-    expect(riseOf(after, reach, 1010)).toBe(0)
-  })
-  test('carries the silhouette up while it is down', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: after } = dragged(pull, { raw: 90, reach, now: 1010 })
-    expect(riseOf(after, reach, 1010)).toBeGreaterThan(60)
-    expect(riseOf(after, reach, 1010 + FALL * 4)).toBe(riseOf(after, reach, 1010))
-  })
-  test('gives the pull back when it is dragged up again', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: out } = dragged(pull, { raw: 300, reach, now: 1010 })
-    const { pull: back } = dragged(out, { raw: 20, reach, now: 1020 })
-    expect(riseOf(back, reach, 1020)).toBeLessThan(riseOf(out, reach, 1010))
-  })
-  test('makes a page when it lifts past the threshold', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: out } = dragged(pull, { raw: 400, reach, now: 1010 })
-    expect(armed(riseOf(out, reach, 1010), reach)).toBe(true)
-    const { pull: after, makes } = lifted(out, { reach, now: 1020 })
-    expect(makes).toBe(true)
-    expect(riseOf(after, reach, 1020)).toBe(0)
-  })
-  test('and springs back when it lifts short of it', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: out } = dragged(pull, { raw: 100, reach, now: 1010 })
-    const { pull: after, makes } = lifted(out, { reach, now: 1020 })
-    expect(makes).toBe(false)
-    expect(riseOf(after, reach, 1020)).toBeGreaterThan(0)
-    expect(riseOf(after, reach, 1020 + FALL)).toBe(0)
-  })
-  test('makes nothing at all when nothing was being pulled', () => {
-    expect(lifted(noPull(), { reach, now: 1000 }).makes).toBe(false)
-  })
-  test('makes the page at the threshold for a reader who asked for no movement', () => {
-    const pull = began(noPull(), true, 1000)
-    const short = dragged(pull, { raw: reach - 1, reach, now: 1010, still: true })
-    expect(short.makes).toBe(false)
-    const far = dragged(short.pull, { raw: reach, reach, now: 1020, still: true })
-    expect(far.makes).toBe(true)
+  test('of nothing being pulled makes nothing', () => {
+    expect(lifted(noPull(), { reach: 120, now: 1000 }).makes).toBe(false)
   })
 })
-describe('a wheel', () => {
-  const reach = 120
-  test('adds its notches up until they cross the threshold', () => {
-    let pull = began(noPull(), true, 1000)
-    const made: boolean[] = []
-    for (let step = 0; step < 4; step++) {
-      const answer = wheeled(pull, { delta: 100, reach, now: 1000 + step * 40 })
-      pull = answer.pull
-      made.push(answer.makes)
-    }
-    expect(made).toEqual([false, false, true, false])
+describe('speed alone never adds a page', () => {
+  test('a wheel only fills; the page comes when it is let go full', () => {
+    let pull = atEnd()
+    for (let at = 0; at < 40; at++) pull = wheeled(pull, { delta: 200, now: 1000 + at * 8 })
+    expect(full(pull, 120)).toBe(true)
+    expect(riseOf(pull, 120, 1400)).toBe(120)
   })
-  test('and makes exactly one page out of one long scroll', () => {
-    let pull = began(noPull(), true, 1000)
-    let pages = 0
-    for (let step = 0; step < 40; step++) {
-      const answer = wheeled(pull, { delta: 60, reach, now: 1000 + step * 8 })
-      pull = answer.pull
-      if (answer.makes) pages++
-    }
-    expect(pages).toBe(1)
-  })
-  test('and another page once the quiet is over and the gesture begins again', () => {
-    let pull = began(noPull(), true, 1000)
-    let pages = 0
-    for (let step = 0; step < 4; step++) {
-      const answer = wheeled(pull, { delta: 200, reach, now: 1000 + step * 30 })
-      pull = answer.pull
-      if (answer.makes) pages++
-    }
-    expect(pages).toBe(1)
-    pull = began(pull, true, 1000 + SETTLE + 100)
-    const again = wheeled(pull, { delta: 300, reach, now: 1000 + SETTLE + 110 })
-    expect(again.makes).toBe(true)
-  })
-  test('does nothing where the scroll did not begin near the end', () => {
+  test('a fling that reaches the end from above never fills, however long it runs on', () => {
     let pull = began(noPull(), false, 1000)
-    for (let step = 0; step < 20; step++) {
-      const answer = wheeled(pull, { delta: 300, reach, now: 1000 + step * 8 })
-      pull = answer.pull
-      expect(answer.makes).toBe(false)
-    }
-    expect(riseOf(pull, reach, 1200)).toBe(0)
-  })
-  test('lets the pull fall back when the wheel stops short of the threshold', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: after, makes } = wheeled(pull, { delta: 60, reach, now: 1010 })
-    expect(makes).toBe(false)
-    expect(riseOf(after, reach, 1010)).toBeGreaterThan(0)
-    expect(riseOf(after, reach, 1010 + FALL)).toBe(0)
-  })
-  test('and starts again from nothing after a pause, rather than from where it was', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: first } = wheeled(pull, { delta: 100, reach, now: 1000 })
-    const { pull: second, makes } = wheeled(first, { delta: 100, reach, now: 1000 + FALL + 10 })
-    expect(makes).toBe(false)
-    expect(riseOf(second, reach, 1000 + FALL + 10)).toBeCloseTo(risen(100, reach), 6)
-  })
-  test('ignores a wheel going the other way', () => {
-    const pull = began(noPull(), true, 1000)
-    const { pull: after, makes } = wheeled(pull, { delta: -300, reach, now: 1010 })
-    expect(makes).toBe(false)
-    expect(after.raw).toBe(0)
+    for (let at = 0; at < 120; at++) pull = wheeled(pull, { delta: 400, now: 1000 + at * 16 })
+    expect(pull.raw).toBe(0)
+    expect(lifted(pull, { reach: 120, now: 3000 }).makes).toBe(false)
   })
 })

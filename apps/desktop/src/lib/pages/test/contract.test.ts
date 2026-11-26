@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { armed, fallen, LEAST_REACH, MOST_REACH, reachFor, risen } from '../src/pull'
+import { began, dragged, FALL, LEAST_REACH, lifted, MOST_REACH, noPull, reachFor, riseOf, wheeled } from '../src/pull'
 import { inSight } from '../src/sight'
 
 const HERE = join(import.meta.dirname, '..')
@@ -29,14 +29,16 @@ describe('a pull past the last page', () => {
     expect(reachFor(30)).toBe(LEAST_REACH)
     expect(reachFor(3000)).toBe(MOST_REACH)
   })
-  test('gives less the further it goes, and arms once it is past the reach', () => {
-    expect(risen(-5, 100)).toBe(0)
-    expect(risen(100, 100)).toBeLessThan(100)
-    expect(risen(100, 100, true)).toBe(100)
-    expect(armed(risen(1000, 100), 100)).toBe(true)
+  test('follows the hand one to one up to full, and stays there while held', () => {
+    const pull = dragged(began(noPull(), true, 0), { raw: 60, now: 10 })
+    expect(riseOf(pull, 100, 10 + FALL * 4)).toBe(60)
+    expect(riseOf(dragged(pull, { raw: 400, now: 20 }), 100, 20)).toBe(100)
   })
-  test('falls back to nothing once let go', () => {
-    expect(fallen(80, 0)).toBe(80)
-    expect(fallen(80, 1000)).toBe(0)
+  test('adds a page only when let go full, never from a wheel alone', () => {
+    const filled = wheeled(began(noPull(), true, 0), { delta: 400, now: 10 })
+    expect(lifted(filled, { reach: 100, now: 20 }).makes).toBe(true)
+    const short = lifted(dragged(began(noPull(), true, 0), { raw: 99, now: 10 }), { reach: 100, now: 20 })
+    expect(short.makes).toBe(false)
+    expect(riseOf(short.pull, 100, 20 + FALL)).toBe(0)
   })
 })
