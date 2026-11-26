@@ -1011,6 +1011,10 @@ describe('the OpenCode every desktop installer carries', () => {
     }
     expect(release.match(/node scripts\/opencode\.mjs fetch \$\{\{ matrix\.target \}\}/g)).toHaveLength(2)
     expect(release).toContain('run: node scripts/opencode.mjs newest')
+    expect(
+      release.match(/scripts\/opencode-app-drive\.py --identifier so\.orden\.Orden --exe/g),
+      'Orden itself finds it',
+    ).toHaveLength(3)
     expect(release).toContain('apps/desktop/src-tauri/binaries/opencode-${{ matrix.target }} shared/bin/opencode')
   })
   test('ships its licence and the licence of the Bun it runs on, for the pinned versions', () => {

@@ -194,6 +194,28 @@ jobs:
           retention-days: 90
           path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/orden.pdb
 
+      - name: Orden finds and starts the OpenCode it carries
+        shell: bash
+        run: |
+          bundle=apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle
+          drive=(scripts/opencode-app-drive.py --identifier so.orden.Orden --exe)
+          if [ "$RUNNER_OS" = Windows ]; then
+            home="$(cygpath -w "$RUNNER_TEMP")\\opencode-app"
+            "/c/Program Files/7-Zip/7z.exe" x -y -o"$home" "$(cygpath -w "$(ls "$bundle"/nsis/*-setup.exe | head -1)")" >/dev/null
+            python "${drive[@]}" "$home\\orden.exe"
+            exit 0
+          fi
+          command -v xvfb-run >/dev/null || bash scripts/ci-apt.sh xvfb
+          command -v dbus-run-session >/dev/null || bash scripts/ci-apt.sh dbus-x11
+          screen=(xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session --)
+          sudo apt-get update -q
+          sudo apt-get install -y "$(realpath "$(ls "$bundle"/deb/*.deb | head -1)")"
+          "${screen[@]}" python3 "${drive[@]}" /usr/share/Orden/orden
+          sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0
+          image=$(realpath "$(ls "$bundle"/appimage/*.AppImage | head -1)")
+          chmod +x "$image"
+          "${screen[@]}" python3 "${drive[@]}" "$image" --appimage-extract-and-run
+
   hover:
     needs: [build]
     if: ${{ !cancelled() && needs.build.result == 'success' }}
@@ -321,6 +343,17 @@ jobs:
           test -s "$app/Contents/Resources/opencode-licenses.txt"
           bash scripts/opencode-check.sh "$app/Contents/MacOS/opencode"
 
+      - name: Orden finds and starts the OpenCode it carries
+        shell: bash
+        run: |
+          if [ "${{ matrix.target }}" = x86_64-apple-darwin ]; then
+            echo "the mac-intel job starts this app on an Intel Mac"
+            exit 0
+          fi
+          app=$(ls -d "$PWD"/apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
+          exe=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
+          python3 scripts/opencode-app-drive.py --identifier so.orden.Orden --exe "$app/Contents/MacOS/$exe"
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: orden-${{ matrix.label }}
@@ -342,9 +375,31 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/prune-caches.sh "$GITHUB_REF"
 
+  mac-intel:
+    needs: mac
+    if: ${{ !cancelled() && needs.mac.result == 'success' }}
+    runs-on: macos-15-intel
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: orden-macos-x64
+          path: built
+
+      - name: Orden finds and starts the OpenCode it carries, on an Intel Mac
+        shell: bash
+        run: |
+          tar -xzf "$(find built -name '*.app.tar.gz' | head -1)" -C "$RUNNER_TEMP"
+          app=$(ls -d "$RUNNER_TEMP"/*.app | head -1)
+          exe=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")
+          python3 scripts/opencode-app-drive.py --identifier so.orden.Orden --exe "$app/Contents/MacOS/$exe"
+
   publish:
-    needs: [version, draft, build, mac]
-    if: ${{ !cancelled() && needs.draft.result != 'failure' && needs.build.result == 'success' && needs.mac.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
+    needs: [version, draft, build, mac, mac-intel]
+    if: ${{ !cancelled() && needs.draft.result != 'failure' && needs.build.result == 'success' && needs.mac.result == 'success' && needs.mac-intel.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -521,7 +576,7 @@ jobs:
       package: orden-unstable
 
   failed:
-    needs: [version, draft, settle, build, hover, mac, caches, publish, apt, rpm, snap, linux, nix-edge, nix]
+    needs: [version, draft, settle, build, hover, mac, mac-intel, caches, publish, apt, rpm, snap, linux, nix-edge, nix]
     if: ${{ failure() && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     permissions:
