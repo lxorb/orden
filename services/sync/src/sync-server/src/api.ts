@@ -85,7 +85,7 @@ export { deviceName } from './locks/device-name'
 export { SocketLock } from './locks/sockets'
 export { OPEN_HEADER, openAnswer, openIn, sweepOpened, WRITTEN_HEADER } from './opened'
 export { LONGEST_PATH, staysInside } from './paths'
-export { forgetPictures, htmlIsLive, keepPictures, picturesOf, picturesOfMeta, RESTAMP } from './pictures'
+export { forgetPictures, hashNamed, htmlIsLive, keepPictures, picturesOf, picturesOfMeta, RESTAMP } from './pictures'
 export { programMayReach } from './programs'
 export {
   PROTECTED,

@@ -10,6 +10,27 @@ export const RESTAMP = 'on conflict(user_id, hash) do update set since = max(sin
 const FRONT_PICTURES = ['image'] as const
 const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 const ANYWHERE = /\/i\/([a-f0-9]{64})(?![a-f0-9])/gi
+const ASSET_NAMED = /(?<![0-9a-z])([0-9a-f]{16}\.[0-9a-z]{1,10})(?![0-9a-z])/gi
+export const hashNamed = (n: string): string =>
+  `(${n}.kind = 'file' and ${n}.path like 'assets/%' and instr(substr(${n}.path, 8), '/') = 0
+    and lower(${n}.name) like substr(${n}.hash, 1, 16) || '.%')`
+export function assetsNamedIn(source: string): Set<string> {
+  const found = new Set<string>()
+  for (const match of source.matchAll(ASSET_NAMED)) if (match[1]) found.add(match[1].toLowerCase())
+  return found
+}
+async function assetsShown(env: Env, spaceId: string, source: string): Promise<string[]> {
+  const named = [...assetsNamedIn(source)]
+  if (!named.length) return []
+  const { results } = await env.DB.prepare(
+    `select distinct hash from notes
+      where space_id = ?1 and kind = 'file' and lower(name) in (select value from json_each(?2))
+        and substr(hash, 1, 16) = substr(lower(name), 1, 16)`,
+  )
+    .bind(spaceId, JSON.stringify(named))
+    .all<{ hash: string }>()
+  return results.map((one) => one.hash)
+}
 export function picturesOfMeta(meta: Readonly<Record<string, string>> | null | undefined): string[] {
   const out: string[] = []
   for (const said of Object.values(meta ?? {})) {
@@ -104,6 +125,7 @@ export async function keepPictures(
       .first<{ meta: string | null }>()
     const pictures = picturesOf(content, live)
     for (const hash of picturesOfMeta(metaFromText(row?.meta))) pictures.add(hash)
+    for (const hash of await assetsShown(env, note.space_id, content)) pictures.add(hash)
     const shown = live ? pictures : new Set([...pictures, ...picturesOf(content, true)])
     await env.DB.batch([
       env.DB.prepare(

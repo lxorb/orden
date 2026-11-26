@@ -9,7 +9,9 @@ import {
   FRONT_REV,
   holdVersion,
   hooks,
+  hashNamed,
   keepPictures,
+  pokeNow,
   keepVersion,
   keepWords,
   laterOf,
@@ -54,7 +56,7 @@ import { allows, atLeast, reachedItem, reachedSpace, refusal, spaceOf } from './
 import { ingestInto, writtenPastRoom } from './rooms'
 import { noteKind, readsAs } from './rooms/kind'
 import { deviceOf } from './sync2/device'
-import { createByPath, deleteById, moveByPath } from './sync2/ops'
+import { createByPath, deleteById, moveByPath, revive } from './sync2/ops'
 import { DOCUMENT_KINDS, kindOfName } from './sync2/tree'
 
 const TOO_LARGE = 'that note is too large'
@@ -163,7 +165,7 @@ export async function addNote(
   await env.NOTES.put(noteKey(spaceId, note.id), content)
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
-  await keepPictures(env, note, content)
+  await keepAssets(env, note, content)
   await hooks()
     .chats.linkPointer(env, note, content)
     .catch(() => undefined)
@@ -202,7 +204,7 @@ async function placeNote(
   await env.NOTES.put(noteKey(spaceId, note.id), content)
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
-  await keepPictures(env, note, content)
+  await keepAssets(env, note, content)
   await hooks()
     .chats.linkPointer(env, note, content)
     .catch(() => undefined)
@@ -310,7 +312,7 @@ export async function saveNote(
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await followOnlyNote(env, note.space_id, [{ from: note.path, to: path }], []).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
-  await keepPictures(env, updated, content)
+  await keepAssets(env, updated, content)
   await hooks()
     .chats.linkPointer(env, updated, content)
     .catch(() => undefined)
@@ -745,4 +747,20 @@ export async function writeWords(
     return await writeWords(env, now, text, path, writer)
   }
   return MOVED
+}
+export async function keepAssets(env: Env, note: { id: string; space_id: string }, content: string): Promise<boolean> {
+  const kept = await keepPictures(env, note, content)
+  if (!kept) return false
+  const { results } = await env.DB.prepare(
+    `select n.id from note_pictures p join notes n on n.hash = p.hash and n.space_id = ?2
+      where p.note_id = ?1 and n.deleted = 1 and n.deleted_at is not null and ${hashNamed('n')}`,
+  )
+    .bind(note.id, note.space_id)
+    .all<{ id: string }>()
+  for (const one of results) {
+    await revive(env, note.space_id, undefined, one.id).catch(() => undefined)
+    const row = await env.DB.prepare('select seq from notes where id = ?').bind(one.id).first<{ seq: number }>()
+    if (row) await pokeNow(env, note.space_id, row.seq).catch(() => undefined)
+  }
+  return true
 }

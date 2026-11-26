@@ -1,6 +1,6 @@
 import { chunks, places } from './bound'
 import { byteLength, cleanPersonName, now, sha256 } from './crypto'
-import { picturesOf } from './pictures'
+import { assetsNamedIn, picturesOf } from './pictures'
 import type { Env, Note } from './types'
 
 export const KEEP_DAYS = [30, 365] as const
@@ -32,7 +32,7 @@ export function presentVersion(version: Version) {
 }
 export function picturesOfVersion(content: string): string | null {
   try {
-    return JSON.stringify([...picturesOf(content, true)])
+    return JSON.stringify([...picturesOf(content, true), ...assetsNamedIn(content)])
   } catch {
     return null
   }

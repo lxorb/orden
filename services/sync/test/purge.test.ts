@@ -8,6 +8,7 @@ import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
 import { saveNote } from '../src/sync-server-engine/src/notes'
 import { purgeExpired } from '../src/sync-server-engine/src/trash'
 import { DEVICES_COUNT_FOR, GRACE, NIGHTLY, sweepUnused } from '../src/sync-server-engine/src/unused'
+import { FRONT_REV } from '../src/sync-server/src/site/front'
 import type { Note } from '../src/sync-server/src/types'
 import { sweepVersions } from '../src/sync-server/src/versions'
 import { call, joined, type ShareView, signIn, type TestEnv, testEnv } from './harness'
@@ -810,7 +811,7 @@ describe('what a purge stops paying for', () => {
     await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
     expect((await call(env, `/i/${hash}.png`)).status).toBe(200)
     expect(env.db.prepare('select hash from unused_blobs').all()).toEqual([{ hash }])
-    env.db.prepare('update notes set front_rev = 2 where id = ?').run(old)
+    env.db.prepare('update notes set front_rev = ? where id = ?').run(FRONT_REV, old)
     expect(await sweepUnused(env, NIGHTLY, Date.now() + GRACE)).toBe(1)
     expect((await call(env, `/i/${hash}.png`)).status).toBe(404)
   })
