@@ -146,8 +146,42 @@ describe('when and where a member last came in (#2555)', () => {
     ]
     return store
   }
+  const toggle = (words: string) => rowOf(words).querySelector<HTMLButtonElement>('button.more')
+  test('keeps each member’s details folded until their row is pressed, and folds them again on a second press', () => {
+    draw({ store: withAccess(), manages: true })
+    expect(rowOf('ada').querySelector('.seen')).toBeNull()
+    expect(toggle('ada')?.getAttribute('aria-expanded')).toBe('false')
+    toggle('ada')?.click()
+    flushSync()
+    expect(rowOf('ada').querySelector('.seen')).not.toBeNull()
+    expect(toggle('ada')?.getAttribute('aria-expanded')).toBe('true')
+    toggle('ada')?.click()
+    flushSync()
+    expect(rowOf('ada').querySelector('.seen')).toBeNull()
+    expect(toggle('ada')?.getAttribute('aria-expanded')).toBe('false')
+  })
+  test('opens with the keyboard too, as a button, and only one member at a time', () => {
+    const store = withAccess()
+    store.who.members = [
+      ...store.who.members,
+      someone('cy@example.com', { since: Date.UTC(2026, 4, 1), lastSeen: Date.now() - DAY, place: 'Bern, CH' }),
+    ]
+    draw({ store, manages: true })
+    expect(toggle('ada')?.tagName).toBe('BUTTON')
+    expect(toggle('ada')?.getAttribute('type')).toBe('button')
+    toggle('ada')?.click()
+    flushSync()
+    toggle('cy')?.click()
+    flushSync()
+    expect(rowOf('ada').querySelector('.seen')).toBeNull()
+    expect(rowOf('cy').querySelector('.seen')?.textContent).toContain('Bern, CH')
+    expect(toggle('ada')?.getAttribute('aria-expanded')).toBe('false')
+    expect(toggle('cy')?.getAttribute('aria-expanded')).toBe('true')
+  })
   test('shows when each member last opened the space, since when they have access and roughly where from', () => {
     draw({ store: withAccess(), manages: true })
+    toggle('ada')?.click()
+    flushSync()
     const ada = rowOf('ada').querySelector('.seen')?.textContent ?? ''
     expect(ada).toContain('Opened 3d ago')
     expect(ada).toContain('Member since')
@@ -157,6 +191,7 @@ describe('when and where a member last came in (#2555)', () => {
   test('shows nothing of it where the server said nothing, as it does for anyone but owners and admins', () => {
     draw({ store: withAccess(), manages: false })
     expect(rowOf('bob').querySelector('.seen')).toBeNull()
+    expect(rowOf('bob').querySelector('button.more')).toBeNull()
   })
   test('tells everyone in the space that owners and admins see it, and says nothing on the sheet about one file', () => {
     draw({ store: withAccess(), manages: false })
