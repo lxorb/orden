@@ -5,14 +5,29 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::{
-    AppHandle, Emitter as _, LogicalSize, Manager as _, PhysicalPosition, PhysicalSize, Url,
-    Webview, WebviewBuilder, WebviewUrl,
+    AppHandle, Emitter as _, LogicalSize, Manager as _, PhysicalPosition, PhysicalSize,
+    Rect as Bounds, Url, Webview, WebviewBuilder, WebviewUrl,
 };
 
 const LABEL: &str = "web-extension-popup-";
 static NUMBERED: AtomicU64 = AtomicU64::new(0);
 static SHOWN: Mutex<Option<String>> = Mutex::new(None);
 static WANTED: Mutex<Option<String>> = Mutex::new(None);
+static PLACED: Mutex<Option<(String, PhysicalPosition<f64>)>> = Mutex::new(None);
+fn place_at(label: &str, at: PhysicalPosition<f64>) {
+    *PLACED.held() = Some((label.to_owned(), at));
+}
+fn placed_at(label: &str) -> Option<PhysicalPosition<f64>> {
+    PLACED.held().as_ref().filter(|(one, _)| one == label).map(|(_, at)| *at)
+}
+fn laid(rect: &Rect) -> bool {
+    [rect.x, rect.y, rect.width, rect.height].iter().all(|one| one.is_finite())
+        && rect.width > 0.0
+        && rect.height > 0.0
+}
+fn bounds(at: PhysicalPosition<f64>, size: PhysicalSize<u32>) -> Bounds {
+    Bounds { position: at.into(), size: size.into() }
+}
 fn want(label: Option<String>) {
     *WANTED.held() = label;
 }
@@ -83,6 +98,9 @@ pub async fn extension_popup_open(
     store: Option<String>,
     rect: Rect,
 ) -> Result<Option<String>, String> {
+    if !laid(&rect) {
+        return Ok(None);
+    }
     let store = orden_web::web_stores::named(store.as_deref())?.map(str::to_owned);
     let label = fresh_label();
     want(Some(label.clone()));
@@ -142,10 +160,12 @@ pub async fn extension_popup_open(
             over = page.url().ok().map(String::from);
         }
         let scale = orden_web::page_scale::of(&window).unwrap_or(1.0);
+        let at = PhysicalPosition::new(rect.x * scale, rect.y * scale);
+        place_at(&label, at);
         let made = orden_web::engine::add_child(
             &window,
             builder,
-            PhysicalPosition::new(rect.x * scale, rect.y * scale),
+            at,
             LogicalSize::new(SMALLEST, SMALLEST),
         )
         .map_err(|error| format!("that popup could not be opened: {error}"));
@@ -161,12 +181,19 @@ pub async fn extension_popup_open(
 }
 #[tauri::command]
 pub fn extension_popup_place(app: AppHandle, rect: Rect) {
+    if !laid(&rect) {
+        return;
+    }
     if let Some(view) = answering(&app) {
         let _doing = orden_crashes::stall::doing("extension_popup_place");
         let scale = orden_web::page_scale::of(&view.window()).unwrap_or(1.0);
-        let _ = view.set_position(PhysicalPosition::new(rect.x * scale, rect.y * scale));
-        let _ = view
-            .set_size(PhysicalSize::new(rect.width.max(1.0) * scale, rect.height.max(1.0) * scale));
+        let at = PhysicalPosition::new(rect.x * scale, rect.y * scale);
+        place_at(view.label(), at);
+        let size = PhysicalSize::new(
+            pixels(rect.width.max(1.0) * scale),
+            pixels(rect.height.max(1.0) * scale),
+        );
+        let _ = view.set_bounds(bounds(at, size));
     }
 }
 #[tauri::command]
@@ -292,32 +319,55 @@ fn measure(app: &AppHandle, view: &Webview) {
         if !is_shown(view.label()) || !still(mine) {
             return;
         }
-        let Some((width, _)) = laid_out(view) else {
+        let Some((width, _, ratio)) = laid_out(view) else {
             continue;
         };
         let width = if width < NO_WIDTH { FLUID } else { width };
-        let width = pixels(width.clamp(SMALLEST, WIDEST)).max(shown.0);
+        let width = physical(width.clamp(SMALLEST, WIDEST), ratio).max(shown.0);
         if width != shown.0 {
-            resized(app, view.label(), LogicalSize::new(width, shown.1));
+            resized(app, view.label(), PhysicalSize::new(width, shown.1));
             std::thread::sleep(Duration::from_millis(30));
         }
-        let Some((_, height)) = laid_out(view) else {
+        let Some((_, height, ratio)) = laid_out(view) else {
             continue;
         };
-        let wanted = (width, pixels(height.clamp(SMALLEST, TALLEST)).max(shown.1));
+        let wanted = (width, physical(height.clamp(SMALLEST, TALLEST), ratio).max(shown.1));
         if wanted == shown {
             continue;
         }
         shown = wanted;
-        resized(app, view.label(), LogicalSize::new(shown.0, shown.1));
-        let _ = app.emit(SAID, Said::Size { width: shown.0, height: shown.1 });
+        resized(app, view.label(), PhysicalSize::new(shown.0, shown.1));
+        let ui = orden_web::page_scale::of(&view.window()).unwrap_or(1.0);
+        let (width, height) = panel(shown, ui);
+        let _ = app.emit(SAID, Said::Size { width, height });
     }
 }
-fn resized(app: &AppHandle, label: &str, size: LogicalSize<u32>) {
+fn physical(css: f64, ratio: f64) -> u32 {
+    pixels(css * sane(ratio))
+}
+fn panel((width, height): (u32, u32), ui: f64) -> (u32, u32) {
+    let ui = sane(ui);
+    (pixels(f64::from(width) / ui), pixels(f64::from(height) / ui))
+}
+fn sane(ratio: f64) -> f64 {
+    if ratio.is_finite() && ratio > 0.0 {
+        ratio
+    } else {
+        1.0
+    }
+}
+fn resized(app: &AppHandle, label: &str, size: PhysicalSize<u32>) {
     let (sizing, label) = (app.clone(), label.to_owned());
     let _ = app.run_on_main_thread(move || {
         if let Some(view) = answering(&sizing).filter(|view| view.label() == label) {
-            let _ = view.set_size(size);
+            match placed_at(&label) {
+                Some(at) => {
+                    let _ = view.set_bounds(bounds(at, size));
+                }
+                None => {
+                    let _ = view.set_size(size);
+                }
+            }
         }
     });
 }
@@ -325,11 +375,10 @@ fn resized(app: &AppHandle, label: &str, size: LogicalSize<u32>) {
 fn pixels(length: f64) -> u32 {
     length.ceil().max(0.0) as u32
 }
-const ASK: &str = "(() => { const root = document.documentElement, body = document.body, own = root.getAttribute('style'); root.removeAttribute('style'); const size = [Math.max(root.scrollWidth, body ? body.scrollWidth : 0), Math.max(root.scrollHeight, body ? body.scrollHeight : 0)]; if (own !== null) root.setAttribute('style', own); return JSON.stringify(size) })()";
-fn laid_out(view: &Webview) -> Option<(f64, f64)> {
+const ASK: &str = "(() => { const root = document.documentElement, body = document.body, own = root.getAttribute('style'); root.removeAttribute('style'); const size = [Math.max(root.scrollWidth, body ? body.scrollWidth : 0), Math.max(root.scrollHeight, body ? body.scrollHeight : 0)]; if (own !== null) root.setAttribute('style', own); return JSON.stringify([...size, devicePixelRatio]) })()";
+fn laid_out(view: &Webview) -> Option<(f64, f64, f64)> {
     let said = evaluated(view)?;
-    let pair: (f64, f64) = serde_json::from_str(&said).ok()?;
-    Some(pair)
+    serde_json::from_str(&said).ok()
 }
 fn evaluated(view: &Webview) -> Option<String> {
     let said = orden_web::engine::devtools::call(
@@ -370,7 +419,7 @@ mod tests {
     fn nothing_reaches_the_popup_without_asking_its_browser_first() {
         let source = include_str!("popup.rs").replace('\r', "");
         let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
-        let calls = ["add_child(", ".set_position(", ".set_size(", ".close()"];
+        let calls = ["add_child(", ".set_position(", ".set_size(", ".set_bounds(", ".close()"];
         let mut checked = 0;
         let starts = ["\nfn ", "\npub fn ", "\npub async fn "];
         for body in starts.iter().flat_map(|start| code.split(start).skip(1)) {
@@ -442,6 +491,60 @@ mod tests {
         assert!(targeting(None).contains(r#"const want = """#));
         assert!(TARGET.contains("info.currentWindow || info.lastFocusedWindow"));
         assert!(TARGET.contains("windowId: one.windowId"));
+    }
+    #[test]
+    fn the_panel_under_the_button_is_as_large_as_the_popup_at_every_scale_the_two_can_have() {
+        for ratio in [1.0, 1.25, 1.5, 1.75, 2.0, 3.0] {
+            for ui in [1.0, 1.1, 1.25, 1.5, 1.875, 2.0, 2.5, 3.0] {
+                for css in [25.0, 99.5, 380.0, 417.3, 600.0, 800.0] {
+                    let drawn = physical(css, ratio);
+                    let (width, height) = panel((drawn, drawn), ui);
+                    assert_eq!(width, height);
+                    let under = f64::from(width) * ui;
+                    assert!(
+                        under >= f64::from(drawn) && under < f64::from(drawn) + ui,
+                        "a {css} px popup at {ratio} under a panel at {ui}: {drawn} drawn, {under} held"
+                    );
+                }
+            }
+        }
+        assert_eq!(physical(100.0, f64::NAN), 100);
+        assert_eq!(panel((100, 50), 0.0), (100, 50));
+    }
+    #[test]
+    fn a_popup_is_never_moved_or_sized_by_half_so_where_its_window_was_never_wins() {
+        let source = include_str!("popup.rs").replace('\r', "");
+        let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
+        assert!(!code.contains(".set_position("));
+        assert_eq!(code.matches(".set_size(").count(), 1);
+        assert!(code.contains("match placed_at(&label)"));
+        assert!(code.contains("place_at(&label, at);"));
+        assert!(code.contains("place_at(view.label(), at);"));
+        place_at("web-extension-popup-a", PhysicalPosition::new(10.0, 20.0));
+        assert_eq!(placed_at("web-extension-popup-a"), Some(PhysicalPosition::new(10.0, 20.0)));
+        assert_eq!(placed_at("web-extension-popup-b"), None);
+    }
+    #[test]
+    fn a_popup_is_never_put_where_its_panel_is_not_drawn() {
+        let rect = |x: f64, y: f64, width: f64, height: f64| Rect { x, y, width, height };
+        assert!(laid(&rect(640.0, 75.0, 25.0, 25.0)));
+        assert!(laid(&rect(0.0, 0.0, 1.0, 1.0)));
+        for hidden in [
+            rect(0.0, 0.0, 0.0, 0.0),
+            rect(640.0, 75.0, 0.0, 25.0),
+            rect(640.0, 75.0, 25.0, -1.0),
+            rect(f64::NAN, 75.0, 25.0, 25.0),
+            rect(640.0, 75.0, f64::INFINITY, 25.0),
+        ] {
+            assert!(!laid(&hidden), "{hidden:?}");
+        }
+        let source = include_str!("popup.rs").replace('\r', "");
+        let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
+        for name in ["pub async fn extension_popup_open(", "pub fn extension_popup_place("] {
+            let body = code.split(name).nth(1).unwrap_or_default();
+            let start = body.split_once(") ").map(|(_, rest)| rest).unwrap_or_default();
+            assert!(start.lines().nth(1).unwrap_or_default().contains("if !laid(&rect)"), "{name}");
+        }
     }
     #[test]
     fn a_newer_measuring_ends_the_older() {
