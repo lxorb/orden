@@ -1,5 +1,5 @@
 import { commandRowsLoaded, type ImportBringPort, portOf, type Shared } from '@orden/contracts'
-import { attachmentFolder, modes } from '../../modes/src/api'
+import { assetFolder } from '../../modes/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import {
   fromBase64,
@@ -195,7 +195,7 @@ async function intoANewNote(
   bytes: ReadonlyMap<number, Uint8Array>,
   root: string,
 ) {
-  const folder = attachmentFolder(modes.attachments, joinPath(root, `${shared.title}.md`), root)
+  const folder = assetFolder(joinPath(root, `${shared.title}.md`), root)
   const first = await port.landShared(shared, bytes, root, folder)
   if (first) await workspace.openEntry(first)
 }

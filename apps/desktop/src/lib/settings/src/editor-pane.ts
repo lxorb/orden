@@ -84,21 +84,6 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             get: () => modes.focus,
             set: () => modes.toggleFocus(view),
           },
-          {
-            kind: 'select',
-            key: 'editor.attachments',
-            label: 'Attachments',
-            hint: 'Where a picture or file you paste or drop into a note is saved.',
-            words: ['images', 'pictures', 'paste', 'assets'],
-            options: [
-              { value: 'space', label: 'Assets folder of the space' },
-              { value: 'note', label: 'Next to the note' },
-              { value: 'named', label: 'A folder named after the note' },
-            ],
-            initial: DEFAULTS.attachments,
-            get: () => modes.attachments,
-            set: (value) => modes.setAttachments(value),
-          },
         ],
       },
       {

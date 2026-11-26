@@ -58,7 +58,6 @@ serveLinks({ search: (await import('../src/lib/search/src/api')).searchSpace })
 const { startup } = await import('../src/lib/launch/src/api')
 const { notePicture } = await import('../src/lib/link-index/src/api')
 const { storeBeside } = await import('../src/lib/workspace/src/api')
-const { modes } = await import('../src/lib/modes/src/api')
 const { assetUrl } = await import('../src/lib/platform/src/tauri')
 void startup.shown()
 const jump = (path: string | null, target: string) => ({
@@ -114,7 +113,6 @@ test('a picture named bare in a note of another space is found in that space', a
   )
 })
 test("a file kept beside a note of another space goes in that space's assets folder", async () => {
-  modes.attachments = 'space'
   await storeBeside(new ArrayBuffer(1), '/home/me/A/sub/Note.md', 'clip.pdf')
   expect(sent.find((one) => one.command === 'save_asset')?.folder).toBe('../assets')
   expect(sent.find((one) => one.command === 'save_asset')?.bytes).toBeInstanceOf(Uint8Array)

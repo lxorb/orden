@@ -18,7 +18,9 @@ const isKept = (file: File): boolean => isImage(file) || embedKind(file.name) !=
 function markdownFor(file: File, path: string, index: NoteIndex): string {
   if (isImage(file)) return `![](${encodeTarget(path)})`
   const target = fileLinkName(index, spacePathOf(index, path))
-  return formatWikilink({ target, heading: null, block: null, alias: null, embed: true })
+  const kept = path.slice(path.replace(/\\/g, '/').lastIndexOf('/') + 1)
+  const alias = kept === file.name || !file.name.trim() ? null : file.name
+  return formatWikilink({ target, heading: null, block: null, alias, embed: true })
 }
 export function wordsBesidePicture(html: string, text: string): boolean {
   if (!text.trim()) return false

@@ -210,7 +210,6 @@ export interface TrashListing {
 export interface AccountSettings {
   look?: unknown
   mobileSeen?: boolean
-  attachments?: string
   remindBefore?: number
   archivedSpaces?: string[]
   canvasTurns?: boolean

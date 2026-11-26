@@ -29,7 +29,6 @@ import { highlightTone, type HighlightColour } from '@orden/markdown/highlights'
 import { SvelteMap } from 'svelte/reactivity'
 import { AccountOwed, api, type AccountSettings } from '../../accounts/src/api'
 import { viewport } from '../../ui-kit/src/api'
-import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from '../../link-format/src/api'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from '../../sync-mirror/src/api'
@@ -115,7 +114,6 @@ interface Saved {
   closeBrackets: boolean
   mobileSeen: boolean
   vim: boolean
-  attachments: string
   pagesPaper: string
   conflicts: string
   keepVersions: number
@@ -180,7 +178,6 @@ export const DEFAULTS = {
   closeBrackets: true,
   mobileSeen: false,
   vim: false,
-  attachments: 'space' as AttachmentFolder,
   pagesPaper: 'a4' as Paper,
   conflicts: DEFAULT_RULE,
   keepVersions: KEEP_MONTH,
@@ -244,7 +241,6 @@ class Modes {
   mobileSeen = $state(DEFAULTS.mobileSeen)
   vim = $state(DEFAULTS.vim)
   readonly vimModes = new SvelteMap<EditorView, VimMode>()
-  attachments = $state<AttachmentFolder>(DEFAULTS.attachments)
   pagesPaper = $state<Paper>(DEFAULTS.pagesPaper)
   conflicts = $state<ConflictRule>(DEFAULTS.conflicts)
   keepVersions = $state<number>(DEFAULTS.keepVersions)
@@ -287,7 +283,6 @@ class Modes {
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
       this.remindBefore = remindingOf(saved.remindBefore) ?? this.remindBefore
       this.frame = frameChoice(saved.frame) ?? DEFAULTS.frame
-      if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
       const tone = toneOf(saved.highlightTone)
       if (tone !== undefined) this.highlightTone = tone
@@ -513,12 +508,6 @@ class Modes {
   vimModeOf(view: EditorView | undefined): VimMode | null {
     return (view && this.vimModes.get(view)) ?? null
   }
-  setAttachments(value: string) {
-    if (!isAttachmentFolder(value)) return
-    this.attachments = value
-    this.persist()
-    this.share({ attachments: value })
-  }
   setPagesPaper(value: string) {
     if (!isPaper(value)) return
     this.pagesPaper = value
@@ -580,7 +569,6 @@ class Modes {
   }
   private readonly synced: Synced = {
     vim: { read: flag, start: DEFAULTS.vim, then: (on) => this.each(undefined, (one) => setVim(one, on)) },
-    attachments: { read: (value) => (isAttachmentFolder(value) ? value : undefined), start: DEFAULTS.attachments },
     conflicts: { read: (value) => conflictRule(value) ?? undefined, start: DEFAULTS.conflicts },
     keepVersions: { read: keepingOf, start: DEFAULTS.keepVersions },
     remindBefore: { read: remindingOf, start: DEFAULTS.remindBefore },
@@ -753,7 +741,6 @@ class Modes {
       closeBrackets: this.closeBrackets,
       mobileSeen: this.mobileSeen,
       vim: this.vim,
-      attachments: this.attachments,
       pagesPaper: this.pagesPaper,
       frame: this.frame,
       hand: this.hand,

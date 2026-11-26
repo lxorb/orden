@@ -37,8 +37,7 @@ vi.mock('../../ui-kit/src/api', () => ({
   },
 }))
 vi.mock('../../modes/src/api', () => ({
-  modes: { attachments: 'space' },
-  attachmentFolder: () => 'assets',
+  assetFolder: () => 'assets',
 }))
 vi.mock('../../panes/src/api', async (importOriginal) => ({
   ...(await importOriginal<object>()),

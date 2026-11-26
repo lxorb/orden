@@ -175,6 +175,12 @@ describe('a dropped file that is not a picture', () => {
     await receiveImages(editor.view, dropped, (one) => Promise.resolve(`../assets/${one.name}`), 0)
     expect(editor.doc).toBe('![](../assets/a.png)\n![[b.pdf]]')
   })
+  test('kept under its hash, still says its own name', async () => {
+    const editor = surface('', 0)
+    const dropped = [file('Quarterly report.pdf', 'application/pdf')]
+    await receiveImages(editor.view, dropped, () => Promise.resolve('../assets/3fa9c0d1e2b3a4f5.pdf'), 0)
+    expect(editor.doc).toBe('![[3fa9c0d1e2b3a4f5.pdf|Quarterly report.pdf]]')
+  })
 })
 describe('a dropped file named like another file in the space', () => {
   const file = (name: string) => new File([new Uint8Array([1])], name, { type: 'application/pdf' })
