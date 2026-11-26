@@ -58,7 +58,7 @@
     writeNew,
     pull,
   } from './lib/workspace/src/api'
-  import { invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
+  import { assetUrl, invoke, isDesktop, isNative, platform, storedText } from './lib/platform/src/api'
   import { chrome, theme } from './lib/theme/src/api'
   import { paintCodePalette } from './lib/highlight/src/api'
   import { pages } from './lib/pages/src/api'
@@ -339,6 +339,7 @@
     Object.assign(window, {
       ordenApp: {
         account,
+        assetUrl,
         arriving,
         busy,
         fullscreen,

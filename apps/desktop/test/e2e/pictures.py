@@ -111,10 +111,10 @@ DROP = """
 DRAWN = """
 () => {
   const seen = []
-  for (const image of document.querySelectorAll('img[src*="/asset/"]')) {
+  for (const image of document.querySelectorAll('img[src^="blob:"]')) {
     const box = image.getBoundingClientRect()
     seen.push({
-      src: new URL(image.src).pathname,
+      src: image.src,
       complete: image.complete,
       width: image.naturalWidth,
       height: image.naturalHeight,
@@ -124,6 +124,7 @@ DRAWN = """
   }
   return {
     controlled: navigator.serviceWorker.controller !== null,
+    unheld: document.querySelectorAll('img[src*="/asset/"]').length,
     images: seen,
     broken: document.querySelectorAll('.orden-image-frame.is-broken').length,
     loading: document.querySelectorAll('.orden-image-frame.is-loading').length,
@@ -141,17 +142,6 @@ async (path) => {
   }
 }
 """
-OWN_CHUNK = """
-async () => {
-  const found = [...document.querySelectorAll('script[src]')]
-    .map((one) => one.src)
-    .find((one) => one.includes('/assets/'))
-  if (!found) return null
-
-  const answer = await fetch(found)
-  return { status: answer.status, type: answer.headers.get('content-type') }
-}
-"""
 FIXTURES = Path(tempfile.gettempdir())
 def started(page: Page) -> dict:
     wait_for(page, "window.ordenApp", "the app")
@@ -160,7 +150,7 @@ def started(page: Page) -> dict:
     return page.evaluate("() => ({ root: window.ordenApp.workspace.activeSpace.root })")
 def fresh(browser: Browser, finger: bool) -> Page:
     context = browser.new_context(
-        service_workers="allow",
+        service_workers="block",
         viewport={"width": 420, "height": 880} if finger else {"width": 1180, "height": 900},
         color_scheme="light",
         has_touch=finger,
@@ -202,8 +192,10 @@ def paste_into_note(page: Page, where: str) -> str:
 def expect_drawn(page: Page, where: str, most: int, wide: int | None = None) -> dict:
     state = page.evaluate(DRAWN)
     say(f"[{where}] {json.dumps(state)}")
-    if not state["controlled"]:
-        wrong(f"{where}: no worker is in front of the page, so nothing can answer")
+    if state["controlled"]:
+        wrong(f"{where}: a worker is in front of the page, so this proves nothing about the page alone")
+    if state["unheld"]:
+        wrong(f"{where}: {state['unheld']} pictures point at a route no one answers")
     if len(state["images"]) != most:
         wrong(f"{where}: {len(state['images'])} pictures asked of the store, not {most}")
     if state["broken"]:
@@ -299,41 +291,31 @@ def drive(browser: Browser) -> None:
     shot(page, "05-reading-after-reload")
     expect_drawn(page, "reading after a reload", 3)
     space = root.strip("/")
-    name = relative.split("/")[-1]
-    hit = page.evaluate(ASKED, f"/asset/{space}/{relative}")
-    say(f"[worker] a hit: {json.dumps(hit)}")
+    held = page.evaluate("(path) => window.ordenApp.assetUrl(path)", f"/{space}/{relative}")
+    hit = page.evaluate(ASKED, held)
+    say(f"[held] a hit: {held} {json.dumps(hit)}")
+    if not held.startswith("blob:"):
+        wrong(f"a picture that is there has the address {held!r}, not a blob")
     if hit["status"] != 200:
-        wrong(f"the worker answered {hit['status']} for a picture that is there")
+        wrong(f"the blob answered {hit['status']} for a picture that is there")
     if hit["type"] != "image/png":
-        wrong(f"the worker called a PNG {hit['type']!r}")
+        wrong(f"the blob calls a PNG {hit['type']!r}")
     if hit["bytes"] < 100:
-        wrong(f"the worker answered with {hit['bytes']} bytes")
-    if "immutable" not in (hit["cache"] or ""):
-        wrong(f"a picture named {name} was not offered for keeping: {hit['cache']!r}")
-    miss = page.evaluate(ASKED, f"/asset/{space}/assets/nowhere.png")
-    say(f"[worker] a miss: {json.dumps(miss)}")
-    if miss["status"] != 404:
-        wrong(f"a picture that is not there answered {miss['status']}, not 404")
-    chunk = page.evaluate(OWN_CHUNK)
-    say(f"[worker] the app's own chunk: {json.dumps(chunk)}")
-    if not chunk:
-        wrong("the page carries no chunk under /assets/ to check")
-    elif chunk["status"] != 200 or "javascript" not in (chunk["type"] or ""):
-        wrong(f"the worker answered for the app's own code: {chunk}")
+        wrong(f"the blob answered with {hit['bytes']} bytes")
+    miss = page.evaluate("(path) => window.ordenApp.assetUrl(path)", f"/{space}/assets/nowhere.png")
+    say(f"[held] a miss: {miss}")
+    if miss.startswith("blob:"):
+        wrong(f"a picture that is not there was given a blob: {miss!r}")
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)
     imported(page, "import", notion_zip(FIXTURES))
     shot(page, "06-editor-imported")
     expect_drawn(page, "the imported note", 1)
-    brought = page.evaluate(
-        "() => new URL(document.querySelector('img[src*=\"/asset/\"]').src).pathname"
-    )
+    brought = page.evaluate("() => document.querySelector('img[src^=\"blob:\"]').src")
     asked = page.evaluate(ASKED, brought)
-    say(f"[worker] the imported picture: {brought} {json.dumps(asked)}")
+    say(f"[held] the imported picture: {brought} {json.dumps(asked)}")
     if asked["type"] != "image/png":
-        wrong(f"the imported picture is served as {asked['type']!r}")
-    if asked["cache"] != "no-cache":
-        wrong(f"a picture named by a person was offered for keeping: {asked['cache']!r}")
+        wrong(f"the imported picture is held as {asked['type']!r}")
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(1200)
     shot(page, "07-reading-imported")
@@ -358,7 +340,7 @@ def drive(browser: Browser) -> None:
           const found = [...document.querySelectorAll('.canvas img.picture')].find((one) => one.getClientRects().length > 0)
           if (!found) return null
           return {
-            src: new URL(found.src).pathname,
+            src: found.src,
             complete: found.complete,
             width: found.naturalWidth,
           }
@@ -369,8 +351,8 @@ def drive(browser: Browser) -> None:
     if not plane:
         wrong("a picture dropped on the plane is not on the plane")
     else:
-        if "/asset/" not in plane["src"]:
-            wrong(f"the plane asks for {plane['src']}, not the asset store")
+        if not plane["src"].startswith("blob:"):
+            wrong(f"the plane asks for {plane['src']}, not the file the page holds")
         if not plane["complete"] or plane["width"] < 1:
             wrong(f"the picture on the plane did not draw: {plane}")
     if page.evaluate("() => [...document.querySelectorAll('.canvas .missing')].filter((one) => one.getClientRects().length > 0).length"):

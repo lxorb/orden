@@ -22,6 +22,7 @@ vi.mock('./store', () => ({
   treeAt: () => null,
   trees: () => [],
   keepsOwnRows: () => true,
+  assetsShown: () => Promise.resolve(),
   files: {
     get: (path: string) => Promise.resolve(disk.files.get(path)),
     paths: () => Promise.resolve([...disk.files.keys()].sort()),

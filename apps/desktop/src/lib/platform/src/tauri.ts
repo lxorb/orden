@@ -103,8 +103,16 @@ export async function currentWindow(): Promise<WindowLike> {
 export async function closeWindow(): Promise<void> {
   if (isDesktop) await (await currentWindow()).close()
 }
+interface AssetHolder {
+  url(path: string): string | null
+  path(url: string): string | null
+}
+let holder: AssetHolder | null = null
+export function showAssetsFrom(one: AssetHolder): void {
+  holder = one
+}
 export function assetUrl(path: string): string {
-  if (!isNative) return assetRoute(path)
+  if (!isNative) return holder?.url(path) ?? assetRoute(path)
   const internals = (window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } })
     .__TAURI_INTERNALS__
   const file = internal.file?.(path) ?? path
@@ -112,7 +120,7 @@ export function assetUrl(path: string): string {
 }
 const ASSET_PROTOCOL = /^(?:asset:\/\/localhost\/|https?:\/\/asset\.localhost\/)/i
 export function assetPath(url: string): string | null {
-  if (!isNative) return assetStorePath(url)
+  if (!isNative) return holder?.path(url) ?? assetStorePath(url)
   if (!ASSET_PROTOCOL.test(url)) return null
   try {
     return decodeURIComponent(url.replace(ASSET_PROTOCOL, '').split(/[?#]/)[0] ?? '') || null

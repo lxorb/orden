@@ -33,6 +33,7 @@ import { keptAway, NOT_HERE } from '../../../away/src/api'
 import { rehomed, unread } from '@orden/scan/indexed'
 import {
   assets,
+  assetsShown,
   type FileRow,
   files,
   KEEP,
@@ -943,7 +944,10 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
 }
 export async function webInvoke<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
   const run = Object.hasOwn(COMMANDS, command) ? COMMANDS[command] : undefined
-  if (run) return (await run(args as Args)) as T
+  if (run) {
+    await assetsShown()
+    return (await run(args as Args)) as T
+  }
   if (command in UNSUPPORTED) return UNSUPPORTED[command] as T
   throw new Error(`${command} is not available in the browser`)
 }

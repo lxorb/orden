@@ -32,6 +32,24 @@ describe('a picture, addressed', () => {
     expect(isNative).toBe(false)
     expect(assetUrl('/Work/assets/pic.png')).toBe('/asset/Work/assets/pic.png')
   })
+  test('a browser that holds the file hands out what its holder gives, and reads it back to the path', async () => {
+    const { assetUrl, assetPath, showAssetsFrom } = await inBrowser()
+    showAssetsFrom({
+      url: (path) => (path === '/Work/assets/pic.png' ? 'blob:held' : null),
+      path: (url) => (url === 'blob:held' ? '/Work/assets/pic.png' : null),
+    })
+    expect(assetUrl('/Work/assets/pic.png')).toBe('blob:held')
+    expect(assetPath('blob:held')).toBe('/Work/assets/pic.png')
+    expect(assetUrl('/Work/assets/other.png')).toBe('/asset/Work/assets/other.png')
+    expect(assetPath('/asset/Work/assets/other.png')).toBe('/Work/assets/other.png')
+    expect(assetPath('blob:other')).toBeNull()
+  })
+  test('the app never asks a holder', async () => {
+    const { assetUrl, assetPath, showAssetsFrom } = await inApp(underHttp)
+    showAssetsFrom({ url: () => 'blob:held', path: () => '/held' })
+    expect(assetUrl('/Work/assets/pic.png')).toBe('http://asset.localhost/%2FWork%2Fassets%2Fpic.png')
+    expect(assetPath('blob:held')).toBeNull()
+  })
   test('neither build hands back the bare path, which is the bug', async () => {
     const browser = await inBrowser()
     expect(browser.assetUrl('/Work/assets/pic.png')).not.toBe('/Work/assets/pic.png')
