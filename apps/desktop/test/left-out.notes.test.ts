@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { chatsEnding, portProvided, type PortName } from '@orden/contracts'
+import { chatsEnding, portProvided, type PortName, showQuickAdd } from '@orden/contracts'
 import { leftOut } from '../app-build'
 
 const held = new Map<string, string>()
@@ -24,7 +24,12 @@ const WHOLE: readonly PortName[] = [
   'quit.terminal',
   'web.lending',
   'web.sites',
+  'quick-add.show',
 ]
+await import('../src/lib/chat-ports')
+await import('../src/lib/terminal-ports')
+await import('../src/lib/quit-ports')
+await import('../src/lib/workspace-ports')
 const { removeAsking } = await import('../src/lib/row-menu/src/row-menu')
 const { workspace } = await import('../src/lib/workspace/src/api')
 const { services } = await import('../src/lib/workspace/src/services')
@@ -78,6 +83,14 @@ describe('an app that leaves a part of Orden out (#2286)', () => {
     await expect(rowsHere('main', true)).resolves.toEqual([])
     await expect(scrollbackOf({ id: 't', doc: '', note: {} } as Parameters<typeof scrollbackOf>[0])).resolves.toBe(null)
   })
+  test('refuses to list, add or change a todo for a reader, and still answers for a base', async () => {
+    const { tasksReader } = await import('../src/lib/reader-verbs/src/reader')
+    for (const verb of ['listTasks', 'addTask', 'updateTask'] as const)
+      await expect(tasksReader[verb]({ title: 'Milk' }), verb).rejects.toMatchObject({ code: 'not_granted' })
+  })
+  test('shows no quick add for a todo', () => {
+    expect(() => showQuickAdd({})).not.toThrow()
+  })
   test('follows a chat link nowhere', async () => {
     const { followHref } = await import('../src/lib/workspace/src/open-link')
     const opening = vi.spyOn(workspace, 'openPage')
@@ -100,6 +113,13 @@ describe('an app that leaves a part of Orden out (#2286)', () => {
       guarded('terminal-ports.ts', port)
     for (const port of ['explorer.show', 'explorer.carry', 'web.sites']) guarded('features.ts', port)
     guarded('quit-ports.ts', 'quit.terminal')
+    guarded('features.ts', 'quick-add.show')
+  })
+  test('still forgets the secrets of the chat services gone, as the whole Orden does', async () => {
+    const start = readFileSync(join(LIB, 'start.ts'), 'utf8')
+    expect(start).toContain("\n  void startup\n    .turn('right')\n    .then(() => retireChats())\n")
+    const { retireChats } = await import('../src/lib/accounts/src/api')
+    expect(typeof (await retireChats()).forgetRetiredChatsHere).toBe('function')
   })
   test('is named in the one list the build and the guard both read', () => {
     const config = readFileSync(join(LIB, '..', '..', 'vite.config.ts'), 'utf8')

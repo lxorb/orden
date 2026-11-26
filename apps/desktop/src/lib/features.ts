@@ -98,12 +98,13 @@ providePort('shell.notice', {
     void notices().then(({ gateNote }) => gateNote.show(words))
   },
 })
-providePort('quick-add.show', {
-  show: (prefill = {}) => {
-    void quickAddSheet.ask()
-    void import('./quick-add/src/api').then(({ quickAdd }) => quickAdd.show(prefill))
-  },
-})
+if (__ORDEN_APP__ === 'orden')
+  providePort('quick-add.show', {
+    show: (prefill = {}) => {
+      void quickAddSheet.ask()
+      void import('./quick-add/src/api').then(({ quickAdd }) => quickAdd.show(prefill))
+    },
+  })
 registerSurfaces({
   graph: loadGraph,
   settings: () => Promise.all([loadSettingsPanel(), registered()]).then(([one]) => one),
@@ -114,7 +115,6 @@ registerSurfaces({
   import: () => import('./import/src/api').then((one) => one.loadImportSheet()),
   'recording-pill': () => import('./dictation/src/api').then((one) => one.loadRecordingPill()),
   overview: () => import('./overview/src/api').then((one) => one.loadOverview()),
-  'quick-add': () => import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
   'search-panel': loadSearchPanel,
   links: () => import('./links-panel/src/api').then((one) => one.loadLinksPanel()),
 })
@@ -123,7 +123,7 @@ registerSidebarPart(outlinePart)
 registerSidebarPart(scratchpadPart)
 if (__ORDEN_APP__ === 'orden')
   registerSidebarPart({ id: 'tasks', toTab: () => runCommand('views.todos').then(() => undefined) })
-registerFeature(() => import('./quick-add/src/api'))
+if (__ORDEN_APP__ === 'orden') registerFeature(() => import('./quick-add/src/api'))
 registerTabKind('view', async () => (await import('./views/src/api')).viewTabKind)
 whenPortProvided('workspace.view', (view) =>
   view.follow((op) => {
@@ -183,6 +183,7 @@ registerSurfaces({
         'terminal-mark': () => import('./terminal/src/api').then((one) => one.loadTerminalMark()),
         explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
         'private-mark': loadPrivateMark,
+        'quick-add': () => import('./quick-add/src/api').then((one) => one.loadQuickAddSheet()),
         web: loadWebTab,
       }
     : {}),

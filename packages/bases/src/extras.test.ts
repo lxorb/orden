@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { fired, inBase, readAutomations, withAutomations } from './automations'
 import { readBase, writeBase } from './base-file'
 import { pressed, readButtons, withButton } from './buttons'
-import { colourExpression, colourRules } from './colour'
+import { colourExpression, colourRules, priorityTone } from './colour'
 import { csvText, csvValue } from './csv'
 import { contextAt, noteRow } from './fixtures/rows'
 import { idNumber, idRepairs, idText, nextId } from './ids'
@@ -260,6 +260,15 @@ describe('conditional colour', () => {
     expect(colourRules('if(a, b, null)')).toBeNull()
     expect(colourRules('"danger"')).toBeNull()
   })
+})
+test('a todo priority has its tone, High the strongest, and none has no tone', () => {
+  expect([0, 1, 2, 3, 4].map(priorityTone)).toEqual([
+    undefined,
+    'var(--callout-note)',
+    'var(--callout-warning)',
+    'var(--danger)',
+    undefined,
+  ])
 })
 describe('buttons', () => {
   const base = readBase(`orden:

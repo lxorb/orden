@@ -91,6 +91,8 @@ describe('the apps one project builds (#2286)', () => {
       'demo',
       'web-tab',
       'pass-sync',
+      'tasks-model',
+      'quick-add',
     ])
       expect(leftOut('notes'), name).toContain(name)
     expect(leftOut('orden')).toEqual([])

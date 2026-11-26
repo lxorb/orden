@@ -386,21 +386,21 @@
       import('./lib/theme-looks/src/api'),
     ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }, { wallpaper, store }]) => {
       Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
-        tasks: () =>
-          Promise.all([
-            import('./lib/tasks-model/src/api'),
-            import('./lib/views/src/api').then((one) => one.baseOpening()),
-            import('./lib/rows/src/api'),
-            import('./lib/file-writes/src/api'),
-          ]).then(([{ todos }, { openTodos, openBaseFile }, { rows }, { writeFile }]) => ({
-            todos,
-            openTodos,
-            openBaseFile,
-            rows,
-            writeFile,
-          })),
         ...(__ORDEN_APP__ === 'orden'
           ? {
+              tasks: () =>
+                Promise.all([
+                  import('./lib/tasks-model/src/api'),
+                  import('./lib/views/src/api').then((one) => one.baseOpening()),
+                  import('./lib/rows/src/api'),
+                  import('./lib/file-writes/src/api'),
+                ]).then(([{ todos }, { openTodos, openBaseFile }, { rows }, { writeFile }]) => ({
+                  todos,
+                  openTodos,
+                  openBaseFile,
+                  rows,
+                  writeFile,
+                })),
               chats: () =>
                 Promise.all([
                   import('./lib/chats-client/src/api').then((one) => one.chatStore()),

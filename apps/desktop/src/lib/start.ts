@@ -1,6 +1,6 @@
 import { oneWindow } from './web-tab/src/api'
 import { door } from '@orden/markdown/door'
-import { account, connectors } from './accounts/src/api'
+import { account, connectors, retireChats } from './accounts/src/api'
 import { busy, guardDrops, outsideDrops, reloading, viewport } from './ui-kit/src/api'
 import { installAiRunner } from './ai-chat/src/api'
 import { joining } from './sharing/src/api'
@@ -147,13 +147,11 @@ export function start(): () => void {
       whenExplorerOn()
       if (__ORDEN_APP__ !== 'orden') whenOn({ on: () => false, kind: 'terminal', name: () => 'Terminal' })
     })
-  if (__ORDEN_APP__ === 'orden')
-    void startup
-      .turn('right')
-      .then(() => import('./chats-client/src/api'))
-      .then((one) => one.retireChats())
-      .then((one) => one.forgetRetiredChatsHere())
-      .catch(() => undefined)
+  void startup
+    .turn('right')
+    .then(() => retireChats())
+    .then((one) => one.forgetRetiredChatsHere())
+    .catch(() => undefined)
   if (__ORDEN_APP__ === 'orden')
     void startup
       .turn('right')
@@ -179,9 +177,10 @@ export function start(): () => void {
       await startup.turn('right')
       await convertAll(workspace)
       await keepWorking()
-      if (platform() !== 'macos') return
-      const { quickShortcuts } = await import('./quick-add/src/api')
-      await (await quickShortcuts()).hearShortcuts()
+      if (__ORDEN_APP__ === 'orden' && platform() === 'macos') {
+        const { quickShortcuts } = await import('./quick-add/src/api')
+        await (await quickShortcuts()).hearShortcuts()
+      }
     })().catch((error: unknown) => log('warn', `after the spaces moved in: ${String(error)}`))
     if (__ORDEN_APP__ === 'orden') void startup.turn('rooms').then(() => oneWindow())
   }
@@ -192,11 +191,12 @@ export function start(): () => void {
   const reporting = !import.meta.env.DEV && !__DRIVEABLE__
   if (isDesktop) {
     void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
-    void startup
-      .turn('right')
-      .then(() => import('./quick-add/src/api'))
-      .then((one) => one.quickAnywhere())
-      .then((one) => stops.keep(one.listen()))
+    if (__ORDEN_APP__ === 'orden')
+      void startup
+        .turn('right')
+        .then(() => import('./quick-add/src/api'))
+        .then((one) => one.quickAnywhere())
+        .then((one) => stops.keep(one.listen()))
     void outsideDrops()
       .then(({ hearOutsideDrops }) => hearOutsideDrops())
       .then(stops.keep)

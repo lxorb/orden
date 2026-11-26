@@ -509,7 +509,7 @@ export function appCommands(view?: EditorView): Command[] {
   return without([
     ...(unsaved ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }] : []),
     { id: 'new', label: 'New note', hint: shortcuts.hint('app.new'), run: entry('app.new') },
-    keyed('quick-add', 'Add task', 'app.quick-add'),
+    ...(todosOn() ? [keyed('quick-add', 'Add task', 'app.quick-add')] : []),
     ...commandRows('send', view),
     {
       id: 'new-unique',

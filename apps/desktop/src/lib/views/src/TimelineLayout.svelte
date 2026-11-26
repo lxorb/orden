@@ -3,7 +3,7 @@
   import { linkModifier } from '@orden/editor'
   import { localDate } from '../../platform/src/api'
   import type { RowChange } from '../../rows/src/api'
-  import { priorityTone } from '../../tasks-model/src/api'
+  import { priorityTone } from '@orden/bases'
   import { changeOf } from './columns'
   import { dateAt } from './days'
   import { plain } from './inline'

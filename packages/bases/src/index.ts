@@ -21,7 +21,7 @@ export { DEFAULT_SUMMARIES } from './summaries'
 export { fromTodoist } from './todoist'
 export { readRollup, readReverse, reverseFormula, type Rollup, rollupFormula, ROLLUPS, type RollupSpec } from './rollup'
 export { idNumber, idRepairs, idText, nextId } from './ids'
-export { type ColourRule, colourExpression, colourRules } from './colour'
+export { type ColourRule, colourExpression, colourRules, priorityTone } from './colour'
 export { fillTemplate, type Filling, repeatDue, withoutTemplateKeys } from './templates'
 export { BUTTON, type Button, isButton, type Press, pressed, readButtons, withButton } from './buttons'
 export {

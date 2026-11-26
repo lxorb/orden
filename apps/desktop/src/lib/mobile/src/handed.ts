@@ -93,6 +93,7 @@ async function take(): Promise<void> {
   await taken(word)
 }
 async function ticked(at: string): Promise<void> {
+  if (__ORDEN_APP__ !== 'orden') return
   const { tickTask } = await import('../../tasks-model/src/api')
   await tickTask(at, true).catch((error: unknown) => {
     log('error', `handed: a task could not be ticked: ${String(error)}`)
@@ -171,13 +172,14 @@ async function ask(shared: Shared, root: string | null): Promise<'new' | 'here' 
     options: [
       ...(root !== null ? [{ id: 'new', label: 'New note', primary: true }] : []),
       ...(into ? [{ id: 'here', label: `Add to ${into.shown}` }] : []),
-      ...(root !== null && words ? [{ id: 'task', label: 'As a task' }] : []),
+      ...(root !== null && words && __ORDEN_APP__ === 'orden' ? [{ id: 'task', label: 'As a task' }] : []),
     ],
   })
   if (chosen === 'new' || chosen === 'here' || chosen === 'task') return chosen
   return null
 }
 async function asATask(shared: Shared) {
+  if (__ORDEN_APP__ !== 'orden') return
   const { addTask } = await import('../../tasks-model/src/api')
   await addTask(shared.task, { typed: false })
 }
