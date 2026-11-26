@@ -103,6 +103,7 @@ export function start(): () => void {
     .catch((error: unknown) => {
       log('error', `restore: ${error instanceof Error ? error.message : String(error)}`)
     })
+  void import('./quitting/src/api').then(({ residency }) => residency.apply())
   void import('./trash/src/api').then(({ trash }) => {
     void trash.sweep()
     const sweeper = setInterval(() => void trash.sweep(), DAY)
