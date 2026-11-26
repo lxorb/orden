@@ -67,4 +67,8 @@ describe('the home page file', () => {
     expect(PAGE).not.toMatch(/Lay it out together|posters\/canvas-/)
     expect(existsSync(new URL('../posters/canvas-desktop-dark.webp', import.meta.url))).toBe(false)
   })
+  test('calls the Markdown section live collaboration', () => {
+    expect(PAGE).toContain('<h2 class="line">Live collaboration.</h2>')
+    expect(PAGE).not.toContain('Write side by side')
+  })
 })
