@@ -2,12 +2,11 @@ import type { BrowserId } from '@orden/contracts'
 import type { Space } from '../../workspace/src/api'
 import type { Landed } from './run.svelte'
 import { arcSidebar } from './arc'
-import { bringHistory, droppedLine, takeEngine, withMarks } from './browser-extras'
+import { bringHistory, droppedLine, withMarks } from './browser-extras'
 import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
 import { chromiumSidebar } from './chromium'
 import { firefoxSidebar } from './firefox'
 import { unmozLz4 } from './mozlz4'
-import { type BrowserEngine, chromiumEngine, mozillaEngine, safariEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { landSpaces } from './sidebar-landing'
 import { sidebarImport } from './sidebar-plan'
@@ -17,7 +16,6 @@ import { invoke } from '../../platform/src/api'
 
 interface Read {
   sidebar: Sidebar
-  engine: BrowserEngine | null
   lost: string[]
 }
 const CONTAINERS = 'Containers stay in Firefox'
@@ -42,13 +40,7 @@ export async function landBrowser(profile: BrowserProfile, several: boolean, tol
   const sidebar = await withMarks(read.sidebar, profile.browser, profile.path)
   const { spaces, lost } = sidebarImport(sidebar, new Date(), firefox ? CONTAINERS : null)
   const kept = KEPT[profile.browser]
-  const lines = [
-    ...lost,
-    ...read.lost,
-    ...droppedLine(sidebar),
-    ...(kept ? [kept(browser)] : []),
-    ...(await takeEngine(read.engine, browser)),
-  ]
+  const lines = [...lost, ...read.lost, ...droppedLine(sidebar), ...(kept ? [kept(browser)] : [])]
   const first = await landSpaces(spaces, lines, nothing, told)
   const history = () => bringHistory(profile.browser, profile.path)
   if (told) told.later.push(history)
@@ -61,7 +53,6 @@ async function readProfile(profile: BrowserProfile, name: string): Promise<Read 
   if (profile.browser === 'arc') return (await readArc(profile)) ?? readChromium(profile, name)
   return readChromium(profile, name)
 }
-const SEARCH = 'search.json.mozlz4'
 async function readFirefox(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: unknown = null
   for (const file of profile.files.filter((one) => one.includes('sessionstore'))) {
@@ -77,8 +68,7 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   const backup = profile.files.find((one) => one.startsWith('bookmarkbackups/'))
   if (!bookmarks && backup) bookmarks = mozJson(await browserFile(profile, backup))
   if (!session && !bookmarks) return null
-  const engine = profile.files.includes(SEARCH) ? mozillaEngine(mozJson(await browserFile(profile, SEARCH))) : null
-  return { sidebar: firefoxSidebar(session, bookmarks, name), engine, lost: [] }
+  return { sidebar: firefoxSidebar(session, bookmarks, name), lost: [] }
 }
 const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
 const isSession = (file: string): boolean =>
@@ -107,7 +97,6 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
       : []
   return {
     sidebar: chromiumSidebar(session, bookmarks, name, account),
-    engine: await preferencesEngine(profile),
     lost,
   }
 }
@@ -118,11 +107,7 @@ async function readArc(profile: BrowserProfile): Promise<Read | null> {
   const arc = arcSidebar(said, profile.path.split(/[\\/]/).pop() ?? 'Default')
   if (!arc) return null
   const lost = arc.stayed ? ['Easels and notes stay in Arc'] : []
-  return { sidebar: arc.sidebar, engine: await preferencesEngine(profile), lost }
-}
-async function preferencesEngine(profile: BrowserProfile): Promise<BrowserEngine | null> {
-  if (!profile.files.includes('Preferences')) return null
-  return chromiumEngine(jsonOf(await browserFile(profile, 'Preferences')))
+  return { sidebar: arc.sidebar, lost }
 }
 function jsonOf(bytes: Uint8Array | null): unknown {
   if (!bytes) return null
@@ -151,7 +136,6 @@ async function readSafari(name: string): Promise<Read | null> {
     bookmarks?: unknown
     tabs?: unknown
     session?: unknown
-    engine?: unknown
   }
   return {
     sidebar: safariSidebar(
@@ -162,7 +146,6 @@ async function readSafari(name: string): Promise<Read | null> {
       },
       name,
     ),
-    engine: safariEngine(files.engine),
     lost: [],
   }
 }

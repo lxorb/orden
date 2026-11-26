@@ -1,6 +1,5 @@
 import { fromBase64, invoke, isDesktop } from '../../platform/src/api'
 import { unmozLz4 } from './mozlz4'
-import { type BrowserEngine, mozillaEngine } from './search-engines'
 import { readZenSession, withBookmarks, type ZenPlaces, type ZenSession } from './zen'
 
 export interface ZenProfile {
@@ -18,9 +17,7 @@ export async function zenProfiles(): Promise<ZenProfile[]> {
 }
 export interface ZenRead {
   sidebar: ZenSession
-  engine: BrowserEngine | null
 }
-const SEARCH = 'search.json.mozlz4'
 export async function zenSession(profile: ZenProfile): Promise<ZenRead> {
   const places = profile.files.includes('places.sqlite') ? await placesOf(profile) : null
   for (const file of profile.files.filter((one) => one.includes('session'))) {
@@ -28,10 +25,7 @@ export async function zenSession(profile: ZenProfile): Promise<ZenRead> {
       .then((said) => readZenSession(said, places))
       .catch(() => null)
     if (session) {
-      const engine = profile.files.includes(SEARCH)
-        ? mozillaEngine(await fileOf(profile, SEARCH).catch(() => null))
-        : null
-      return { sidebar: withBookmarks(session, places), engine }
+      return { sidebar: withBookmarks(session, places) }
     }
   }
   throw new Error('Zen’s tabs could not be read.')

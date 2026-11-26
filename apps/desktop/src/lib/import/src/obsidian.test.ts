@@ -2,8 +2,7 @@ import type { PickedFile } from '@orden/contracts'
 import JSZip from 'jszip'
 import { describe, expect, test, vi } from 'vitest'
 import { setLinkWriting } from '../../link-format/src/api'
-import { carriedBy, NOTION } from './carry'
-import { fromAppJson, leftInVault, obsidianCarries } from './obsidian'
+import { leftInVault, linksFromAppJson, obsidianLinks } from './obsidian'
 import { detect, readAs } from './read'
 import { insideFolder, sourceOf, sourcesFrom, type Source } from './sources'
 
@@ -84,64 +83,31 @@ describe('an Obsidian vault', () => {
     expect(plan.lost).toEqual(['2 files are in iCloud rather than on this Mac'])
   })
 })
-describe('what a vault carries into the settings', () => {
-  test('is Obsidian’s defaults where app.json says nothing', () => {
-    expect(fromAppJson({})).toEqual({
-      linkFormat: 'wikilink',
-      hardBreaks: true,
-      attachments: 'space',
-      vim: false,
-      quietMarks: false,
-      keys: 'obsidian',
-    })
+describe('the links a vault writes', () => {
+  test('are wikilinks where app.json says nothing', () => {
+    expect(linksFromAppJson({})).toBe('wikilink')
+    expect(linksFromAppJson(null)).toBe('wikilink')
   })
-  test('reads each answer the way Obsidian meant it', () => {
-    const carried = fromAppJson({
-      useMarkdownLinks: true,
-      newLinkFormat: 'relative',
-      strictLineBreaks: true,
-      attachmentFolderPath: './assets',
-      propertiesInDocument: 'source',
-      vimMode: true,
-    })
-    expect(carried).toMatchObject({
-      linkFormat: 'relative',
-      hardBreaks: false,
-      attachments: 'note',
-      vim: true,
-    })
+  test('are read the way Obsidian meant them, a markdown link with no format being the shortest', () => {
+    expect(linksFromAppJson({ useMarkdownLinks: true, newLinkFormat: 'relative' })).toBe('relative')
+    expect(linksFromAppJson({ useMarkdownLinks: true, newLinkFormat: 'absolute' })).toBe('absolute')
+    expect(linksFromAppJson({ useMarkdownLinks: true })).toBe('shortest')
   })
-  test('takes a markdown link with no format as the shortest one, Obsidian’s default', () => {
-    expect(fromAppJson({ useMarkdownLinks: true }).linkFormat).toBe('shortest')
-    expect(fromAppJson({ useMarkdownLinks: true, newLinkFormat: 'absolute' }).linkFormat).toBe('absolute')
+  test('come from app.json in what was picked, and a broken one as the default', async () => {
+    await expect(obsidianLinks([file('.obsidian/app.json', '{"useMarkdownLinks":true}')])).resolves.toBe('shortest')
+    await expect(obsidianLinks([file('.obsidian/app.json', '{not json')])).resolves.toBe('wikilink')
   })
-  test('puts pictures in the space’s own folder for a folder at the top of the vault', () => {
-    expect(fromAppJson({ attachmentFolderPath: '/' }).attachments).toBe('space')
-    expect(fromAppJson({ attachmentFolderPath: 'Attachments' }).attachments).toBe('space')
-    expect(fromAppJson({ attachmentFolderPath: './' }).attachments).toBe('note')
-  })
-  test('reads app.json out of what was picked, and a broken one as the defaults', async () => {
-    const strict = await obsidianCarries([file('.obsidian/app.json', '{"strictLineBreaks":true}')])
-    expect(strict.hardBreaks).toBe(false)
-    const broken = await obsidianCarries([file('.obsidian/app.json', '{not json')])
-    expect(broken).toEqual(fromAppJson({}))
-  })
-  test('reads the vault’s own app.json, not an older vault’s that sorts first', async () => {
-    const carried = await carriedBy('obsidian', [
-      file('Old vault/.obsidian/app.json', '{"useMarkdownLinks":true,"vimMode":true}'),
+  test('come from the vault’s own app.json, not an older vault’s that sorts first', async () => {
+    const links = await obsidianLinks([
+      file('Old vault/.obsidian/app.json', '{"useMarkdownLinks":true}'),
       file('Old vault/Note.md', '# Old'),
-      file('.obsidian/app.json', '{"vimMode":false}'),
+      file('.obsidian/app.json', '{}'),
       file('Home.md', '# Home'),
     ])
-    expect(carried).toMatchObject({ vim: false, linkFormat: 'wikilink' })
-    await expect(obsidianCarries([file('Brain/.obsidian/app.json', '{"vimMode":true}')])).resolves.toMatchObject({
-      vim: true,
-    })
-  })
-  test('is Notion’s habits for a Notion export, and nothing for a plain folder', async () => {
-    await expect(carriedBy('notion', [])).resolves.toBe(NOTION)
-    expect(NOTION).toMatchObject({ quietMarks: true, keys: 'notion' })
-    await expect(carriedBy('markdown', [])).resolves.toBeNull()
+    expect(links).toBe('wikilink')
+    await expect(obsidianLinks([file('Brain/.obsidian/app.json', '{"useMarkdownLinks":true}')])).resolves.toBe(
+      'shortest',
+    )
   })
 })
 describe('the links in a vault', () => {
@@ -975,15 +941,15 @@ describe('the files in a vault', () => {
       vi.unstubAllGlobals()
     }
   })
-  test('land at the top of the space with their settings when a hidden file sits beside the vault', async () => {
+  test('land at the top of the space with their app.json when a hidden file sits beside the vault', async () => {
     const sources = [
-      file('Brain/.obsidian/app.json', '{"vimMode":true}'),
+      file('Brain/.obsidian/app.json', '{"useMarkdownLinks":true}'),
       file('Brain/Home.md', 'hi'),
       file('.nomedia', ''),
     ]
     await expect(detect(sources)).resolves.toBe('obsidian')
     await expect(pathsFrom(sources)).resolves.toEqual(['.obsidian/app.json', 'Home.md'])
-    expect((await obsidianCarries(sources)).vim).toBe(true)
+    await expect(obsidianLinks(sources)).resolves.toBe('shortest')
   })
   test('stay in their folders when the folder picked holds more than one vault', async () => {
     const notes = async (sources: Source[]) => (await pathsFrom(sources)).filter((one) => !one.includes('.obsidian'))

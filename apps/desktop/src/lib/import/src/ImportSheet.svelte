@@ -52,7 +52,7 @@
   }
 </script>
 
-<Sheet open={importing.open} title="Import" onclose={() => importing.close()}>
+<Sheet open={importing.open} title="Import files" onclose={() => importing.close()}>
   {#if importing.error}
     <p class="wrong">{importing.error}</p>
   {/if}

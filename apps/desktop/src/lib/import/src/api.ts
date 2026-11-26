@@ -1,4 +1,3 @@
-export type { Carried } from './carry'
 export { converted } from './convert'
 export { folderNameFor, onMac } from './folder-name'
 export { dayOf, noteText } from './meta'

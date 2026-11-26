@@ -126,7 +126,7 @@ function importCommands(): Command[] {
     void runCommand(id)
   }
   return [
-    commanded('import', 'Import', 'import.show'),
+    commanded('import', 'Import files', 'import.show'),
     { id: 'import-obsidian', label: 'Import from Obsidian', run: asked('import.obsidian') },
     commanded('import-notion', 'Import from Notion', 'import.notion'),
     ...(isDesktop ? [{ id: 'import-zen', label: 'Import from Zen', run: asked('import.zen') }] : []),

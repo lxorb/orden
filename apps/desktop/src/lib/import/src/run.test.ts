@@ -144,8 +144,6 @@ vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   viewport: { drawer: false },
 }))
-const carriedOver: unknown[] = []
-vi.mock('./carry-over', () => ({ carryOver: async (carried: unknown) => void carriedOver.push(carried) }))
 const { ImportRun, runs } = await import('./run.svelte')
 const { busy } = await import('../../ui-kit/src/api')
 const file = (path: string, body: string | Uint8Array = 'x'): Source =>
@@ -163,7 +161,6 @@ beforeEach(() => {
   bytes.clear()
   times.clear()
   closed.length = 0
-  carriedOver.length = 0
   unreadable = ''
   garbled = ''
   setLinkWriting('wikilink')
@@ -176,6 +173,42 @@ beforeEach(() => {
   ws.binned = []
   ws.spaces = [{ id: 'old', name: 'Old', root: '/spaces/Old' }]
   busy.clear()
+})
+describe('an import', () => {
+  test('brings files and changes no setting, whatever the app it came from had set', async () => {
+    const { modes } = await import('../../modes/src/api')
+    const { shortcuts } = await import('../../shortcuts/src/api')
+    const settings = () => ({
+      vim: modes.vim,
+      hardBreaks: modes.hardBreaks,
+      quietMarks: modes.quietMarks,
+      linkFormat: modes.linkFormat,
+      attachments: modes.attachments,
+      preset: shortcuts.preset,
+      linkWriting: linkWriting(),
+    })
+    const before = settings()
+    const obsidian = await brought([
+      file(
+        '.obsidian/app.json',
+        JSON.stringify({
+          vimMode: true,
+          strictLineBreaks: true,
+          useMarkdownLinks: true,
+          newLinkFormat: 'relative',
+          attachmentFolderPath: './',
+        }),
+      ),
+      file('Home.md', '# Home\n'),
+    ])
+    expect(wrote).toContain(`${ROOT}/Home.md`)
+    await obsidian.complete()
+    expect(settings()).toEqual(before)
+    const notion = await brought([file('Plan 0123456789abcdef0123456789abcdef.md', '# Plan\n')], 'Notion')
+    expect(notion.format).toBe('notion')
+    await notion.complete()
+    expect(settings()).toEqual(before)
+  })
 })
 describe('an import into a new space', () => {
   test('is ready for review once every file is written and checked, and opens on its first note when completed', async () => {
@@ -193,9 +226,9 @@ describe('an import into a new space', () => {
     expect(closed).toEqual(['tab-import'])
     expect(opened).toEqual([`${ROOT}/Welcome.md`])
   })
-  test('keeps its wikilinks when the Links setting was last on markdown links, and carries settings only once completed', async () => {
+  test('keeps its wikilinks when the Links setting was last on markdown links', async () => {
     setLinkWriting('shortest')
-    const run = await brought([
+    await brought([
       ...VAULT,
       file('Home.md', 'See [[Plan]] and ![[diagram.png]].\n'),
       file('Plan.md', '# Plan\n'),
@@ -203,9 +236,6 @@ describe('an import into a new space', () => {
     ])
     expect(linkWriting()).toBe('shortest')
     expect(said.get(`${ROOT}/Home.md`)).toBe('See [[Plan]] and ![[diagram.png]].\n')
-    expect(carriedOver).toEqual([])
-    await run.complete()
-    expect(carriedOver).toHaveLength(1)
   })
   test('holding nothing but Obsidian housekeeping makes no empty space and says why', async () => {
     const run = await brought([...VAULT, file('.obsidian/workspace.json', '{}'), file('.trash/Old.md', 'gone')])

@@ -18,7 +18,7 @@ let marksOf: Record<string, string> = {}
 let history: unknown[] = []
 const asked: string[] = []
 const brought: { rows: unknown }[] = []
-const engine = { id: 'google', custom: '', chosen: false }
+const offeredEngines: unknown[] = []
 const written: { root: string; files: Planned[] }[] = []
 const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []
@@ -70,12 +70,7 @@ providePort('web.pages', {
   ...webPages(),
   bringHistory: (rows) => Promise.resolve(void brought.push({ rows })),
   takeEngine: (offered) => {
-    const same = 'id' in offered ? engine.id === offered.id : engine.id === 'custom' && engine.custom === offered.custom
-    if (same) return Promise.resolve('same')
-    if (engine.chosen) return Promise.resolve('kept')
-    if ('id' in offered) engine.id = offered.id
-    else Object.assign(engine, { id: 'custom', custom: offered.custom })
-    engine.chosen = true
+    offeredEngines.push(offered)
     return Promise.resolve('taken')
   },
 })
@@ -135,7 +130,7 @@ beforeEach(() => {
   marksOf = {}
   history = []
   brought.length = 0
-  Object.assign(engine, { id: 'google', custom: '', chosen: false })
+  offeredEngines.length = 0
   asked.length = 0
   written.length = 0
   spaces.length = 0
@@ -156,7 +151,7 @@ describe('a Firefox profile brought into Orden', () => {
     expect(said).toEqual(['Containers stay in Firefox 2 pages not on the web stay behind'])
     expect(asked[0]).toBe('read_browser_file sessionstore-backups/recovery.jsonlz4')
   })
-  test("wears its sites' marks, folds its history in and takes its engine", async () => {
+  test("wears its sites' marks and folds its history in", async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
     files.set('search.json.mozlz4', packed(ENGINES))
     marksOf = { 'https://mail.example.com/': 'data:image/png;base64,iVBORw0KGgo=' }
@@ -165,15 +160,14 @@ describe('a Firefox profile brought into Orden', () => {
     const mail = written[0]?.files.find((one) => one.path === 'Mail.url')
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
     expect(brought).toEqual([{ rows: history }])
-    expect(engine).toMatchObject({ id: 'duckduckgo', chosen: true })
   })
-  test('leaves an engine chosen here as it is, and says which the browser had', async () => {
+  test('leaves the search engine here alone and says nothing of the one the browser had', async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
     files.set('search.json.mozlz4', packed(ENGINES))
-    Object.assign(engine, { id: 'bing', chosen: true })
     await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'search.json.mozlz4'] }, false)
-    expect(engine.id).toBe('bing')
-    expect(said[0]).toContain('Firefox searches with DuckDuckGo: choose it in Settings to search with it here')
+    expect(offeredEngines).toEqual([])
+    expect(asked.some((one) => one.includes('search.json'))).toBe(false)
+    expect(said.join(' ')).not.toMatch(/search/i)
   })
   test("takes the day's copy of the bookmarks where the database cannot be read", async () => {
     places = null
@@ -194,6 +188,9 @@ const CHROME: BrowserProfile = {
   path: '/chrome/Default',
   files: ['Bookmarks', 'Sessions/Session_13436813666016900', 'Sessions_Encrypted/Session_2'],
 }
+const PREFERENCES = {
+  default_search_provider_data: { template_url_data: { keyword: 'duckduckgo.com', short_name: 'DuckDuckGo' } },
+}
 const bookmarksFile = () => toBase64(new TextEncoder().encode(JSON.stringify(chromium.BOOKMARKS)))
 describe('a Chrome profile brought into Orden', () => {
   test('is a space of its tabs and groups, its pinned tab an Essential, its bookmarks a folder', async () => {
@@ -207,6 +204,14 @@ describe('a Chrome profile brought into Orden', () => {
     expect(paths).toContain('Bookmarks/Bookmarks bar/Work/Board.url')
     expect(marks).toEqual([{ kind: 'note', path: 'mail.example.com.url', text: '' }])
     expect(said).toEqual(['1 page not on the web stays behind Saved tab groups and the reading list stay in Chrome'])
+  })
+  test('leaves the search engine here alone, whatever its Preferences say', async () => {
+    files.set('Bookmarks', bookmarksFile())
+    files.set('Preferences', toBase64(new TextEncoder().encode(JSON.stringify(PREFERENCES))))
+    await landBrowser({ ...CHROME, files: [...CHROME.files, 'Preferences'] }, false)
+    expect(offeredEngines).toEqual([])
+    expect(asked.some((one) => one.includes('Preferences'))).toBe(false)
+    expect(said.join(' ')).not.toMatch(/search/i)
   })
   test("brings the Google account's bookmarks a signed-in profile keeps apart", async () => {
     const account = {

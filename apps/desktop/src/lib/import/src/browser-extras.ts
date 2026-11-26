@@ -1,6 +1,5 @@
 import { webPages } from '@orden/contracts'
 import { invoke } from '../../platform/src/api'
-import type { BrowserEngine } from './search-engines'
 import type { Sidebar } from './sidebar'
 import { isObject, text } from './sidebar-made'
 
@@ -29,12 +28,6 @@ export async function bringHistory(browser: Browser, profile: string): Promise<v
     .catch(() => null)
   if (!Array.isArray(rows) || !rows.length) return
   await webPages().bringHistory(rows)
-}
-export async function takeEngine(engine: BrowserEngine | null, browser: string): Promise<string[]> {
-  if (!engine) return []
-  const taken = await webPages().takeEngine('id' in engine ? { id: engine.id } : { custom: engine.custom })
-  if (taken !== 'kept') return []
-  return [`${browser} searches with ${engine.name}: choose it in Settings to search with it here`]
 }
 export function droppedLine(sidebar: Sidebar): string[] {
   const count = sidebar.dropped ?? 0

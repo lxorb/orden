@@ -5,7 +5,6 @@ import { busy, message } from '../../ui-kit/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
 import { arrive } from './arrive'
-import { type Carried, carriedBy } from './carry'
 import { type Kept, keptText } from './kept'
 import type { FormatId, ImportPlan, Planned } from './plan'
 import {
@@ -70,7 +69,6 @@ export class ImportRun {
   private phaseAt = Date.now()
   private stopped = false
   private halted = () => this.stopped
-  private carried: Carried | null = null
   private tab: Tab | null = null
   private made: Space[] = []
   private paths: string[] = []
@@ -185,7 +183,7 @@ export class ImportRun {
     this.tab = workspace.openUnsaved('import', keptText(this.kept()), tabName('reading', 0, 0))
   }
   private async planned(format: FormatId, sources: Source[]): Promise<ImportPlan> {
-    this.carried = await carriedBy(format, sources)
+    const links = format === 'obsidian' ? await (await import('./obsidian')).obsidianLinks(sources) : undefined
     this.total = sources.length
     const counted = sources.map((source) => {
       let read = false
@@ -202,7 +200,7 @@ export class ImportRun {
         bytes: () => unless() ?? source.bytes().then((bytes) => (mark(), bytes)),
       }
     })
-    return spelledAs(this.carried?.linkFormat, () => readAs(format, counted))
+    return spelledAs(links, () => readAs(format, counted))
   }
   private async written(plan: ImportPlan, folder: string): Promise<[Planned, string][]> {
     const space = this.space
@@ -262,10 +260,6 @@ export class ImportRun {
     }
   }
   async complete() {
-    if (this.carried) {
-      const { carryOver } = await import('./carry-over')
-      await carryOver(this.carried)
-    }
     for (const later of this.later) await later()
     const tab = this.tab
     runs.delete(this.id)

@@ -1,6 +1,4 @@
-import type { AttachmentFolder } from '../../modes/src/api'
 import type { LinkFormat } from '../../link-format/src/api'
-import type { Carried } from './carry'
 import { isJunk } from './folder'
 import type { Source } from './sources'
 import { counted } from './counted'
@@ -37,7 +35,7 @@ export function lostInVault(sources: readonly Source[]): string[] {
   if (!away) return []
   return [counted(away, 'file is', 'files are') + ' in iCloud rather than on this Mac']
 }
-export async function obsidianCarries(sources: readonly Source[]): Promise<Carried> {
+export async function obsidianLinks(sources: readonly Source[]): Promise<LinkFormat> {
   const app = atVaultTop(sources).find((one) => one.path === '.obsidian/app.json')
   let said: unknown = {}
   if (app) {
@@ -46,24 +44,13 @@ export async function obsidianCarries(sources: readonly Source[]): Promise<Carri
       .then((words) => JSON.parse(words) as unknown)
       .catch(() => ({}))
   }
-  return fromAppJson(said)
+  return linksFromAppJson(said)
 }
-export function fromAppJson(said: unknown): Carried {
+export function linksFromAppJson(said: unknown): LinkFormat {
   const app = said !== null && typeof said === 'object' ? (said as Record<string, unknown>) : {}
-  return {
-    linkFormat: linkFormatOf(app.useMarkdownLinks, app.newLinkFormat),
-    hardBreaks: app.strictLineBreaks !== true,
-    attachments: attachmentsOf(app.attachmentFolderPath),
-    vim: app.vimMode === true,
-    quietMarks: false,
-    keys: 'obsidian',
-  }
+  return linkFormatOf(app.useMarkdownLinks, app.newLinkFormat)
 }
 function linkFormatOf(markdown: unknown, format: unknown): LinkFormat {
   if (markdown !== true) return 'wikilink'
   return format === 'relative' || format === 'absolute' ? format : 'shortest'
-}
-function attachmentsOf(path: unknown): AttachmentFolder {
-  if (typeof path !== 'string') return 'space'
-  return path.startsWith('./') ? 'note' : 'space'
 }
