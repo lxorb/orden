@@ -99,21 +99,21 @@
 <div class="bar">
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip('Back', 'app.back')}
+    {@attach shortcuts.tip('Back', 'app.back')}
     aria-label="Back"
     disabled={!view.canGoBack}
     onclick={() => view.back()}>{@render glyph(ArrowLeft)}</button
   >
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip('Forward', 'app.forward')}
+    {@attach shortcuts.tip('Forward', 'app.forward')}
     aria-label="Forward"
     disabled={!view.canGoForward}
     onclick={() => view.forward()}>{@render glyph(ArrowRight)}</button
   >
   <button
     class="orden-glyph"
-    title={shortcuts.tooltip('Folder above', 'explorer.parent')}
+    {@attach shortcuts.tip('Folder above', 'explorer.parent')}
     aria-label="Folder above"
     disabled={!view.canGoUp}
     onclick={() => view.up()}>{@render glyph(ArrowUp)}</button
@@ -146,7 +146,7 @@
       <button
         class="past"
         tabindex="-1"
-        title={shortcuts.tooltip('Type a location', 'explorer.location')}
+        {@attach shortcuts.tip('Type a location', 'explorer.location')}
         aria-label="Type a location"
         onclick={() => (typing = true)}
       ></button>
@@ -168,7 +168,7 @@
   <button
     class="orden-glyph"
     class:is-on={filtering || !!view.filter || !!view.search}
-    title={shortcuts.tooltip('Filter', 'explorer.filter')}
+    {@attach shortcuts.tip('Filter', 'explorer.filter')}
     aria-label="Filter"
     onclick={() => (filtering = !filtering)}>{@render glyph(Search)}</button
   >
@@ -182,7 +182,7 @@
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.view === 'list'}
-    title={shortcuts.tooltip('List', 'explorer.list')}
+    {@attach shortcuts.tip('List', 'explorer.list')}
     aria-label="List"
     aria-pressed={explorerPrefs.view === 'list'}
     onclick={() => explorerPrefs.show('list')}>{@render glyph(List)}</button
@@ -190,7 +190,7 @@
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.view === 'grid'}
-    title={shortcuts.tooltip('Grid', 'explorer.grid')}
+    {@attach shortcuts.tip('Grid', 'explorer.grid')}
     aria-label="Grid"
     aria-pressed={explorerPrefs.view === 'grid'}
     onclick={() => explorerPrefs.show('grid')}>{@render glyph(LayoutGrid)}</button
@@ -198,7 +198,7 @@
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.view === 'columns'}
-    title={shortcuts.tooltip('Columns', 'explorer.columns')}
+    {@attach shortcuts.tip('Columns', 'explorer.columns')}
     aria-label="Columns"
     aria-pressed={explorerPrefs.view === 'columns'}
     onclick={() => explorerPrefs.show('columns')}>{@render glyph(Columns)}</button
@@ -206,7 +206,7 @@
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.hidden}
-    title={shortcuts.tooltip('Hidden files', 'explorer.hidden')}
+    {@attach shortcuts.tip('Hidden files', 'explorer.hidden')}
     aria-label="Hidden files"
     aria-pressed={explorerPrefs.hidden}
     onclick={() => explorerPrefs.toggleHidden()}>{@render glyph(explorerPrefs.hidden ? Eye : EyeOff)}</button
@@ -222,13 +222,17 @@
   <button
     class="orden-glyph"
     class:is-on={explorerPrefs.preview}
-    title={shortcuts.tooltip('Preview', 'explorer.preview')}
+    {@attach shortcuts.tip('Preview', 'explorer.preview')}
     aria-label="Preview"
     aria-pressed={explorerPrefs.preview}
     onclick={() => explorerPrefs.togglePreview()}>{@render glyph(PanelRight)}</button
   >
   {#if explorerOn()}
-    <TurnButton title={shortcuts.tooltip(turnLabel(view.tab), 'tab.flip')} onclick={() => turnTab(view.tab)} />
+    <TurnButton
+      label={turnLabel(view.tab)}
+      tip={shortcuts.tip(turnLabel(view.tab), 'tab.flip')}
+      onclick={() => turnTab(view.tab)}
+    />
   {/if}
 </div>
 

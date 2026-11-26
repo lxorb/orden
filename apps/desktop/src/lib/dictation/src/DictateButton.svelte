@@ -10,11 +10,7 @@
   let button = $state<HTMLButtonElement>()
   let pressed: { at: number; started: boolean } | null = null
   const title = $derived(
-    hearing === 'finishing'
-      ? 'Writing down what you said'
-      : hearing === 'idle'
-        ? shortcuts.tooltip('Dictate', 'field.dictate')
-        : 'Stop dictating',
+    hearing === 'finishing' ? 'Writing down what you said' : hearing === 'idle' ? 'Dictate' : 'Stop dictating',
   )
   function down(event: PointerEvent) {
     if (event.button !== 0) return
@@ -42,7 +38,7 @@
     class:listening={hearing === 'listening' || hearing === 'opening'}
     class:finishing={hearing === 'finishing'}
     style:--level={voice.owner === owner ? voice.level : 0}
-    {title}
+    {@attach shortcuts.tip(title, hearing === 'idle' ? 'field.dictate' : null)}
     aria-label={title}
     aria-pressed={hearing !== 'idle'}
     aria-haspopup={asking ? 'dialog' : undefined}

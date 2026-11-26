@@ -44,7 +44,7 @@ describe('the key that turns a terminal into the file explorer and back', () => 
     expect(entry?.category).toBe('view')
     expect(entry?.desktop).toBe(true)
     for (const platform of PLATFORMS) expect(onPlatform(platform).keyFor('tab.flip'), platform).toBe('Mod-Alt-u')
-    expect(shortcuts.tooltip('Terminal', 'tab.flip')).toBe('Terminal (Ctrl+Alt+U)')
+    expect(shortcuts.hint('tab.flip')).toBe('Ctrl+Alt+U')
   })
   test('is shown only while the file explorer is turned on', () => {
     explorer(false)

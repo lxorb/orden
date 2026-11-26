@@ -10,6 +10,7 @@
     scrollbar,
   } from '../../ui-kit/src/api'
   import { tick, untrack } from 'svelte'
+  import { Caps } from '../../keytip/src/api'
   import { typeAhead } from './type-ahead'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@orden/editor'
@@ -461,7 +462,7 @@
         <button
           type="button"
           class="orden-chip scope"
-          title={shortcuts.tooltip('Search all spaces or only this one', 'palette.scope')}
+          {@attach shortcuts.tip('Search all spaces or only this one', 'palette.scope')}
           onclick={flipScope}>{scope === 'here' ? 'Only this space' : 'All spaces'}</button
         >
       {/if}
@@ -550,7 +551,7 @@
               {:else if row.kind === 'setting' && row.setting.value()}
                 <span class="value">{row.setting.value()}</span>
               {:else if hint}
-                <kbd>{hint}</kbd>
+                <Caps shown={hint} />
               {/if}
             </button>
           </li>
@@ -693,14 +694,6 @@
   }
   .found p {
     margin: 0;
-  }
-  kbd {
-    flex: none;
-    margin-inline-start: auto;
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--muted);
-    letter-spacing: 0.02em;
   }
   :global([data-touch]) .palette {
     top: 0;

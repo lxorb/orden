@@ -105,7 +105,7 @@
     class:on={membersOn}
     aria-label="Members"
     aria-pressed={membersOn}
-    use:tip={() => shortcuts.tooltip('Members', 'chat.members')}
+    {@attach shortcuts.tip('Members', 'chat.members')}
     onclick={onmembers}
   >
     <span class="faces" aria-hidden="true">
@@ -132,7 +132,7 @@
     type="button"
     class="orden-glyph"
     aria-label="Search this chat"
-    use:tip={() => shortcuts.tooltip('Search this chat', 'chat.search')}
+    {@attach shortcuts.tip('Search this chat', 'chat.search')}
     onclick={() => page.search()}><Glyph name="search" /></button
   >
 </header>

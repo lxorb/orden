@@ -48,7 +48,7 @@ export interface Mark {
 export interface ToolMark extends Mark {
   id: Tool
 }
-export const hinted = (mark: Pick<Mark, 'title' | 'key'>): string => shortcuts.tooltip(mark.title(), mark.key)
+export const hinted = (mark: Pick<Mark, 'title' | 'key'>) => shortcuts.tip(mark.title, mark.key)
 export const ABOUT: ToolMark[] = [
   {
     id: 'select',

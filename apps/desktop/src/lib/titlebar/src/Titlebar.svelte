@@ -79,7 +79,7 @@
   <button
     class="orden-glyph search"
     data-overview-keeps
-    title={shortcuts.tooltip('Search', 'app.palette')}
+    {@attach shortcuts.tip('Search', 'app.palette')}
     aria-label="Search notes and commands"
     onpointerdown={keepFocus}
     onmousedown={keepFocus}
@@ -95,7 +95,7 @@
     data-overview-keeps
     class:is-on={tabOverview.open}
     aria-pressed={tabOverview.open}
-    title={shortcuts.tooltip('Tabs', 'app.tab-overview')}
+    {@attach shortcuts.tip('Tabs', 'app.tab-overview')}
     aria-label="Tabs"
     onpointerdown={keepFocus}
     onmousedown={keepFocus}
@@ -140,7 +140,7 @@
         <button
           class="close"
           onclick={closeWindow}
-          title={shortcuts.tooltip('Close', 'app.close-window')}
+          {@attach shortcuts.tip('Close', 'app.close-window')}
           aria-label="Close"
         >
           <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>

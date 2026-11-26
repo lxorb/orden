@@ -517,9 +517,11 @@
         </button>
         <button
           class="mode"
-          title={mode === 'full'
-            ? 'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting'
-            : shortcuts.tooltip('Next mode', 'ai.mode')}
+          {@attach mode === 'full'
+            ? shortcuts.tip(
+                'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting',
+              )
+            : shortcuts.tip('Next mode', 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}
           disabled={!head}

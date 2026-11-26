@@ -72,7 +72,18 @@ def title(page: Page, selector: str) -> str:
     if found.count() == 0:
         wrong(f"nothing at {selector}")
         return ""
-    return found.get_attribute("title") or ""
+    page.mouse.move(0, 0)
+    page.wait_for_timeout(150)
+    found.hover()
+    page.wait_for_selector('[role="tooltip"]', timeout=3000)
+    said = page.evaluate("""() => {
+      const tip = document.querySelector('[role="tooltip"]')
+      const label = tip?.querySelector('.label')?.textContent?.trim() ?? ''
+      const keys = [...(tip?.querySelectorAll('kbd') ?? [])].map((one) => one.textContent).join('+')
+      return keys ? `${label} (${keys})` : label
+    }""")
+    page.mouse.move(0, 0)
+    return said
 def keyed(page: Page, selector: str, name: str, key: str) -> None:
     said = title(page, selector)
     if said != f"{name} ({key})":

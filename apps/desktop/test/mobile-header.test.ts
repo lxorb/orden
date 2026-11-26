@@ -98,7 +98,7 @@ describe('the menu of the whole app', () => {
 })
 describe('the search button', () => {
   test('opens the palette, says its key on the tooltip, and is in both bars', () => {
-    expect(titlebar).toContain("title={shortcuts.tooltip('Search', 'app.palette')}")
+    expect(titlebar).toContain("{@attach shortcuts.tip('Search', 'app.palette')}")
     expect(titlebar).toContain('onclick={() => onpalette()}')
     expect(titlebar.match(/\{@render searchGlyph\(\)\}/g) ?? []).toHaveLength(2)
   })

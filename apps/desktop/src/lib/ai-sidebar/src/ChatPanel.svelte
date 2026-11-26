@@ -120,8 +120,14 @@
   })
 </script>
 
-{#snippet glyph(title: string, label: string, run: () => void, path: string, pressed?: boolean)}
-  <button class="orden-glyph" {title} aria-label={label} aria-pressed={pressed} onclick={run}>
+{#snippet glyph(key: string | null, label: string, run: () => void, path: string, pressed?: boolean)}
+  <button
+    class="orden-glyph"
+    {@attach shortcuts.tip(label, key)}
+    aria-label={label}
+    aria-pressed={pressed}
+    onclick={run}
+  >
     <svg viewBox="0 0 13 13" aria-hidden="true"><path d={path} /></svg>
   </button>
 {/snippet}
@@ -163,7 +169,7 @@
         {/if}
         <span class="gap"></span>
         {#if wide && !railed}
-          {@render glyph(shortcuts.tooltip('New chat', 'ai.new'), 'New chat', () => chat.newThread(), NEW)}
+          {@render glyph('ai.new', 'New chat', () => chat.newThread(), NEW)}
         {/if}
       </header>
     {/if}
