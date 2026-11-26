@@ -21,7 +21,7 @@ interface PeopleReply {
 describe('a profile change', () => {
   test('keeps what it names and leaves out what it does not', () => {
     expect(profileChanges({ pronouns: ' she / her ', bio: null })).toEqual({
-      changes: { pronouns: 'she / her', bio: null },
+      changes: { bio: null },
     })
     expect(profileChanges({})).toEqual({ changes: {} })
   })
@@ -32,13 +32,11 @@ describe('a profile change', () => {
     expect(profileChanges({ bio: '   ' })).toEqual({ changes: { bio: null } })
   })
   test('says what is wrong with what it cannot keep', () => {
-    expect(profileChanges({ pronouns: 'x'.repeat(41) })).toEqual({
-      problem: 'use at most 40 characters',
-    })
     expect(profileChanges({ bio: 'x'.repeat(191) })).toEqual({
       problem: 'use at most 190 characters',
     })
-    expect(profileChanges({ pronouns: 3 })).toEqual({ problem: 'pronouns must be text' })
+    expect(profileChanges({ bio: 3 })).toEqual({ problem: 'bio must be text' })
+    expect(profileChanges({ pronouns: 3 })).toEqual({ changes: {} })
     expect(profileChanges({ accent: '#ff0000' })).toEqual({ changes: {} })
     expect(profileChanges({ zone: 'Mars/Olympus' })).toEqual({
       problem: 'zone must be a time zone',
@@ -121,7 +119,6 @@ describe('the routes', () => {
       method: 'PUT',
       token: member,
       body: {
-        pronouns: 'they/them',
         bio: 'Thesis on sparse solvers.',
         accent: 'teal',
         zone: 'Europe/Zurich',
@@ -131,7 +128,6 @@ describe('the routes', () => {
     expect(put.status).toBe(200)
     const { json } = await call(env, '/v1/me', { token: member })
     expect(json.user).toMatchObject({
-      pronouns: 'they/them',
       bio: 'Thesis on sparse solvers.',
       zone: 'Europe/Zurich',
       status: { emoji: '🌴', text: 'Away', until: null, quiet: false },
@@ -140,6 +136,21 @@ describe('the routes', () => {
       nicks: {},
     })
     expect(json.user).not.toHaveProperty('accent')
+  })
+  test('has no pronouns: a change that still carries them is taken and they are kept nowhere', async () => {
+    const put = await call(env, '/v2/me/profile', {
+      method: 'PUT',
+      token: member,
+      body: { pronouns: 'they/them', bio: 'Still here.' },
+    })
+    expect(put.status).toBe(200)
+    const { json } = await call(env, '/v1/me', { token: member })
+    expect(json.user).toMatchObject({ bio: 'Still here.' })
+    expect(json.user).not.toHaveProperty('pronouns')
+    expect(env.db.prepare('select pronouns from users where email = ?').get(MEMBER)).toEqual({ pronouns: null })
+    const id = (env.db.prepare('select id from users where email = ?').get(MEMBER) as { id: string }).id
+    const listed = await call<PeopleReply>(env, `/v2/people?ids=${id}`, { token: other })
+    expect(JSON.stringify(listed.json)).not.toContain('pronouns')
   })
   test('a profile change that is wrong is refused with its sentence', async () => {
     const put = await call(env, '/v2/me/profile', {
@@ -340,7 +351,7 @@ describe('the routes', () => {
          values ('c_open', ?, 'user:someone', 1), ('c_elsewhere', 'another-space', 'user:x', 1)`,
       )
       .run(space)
-    await call(env, '/v2/me/profile', { method: 'PUT', token: member, body: { pronouns: 'he' } })
+    await call(env, '/v2/me/profile', { method: 'PUT', token: member, body: { bio: 'he' } })
     expect(asked).toEqual([{ chat: 'c_open', ask: 'profile', who: `user:${memberId}` }])
   })
   test('a guest reaches none of it', async () => {

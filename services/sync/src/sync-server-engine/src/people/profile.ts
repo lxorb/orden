@@ -14,14 +14,12 @@ export interface ProfileRow {
   email: string
   name: string | null
   avatar: string | null
-  pronouns: string | null
   bio: string | null
   status: string | null
   zone: string | null
   hidden: number
 }
-export const PROFILE_COLUMNS = 'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.zone, u.hidden'
-const PRONOUNS_LIMIT = 40
+export const PROFILE_COLUMNS = 'u.id, u.email, u.name, u.avatar, u.bio, u.status, u.zone, u.hidden'
 const BIO_LIMIT = 190
 const STATUS_LIMIT = 100
 const EMOJI_LIMIT = 16
@@ -59,7 +57,6 @@ function isZone(zone: string): boolean {
   }
 }
 export interface ProfileChanges {
-  pronouns?: string | null
   bio?: string | null
   status?: Status | null
   zone?: string | null
@@ -67,25 +64,12 @@ export interface ProfileChanges {
 }
 export function profileChanges(fields: Record<string, unknown>): { changes: ProfileChanges } | { problem: string } {
   const changes: ProfileChanges = {}
-  const words = (
-    name: 'pronouns' | 'bio',
-    limit: number,
-  ): { kept: string | null | undefined } | { problem: string } => {
-    if (!Object.hasOwn(fields, name)) return { kept: undefined }
-    const value = fields[name]
-    if (value === null) return { kept: null }
-    if (typeof value !== 'string') return { problem: `${name} must be text` }
-    const kept = name === 'bio' ? value.replace(/(?!\n)\p{Cc}/gu, '').trim() : cleanPersonName(value)
-    if (kept.length > limit) return { problem: `use at most ${limit} characters` }
-    return { kept: kept || null }
-  }
-  for (const [name, limit] of [
-    ['pronouns', PRONOUNS_LIMIT],
-    ['bio', BIO_LIMIT],
-  ] as const) {
-    const read = words(name, limit)
-    if ('problem' in read) return read
-    if (read.kept !== undefined) changes[name] = read.kept
+  if (Object.hasOwn(fields, 'bio')) {
+    const value = fields.bio
+    if (value !== null && typeof value !== 'string') return { problem: 'bio must be text' }
+    const kept = value === null ? '' : value.replace(/(?!\n)\p{Cc}/gu, '').trim()
+    if (kept.length > BIO_LIMIT) return { problem: `use at most ${BIO_LIMIT} characters` }
+    changes.bio = kept || null
   }
   if (Object.hasOwn(fields, 'status')) {
     const value = fields.status
@@ -120,7 +104,6 @@ export function presentProfile(row: ProfileRow, presence: Presence | null, now: 
   const mine = row.id === asker
   return {
     ...presentFace(row),
-    pronouns: row.pronouns,
     bio: row.bio,
     status: statusIn(row.status, now),
     zone: row.zone,
@@ -130,7 +113,6 @@ export function presentProfile(row: ProfileRow, presence: Presence | null, now: 
 export function presentOwnProfile(row: ProfileRow, now: number) {
   return {
     avatar: avatarIn(row.avatar),
-    pronouns: row.pronouns,
     bio: row.bio,
     status: statusIn(row.status, now),
     zone: row.zone,
