@@ -12,6 +12,7 @@ on:
       - 'packaging/**'
       - '!packaging/nix/**'
       - 'scripts/wayland-*'
+      - 'scripts/stop-app.sh'
       - 'scripts/appimage-trim.sh'
       - '.github/workflows/wayland.yml'
   workflow_dispatch:
@@ -144,7 +145,7 @@ jobs:
           DRIVE: '1'
           DPI: '128'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A light page on its white ground in the app's dark scheme, under sway
@@ -153,7 +154,7 @@ jobs:
           OUT: wayland-out/ground
           GROUND: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The first start asks about crash reports once, and the answer is kept
@@ -162,7 +163,7 @@ jobs:
           OUT: wayland-out/crash-ask
           CRASH_ASK: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The editor's text size changed from Settings, under sway
@@ -171,7 +172,7 @@ jobs:
           OUT: wayland-out/textsize
           TEXTSIZE: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Tabs switched in the dark without a white frame, under sway
@@ -180,7 +181,7 @@ jobs:
           OUT: wayland-out/flash
           FLASH: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A site's certificate from its popover, under sway
@@ -189,7 +190,7 @@ jobs:
           OUT: wayland-out/cert
           CERT: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A download stopped on its way, and the same name again, under sway
@@ -198,7 +199,7 @@ jobs:
           OUT: wayland-out/download
           DOWNLOAD: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's extensions in the bar and in Settings, under sway
@@ -207,7 +208,7 @@ jobs:
           OUT: wayland-out/extensions
           EXTENSIONS: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Pass fills, saves and signs in by itself on a web tab's pages, under sway
@@ -216,7 +217,7 @@ jobs:
           OUT: wayland-out/pass
           PASS: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A device's name refused for a note and a folder, under sway
@@ -225,7 +226,7 @@ jobs:
           OUT: wayland-out/reserved
           RESERVED: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A page note made from a PDF wears the PDF's mark, under sway
@@ -234,7 +235,7 @@ jobs:
           OUT: wayland-out/pdf-mark
           PDFMARK: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A space watched past a folder nobody may read and past the limit, under sway
@@ -243,7 +244,7 @@ jobs:
           OUT: wayland-out/watch
           WATCH: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A note let go of on a site in a web tab is a file there, under sway
@@ -252,7 +253,7 @@ jobs:
           OUT: wayland-out/carry
           CARRY: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden" "$HOME/.cache/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page in the app's scheme, under sway
@@ -261,7 +262,7 @@ jobs:
           OUT: wayland-out/scheme
           SCHEME: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: What the app took in survives a kill, under sway
@@ -270,7 +271,7 @@ jobs:
           OUT: wayland-out/kill
           KILL: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page has its card's rounded corners, under sway
@@ -279,7 +280,7 @@ jobs:
           OUT: wayland-out/corner
           CORNER: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A press into a web tab's page chooses its tab and its pane, under sway
@@ -288,7 +289,7 @@ jobs:
           OUT: wayland-out/choosing
           CHOOSING: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Every way a page opens a window does what it asked for, under sway
@@ -297,7 +298,7 @@ jobs:
           OUT: wayland-out/opens
           OPENS: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Web tabs closed one after another while their pages come up, under sway
@@ -307,7 +308,7 @@ jobs:
           CLOSING: '1'
           RUST_BACKTRACE: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Auto-tidy closes saved tabs out of sight and keeps the rest, after a restart, under sway
@@ -316,7 +317,7 @@ jobs:
           OUT: wayland-out/auto-tidy
           AUTOTIDY: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's page has its worker answer it, opened and after a restart, under sway
@@ -325,7 +326,7 @@ jobs:
           OUT: wayland-out/worker
           WORKER: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: A web tab's session cookie is there after a restart, under sway
@@ -334,7 +335,7 @@ jobs:
           OUT: wayland-out/session
           SESSION: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Export PDF writes pages and words and nothing from the disk, under sway
@@ -343,7 +344,7 @@ jobs:
           OUT: wayland-out/pdf
           EXPORTPDF: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Popups chosen from over a web tab's page, under sway
@@ -352,7 +353,7 @@ jobs:
           OUT: wayland-out/popups
           POPUP: '1'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: Popups chosen from over a web tab's page, under sway, scaled
@@ -362,7 +363,7 @@ jobs:
           POPUP: '1'
           DPI: '128'
         run: |
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden" "$HOME/.local/share/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: The window moved by its strip and resized by its edge, under sway
@@ -373,7 +374,7 @@ jobs:
           IDLE: '1'
         run: |
           echo "left of the runs before:"; pgrep -a orden || true
-          pkill -f /usr/share/Orden/orden || true
+          . scripts/stop-app.sh && stop_app /usr/share/Orden/orden
           rm -rf "$HOME/.config/so.orden.Orden"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/orden
       - name: What

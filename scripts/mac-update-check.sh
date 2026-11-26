@@ -1,5 +1,6 @@
 #!/bin/bash
 set -u
+. "$(dirname "$0")/stop-app.sh"
 
 dmg="$1"
 where="$2"
@@ -63,8 +64,7 @@ launch() {
 quit_app() {
   osascript -e "quit app id \"$id\"" >/dev/null 2>&1 || true
   for _ in $(seq 20); do running "$app" || return 0; sleep 1; done
-  pkill -f "$app/Contents/MacOS/" || true
-  sleep 2
+  stop_app "$app/Contents/MacOS/"
 }
 
 rm -rf "$support"

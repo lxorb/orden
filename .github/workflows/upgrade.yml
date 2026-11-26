@@ -19,6 +19,7 @@ on:
       - apps/desktop/src-tauri/crates/system/src/updates.rs
       - scripts/windows-upgrade.ps1
       - scripts/windows-arch-move.ps1
+      - scripts/stop-app.sh
       - .github/workflows/upgrade.yml
 
 concurrency:
@@ -159,6 +160,12 @@ jobs:
       OLD_APP: ${{ matrix.old }}.app
       CASK: ${{ matrix.cask }}
     steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          sparse-checkout: scripts/stop-app.sh
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: new-macos
@@ -207,7 +214,7 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$apps/Orden.app/Contents/Info.plist")" = Orden
           osascript -e 'quit app id "so.orden.Orden"' || true
           sleep 3
-          pkill -f "$apps/Orden.app/Contents/MacOS/" || true
+          . scripts/stop-app.sh && stop_app "$apps/Orden.app/Contents/MacOS/"
 
       - name: A copy Homebrew put there keeps its name
         run: |

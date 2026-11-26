@@ -1,5 +1,6 @@
 #!/bin/bash
 set -u
+. "$(dirname "$0")/stop-app.sh"
 
 built="$1"
 identifier="so.orden.Orden.probe.mac-move"
@@ -32,8 +33,7 @@ up() {
 quit_app() {
   osascript -e "quit app id \"$identifier\"" >/dev/null 2>&1 || true
   for _ in $(seq 20); do running "$1" || return 0; sleep 1; done
-  pkill -f "$1/Contents/MacOS/" || true
-  sleep 2
+  stop_app "$1/Contents/MacOS/"
 }
 
 rm -rf "$support"
