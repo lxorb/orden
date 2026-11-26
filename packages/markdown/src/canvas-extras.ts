@@ -7,7 +7,7 @@ export function ownOf(file: Record<string, unknown>): Fields | undefined {
   if (isRecord(file.orden)) return file.orden
   return isRecord(file.nib) ? file.nib : undefined
 }
-function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
+export function keptOwn(file: Record<string, unknown>, own: Fields | null): void {
   delete file.nib
   if (own) file.orden = own
   else delete file.orden
@@ -19,7 +19,7 @@ const RECORD = 'outside'
 type Fields = Record<string, unknown>
 export interface Extras {
   top: Fields
-  nib: Fields
+  orden: Fields
   nodes: Map<string, Fields>
   edges: Map<string, Fields>
   ink: Map<string, Fields>
@@ -28,8 +28,20 @@ export interface Extras {
   generations: Map<string, number>
   buried: Map<string, number>
 }
-type Kind = 'node' | 'edge' | 'ink' | 'shape' | 'field' | 'top' | 'nib'
+type Kind = 'node' | 'edge' | 'ink' | 'shape' | 'field' | 'top' | 'orden'
 const named = (kind: Kind, id: string): string => `${kind}:${id}`
+const FORMER_OWN = 'nib:'
+function carriedNames<T>(entries: readonly (readonly [string, T])[]): [string, T][] {
+  const now = new Set(entries.map(([name]) => name))
+  const out: [string, T][] = []
+  for (const [name, held] of entries) {
+    if (!name.startsWith(FORMER_OWN)) out.push([name, held])
+    else if (!now.has(named('orden', name.slice(FORMER_OWN.length)))) {
+      out.push([named('orden', name.slice(FORMER_OWN.length)), held])
+    }
+  }
+  return out
+}
 const isRecord = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 const idOf = (value: Fields): string | null => (typeof value.id === 'string' && value.id ? value.id : null)
@@ -44,7 +56,7 @@ function beyond(value: Fields, known: ReadonlySet<string>): Fields | null {
 }
 const none = (): Extras => ({
   top: {},
-  nib: {},
+  orden: {},
   nodes: new Map(),
   edges: new Map(),
   ink: new Map(),
@@ -73,7 +85,7 @@ function fingerprint(value: unknown): string {
 function everyOf(extras: Extras): Map<string, unknown> {
   const out = new Map<string, unknown>()
   for (const [key, held] of Object.entries(extras.top)) out.set(named('top', key), held)
-  for (const [key, held] of Object.entries(extras.nib)) out.set(named('nib', key), held)
+  for (const [key, held] of Object.entries(extras.orden)) out.set(named('orden', key), held)
   for (const [id, held] of extras.nodes) out.set(named('node', id), held)
   for (const [id, held] of extras.edges) out.set(named('edge', id), held)
   for (const [id, held] of extras.ink) out.set(named('ink', id), held)
@@ -102,7 +114,7 @@ export function extrasFrom(
     if (!TOP_FIELDS.has(key)) out.top[key] = held
   }
   const own = ownOf(parsed)
-  if (own) out.nib = beyond(own, ORDEN_FIELDS) ?? {}
+  if (own) out.orden = beyond(own, ORDEN_FIELDS) ?? {}
   const unreadIn = (list: unknown, read: ReadonlySet<string>, known: ReadonlySet<string>) => {
     const unread = new Map<string, Fields>()
     if (!Array.isArray(list)) return unread
@@ -126,7 +138,7 @@ export function extrasFrom(
     out.shapes = unreadOnly(own.shapes, nodes)
   }
   const record = own?.[RECORD]
-  const said = isRecord(record) ? record : {}
+  const said = isRecord(record) ? Object.fromEntries(carriedNames(Object.entries(record))) : {}
   const now = everyOf(out)
   for (const [name, held] of now) {
     const was = entryOf(said[name])
@@ -155,7 +167,7 @@ export function holdsExtras(extras: Extras | undefined): extras is Extras {
   if (!extras) return false
   return (
     Object.keys(extras.top).length > 0 ||
-    Object.keys(extras.nib).length > 0 ||
+    Object.keys(extras.orden).length > 0 ||
     extras.nodes.size > 0 ||
     extras.edges.size > 0 ||
     extras.ink.size > 0 ||
@@ -195,7 +207,7 @@ export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Ex
     const kind = name.slice(0, split) as Kind
     const id = name.slice(split + 1)
     if (kind === 'top') out.top[id] = value
-    else if (kind === 'nib') out.nib[id] = value
+    else if (kind === 'orden') out.orden[id] = value
     else if (isRecord(value)) {
       mapOf(out, kind).set(id, value)
     }
@@ -246,7 +258,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   }
   const written = none()
   written.top = Object.fromEntries(Object.entries(extras.top).filter(([key]) => !TOP_FIELDS.has(key)))
-  written.nib = extras.nib
+  written.orden = extras.orden
   for (const [id, node] of extras.nodes) if (nodes.includes(node)) written.nodes.set(id, node)
   for (const [id, edge] of extras.edges) if (edges.includes(edge)) written.edges.set(id, edge)
   written.ink = extras.ink
@@ -262,7 +274,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   }
   const section = {
     ...ownOf(file),
-    ...extras.nib,
+    ...extras.orden,
     ...(Object.keys(record).length ? { [RECORD]: record } : {}),
   }
   keptOwn(file, Object.keys(section).length ? section : null)
@@ -272,7 +284,7 @@ export function extrasText(extras: Extras): string {
   const sorted = (map: Map<string, Fields>) => [...map].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
   return JSON.stringify({
     top: extras.top,
-    nib: extras.nib,
+    orden: extras.orden,
     nodes: sorted(extras.nodes),
     edges: sorted(extras.edges),
     ink: sorted(extras.ink),
@@ -299,13 +311,17 @@ export function extrasRead(text: unknown): Extras {
     )
   const counts = (value: unknown) =>
     new Map(
-      (Array.isArray(value) ? value : []).filter(
-        (one): one is [string, number] => Array.isArray(one) && typeof one[0] === 'string' && Number.isInteger(one[1]),
+      carriedNames(
+        (Array.isArray(value) ? value : []).filter(
+          (one): one is [string, number] =>
+            Array.isArray(one) && typeof one[0] === 'string' && Number.isInteger(one[1]),
+        ),
       ),
     )
+  const own: unknown = parsed.orden ?? parsed.nib
   return {
     top: isRecord(parsed.top) ? parsed.top : {},
-    nib: isRecord(parsed.nib) ? parsed.nib : {},
+    orden: isRecord(own) ? own : {},
     nodes: pairs(parsed.nodes),
     edges: pairs(parsed.edges),
     ink: pairs(parsed.ink),

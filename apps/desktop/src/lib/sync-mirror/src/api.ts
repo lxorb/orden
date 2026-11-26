@@ -11,6 +11,7 @@ export {
   type Tracked,
   type Untold,
 } from './mirror'
+export { isAside } from './former-aside'
 export type { Joined, Waiting } from './pass'
 export { record } from './record.svelte'
 export type { Folded } from './web-copies'

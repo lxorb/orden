@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../../../ai-providers/src/chat/types'
-import { agentOf, agentsOf, answered, byNote, changesOf, changesSince, type Edit, linesOf, providerOf } from './changes'
+import { agentOf, answered, byNote, changesOf, changesSince, type Edit, linesOf, providerOf } from './changes'
 import { forkAt, cutForEdit, switchBranch, type Branched } from './branches'
 import { fileChangesOf, verbOf } from './files'
 import { planFor } from './plan'
@@ -18,7 +18,7 @@ function you(id: string, at: number, steered = false): Turn {
 function model(id: string, at: number, parts: Turn['parts'] = []): Turn {
   return { id, role: 'model', at, parts, provider: 'p' }
 }
-function edit(id: string, at: number, path = '/s/a.md', agent = 'nib-p'): Edit {
+function edit(id: string, at: number, path = '/s/a.md', agent = 'orden-p'): Edit {
   return { id, agent, path, at, spots: [{ from: 0, to: 3, removed: 'old', inserted: 'new' }] }
 }
 const thread = {
@@ -178,21 +178,15 @@ describe('an edited message', () => {
   })
 })
 describe('the agent an edit was made by', () => {
-  test('is the built-in provider under the new name and under the one an older version wrote', () => {
+  test('is the built-in provider under the app’s own prefix, and no other', () => {
     expect(agentOf('anthropic')).toBe('orden-anthropic')
-    expect(agentsOf('anthropic')).toEqual(['orden-anthropic', 'nib-anthropic'])
     expect(providerOf('orden-anthropic')).toBe('anthropic')
-    expect(providerOf('nib-anthropic')).toBe('anthropic')
     expect(providerOf('claude-code')).toBeNull()
   })
   test('follows an account the vault moved to a fresh id to the agent rights it had', async () => {
     const { keepMoves } = await import('../../../ai-providers/src/api')
     keepMoves({ gemini: 'gemini-2' })
     expect(agentOf('gemini-2')).toBe('orden-gemini')
-    const [current, former] = agentsOf('gemini-2')
-    expect(current).toBe('orden-gemini')
-    expect(former).not.toBe(current)
-    expect(providerOf(former ?? '')).toBe('gemini-2')
     expect(providerOf('orden-gemini')).toBe('gemini-2')
     expect(providerOf(agentOf('gemini'))).toBe('gemini')
     expect(agentOf('gemini')).not.toBe('orden-gemini')

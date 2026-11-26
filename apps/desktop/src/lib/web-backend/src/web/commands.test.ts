@@ -1318,10 +1318,17 @@ describe('the scratchpad', () => {
     expect(path).toBe('/.orden/Scratchpad.md')
     expect(await read(path)).toBe('')
   })
-  test('brings the words written under the old name, which stay where they were', async () => {
+  test('brings the words written under the old name, which then lives only under the new one', async () => {
     await write('/.nib/Scratchpad.md', 'kept words')
     const path = await webInvoke<string>('scratchpad_path')
+    expect(path).toBe('/.orden/Scratchpad.md')
     expect(await read(path)).toBe('kept words')
-    expect(await read('/.nib/Scratchpad.md')).toBe('kept words')
+    expect(disk.files.has('/.nib/Scratchpad.md')).toBe(false)
+  })
+  test('never writes over a scratchpad already kept under the new name', async () => {
+    await write('/.orden/Scratchpad.md', 'newer words')
+    await write('/.nib/Scratchpad.md', 'older words')
+    expect(await read(await webInvoke<string>('scratchpad_path'))).toBe('newer words')
+    expect(await read('/.nib/Scratchpad.md')).toBe('older words')
   })
 })

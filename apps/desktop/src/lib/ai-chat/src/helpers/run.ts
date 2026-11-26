@@ -4,7 +4,7 @@ import { invoke, isDesktop } from '../../../platform/src/api'
 import { type Effort, type Mode, type Thread, usable, ai } from '../../../ai-providers/src/api'
 import { answerFor, type Helper, helpers } from './helpers.svelte'
 import type { Offered } from './route'
-import { agentsOf } from '../review/changes'
+import { agentOf } from '../review/changes'
 
 export const WAIT = 20_000
 const LISTING = 10_000
@@ -36,10 +36,7 @@ async function grants(): Promise<Held[] | null> {
   const state = await invoke<{ agents?: unknown }>('agents_state').catch(() => null)
   return Array.isArray(state?.agents) ? (state.agents as Held[]) : null
 }
-const grantOf = (all: readonly Held[], provider: string) =>
-  agentsOf(provider)
-    .map((id) => all.find((one) => one.id === id))
-    .find(Boolean) ?? null
+const grantOf = (all: readonly Held[], provider: string) => all.find((one) => one.id === agentOf(provider)) ?? null
 const SUPERVISION: Readonly<Record<string, number>> = { autonomous: 0, unsupervised: 1, confirm: 2 }
 const UNRULED = 1
 const ALLOWED = 0

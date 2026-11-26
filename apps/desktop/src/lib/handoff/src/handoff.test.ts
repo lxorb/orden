@@ -145,7 +145,6 @@ describe('the new address, given it', () => {
 describe('a message', () => {
   test('is a handoff only when it says so', () => {
     expect(isHandoff({ kind: 'orden-handoff', databases: [], local: [] })).toBe(true)
-    expect(isHandoff({ kind: 'nib-handoff', databases: [], local: [] })).toBe(true)
     expect(isHandoff({ kind: 'something-else', databases: [], local: [] })).toBe(false)
     expect(isHandoff({ kind: 'orden-handoff' })).toBe(false)
     expect(isHandoff('orden-handoff')).toBe(false)

@@ -1,4 +1,4 @@
-import { type Extras, extrasFrom, holdsExtras, ownOf, withExtras } from './canvas-extras'
+import { type Extras, extrasFrom, holdsExtras, keptOwn, ownOf, withExtras } from './canvas-extras'
 import { oneEdit, type TextEdit } from './edits'
 import { isPaper, type Paper, PAPERS } from './papers'
 
@@ -705,9 +705,7 @@ export function canvasIconEdit(text: string, name: string | null, tint: string |
     ...(name && wanted ? { iconColor: wanted } : {}),
     ...rest,
   }
-  delete file.nib
-  if (Object.keys(own).length > 1) file.orden = own
-  else delete file.orden
+  keptOwn(file, Object.keys(own).length > 1 ? own : null)
   return oneEdit(text, `${JSON.stringify(file, null, '\t')}\n`)
 }
 function isCanvasJson(text: string): boolean {

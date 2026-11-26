@@ -75,8 +75,7 @@ interface Edit {
   insert: string
 }
 function timesOf(text: string, ids: readonly string[], now: number): Edit[] {
-  const top = skim(text, ['orden', 'nib'])
-  const own = top?.get('orden') ?? top?.get('nib')
+  const own = skim(text, ['orden'])?.get('orden')
   const at: Span | undefined = own ? skim(text, ['at'], own)?.get('at') : undefined
   const held = at ? skim(text, ids, at) : null
   if (!at || !held) return []

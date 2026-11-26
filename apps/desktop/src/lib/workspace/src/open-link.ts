@@ -25,7 +25,7 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 export function settingsPane(href: string): 'import' | null {
-  return /^(orden|nib):\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
+  return /^orden:\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
 }
 export function followHref(href: string, press: LinkPress): void {
   const pane = settingsPane(href)
@@ -34,7 +34,7 @@ export function followHref(href: string, press: LinkPress): void {
     return
   }
   const ask = tabAsk(press, true)
-  if (/^(orden|nib):\/\/chat\//i.test(href)) {
+  if (/^orden:\/\/chat\//i.test(href)) {
     const chats = portOf('chats')
     if (chats.ok) void chats.value.openLink(href, howFor(ask))
     return

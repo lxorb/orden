@@ -1,5 +1,6 @@
 import { carryKeys, keep, storedText } from '../../platform/src/api'
 import { type DatabaseDump, dump, finished, shaped } from './database-dump'
+import { FORMER_DATABASE } from './former-database'
 
 export const WEB: string = import.meta.env.VITE_ORDEN_WEB ?? 'https://app.orden.so'
 export const LEGACY_WEBS: readonly string[] = (
@@ -10,17 +11,16 @@ export const LEGACY_WEBS: readonly string[] = (
   .filter((one) => one !== '' && one !== WEB)
 export const HANDOFF_PATH = '/handoff'
 const KIND = 'orden-handoff'
-const FORMER_KIND = 'nib-handoff'
-const NOTES = ['orden', 'nib']
+const NOTES = ['orden', FORMER_DATABASE]
 export interface Handoff {
-  kind: typeof KIND | typeof FORMER_KIND
+  kind: typeof KIND
   databases: DatabaseDump[]
   local: [string, string][]
 }
 export function isHandoff(value: unknown): value is Handoff {
   if (typeof value !== 'object' || value === null) return false
   const said = value as Partial<Handoff>
-  return (said.kind === KIND || said.kind === FORMER_KIND) && Array.isArray(said.databases) && Array.isArray(said.local)
+  return said.kind === KIND && Array.isArray(said.databases) && Array.isArray(said.local)
 }
 export function isEmpty(handoff: Handoff): boolean {
   return (

@@ -1,4 +1,5 @@
 export { HANDOFF_PATH, isEmpty, isHandoff, LEGACY_WEBS, pack, unpack, WEB } from './handoff'
 export { dump, existing, finished, shaped } from './database-dump'
+export { FORMER_DATABASE, formerDatabase } from './former-database'
 export { carryOldDatabases } from './old-engine'
 export type { DatabaseDump } from './database-dump'

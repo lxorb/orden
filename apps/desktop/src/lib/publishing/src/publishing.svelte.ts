@@ -10,8 +10,8 @@ import {
   type SiteSettings,
   account,
 } from '../../accounts/src/api'
-import { invoke, sha256, log, relativeTo as relativeIn, afterQuiet } from '../../platform/src/api'
-import { theme, carriedCss } from '../../theme/src/api'
+import { sha256, log, relativeTo as relativeIn, afterQuiet } from '../../platform/src/api'
+import { theme, themeSheet } from '../../theme/src/api'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from '../../ui-kit/src/api'
 import { sync } from '../../sync-store/src/api'
@@ -155,9 +155,7 @@ class Publish {
     const kept = held?.name === this.themeName ? held : undefined
     const file = theme.files.find((one) => one.name === this.themeName && one.path)
     if (!file?.path) return kept
-    const css = await invoke<string>('read_theme', { path: file.path })
-      .then(carriedCss)
-      .catch(() => '')
+    const css = await themeSheet(file.path).catch(() => '')
     if (!css) return kept
     const { pageSheet } = await import('../../theme-looks/src/api')
     const bytes = new TextEncoder().encode(pageSheet(css))

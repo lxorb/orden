@@ -715,7 +715,6 @@ async function writePaperText(path: string, content: string): Promise<void> {
   if (content) await meta.put(`${PAPERS}${content.length}:${wanted}`, content)
 }
 const SCRATCHPAD = '/.orden/Scratchpad.md'
-const FORMER_SCRATCHPAD = '/.nib/Scratchpad.md'
 const UNSUPPORTED: Record<string, unknown> = {
   has_pandoc: false,
   web_pass_fill: false,
@@ -927,10 +926,15 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
   read_custom_css: async () => (await meta.get('custom.css')) ?? '',
   read_snippets: async () => (await meta.get('snippets.json')) ?? '{}',
   async scratchpad_path() {
-    if (!(await files.get(SCRATCHPAD))) {
-      await writeNote(SCRATCHPAD, (await textRow(FORMER_SCRATCHPAD))?.content ?? '')
-    }
-    return SCRATCHPAD
+    if (await files.get(SCRATCHPAD)) return SCRATCHPAD
+    const { carryScratchpad } = await import('./carry-scratchpad')
+    const path = await carryScratchpad(SCRATCHPAD, {
+      read: async (at) => (await textRow(at))?.content ?? null,
+      write: writeNote,
+      remove: (at) => files.remove(at),
+    })
+    if (path === SCRATCHPAD && !(await files.get(SCRATCHPAD))) await writeNote(SCRATCHPAD, '')
+    return path
   },
   new_window: () => void window.open(location.href, '_blank'),
   show_window: () => window.focus(),

@@ -37,7 +37,7 @@ import {
   steers,
 } from '../../../ai-providers/src/api'
 import { always, type Answers, crateAnswers } from '../chat/approvals'
-import { agentsOf } from '../review/changes'
+import { agentOf } from '../review/changes'
 
 const {
   GOAL_CLEARED,
@@ -410,10 +410,10 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       turn = begin(modelTurn(thread))
     }
     running.set(thread.id, { thread, on, steered })
-    const agents = agentsOf(provider.id)
+    const agent = agentOf(provider.id)
     const unhear = await answers
       .asked((asked) => {
-        if (!agents.includes(asked.agent) || (asked.thread && asked.thread !== thread.id)) return
+        if (asked.agent !== agent || (asked.thread && asked.thread !== thread.id)) return
         const at = turn.parts.findIndex(
           (one) => one.kind === 'tool' && one.state === 'running' && one.verb === asked.verb,
         )

@@ -4,7 +4,6 @@ import { providePort } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
 import {
   builtIns,
-  carriedCss,
   chosenFirst,
   chrome,
   isBuiltIn,
@@ -73,12 +72,6 @@ describe('a theme sheet', () => {
     expect(chosenFirst('--font-ui: Inter;')).toBe('--font-ui: var(--font-ui-chosen,) Inter;')
     expect(chosenFirst('code { font-family: Menlo }')).toBe('code { font-family: var(--font-mono-chosen,) Menlo }')
     expect(chosenFirst('--font-ui: var(--font-system);')).toBe('--font-ui: var(--font-system);')
-  })
-  test('carries the old prefix into the new one in selectors and tokens', () => {
-    expect(carriedCss('.nib-pane { --nib-x: 1 } #nib-app [class="nib-row"]')).toBe(
-      '.orden-pane { --orden-x: 1 } #orden-app [class="orden-row"]',
-    )
-    expect(carriedCss('.nibble { color: red }')).toBe('.nibble { color: red }')
   })
   test('a stamp survives a round trip and a forged one is refused', () => {
     const stamp = { id: 'rose', name: 'Rose', author: 'Orden', version: '1.2.3' }

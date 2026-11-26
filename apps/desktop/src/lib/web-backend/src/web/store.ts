@@ -1,6 +1,6 @@
 import { breathe, fromBase64 } from '../../../platform/src/api'
 import { dropAsset, holdAsset } from './asset-blobs'
-import { databaseName, FORMER_NAME } from './carry-database'
+import { carriedName } from './carry-database'
 import type { PlaneMarks } from '@orden/scan/canvas'
 
 const NAME = 'orden'
@@ -36,7 +36,7 @@ let open: Promise<IDBDatabase> | null = null
 let named: Promise<string> | null = null
 function database(): Promise<IDBDatabase> {
   if (open) return open
-  named ??= databaseName(FORMER_NAME, NAME)
+  named ??= carriedName(NAME)
   const opening: Promise<IDBDatabase> = named.then((name) => opened(opening, name))
   open = opening
   return opening

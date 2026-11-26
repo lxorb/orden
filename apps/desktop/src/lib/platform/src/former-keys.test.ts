@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { carryKeys } from './former-keys'
+import { recentLog } from './log'
 
 class Held implements Storage {
   items = new Map<string, string>()
@@ -61,6 +62,7 @@ test('a value the storage has no room to copy stays where it was, to move on a l
   held.full = true
   carryKeys(held)
   expect(Object.fromEntries(held.items)).toEqual({ 'nib:workspace': 'big' })
+  expect(recentLog().at(-1)).toContain(':workspace')
   held.full = false
   carryKeys(held)
   expect(Object.fromEntries(held.items)).toEqual({ 'orden:workspace': 'big' })
@@ -71,4 +73,17 @@ test('a language chosen when Orden spoke more than English is let go', () => {
   held.setItem('orden:theme', 'dark')
   carryKeys(held)
   expect(Object.fromEntries(held.items)).toEqual({ 'orden:theme': 'dark' })
+})
+test('a value the storage drops on the way is not taken for carried, and the old key stays', () => {
+  class Dropping extends Held {
+    override setItem(): void {
+      return
+    }
+  }
+  const held = new Dropping()
+  held.items.set('nib:workspace', 'big')
+  carryKeys(held)
+  expect([...held.items.values()]).toEqual(['big'])
+  expect(held.items.has('orden:workspace')).toBe(false)
+  expect(recentLog().at(-1)).toContain(':workspace')
 })

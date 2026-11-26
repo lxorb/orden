@@ -68,7 +68,6 @@ test.each<[unknown, ...Parameters<typeof isWebAddress>]>([
 test.each<[unknown, ...Parameters<typeof plainOrigin>]>([
   ['svelte.dev', 'https://svelte.dev/docs/introduction'],
   ['orden://history', 'orden://history'],
-  ['nib://history', 'nib://history'],
   ['docs.example.org:8443', 'https://docs.example.org:8443/a'],
   ['bbc.co.uk', 'https://www.bbc.co.uk/news'],
   ['http://example.com', 'http://example.com/a'],

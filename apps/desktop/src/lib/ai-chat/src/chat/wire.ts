@@ -82,5 +82,5 @@ export function argsOf(json: string): unknown {
   }
 }
 export function bareName(name: string): string {
-  return name.replace(/^(?:orden|nib)[.:_]{1,2}/, '')
+  return name.replace(/^orden[.:_]{1,2}/, '')
 }

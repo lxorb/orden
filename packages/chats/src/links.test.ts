@@ -12,9 +12,6 @@ describe('a chat link', () => {
     expect(chatLinkOf(chatLink(CHAT))).toEqual({ chat: CHAT })
     expect(chatLinkOf(chatLink(CHAT, MESSAGE))).toEqual({ chat: CHAT, message: MESSAGE })
   })
-  it('still reads one written before the rename', () => {
-    expect(chatLinkOf(`nib://chat/${CHAT}/${MESSAGE}`)).toEqual({ chat: CHAT, message: MESSAGE })
-  })
   it.each([
     'https://orden.so',
     'orden://chat/',

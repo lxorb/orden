@@ -1,6 +1,17 @@
-import { type DatabaseDump, dump, existing, finished, shaped } from '../../../handoff/src/api'
+import {
+  type DatabaseDump,
+  dump,
+  existing,
+  finished,
+  FORMER_DATABASE,
+  formerDatabase,
+  shaped,
+} from '../../../handoff/src/api'
+import { log } from '../../../platform/src/api'
 
-export const FORMER_NAME = 'nib'
+export { formerDatabase }
+export const FORMER_NAME = FORMER_DATABASE
+export const carriedName = (to: string): Promise<string> => databaseName(formerDatabase(to), to)
 const ANSWERED_WITHIN = 400
 const me = crypto.randomUUID()
 type Heard = 'nobody' | 'older' | 'staying'
@@ -45,8 +56,10 @@ export async function databaseName(from: string, to: string, former = FORMER_NAM
     return from
   }
   const inUse = () => askedFormer(channel, from).then((now) => now !== 'nobody')
-  const carried = await carryDatabase(from, to, inUse).catch(() => false)
-  if (carried) return to
+  const carried = await carryDatabase(from, to, inUse).catch((error: unknown) => String(error))
+  if (carried === true) return to
+  const why = carried === false ? 'not every row was found in the new one' : carried
+  log('warn', `orden: could not carry the database ${from} to ${to}, so ${from} stays in use: ${why}`)
   answerAs(channel, from)
   return from
 }
