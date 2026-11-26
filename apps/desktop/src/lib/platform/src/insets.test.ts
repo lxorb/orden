@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { edgesOf, startInsets, tintSystemBars, writeEdges } from './insets'
+import { edgesOf, keyboardOf, startInsets, tintSystemBars, writeEdges } from './insets'
 
 function root() {
   const written = new Map<string, string>()
@@ -62,6 +62,34 @@ describe('what the page does with them', () => {
     tintSystemBars(true)
     tintSystemBars(false)
     expect(bars).toEqual([true, false])
+  })
+})
+describe('the keyboard the activity measured', () => {
+  test('is handed on at start and on every change, beside the edges', () => {
+    const page = root()
+    const heights: number[] = []
+    let said = '{"top":24,"right":0,"bottom":48,"left":0,"keyboard":0}'
+    const window: Record<string, unknown> = {}
+    vi.stubGlobal('__ORDEN_SYSTEM__', { insets: () => said })
+    vi.stubGlobal('window', window)
+    vi.stubGlobal('document', { documentElement: page.element })
+    startInsets((height) => void heights.push(height))
+    said = '{"top":24,"right":0,"bottom":0,"left":0,"keyboard":291}'
+    ;(window.__ordenInsets as () => void)()
+    said = '{"top":24,"right":0,"bottom":48,"left":0,"keyboard":0}'
+    ;(window.__ordenInsets as () => void)()
+    expect(heights).toEqual([0, 291, 0])
+    expect(page.written.get('--inset-bottom')).toBe('48px')
+  })
+  test.each<[number, string]>([
+    [291, '{"top":0,"right":0,"bottom":0,"left":0,"keyboard":291}'],
+    [0, '{"top":0,"right":0,"bottom":0,"left":0}'],
+    [0, '{"keyboard":-4}'],
+    [0, '{"keyboard":"291px"}'],
+    [0, 'null'],
+    [0, ''],
+  ])('%i from %j', (height, text) => {
+    expect(keyboardOf(text)).toBe(height)
   })
 })
 test.each<[unknown, ...Parameters<typeof edgesOf>]>([

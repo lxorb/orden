@@ -27,12 +27,25 @@ export function edgesOf(text: string): Edges | null {
 export function writeEdges(root: HTMLElement, edges: Edges): void {
   for (const edge of EDGES) root.style.setProperty(`--inset-${edge}`, `${edges[edge]}px`)
 }
-export function startInsets(): void {
+export function keyboardOf(text: string): number {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return 0
+  }
+  if (typeof parsed !== 'object' || parsed === null) return 0
+  const { keyboard }: { keyboard?: unknown } = parsed
+  return typeof keyboard === 'number' && Number.isFinite(keyboard) && keyboard > 0 ? keyboard : 0
+}
+export function startInsets(keys?: (height: number) => void): void {
   const insets = method('insets')
   if (!insets) return
   const read = () => {
-    const edges = edgesOf(insets())
+    const said = insets()
+    const edges = edgesOf(said)
     if (edges) writeEdges(document.documentElement, edges)
+    keys?.(keyboardOf(said))
   }
   read()
   answer('__ordenInsets', read)

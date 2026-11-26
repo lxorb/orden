@@ -6,6 +6,7 @@ interface Kind {
   agent?: string
   mobile?: boolean | null
   finger?: boolean
+  activity?: boolean
 }
 const AGENTS = {
   desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
@@ -16,6 +17,7 @@ const AGENTS = {
 } as const
 function stubDocument(window: { layout: number }) {
   const attributes = new Set<string>()
+  const written = new Map<string, string>()
   return {
     documentElement: {
       get clientHeight() {
@@ -24,7 +26,8 @@ function stubDocument(window: { layout: number }) {
       dataset: {} as Record<string, string>,
       attributes,
       toggleAttribute: (name: string, on: boolean) => (on ? attributes.add(name) : attributes.delete(name)),
-      style: { setProperty: () => undefined },
+      written,
+      style: { setProperty: (name: string, value: string) => void written.set(name, value) },
     },
   }
 }
@@ -89,13 +92,23 @@ async function started(kind: Kind = {}, width = 390, height = 844) {
   vi.doMock('../../platform/src/tauri', () => ({ isMobile: kind.app ?? false }))
   vi.stubGlobal('window', window)
   vi.stubGlobal('document', document)
+  let told = 0
+  if (kind.activity) {
+    vi.stubGlobal('__ORDEN_SYSTEM__', {
+      insets: () => `{"top":24,"right":0,"bottom":${told ? 0 : 16},"left":0,"keyboard":${told}}`,
+    })
+  }
+  const activitySays = (pixels: number) => {
+    told = pixels
+    ;(window as unknown as { __ordenInsets: () => void }).__ordenInsets()
+  }
   vi.stubGlobal('navigator', {
     userAgent: kind.agent ?? AGENTS.desktop,
     ...(kind.mobile === undefined || kind.mobile === null ? {} : { userAgentData: { mobile: kind.mobile } }),
   })
   const { pageHeight, viewport } = await import('./viewport.svelte')
   viewport.start()
-  return { pageHeight, viewport, window, root: document.documentElement }
+  return { pageHeight, viewport, window, root: document.documentElement, activitySays }
 }
 async function machine(kind: Kind = {}) {
   const { deviceFor } = await import('./viewport.svelte')
@@ -136,6 +149,55 @@ describe('the keyboard', () => {
     expect(viewport.typing).toBe(true)
     window.keysBelow(0)
     expect(viewport.typing).toBe(false)
+  })
+  test('on Android the activity says how tall the keys are, and the page that was not made shorter says so too', async () => {
+    const { viewport, window, root, activitySays, pageHeight } = await started({ app: true, activity: true })
+    expect(viewport.keyboard).toBe(0)
+    expect(root.written.get('--keyboard')).toBe('0px')
+    activitySays(KEYS)
+    expect(window.innerHeight).toBe(844)
+    expect(viewport.keyboard).toBe(KEYS)
+    expect(root.written.get('--keyboard')).toBe(`${KEYS}px`)
+    expect(viewport.height).toBe(844 - KEYS)
+    expect(pageHeight()).toBe(`${844 - KEYS}px`)
+    expect(viewport.typing).toBe(true)
+    activitySays(0)
+    expect(viewport.keyboard).toBe(0)
+    expect(root.written.get('--keyboard')).toBe('0px')
+    expect(viewport.height).toBe(844)
+    expect(viewport.typing).toBe(false)
+  })
+  test('a web view that covers the page itself and an activity that says so are one keyboard, not two', async () => {
+    const { viewport, window, activitySays } = await started({ app: true, activity: true })
+    activitySays(KEYS)
+    window.keysOver(KEYS)
+    expect(viewport.keyboard).toBe(KEYS)
+    expect(viewport.height).toBe(844 - KEYS)
+    window.keysOver(0)
+    activitySays(0)
+    expect(viewport.keyboard).toBe(0)
+    expect(viewport.height).toBe(844)
+  })
+  test('a web view made shorter by the keys is not told of them a second time', async () => {
+    const { viewport, window, activitySays } = await started({ app: true, activity: true })
+    activitySays(KEYS)
+    window.keysBelow(KEYS)
+    expect(viewport.keyboard).toBe(0)
+    expect(viewport.height).toBe(844 - KEYS)
+    expect(viewport.typing).toBe(true)
+    activitySays(0)
+    window.keysBelow(0)
+    expect(viewport.keyboard).toBe(0)
+    expect(viewport.height).toBe(844)
+    expect(viewport.typing).toBe(false)
+  })
+  test('a window made shorter while the keys were down still has its whole keyboard counted', async () => {
+    const { viewport, window, activitySays } = await started({ app: true, activity: true })
+    window.keysBelow(200)
+    activitySays(0)
+    activitySays(KEYS)
+    expect(viewport.keyboard).toBe(KEYS)
+    expect(viewport.height).toBe(844 - 200 - KEYS)
   })
   test('an iPhone sliding the page up to the caret is put back, and the keys measured whole', async () => {
     const { viewport, window } = await started({ app: true, finger: true })
