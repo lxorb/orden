@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import '../src/view/host-here'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import type { AccountDouble } from '../../accounts/test/fakes'

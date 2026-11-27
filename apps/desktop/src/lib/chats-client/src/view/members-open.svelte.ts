@@ -1,4 +1,4 @@
-import { SidebarWidth } from '../../../sidebar/src/api'
+import { host, type MembersWidth } from './host'
 import { keepJson, stored } from '../../../platform/src/api'
 
 const KEY = 'orden:chat-members'
@@ -9,7 +9,9 @@ function read(): string[] {
 }
 class MembersOpen {
   chats = $state<string[]>(read())
-  readonly width = new SidebarWidth(() => 'right', 'orden:chat-members-width')
+  get width(): MembersWidth {
+    return host().membersWidth()
+  }
   shown(chat: string): boolean {
     return this.chats.includes(chat)
   }

@@ -13,6 +13,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     return held === undefined ? Promise.reject(new Error('no such file')) : Promise.resolve(held)
   },
 }))
+await import('../../src/lib/chats-client/src/view/host-here')
 const ChatMark = (await import('../../src/lib/chats-client/src/view/ChatMark.svelte')).default
 const { GLYPHS } = await import('../../src/lib/chat-kit/src/api')
 const { elsewhere } = await import('../../src/lib/link-index/src/api')

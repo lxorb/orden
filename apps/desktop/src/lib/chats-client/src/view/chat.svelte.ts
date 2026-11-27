@@ -1,7 +1,7 @@
 import type { Member, Message, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../../ui-controls/src/api'
-import { workspace } from '../../../workspace/src/api'
+import { host } from './host'
 import { chatsView } from './chats-view.svelte'
 import type { ChatEntry, ChatView, Draft, Shown } from '../shapes'
 import { trimmed } from './compose'
@@ -134,11 +134,10 @@ export class ChatPage {
     saved.toggle(this.id, message)
   }
   addAsTask(message: Message): void {
-    void import('./keep').then((keep) => keep.addAsTask(this, message, this.entry?.space ?? null))
+    host().addAsTask?.(this, message, this.entry?.space ?? null)
   }
   async saveAsNote(message: Message): Promise<void> {
-    const keep = await import('./keep')
-    await keep.saveAsNote(this, message, this.entry?.space ?? null)
+    await host().saveAsNote?.(this, message, this.entry?.space ?? null)
   }
   isSaved(message: Message): boolean {
     return saved.has(this.id, message.id)
@@ -146,7 +145,7 @@ export class ChatPage {
   search(): void {
     const name = this.entry?.name ?? ''
     chatsView.query = /[\s"]/.test(name) ? `in:"${name.replace(/"/g, '')}" ` : `in:#${name} `
-    workspace.showPanel('chats')
+    host().showChats()
   }
   copyLink(message: Message): Promise<void> {
     return copyText(chatLink(this.id, message.id))

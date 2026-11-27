@@ -9,6 +9,7 @@ import { invoke, joinPath, spaceHolding } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
 import { workspace } from '../../workspace/src/api'
 import { makeChat } from './http'
+import './view/host-here'
 
 const isPointer = (path: string) => path.toLowerCase().endsWith(CHAT_EXTENSION)
 async function make(folder: string, name: string): Promise<ChatPlace | null> {
@@ -103,7 +104,7 @@ export const placesHere: ChatPlaces = {
   remoteOf: (root) => sync.remoteIdFor(root),
   noteId: (path) => sync.tracked(path)?.id ?? null,
   nudge: () => sync.nudge(),
-  retired: isRetiredChat,
+  retired: (chat) => isRetiredChat(chat),
   find,
   read,
   make,

@@ -10,6 +10,7 @@ vi.stubGlobal(
     disconnect = vi.fn()
   },
 )
+await import('../../src/lib/chats-client/src/view/host-here')
 const { FixtureChats } = await import('../../src/lib/chats-client/src/view/fixture.svelte')
 const { useStore } = await import('../../src/lib/chats-client/src/view/source.svelte')
 const { workspace } = await import('../../src/lib/workspace/src/api')

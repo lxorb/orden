@@ -1,13 +1,12 @@
 <script lang="ts">
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
-  import { webPages } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
-  import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag, viewport } from '../../../ui-kit/src/api'
+  import { carriedFiles, carriesFiles, dropOver, isTreeDrag, viewport } from '../../../ui-kit/src/api'
   import { EmojiPicker } from '../../../emoji/src/api'
   import { shortcuts } from '../../../shortcuts/src/api'
   import { samePath } from '../../../platform/src/api'
   import type { Tab } from '../../../documents/src/api'
-  import { workspace } from '../../../workspace/src/api'
+  import { host } from './host'
   import { ChatPage } from './chat.svelte'
   import ChatHead from './ChatHead.svelte'
   import Composer from './Composer.svelte'
@@ -133,14 +132,12 @@
   }
   function dropped(event: DragEvent) {
     dropping = false
-    const notes = workspace.carriedNotes(event.dataTransfer)
+    const { notes, address } = host().carried(event.dataTransfer)
     if (notes.length) {
       event.preventDefault()
       composer?.addNotes(notes)
       return
     }
-    const web = workspace.tabs.find((one) => one.id === draggedTab(event.dataTransfer))
-    const address = web && (webPages().addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
     if (address) {
       event.preventDefault()
       composer?.insert(`${address} `)

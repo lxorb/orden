@@ -52,6 +52,7 @@ vi.mock('../src/lib/search/src/api', async (importOriginal) => ({
   },
 }))
 vi.stubGlobal('localStorage', memoryStorage())
+await import('../src/lib/chats-client/src/view/host-here')
 const { workspace } = await import('../src/lib/workspace/src/api')
 const { links, serveLinks } = await import('../src/lib/link-index/src/api')
 serveLinks({ search: (await import('../src/lib/search/src/api')).searchSpace })

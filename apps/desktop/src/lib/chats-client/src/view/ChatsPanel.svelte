@@ -1,15 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { localNumber } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace/src/api'
-  import { hiddenKinds } from '../../../gates/src/api'
-  import { canWriteAt } from '../../../sharing/src/api'
   import type { ChatEntry, Hit } from '../shapes'
   import ChatMark from './ChatMark.svelte'
-  import { chatsHere, onlyHere } from './here'
+  import { onlyHere } from './here'
+  import { host } from './host'
   import { Glyph } from '../../../chat-kit/src/api'
   import { Select } from '../../../ui-controls/src/api'
-  import { chatName, makeChat, nameChat, openChat } from './open'
+  import { chatName, makeChat, nameChat } from './open'
   import { chatsView } from './chats-view.svelte'
   import { unreadCount } from '../unread'
   import { messagesFor } from './found'
@@ -33,7 +31,7 @@
   let activity = $state.raw<Hit[]>([])
   let activityRead = $state(false)
   let arranged = $state<'all' | 'priority'>('all')
-  const here = $derived(chatsHere(store().list, workspace.activeSpace?.root))
+  const here = $derived(host().here(store().list))
   const chats = $derived.by(() => {
     const asked = chatsView.query.trim().toLowerCase()
     return [...here]
@@ -110,7 +108,7 @@
   }
   onMount(() => void lookActive())
   function open(chat: ChatEntry | undefined, message?: string) {
-    if (chat?.path) openChat(chat.path, {}, message)
+    if (chat) host().openEntry(chat, message)
   }
   const chatOf = (id: string) => store().list.find((one) => one.id === id)
 </script>
@@ -253,7 +251,7 @@
 
     <div class="section">
       <p class="orden-section">Chats</p>
-      {#if workspace.activeSpace && hiddenKinds.offers('chat') && canWriteAt(workspace.activeSpace.root)}
+      {#if host().makesIn()}
         <button
           type="button"
           class="orden-glyph add"
@@ -265,7 +263,7 @@
     </div>
     {#if chatsView.naming !== null}
       {@render namer(
-        chatName(workspace.freeName(chatsView.naming, 'Chat.chat')),
+        chatName(host().freeName(chatsView.naming, 'Chat.chat')),
         'New chat',
         (typed) => void nameChat(typed),
         () => (chatsView.naming = null),
@@ -275,7 +273,7 @@
       {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
       {@const count = unreadCount(chat, now)}
       {@const unread = count > 0}
-      {@const on = workspace.active?.path === chat.path && chat.path !== null}
+      {@const on = host().isOpen(chat)}
       {#if chatsView.renaming === chat.id}
         {@render namer(
           chat.name ?? 'Chat',
@@ -291,7 +289,7 @@
           class:unread
           class:muted
           class:is-on={on}
-          disabled={!chat.path}
+          disabled={!host().opens(chat)}
           use:seen={on}
           onclick={() => open(chat)}
           oncontextmenu={(event) => rowMenu(event, chat)}

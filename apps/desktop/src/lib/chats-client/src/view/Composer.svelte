@@ -3,19 +3,15 @@
   import { ASK_EVERYONE_PAST } from '@orden/chats/limits'
   import { createEditor, EditorView, modeEffects, setNoteIndex } from '@orden/editor'
   import { onMount, untrack } from 'svelte'
-  import { chatReplies } from '../../../ai-chat/src/api'
   import { chooseFiles } from '../../../ui-controls/src/api'
-  import { pickedLink } from '../../../link-format/src/api'
   import { localDate, localNumber, dur, fade, scale, insideSpace, afterQuiet } from '../../../platform/src/api'
-  import { links } from '../../../link-index/src/api'
   import { DIVIDER, longPress, menu } from '../../../ui-kit/src/api'
-  import { modes } from '../../../modes/src/api'
-  import { followHref, followNoteFrom, workspace } from '../../../workspace/src/api'
   import { shortcuts } from '../../../shortcuts/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { Attachments } from './attachments.svelte'
   import type { Scheduled } from '../shapes'
   import { firstLine } from './body'
+  import { host as chatsHost } from './host'
   import type { ChatPage } from './chat.svelte'
   import { asFile, enterDoes, mentionAt, mentionChoices, mentionText, ordenAsked, type Special } from './compose'
   import { Glyph } from '../../../chat-kit/src/api'
@@ -59,8 +55,8 @@
   let dropped = $state<string | null>(null)
   function linkedNote(words: string): string | null {
     const target = /\[\[([^\]|#^]+)/.exec(words)?.[1]?.trim()
-    const root = workspace.rootHolding(path)
-    const found = target ? links.targetOf(path, { kind: 'wikilink', target }) : null
+    const root = chatsHost().rootHolding(path)
+    const found = target ? chatsHost().linkTarget(path, target) : null
     return found && root ? insideSpace(root, found) : null
   }
   const keep = afterQuiet(() => {
@@ -73,6 +69,9 @@
   const choices = $derived(mention ? mentionChoices(mention.query, page.members, page.me, mention.from === 0) : [])
   onMount(() => {
     if (!host) return
+    const notes = chatsHost().noteIndex(path)
+    const openNote = chatsHost().noteOpener(path)
+    const writeLink = chatsHost().writeLink()
     const made = createEditor({
       parent: host,
       doc: store().draft(untrack(() => draftKey)),
@@ -87,14 +86,15 @@
         mention = found ? { from: caret - found.query.length - 1, query: found.query } : null
         mentionLit = 0
       },
-      notes: links.index(path),
-      openNote: followNoteFrom(path),
-      openLink: followHref,
-      writeLink: pickedLink,
+      ...(notes ? { notes } : {}),
+      ...(openNote ? { openNote } : {}),
+      ...(writeLink ? { writeLink } : {}),
+      openLink: (href, press) => chatsHost().followHref(href, press),
       shortcuts: shortcuts.forEditor,
       trustedMarkup: false,
     })
-    made.dispatch({ effects: modeEffects(modes.settings) })
+    const typing = chatsHost().editorModes()
+    if (typing) made.dispatch({ effects: modeEffects(typing) })
     empty = made.state.doc.length === 0
     editor = made
     const take = (offer: { note?: string } | null) => {
@@ -117,8 +117,8 @@
     }
   })
   $effect(() => {
-    const index = links.index(path)
-    if (editor) setNoteIndex(editor, index)
+    const index = chatsHost().noteIndex(path)
+    if (editor && index) setNoteIndex(editor, index)
   })
   $effect(() => {
     if (aside) untrack(focus)
@@ -141,9 +141,10 @@
     focus()
   }
   export function addNotes(paths: readonly string[]): void {
-    void import('@orden/editor/note-links').then(({ noteLinks }) =>
-      insert(`${noteLinks(links.index(path), paths, pickedLink)} `),
-    )
+    const index = chatsHost().noteIndex(path)
+    const write = chatsHost().writeLink()
+    if (!index || !write) return
+    void import('@orden/editor/note-links').then(({ noteLinks }) => insert(`${noteLinks(index, paths, write)} `))
   }
   export function insert(words: string) {
     if (!editor) return
@@ -164,8 +165,7 @@
     if (question !== null && !attachments.refs.length) {
       setText('')
       store().keepDraft(draftKey, '')
-      const { askOrden } = await chatReplies()
-      await askOrden(page.id, question, parent)
+      await chatsHost().askOrden?.(page.id, question, parent)
       return
     }
     if (/(?:^|\s)@(?:here|everyone)\b/.test(words) && page.members.length > ASK_EVERYONE_PAST) {

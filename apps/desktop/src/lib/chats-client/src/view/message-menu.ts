@@ -1,7 +1,7 @@
 import { may, type Message, type Role } from '@orden/chats'
 import { copyText } from '../../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../../ui-kit/src/api'
-import { canWriteAt } from '../../../sharing/src/api'
+import { host } from './host'
 import type { ChatPage } from './chat.svelte'
 
 export interface MessageGestures {
@@ -18,7 +18,7 @@ export function messageMenu(
   const posting = page.view.meta.posting
   const mine = page.me !== null && message.author === page.me
   const canPost = may(role, 'post', posting)
-  const canKeep = !page.entry?.path || canWriteAt(page.entry.path)
+  const canKeep = host().saveAsNote !== null && host().keeps(page.entry)
   if (message.deleted) return []
   const removing: MenuEntry[] =
     (mine && may(role, 'delete-own', posting)) || may(role, 'delete-any', posting)
@@ -32,7 +32,7 @@ export function messageMenu(
     { label: 'Copy link', run: () => void page.copyLink(message) },
     ...(may(role, 'pin', posting) ? [{ label: message.pinned ? 'Unpin' : 'Pin', run: () => page.pin(message) }] : []),
     { label: 'Save', checked: page.isSaved(message), run: () => page.save(message) },
-    { label: 'Add as task', run: () => page.addAsTask(message) },
+    ...(host().addAsTask ? [{ label: 'Add as task', run: () => page.addAsTask(message) }] : []),
     ...(canKeep ? [{ label: 'Save as note', run: () => void page.saveAsNote(message) }] : []),
     { label: 'Mark unread', run: () => page.markUnread(message) },
     DIVIDER,
