@@ -65,6 +65,7 @@
 
   const { tab: given, focused, shown = true }: { tab: Tab; focused: boolean; shown?: boolean } = $props()
   const tab = untrack(() => given)
+  const ELECTRON_GATE = typeof navigator !== 'undefined' && navigator.userAgent.includes('Electron/')
   const LEAVING = 300
   const CALM_FRAMES = 3
   const OVERVIEW = '[data-opens="overview"], .orden-glyph.overview'
@@ -722,6 +723,8 @@
       ondrop={(event) => hole && droppedOnPage(tab.id, hole, event, page.zoom)}
     ></div>
     <WebAsks tab={tab.id} />
+  {:else if ELECTRON_GATE && address}
+    <webview class="framed" data-web-tab={tab.id} src={address} partition="persist:gate"></webview>
   {:else if page.framing === 'frame' && address}
     <iframe
       class="framed"

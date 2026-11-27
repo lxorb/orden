@@ -73,6 +73,11 @@ app.on('web-contents-created', (_, wc) => {
       taken.push('ctrl+k')
       event.preventDefault()
     }
+    if (check === 'orden' && input.type === 'keyDown' && (input.control || input.meta) && input.key.toLowerCase() === 'j') {
+      taken.push('mod+j')
+      event.preventDefault()
+      win.webContents.executeJavaScript(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', code: 'KeyJ', ctrlKey: ${input.control}, metaKey: ${input.meta}, bubbles: true, cancelable: true }))`)
+    }
   })
 })
 
@@ -490,6 +495,132 @@ const checks = {
     const t = { toReady: ready - started, toHostLoaded: (await loaded) - started, toGuestReady: (await gotGuest) - started }
     await sleep(300)
     return { pass: true, data: { ...t, ...memory() } }
+  },
+  async orden() {
+    const dist = process.env.GATE_DIST || path.join(assets, 'orden-dist')
+    if (!fs.existsSync(path.join(dist, 'index.html'))) return { pass: false, data: { error: 'no built frontend at ' + dist } }
+    const origin = await serve(dist, 'index.html')
+    win = new BrowserWindow({ x: 0, y: 0, width: 1280, height: 800, frame: false, useContentSize: true, webPreferences: { webviewTag: true, preload: path.join(__dirname, 'orden-preload.cjs') } })
+    const errors = []
+    win.webContents.on('console-message', (event) => event.level === 'error' && errors.length < 10 && errors.push(String(event.message).slice(0, 200)))
+    const js = async (code) => {
+      const got = await win.webContents.executeJavaScript(`(async () => { try { return await (${code}) } catch (e) { return { __error: String((e && e.stack) || e) } } })()`, true)
+      if (got && got.__error) throw new Error(`${got.__error.slice(0, 500)} in ${code.slice(0, 120)}`)
+      return got
+    }
+    const until = async (code, what, patience = 60000) => {
+      const end = Date.now() + patience
+      while (Date.now() < end) {
+        if (await js(code).catch(() => false)) return
+        await sleep(200)
+      }
+      throw new Error('never saw ' + what + '; console: ' + errors.join(' / '))
+    }
+    const t0 = Date.now()
+    await win.loadURL(origin + '/')
+    await until('!!(window.ordenApp && window.ordenApp.workspace.activeSpace)', 'the app')
+    const data = { appReadyMs: Date.now() - t0 }
+    await js(`(async () => { const ws = window.ordenApp.workspace; const root = ws.activeSpace.root; await ws.noteFrom('# Beside\\n\\nA note beside a page.\\n', root); await ws.loadTree(); for (const tab of [...ws.tabs]) ws.close(tab.id); ws.openPage(${JSON.stringify(base + '/page.html')}); window.ordenApp.shortcuts.set('app.palette', 'Mod-j') })()`)
+    await until("!!document.querySelector('webview')", 'a webview element in the web tab')
+    const end = Date.now() + 20000
+    while (!guests.length && Date.now() < end) await sleep(100)
+    if (!guests.length) throw new Error('no guest')
+    await win.webContents.insertCSS('webview{background:#ff0000 !important}')
+    await sleep(2500)
+    win.focus()
+    const rectOf = async () => {
+      await until("!!document.querySelector('webview')", 'the webview again', 8000)
+      return rectNow()
+    }
+    const rectNow = () => js("(() => { const r = document.querySelector('webview').getBoundingClientRect(); return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), bottom: Math.round(r.bottom) } })()")
+    const green = (c) => c[1] > c[0] + 30 && c[1] > c[2] + 30
+    const reds = (f) => {
+      let n = 0
+      for (let y = 60; y < f.h; y += 40) n += rowOf(f, y).split('R').length - 1
+      return n
+    }
+    let rect = await rectOf()
+    data.rect = rect
+    const rest = filming()
+    await sleep(400)
+    rest.stop()
+    const r = rest.frames.at(-1)
+    data.rest = { page: px(r, rect.left + 300, rect.top + 300), edge: px(r, rect.right - 3, rect.top + 300), red: reds(r), corners: [px(r, rect.left, rect.top), px(r, rect.right - 1, rect.top), px(r, rect.left, rect.bottom - 1), px(r, rect.right - 1, rect.bottom - 1)] }
+    data.shape = await js("(() => { const w = document.querySelector('webview'); const pane = w.closest('[data-pane]'); return { webview: getComputedStyle(w).borderRadius, pane: pane ? getComputedStyle(pane).borderRadius : null, paneOverflow: pane ? getComputedStyle(pane).overflow : null } })()")
+    const covered = () => js(`(() => { const w = document.querySelector('webview'); const r = w.getBoundingClientRect(); const found = []; for (let y = r.top + 30; y < r.bottom - 10; y += 30) for (let x = r.left + 30; x < r.right - 10; x += 30) { const top = document.elementFromPoint(x, y); if (top && top !== w) found.push({ x: Math.round(x), y: Math.round(y), what: top.tagName + '.' + String(top.className).slice(0, 40) }) } return found })()`)
+    const layer = async (name, show, hide) => {
+      const film = filming()
+      await show()
+      await sleep(900)
+      film.stop()
+      fs.writeFileSync(path.join(out, `orden-${name}.png`), (await win.webContents.capturePage()).toPNG())
+      const over = await covered()
+      const last = film.frames.at(-1)
+      const changed = over.filter((at) => px(last, at.x, at.y).some((v, i) => Math.abs(v - px(r, at.x, at.y)[i]) > 12))
+      const seen = { frames: film.frames.length, pointsUnderLayer: over.length, pointsDrawnOver: changed.length, what: [...new Set(over.map((at) => at.what))].slice(0, 4), red: film.frames.reduce((s, f) => s + reds(f), 0), white: film.frames.filter((f) => px(f, rect.right - 3, rect.bottom - 8).every((v) => v > 245)).length }
+      seen.ok = over.length > 0 && changed.length > 0 && seen.red === 0 && seen.white === 0
+      data[name] = seen
+      await hide()
+      await sleep(700)
+    }
+    osio('click', ...at(rect.left + 100, rect.top + 35))
+    await sleep(400)
+    osio('type', 'ab')
+    await sleep(300)
+    data.typedInPage = (await page('state()')).in
+    data.paletteKey = await js("window.ordenApp.shortcuts.keyFor('app.palette')")
+    await layer('palette', async () => osio('key', process.platform === 'darwin' ? 'cmd+j' : 'ctrl+j'), async () => undefined)
+    osio('type', 'zz')
+    await sleep(400)
+    data.paletteTyping = { appTook: [...taken], active: await js("(() => { const a = document.activeElement; return a ? a.tagName + ':' + (a.value ?? '') : null })()"), pageKeys: (await page('state()')).keys.join('') }
+    osio('key', 'escape')
+    await sleep(600)
+    const press = (x, y, button) => {
+      win.webContents.sendInputEvent({ type: 'mouseDown', x, y, button, clickCount: 1 })
+      win.webContents.sendInputEvent({ type: 'mouseUp', x, y, button, clickCount: 1 })
+    }
+    await layer('tabMenu', async () => press(190, 19, 'right'), async () => osio('key', 'escape'))
+    await layer('searchButton', async () => press(17, 19, 'left'), async () => osio('key', 'escape'))
+    await layer('overview', async () => press(45, 19, 'left'), async () => osio('key', 'escape'))
+    osio('key', 'escape')
+    await sleep(600)
+    const motion = async (name, act) => {
+      const film = filming()
+      await sleep(200)
+      await act()
+      await sleep(1200)
+      film.stop()
+      const edges = film.frames.map((f) => rowOf(f, rect.top + 300).lastIndexOf('B'))
+      const lefts = film.frames.map((f) => rowOf(f, rect.top + 300).indexOf('G'))
+      let moved = 0
+      for (let i = 1; i < edges.length; i++) if (edges[i] !== edges[i - 1] || lefts[i] !== lefts[i - 1]) moved++
+      film.frames.forEach((f, i) => {
+        if (edges[i] < 0 && i < edges.length && film.frames.filter((_, j) => j < i && edges[j] < 0).length < 2) fs.writeFileSync(path.join(out, `orden-lost-${name}-${i}.png`), nativeImage.createFromBitmap(f.data, { width: f.w, height: f.h }).toPNG())
+      })
+      const gaps = film.frames.filter((f) => {
+        const row = rowOf(f, rect.top + 300)
+        const b = row.lastIndexOf('B')
+        return b >= 6 && row[b - 6] !== 'G' && row[b - 6] !== 'B'
+      }).length
+      data[name] = { frames: film.frames.length, movedFrames: moved, red: film.frames.reduce((s, f) => s + reds(f), 0), lostEdge: edges.filter((e) => e < 0).length, gaps }
+      data[name].ok = data[name].red === 0 && gaps === 0
+      data[name].guestsMade = guests.length
+      rect = await rectOf()
+      await sleep(800)
+    }
+    await motion('sidebarClose', () => js("window.ordenApp.workspace.toggleSidebar('left')"))
+    await motion('sidebarOpen', () => js("window.ordenApp.workspace.toggleSidebar('left')"))
+    await motion('window', async () => {
+      for (let w = 1280; w >= 1000; w -= 10) {
+        win.setContentSize(w, 800)
+        await sleep(16)
+      }
+    })
+    screenShot('orden')
+    const image = await win.webContents.capturePage()
+    fs.writeFileSync(path.join(out, 'orden-window.png'), image.toPNG())
+    const ok = { rest: green(data.rest.page) && data.rest.red === 0, palette: data.palette.ok, tabMenu: data.tabMenu.ok, overview: data.overview.ok, typedInPage: data.typedInPage === 'ab', paletteTakesKeys: data.paletteTyping.appTook.includes('mod+j') && /zz/.test(data.paletteTyping.active || '') && !data.paletteTyping.pageKeys.includes('z'), sidebar: data.sidebarClose.ok && data.sidebarOpen.ok && data.sidebarClose.movedFrames + data.sidebarOpen.movedFrames > 0, window: data.window.ok }
+    return { pass: Object.values(ok).every(Boolean), data: { ok, ...data, errors } }
   },
   async manual() {
     win = new BrowserWindow({ width: 1280, height: 800, webPreferences: { webviewTag: true, nodeIntegration: true, contextIsolation: false } })

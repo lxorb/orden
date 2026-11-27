@@ -21,6 +21,7 @@ const PLAN = [
   ['persist', ['webview'], 1],
   ['ext', ['webview'], 1],
   ['startup', ['webview'], 5],
+  ['orden', ['webview'], 1],
 ]
 fs.mkdirSync(out, { recursive: true })
 const all = []

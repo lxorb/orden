@@ -18,10 +18,20 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .node-version
+          cache: pnpm
       - run: |
           sudo apt-get update -q
           sudo apt-get install -y -q ffmpeg unzip
           GITHUB_TOKEN=${{ github.token }} bash apps/desktop-electron/gate/assets.sh "$RUNNER_TEMP/assets"
+      - name: Orden's frontend
+        run: |
+          pnpm install --frozen-lockfile
+          cd apps/desktop
+          pnpm exec vite build --mode drive --outDir "$RUNNER_TEMP/assets/orden-dist" --emptyOutDir
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: gate-assets
@@ -55,6 +65,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version-file: .node-version
+          package-manager-cache: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: gate-assets

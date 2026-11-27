@@ -60,7 +60,7 @@ if PLATFORM == "windows":
 elif PLATFORM == "macos":
     import Quartz
 
-    KEYCODE = {"tab": 48, "k": 40, "enter": 36, "escape": 53, "a": 0, "b": 11}
+    KEYCODE = {"j": 38, "p": 35, "z": 6, "tab": 48, "k": 40, "enter": 36, "escape": 53, "a": 0, "b": 11}
     FLAG = {"ctrl": Quartz.kCGEventFlagMaskControl, "shift": Quartz.kCGEventFlagMaskShift, "alt": Quartz.kCGEventFlagMaskAlternate, "cmd": Quartz.kCGEventFlagMaskCommand}
     held = {"down": False, "at": (0, 0)}
 
@@ -112,7 +112,7 @@ else:
         xdo("type", "--delay", 40, s)
 
     def key(combo):
-        xdo("key", combo.replace("Tab", "Tab").replace("tab", "Tab"))
+        xdo("key", combo.replace("tab", "Tab").replace("escape", "Escape").replace("cmd", "super"))
 
 
 def click(x, y):
