@@ -81,3 +81,27 @@ describe('the first start after an update', () => {
     expect(fetched).toEqual([])
   })
 })
+describe('opened by hand', () => {
+  test('shows what came with the last update, also when nothing is new since the last start', () => {
+    localStorage.setItem('orden:version-seen', '1.0.0')
+    news.newsSince('1.2.0', SHIPPED)
+    expect(news.newsSince('1.2.0', SHIPPED)).toBeNull()
+    expect(news.newsByHand('1.2.0', SHIPPED)).toEqual({
+      version: '1.2.0',
+      since: '1.0.0',
+      bugs: 21,
+      added: ['Search', 'Tabs', 'Links'],
+      updates: 3,
+      byHand: true,
+    })
+  })
+  test('shows the latest release on its own where no update was seen', () => {
+    expect(news.newsByHand('1.2.0', SHIPPED)).toMatchObject({ version: '1.2.0', since: '1.1.1', bugs: 7, updates: 1 })
+  })
+  test('shows the latest release a newer unstable build came from', () => {
+    expect(news.newsByHand('1.2.1-40', SHIPPED)).toMatchObject({ version: '1.2.0', updates: 1 })
+  })
+  test('is nothing where the build carries no history', () => {
+    expect(news.newsByHand('1.2.0', [])).toBeNull()
+  })
+})

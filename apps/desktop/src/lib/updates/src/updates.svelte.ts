@@ -1,4 +1,4 @@
-import { keep, storedText, isDesktop } from '../../platform/src/api'
+import { keep, openExternal, storedText, isDesktop } from '../../platform/src/api'
 import {
   announcedVersion,
   asChannel,
@@ -11,6 +11,7 @@ import {
   updatedBySystem,
 } from './updater'
 import type { News } from './news'
+import { RELEASES_URL } from './links'
 
 const EVERY = 6 * 60 * 60 * 1000
 const TICK = 10 * 60 * 1000
@@ -107,6 +108,11 @@ class Updates {
     clearTimeout(this.waiting)
     this.ready = version
     if (this.managed && !this.system) keep(TOLD_KEY, version)
+  }
+  async showNews() {
+    const found = (await import('./news')).newsByHand()
+    if (found) this.news = found
+    else void openExternal(RELEASES_URL)
   }
   dismiss() {
     clearTimeout(this.waiting)
