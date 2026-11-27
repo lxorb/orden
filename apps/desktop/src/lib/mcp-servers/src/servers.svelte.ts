@@ -6,6 +6,7 @@ class McpServers {
   list = $state<ServerView[]>([])
   read = $state(false)
   problem = $state('')
+  signing = $state<string | null>(null)
   private users = 0
   private asked = 0
   private unlisten: (() => void) | null = null
@@ -80,6 +81,17 @@ class McpServers {
   }
   restart(id: string) {
     return this.call('mcp_server_restart', { id })
+  }
+  async signIn(id: string) {
+    this.signing = id
+    try {
+      return await this.call('mcp_server_sign_in', { id })
+    } finally {
+      this.signing = null
+    }
+  }
+  signOut(id: string) {
+    return this.call('mcp_server_sign_out', { id })
   }
   async remove(view: ServerView): Promise<boolean> {
     const sure = await prompt.confirm({
