@@ -3,8 +3,14 @@ name: publish-mobile
 on:
   push:
     tags: ['v*']
-    branches: [unstable, 'tmp/ci-mobile*']
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'The platforms to build, space separated (android ios), or all'
+        required: true
+      apps:
+        description: 'The Android apps to build, space separated (orden and the apps with an overlay, such as notes), or all; only all of both, on unstable, publishes edge'
+        required: true
 
 concurrency:
   group: publish-mobile-${{ github.ref }}
@@ -18,7 +24,6 @@ env:
 
 jobs:
   version:
-    if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/tmp/ci-mobile')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,12 +44,22 @@ jobs:
 
       - name: The apps that have an overlay, after the whole Orden
         id: apps
+        env:
+          ONLY: ${{ inputs.apps }}
+          FILTER: |
+            ($only | split(" ") | map(select(. != ""))) as $want
+            | if ($want | length) == 0 or ($want | index("all") != null) then .
+              elif ($want - . | length) > 0 then error("no app named \($want - . | join(" ")); there are \(join(" "))")
+              else . - (. - $want)
+              end
         run: |
           apps=$(node scripts/phone-apps.mjs --built | jq -c '["orden"] + .')
+          apps=$(jq -c --arg only "$ONLY" "$FILTER" <<<"$apps")
           echo "apps=$apps" >>"$GITHUB_OUTPUT"
 
   android:
     needs: version
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' android ') }}
     name: android-${{ matrix.app }}
     runs-on: ubuntu-latest
     permissions:
@@ -65,7 +80,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
@@ -194,7 +210,7 @@ jobs:
 
   ios:
     needs: version
-    if: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' ios ') }}
     runs-on: macos-latest
     permissions:
       contents: read
@@ -206,7 +222,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
@@ -267,7 +284,7 @@ jobs:
 
   publish:
     needs: [version, android, ios]
-    if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')
+    if: ${{ (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) && (github.event_name != 'workflow_dispatch' || (inputs.platforms == 'all' && inputs.apps == 'all')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

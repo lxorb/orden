@@ -87,7 +87,7 @@ describe('the phone apps CI builds and drives (#2286)', () => {
     expect(workflow).toContain('node scripts/phone-apps.mjs --driven')
     expect(workflow).toContain('app: ${{ fromJson(needs.apps.outputs.apps) }}')
     expect(workflow).toContain('apps/desktop/test/e2e/${{ matrix.app }}-phone.py')
-    expect(workflow).toContain("branches: ['tmp/ci-phone*', unstable]")
+    expect(workflow).toContain('branches: [unstable]')
     expect(workflow).toContain('git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE "$NATIVE" || go=false')
     expect(workflow).not.toContain('apps/desktop/src-tauri/src/**')
   })

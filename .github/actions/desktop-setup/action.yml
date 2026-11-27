@@ -20,8 +20,8 @@ runs:
     - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
       with:
         node-version: 24
-        cache: ${{ inputs.node-cache == 'true' && 'pnpm' || '' }}
-        package-manager-cache: ${{ inputs.node-cache == 'true' }}
+        cache: ${{ inputs.node-cache == 'true' && !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+        package-manager-cache: ${{ inputs.node-cache == 'true' && !startsWith(github.ref, 'refs/heads/tmp/') }}
 
     - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
       with:

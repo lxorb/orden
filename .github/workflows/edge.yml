@@ -1,0 +1,72 @@
+name: edge
+
+on:
+  schedule:
+    - cron: '37 1 * * *'
+  workflow_dispatch:
+    inputs:
+      always:
+        description: Build even when nothing an app is built from changed since the last edge build
+        type: boolean
+        default: false
+      dry:
+        description: Say what would be started, and start nothing
+        type: boolean
+        default: false
+
+concurrency:
+  group: edge
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Build edge when unstable moved what an app is built from
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ALWAYS: ${{ inputs.always }}
+          DRY: ${{ inputs.dry }}
+          APART: '^(services/|legal/|LICENSE$|packaging/nix/edge\.json$|\.github/CODEOWNERS$|\.github/workflows/|apps/desktop/test/|packages/editor/test/)|\.md$|\.test\.ts$'
+          BUILDS: '^\.github/workflows/(release|publish-mobile|apt|rpm|snap|nix)\.yml$'
+        run: |
+          head=$(gh api "repos/$REPO/commits/unstable" --jq .sha)
+          built=$(gh api "repos/$REPO/commits/edge" --jq .sha 2>/dev/null) || built=""
+          echo "unstable is $head; edge was built from ${built:-nothing}."
+          go=true
+          if [ "$ALWAYS" != true ] && [ -n "$built" ]; then
+            changed=$(gh api "repos/$REPO/compare/$built...$head" --jq '.files[].filename')
+            echo "$changed"
+            if [ "$(grep -c . <<<"$changed")" -lt 300 ] &&
+              ! grep -vE "$APART" <<<"$changed" | grep -q . && ! grep -qE "$BUILDS" <<<"$changed"; then
+              go=false
+              echo "::notice::Nothing an app is built from changed since edge was built from $built; no build."
+            fi
+          fi
+          for workflow in release.yml publish-mobile.yml; do
+            [ "$go" = true ] || break
+            running=$(gh api "repos/$REPO/actions/workflows/$workflow/runs?branch=unstable&per_page=20" \
+              --jq '[.workflow_runs[] | select(.status != "completed")] | length')
+            if [ "$running" != 0 ]; then
+              echo "::notice::$workflow is already running on unstable; not started again."
+              continue
+            fi
+            if [ "$DRY" = true ]; then
+              echo "::notice::$workflow would be started on unstable at $head."
+              continue
+            fi
+            if [ "$workflow" = release.yml ]; then
+              gh workflow run "$workflow" -R "$REPO" --ref unstable -f platforms=all
+            else
+              gh workflow run "$workflow" -R "$REPO" --ref unstable -f platforms=all -f apps=all
+            fi
+            echo "::notice::$workflow started on unstable at $head."
+          done

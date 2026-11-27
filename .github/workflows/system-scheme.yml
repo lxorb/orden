@@ -10,9 +10,11 @@ on:
       - apps/desktop/src-tauri/src/appearance.rs
       - scripts/system-scheme-drive.py
       - .github/workflows/system-scheme.yml
-  push:
-    branches: ['tmp/ci-2218*']
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'The platforms to run on, space separated (windows macos linux), or all'
+        required: true
 
 concurrency:
   group: system-scheme-${{ github.ref }}
@@ -22,18 +24,23 @@ permissions:
   contents: read
 
 jobs:
+  pick:
+    permissions: {}
+    uses: ./.github/workflows/pick.yml
+    with:
+      only: ${{ inputs.platforms }}
+      all: >-
+        [{"runner":"windows-latest","target":"x86_64-pc-windows-msvc"},
+        {"runner":"macos-latest","target":"aarch64-apple-darwin"},
+        {"runner":"ubuntu-24.04","target":"x86_64-unknown-linux-gnu"}]
+
   follows:
+    needs: pick
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-          - runner: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
+        include: ${{ fromJSON(needs.pick.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 75
     defaults:

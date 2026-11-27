@@ -2,6 +2,10 @@ name: mac-update
 
 on:
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: 'The jobs to run, space separated (update move window), or all'
+        required: true
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -26,7 +30,7 @@ permissions:
 
 jobs:
   update:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' update ')) }}
     strategy:
       fail-fast: false
       matrix:
@@ -59,7 +63,7 @@ jobs:
         run: bash scripts/mac-update-check.sh "$(ls old/*.dmg | head -1)" ${{ matrix.where }} "$LATEST"
 
   move:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' move ')) }}
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
@@ -68,7 +72,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: stable
@@ -86,7 +91,7 @@ jobs:
         run: bash scripts/mac-move-check.sh "$(ls -d apps/desktop/src-tauri/target/release/bundle/macos/*.app | head -1)"
 
   window:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' window ')) }}
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
@@ -95,7 +100,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
           toolchain: stable
