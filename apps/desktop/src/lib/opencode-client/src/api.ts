@@ -10,7 +10,7 @@ export type {
   Reply,
   Session,
 } from './types'
-export type { Call, Preset, Status } from './client'
+export type { Asking, Call, Preset, Status } from './client'
 export {
   followEvents,
   isEvent,

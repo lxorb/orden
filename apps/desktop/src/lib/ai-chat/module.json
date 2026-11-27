@@ -33,6 +33,7 @@
     "panes",
     "agent-protocol",
     "files-out",
-    "marks"
+    "marks",
+    "opencode-client"
   ]
 }

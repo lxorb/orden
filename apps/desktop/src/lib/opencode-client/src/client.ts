@@ -3,6 +3,12 @@ import { Channel } from '../../crate/src/api'
 import type { Agent, Event, Message, PermissionRequest, Providers, Reply, Session } from './types'
 
 export type Preset = 'approve' | 'auto' | 'full'
+export interface Asking {
+  agent?: string
+  system?: string
+  providerID?: string
+  modelID?: string
+}
 export interface Status {
   state: string
   port: number | null
@@ -43,13 +49,17 @@ export class OpenCode {
   messages(id: string): Promise<Message[]> {
     return this.asked('GET', `/session/${id}/message`)
   }
-  prompt(id: string, text: string, how: { agent?: string; providerID?: string; modelID?: string } = {}): Promise<void> {
+  prompt(id: string, text: string, how: Asking = {}): Promise<void> {
     const model = how.providerID && how.modelID ? { model: { providerID: how.providerID, modelID: how.modelID } } : {}
     return this.asked('POST', `/session/${id}/prompt_async`, {
       parts: [{ type: 'text', text }],
       ...(how.agent ? { agent: how.agent } : {}),
+      ...(how.system ? { system: how.system } : {}),
       ...model,
     })
+  }
+  summarize(id: string, providerID: string, modelID: string): Promise<boolean> {
+    return this.asked('POST', `/session/${id}/summarize`, { providerID, modelID })
   }
   abort(id: string): Promise<boolean> {
     return this.asked('POST', `/session/${id}/abort`)

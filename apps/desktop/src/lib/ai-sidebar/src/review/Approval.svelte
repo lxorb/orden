@@ -21,7 +21,7 @@
     if (!approval || answering) return
     answering = true
     if (always && thread) sayAlways(thread, part.verb, part.result?.site)
-    await crateAnswers.answer(approval, allow)
+    await crateAnswers.answer(approval, allow, always)
   }
 </script>
 
