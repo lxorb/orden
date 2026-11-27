@@ -131,6 +131,14 @@ jobs:
         shell: bash
         run: node scripts/opencode.mjs fetch ${{ matrix.target }}
 
+      - name: The shell OpenCode runs commands through on Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        working-directory: apps/desktop/src-tauri
+        run: |
+          cargo build -p orden-opencode --bin orden-shell --release --target ${{ matrix.target }}
+          cp target/${{ matrix.target }}/release/orden-shell.exe binaries/orden-shell-${{ matrix.target }}.exe
+
       - name: Build the app
         shell: bash
         env:
@@ -202,6 +210,7 @@ jobs:
           if [ "$RUNNER_OS" = Windows ]; then
             home="$(cygpath -w "$RUNNER_TEMP")\\opencode-app"
             "/c/Program Files/7-Zip/7z.exe" x -y -o"$home" "$(cygpath -w "$(ls "$bundle"/nsis/*-setup.exe | head -1)")" >/dev/null
+            test -f "$(cygpath -u "$home")/orden-shell.exe"
             python "${drive[@]}" "$home\\orden.exe"
             exit 0
           fi

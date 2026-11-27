@@ -72,7 +72,10 @@ function config(triple) {
   const binary = binaryOf(triple)
   if (!triple.includes('linux')) {
     return {
-      bundle: { externalBin: ['binaries/opencode'], resources: { [LICENSES]: 'opencode-licenses.txt' } },
+      bundle: {
+        externalBin: windows(triple) ? ['binaries/opencode', 'binaries/orden-shell'] : ['binaries/opencode'],
+        resources: { [LICENSES]: 'opencode-licenses.txt' },
+      },
     }
   }
   const beside = { '/usr/share/Orden/opencode': binary, '/usr/share/Orden/opencode-licenses.txt': LICENSES }
