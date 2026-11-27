@@ -193,14 +193,54 @@ describe('what a device says about itself', () => {
   })
 })
 describe('which builds send', () => {
-  test('only a build made as a release sends, whatever its version says', async () => {
+  test('only a build made as a release sends, stable or unstable, whatever its version says', async () => {
     const { sendable } = await import('./queue')
-    expect(sendable({ release: true, held: false })).toBe(true)
-    expect(sendable({ release: false, held: false })).toBe(false)
-    expect(sendable({ release: true, held: true })).toBe(false)
+    expect(sendable({ release: 'stable', held: false })).toBe(true)
+    expect(sendable({ release: 'unstable', held: false })).toBe(true)
+    expect(sendable({ release: null, held: false })).toBe(false)
+    expect(sendable({ release: 'stable', held: true })).toBe(false)
+    expect(sendable({ release: 'unstable', held: true })).toBe(false)
+  })
+  test('the channel an event carries is the one the build was made for, not the updates the reader chose', async () => {
+    localStorage.setItem('orden:channel', 'stable')
+    localStorage.setItem(HELPING, 'true')
+    const posted = vi.fn(
+      (_route: string, _how: { body: { events: { app: { version: string; channel: string } }[] } }) =>
+        Promise.resolve({ ok: true }),
+    )
+    vi.doMock('./queue', async (actual) => ({
+      ...(await actual<typeof import('./queue')>()),
+      release: () => 'unstable' as const,
+    }))
+    vi.doMock('./system', async (actual) => {
+      const real = await actual<typeof import('./system')>()
+      return {
+        ...real,
+        commonOf: (seen: import('./system').Seen) => real.commonOf({ ...seen, version: '0.22.6-2510' }),
+      }
+    })
+    vi.doMock('../../accounts/src/api', async (actual) => ({
+      ...(await actual<typeof import('../../accounts/src/api')>()),
+      request: posted,
+    }))
+    vi.useFakeTimers()
+    try {
+      const { watchUsage } = await import('./watch.svelte')
+      const stop = await watchUsage(true)
+      await elapse(2 * 60 * 60 * 1000)
+      stop()
+      const sent = posted.mock.calls.flatMap(([, how]) => how.body.events.map((one) => one.app))
+      expect(sent.length).toBeGreaterThan(0)
+      expect(new Set(sent.map((one) => one.channel))).toEqual(new Set(['unstable']))
+    } finally {
+      vi.doUnmock('../../accounts/src/api')
+      vi.doUnmock('./system')
+      vi.doUnmock('./queue')
+      vi.resetModules()
+    }
   })
   test('a test or dev build is never a release, so it queues and sends nothing even when asked to', async () => {
-    expect(__ORDEN_RELEASE__).toBe(false)
+    expect((await import('./queue')).release()).toBe(null)
     localStorage.setItem(HELPING, 'true')
     const posted = vi.fn()
     vi.doMock('../../accounts/src/api', async (actual) => ({

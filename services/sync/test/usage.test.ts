@@ -112,24 +112,32 @@ describe('the usage door', () => {
     const ids = forwarded[0]?.body.batch.map((one) => one.distinct_id)
     expect(ids).toEqual(['cd'.repeat(16), 'cd'.repeat(16)])
   })
-  test('only a released build on the stable channel is passed on, the web app by its real version', async () => {
+  test('only a released build is passed on, stable or unstable by its version, the web app by its real one', async () => {
     const web = { os: 'other', arch: 'other', form: 'web', engine: 'chromium' }
     const answer = await send({
       events: [
         ...['0.0.1', '99.0.0', '0.99.0', '0.16.0-dev', '0.22.3-2240', '0.22.5-2482'].map((version) =>
           daily({ app: { version, channel: 'stable' } }),
         ),
-        daily({ app: { version: '0.22.3', channel: 'unstable' } }),
+        ...['0.0.1', '0.22.3', '99.0.0-12', '0.16.0-dev', '0.22.6-rc.1', '0.0.1-7'].map((version) =>
+          daily({ app: { version, channel: 'unstable' } }),
+        ),
         daily({ app: { version: '0.0.1', channel: 'stable' }, system: web }),
-        daily({ app: { version: '0.22.5-2482', channel: 'unstable' }, system: web }),
+        daily({ app: { version: '0.0.1', channel: 'unstable' }, system: web }),
+        daily({ app: { version: '0.22.5', channel: 'unstable' }, system: web }),
         daily({ app: { version: '0.22.2', channel: 'stable' } }),
         daily({ app: { version: '0.22.5', channel: 'stable' }, system: web }),
+        daily({ app: { version: '0.22.6-2510', channel: 'unstable' } }),
+        daily({ app: { version: '0.22.6-2511', channel: 'unstable' }, system: web }),
       ],
     })
     expect(answer.status).toBe(200)
-    expect(answer.json.taken).toBe(2)
-    const seen = forwarded[0]?.body.batch.map((one) => (one.properties as { app_version: string }).app_version)
-    expect(seen).toEqual(['0.22.2', '0.22.5'])
+    expect(answer.json.taken).toBe(4)
+    const seen = forwarded[0]?.body.batch.map((one) => {
+      const said = one.properties as { app_version: string; channel: string }
+      return `${said.app_version} ${said.channel}`
+    })
+    expect(seen).toEqual(['0.22.2 stable', '0.22.5 stable', '0.22.6-2510 unstable', '0.22.6-2511 unstable'])
   })
   test('the version, system and device fill PostHog’s own properties beside ours', async () => {
     await send({

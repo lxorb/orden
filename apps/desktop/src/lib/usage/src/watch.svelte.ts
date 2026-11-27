@@ -2,10 +2,9 @@ import type { Entry } from '@orden/contracts'
 import { dayOf, sizeOf, startupOfMs, usageEventOf, type UsageDay, type UsageEvent } from '@orden/sync-core'
 import { account, request } from '../../accounts/src/api'
 import { heardElsewhere, systemLocale, log, keepJson, stored, isMobile, isNative, invoke } from '../../platform/src/api'
-import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { HELP_IMPROVE, USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
-import { flush, pruned, sendable } from './queue'
+import { flush, pruned, release, sendable } from './queue'
 import { commonOf } from './system'
 import { saveTallies, started, spent, takeTallies, type Tally } from './tally'
 
@@ -34,7 +33,7 @@ function common() {
     : null
   return commonOf({
     version: __APP_VERSION__,
-    channel: updates.channel,
+    channel: release() ?? 'unstable',
     native,
     mobile: isMobile,
     agent: navigator.userAgent,
@@ -127,7 +126,7 @@ async function held(): Promise<boolean> {
   }
 }
 export async function watchUsage(sending: boolean): Promise<() => void> {
-  if (!sending || !sendable({ release: __ORDEN_RELEASE__, held: await held() })) return () => undefined
+  if (!sending || !sendable({ release: release(), held: await held() })) return () => undefined
   if (usageChoice.helping) started(startupOfMs(performance.now()))
   roll()
   const minutes = setInterval(() => idle(tick), A_MINUTE)

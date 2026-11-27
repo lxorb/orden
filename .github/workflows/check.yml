@@ -506,6 +506,9 @@ jobs:
           cd "$RUNNER_TEMP/unstable"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           pnpm install --frozen-lockfile
+          latest=$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/v||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+          IFS=. read -r major minor patch <<<"${latest:-0.0.0}"
+          export ORDEN_RELEASE=unstable ORDEN_VERSION="$major.$minor.$((patch + 1))-$GITHUB_RUN_NUMBER"
           VITE_ORDEN_CHANNEL=unstable pnpm --filter ./apps/desktop build --mode web
 
       - name: Put the two builds together

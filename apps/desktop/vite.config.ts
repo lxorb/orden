@@ -50,6 +50,10 @@ function without(named: RegExp, inside: RegExp, strict: boolean): Plugin {
     },
   }
 }
+function releaseChannel(given: string | undefined): 'stable' | 'unstable' | null {
+  if (given === 'stable' || given === 'true') return 'stable'
+  return given === 'unstable' ? 'unstable' : null
+}
 function appVersion(): string {
   const given = process.env.ORDEN_VERSION?.trim()
   if (given) return given
@@ -100,7 +104,7 @@ export default defineConfig(({ command, mode }) => {
     define: {
       __ORDEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
       __APP_VERSION__: JSON.stringify(appVersion()),
-      __ORDEN_RELEASE__: JSON.stringify(process.env.ORDEN_RELEASE === 'true'),
+      __ORDEN_RELEASE__: JSON.stringify(releaseChannel(process.env.ORDEN_RELEASE)),
       __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
       __AI__: JSON.stringify(ai),
       __ORDEN_APP__: JSON.stringify(app),

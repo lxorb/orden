@@ -124,10 +124,13 @@ async function capturedOf(event: UsageEvent, at: number): Promise<Captured[]> {
   if (event.kind === 'usage') return usageEvents(event, timestamp)
   return [{ event: 'daily install', distinct_id: event.install ?? newId(), timestamp, properties: shared(event) }]
 }
-const RELEASED = /^\d+\.\d+\.\d+$/
+const RELEASED: Record<UsageEvent['app']['channel'], RegExp> = {
+  stable: /^\d+\.\d+\.\d+$/,
+  unstable: /^\d+\.\d+\.\d+-\d+$/,
+}
 function fromRelease(event: UsageEvent): boolean {
   const { version, channel } = event.app
-  return channel === 'stable' && RELEASED.test(version) && releasedVersion(version) && counted(event)
+  return RELEASED[channel].test(version) && releasedVersion(version) && counted(event)
 }
 function fresh(event: UsageEvent, today: string): boolean {
   const age = daysBetween(event.day, today)
