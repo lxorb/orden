@@ -1,4 +1,4 @@
-import { chatOf, type Event, type Notify, type Pointer } from '@orden/chats'
+import { chatOf, type Event, type Notify, type Pointer, type Who } from '@orden/chats'
 import {
   chatListOf,
   type ChatList,
@@ -55,6 +55,14 @@ export async function sendEvents(chat: string, events: readonly Event[]): Promis
     return fromServer(error) && error.status !== 401 ? 'gone' : null
   }
 }
+export async function listBlocks(): Promise<Who[] | null> {
+  const said = await ask('/v2/chats/blocks')
+  return isRecord(said) && Array.isArray(said.blocked) ? said.blocked.filter(isWho) : null
+}
+export const putBlock = (who: Who) => answered(`/v2/chats/blocks/${encodeURIComponent(who)}`, { method: 'PUT' })
+export const dropBlock = (who: Who) => answered(`/v2/chats/blocks/${encodeURIComponent(who)}`, { method: 'DELETE' })
+export const sendReport = (chat: string, report: { message?: string; who?: Who; reason: string }) =>
+  answered(`${chatPath(chat)}/reports`, { body: report })
 export const postRead = (chat: string, seq: number, back = false) =>
   answered(`${chatPath(chat)}/read`, { body: { seq, back } })
 export const putMe = (chat: string, notify: Notify | null, mutedUntil: number | null) =>
