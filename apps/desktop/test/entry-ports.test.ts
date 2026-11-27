@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { entryOf, leftOut, ORDEN_APPS } from '../app-build'
 import { walk } from './files'
 
 const APP = join(import.meta.dirname, '..')
@@ -44,12 +45,18 @@ function imported(file: string, lazy: boolean): string[] {
     return found && /\.(?:ts|svelte|js)$/.test(found) ? [found] : []
   })
 }
-function graph(starts: readonly string[], lazy: boolean): string[] {
+const LIB = join(APP, 'src', 'lib')
+function leftOutOf(page: string): readonly string[] {
+  const app = ORDEN_APPS.find((one) => entryOf(one) === page && entryOf(one) !== 'index.html')
+  return app ? leftOut(app) : []
+}
+function graph(starts: readonly string[], lazy: boolean, left: readonly string[] = []): string[] {
   const seen = new Set<string>()
   const queue = [...starts]
+  const absent = (file: string) => left.some((module) => file.startsWith(join(LIB, module, 'src') + '/'))
   while (queue.length) {
     const file = queue.shift()
-    if (file === undefined || seen.has(file)) continue
+    if (file === undefined || seen.has(file) || absent(file)) continue
     seen.add(file)
     queue.push(...imported(file, lazy))
   }
@@ -74,9 +81,10 @@ describe('the ports an entry needs', () => {
     )
     for (const [, starts] of ENTRIES) expect(starts.length).toBeGreaterThan(0)
   })
-  test.each(ENTRIES)('%s binds at startup every port its code may need', (_page, starts) => {
-    const bound = new Set(names(graph(starts, false), PROVIDED).map(([port]) => port))
-    const unbound = names(graph(starts, true), NEEDED)
+  test.each(ENTRIES)('%s binds at startup every port its code may need', (page, starts) => {
+    const left = leftOutOf(page)
+    const bound = new Set(names(graph(starts, false, left), PROVIDED).map(([port]) => port))
+    const unbound = names(graph(starts, true, left), NEEDED)
       .filter(([port]) => !bound.has(port ?? ''))
       .map(([port, file]) => `${port} in ${relative(ROOT, file ?? '')}`)
     expect([...new Set(unbound)]).toEqual([])
@@ -88,6 +96,14 @@ describe('the ports an entry needs', () => {
       .filter((file) => !own.has(file))
       .map((file) => relative(ROOT, file))
     expect(reached).toEqual([])
+  })
+  test('an app’s page is not asked for what the modules it leaves out would need', () => {
+    expect(leftOutOf('index.html')).toEqual([])
+    expect(leftOutOf('quick-add.html')).toEqual([])
+    expect(leftOutOf('chat.html')).toEqual(leftOut('chat'))
+    const inside = join(LIB, 'workspace', 'src', 'api.ts')
+    expect(graph([inside], false, ['workspace'])).toEqual([])
+    expect(graph([inside], false)).toContain(inside)
   })
   test('every needPort names its port where it asks', () => {
     const vague = [join(APP, 'src'), join(ROOT, 'packages')]

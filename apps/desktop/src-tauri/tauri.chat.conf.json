@@ -1,0 +1,12 @@
+{
+  "productName": "Orden Chat",
+  "build": {
+    "beforeBuildCommand": "pnpm build:chat",
+    "frontendDist": "../dist-chat"
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [{ "scheme": ["orden-chat"], "appLink": false }]
+    }
+  }
+}

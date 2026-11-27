@@ -61,6 +61,8 @@ export default {
         'index.html',
         'quick-add.html',
         'src/quick-add.ts',
+        'chat.html',
+        'src/chat.ts',
         'handoff.html',
         'src/handoff.ts',
         'src/dir-auto.ts',

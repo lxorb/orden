@@ -50,6 +50,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/time/src/Blocks.svelte .picked': 'the bar of selected blocks, in Orden Track only, which holds no web tab',
   'lib/time/src/track/BottomSheet.svelte .shade': 'a sheet of Orden Track, which holds no web tab',
   'lib/time/src/track/BottomSheet.svelte .sheet': 'a sheet of Orden Track, which holds no web tab',
+  'lib/chat-app/src/ChatApp.svelte .chat-app': 'the whole of Orden Chat, which holds no web tab',
   'lib/track-app/src/TrackApp.svelte .track': 'the whole of Orden Track, which holds no web tab',
   'lib/track-app/src/TrackApp.svelte .tip': 'the name of a bar icon in Orden Track, which holds no web tab',
   'lib/track-app/src/Undo.svelte .undo': 'the Undo of Orden Track, which holds no web tab',

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:notes": "ORDEN_APP=notes vite build",
+    "build:chat": "ORDEN_APP=chat vite build",
     "build:track": "ORDEN_APP=track vite build",
     "app": "tauri dev",
     "app:build": "tauri build",

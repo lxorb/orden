@@ -1,0 +1,5 @@
+{
+  "name": "chat-push",
+  "layer": "foundation",
+  "dependsOn": ["accounts", "chats", "platform"]
+}

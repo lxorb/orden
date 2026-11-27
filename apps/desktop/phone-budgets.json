@@ -8,6 +8,9 @@
     "flingsWithLongFrame": { "most": 1, "target": 0 },
     "textScaleFollowed": { "least": 1, "target": 1 }
   },
+  "chat": {
+    "apkBytes": { "most": 19750000, "target": 26214400 }
+  },
   "track": {
     "apkBytes": { "most": 19750000, "target": 23068672 }
   }
