@@ -18,6 +18,12 @@ export interface OrdenSystem {
   ownerCheck(said: string, reason: string): void
   exactAlarms(): boolean
   askExactAlarms(): void
+  pushToken(said: string): string
+  pushClear(said: string, chat: string): void
+  pushQuiet(said: string, json: string): void
+  pushTaken(said: string): string
+  trackState(said: string, json: string): void
+  trackTaken(said: string): string
 }
 export function method<K extends keyof OrdenSystem>(name: K): OrdenSystem[K] | undefined {
   const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__

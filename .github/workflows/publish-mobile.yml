@@ -165,6 +165,14 @@ jobs:
           grep -c "versionCode='${{ needs.version.outputs.code }}' versionName='${{ needs.version.outputs.version }}'" badging.txt
           ! grep -v "versionCode='${{ needs.version.outputs.code }}' versionName='${{ needs.version.outputs.version }}'" badging.txt
 
+      - name: What was built carries its own tiles, widgets, permissions and links, and no other app's
+        run: |
+          aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort | tail -1)
+          for apk in out/*.apk; do
+            "$aapt2" dump xmltree --file AndroidManifest.xml "$apk" >manifest.txt
+            node scripts/phone-manifest.mjs "$APP" manifest.txt --links
+          done
+
       - name: The APK is no larger than its budget
         if: matrix.app != 'orden'
         run: node scripts/phone-budget.mjs "$APP" "apkBytes=$(stat -c %s "out/$APP-arm64-release.apk")"

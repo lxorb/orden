@@ -1,2 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.RECORD_AUDIO" tools:node="remove" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" tools:node="remove" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+
+    <application>
+        <activity android:name="so.orden.Orden.MainActivity">
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <service android:name="so.orden.Orden.NewNoteTile" tools:node="remove" />
+        <service android:name="so.orden.Orden.SearchTile" tools:node="remove" />
+        <service android:name="so.orden.Orden.RecordTile" tools:node="remove" />
+        <receiver android:name="so.orden.Orden.NotesWidget" tools:node="remove" />
+        <receiver android:name="so.orden.Orden.ReminderReceiver" tools:node="remove" />
+        <receiver android:name="so.orden.Orden.TodayWidget" tools:node="remove" />
+
+        <service
+            android:name="so.orden.Orden.TrackTile"
+            android:exported="true"
+            android:icon="@drawable/ic_track"
+            android:label="@string/tile_track"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name="so.orden.Orden.TrackReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="so.orden.Orden.TrackWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_track" />
+        </receiver>
+    </application>
+</manifest>

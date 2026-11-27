@@ -9,4 +9,16 @@
     <string name="widget_today">Todos</string>
     <string name="widget_add_task">Add a task</string>
     <string name="widget_today_description">Your open todos, dated or not, each with a box that ticks it.</string>
+    <string name="tile_track">Track</string>
+    <string name="widget_track">Track</string>
+    <string name="widget_track_empty">No activities yet</string>
+    <string name="widget_track_description">Your activities, each starting its timer with one touch.</string>
+    <string name="track_channel">Running timer</string>
+    <string name="track_stop">Stop</string>
+    <string name="chat_channel">Messages</string>
+    <string name="chat_you">You</string>
+    <string name="chat_reply">Reply</string>
+    <string name="chat_mark_read">Mark as read</string>
+    <string name="chat_new_message">New message</string>
+    <string name="chat_attachment">Sent an attachment</string>
 </resources>
