@@ -10,7 +10,8 @@ import { isOnlineTab } from '../../online-terms/src/api'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 
-export const isDraft = (note: NoteDoc): boolean => note.path === null && note.shared === null && holdsWords(note.kind)
+export const isDraft = (note: NoteDoc): boolean =>
+  note.path === null && note.shared === null && !note.reads && holdsWords(note.kind)
 export function isUnsaved(note: NoteDoc): boolean {
   if (isDraft(note)) return true
   if (note.path !== null || note.shared !== null) return false
