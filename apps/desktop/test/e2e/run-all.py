@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import harness  # noqa: E402
 HERE = harness.HERE
 LOGS = harness.SHOTS / "logs"
-NOT_A_DRIVE = {"run-all.py", "harness.py", "compare.py", "settling.py", "embed-sandbox.py"}
+NOT_A_DRIVE = {"run-all.py", "harness.py", "phone_kit.py", "compare.py", "settling.py", "embed-sandbox.py"}
 JOBS = max(1, min(4, (os.cpu_count() or 4) // 4))
 PATIENCE = 900
 BUDGET = re.compile(r"^BUDGET = (\d+)", re.MULTILINE)
