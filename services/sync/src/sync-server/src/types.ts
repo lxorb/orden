@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database
   NOTES: R2Bucket
+  NOTES_EU?: R2Bucket
+  NOTES_HOME?: string
   ROOMS?: DurableObjectNamespace
   HUB?: DurableObjectNamespace
   CHATS?: DurableObjectNamespace
