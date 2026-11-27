@@ -33,7 +33,7 @@ import {
 } from './placing'
 import { askChat } from './ask'
 import { pushPost } from './push'
-import { hubIdOf, reachAs, reachByToken, reaching } from './reach'
+import { hubIdOf, reachAs, reachByToken, type Reacher, reaching } from './reach'
 import { SCHEMA } from './schema'
 export type ChatAsk =
   | 'join'
@@ -110,7 +110,7 @@ function wholeIn(value: string | null): number | null {
 export class ChatLog implements DurableObject {
   private ready = false
   private signInsAskedAt = 0
-  private reachers: { at: number; list: { id: string; guest: boolean }[] } | null = null
+  private reachers: { at: number; list: Reacher[] } | null = null
   private readonly env: Env
   constructor(
     private readonly ctx: DurableObjectState,
@@ -312,8 +312,7 @@ export class ChatLog implements DurableObject {
     at: number,
     from: WebSocket | null,
   ): Promise<Answer> {
-    const mentions = event.kind === 'post' ? (event.mentions ?? []) : []
-    if (mentions.includes('here') || mentions.includes('everyone')) {
+    if (event.kind === 'post' && (event.mentions?.length || event.parent !== undefined)) {
       await this.reachersNow().catch((error: unknown) => {
         note(`chat ${this.chatId()} reachers`, error, null)
       })
@@ -340,6 +339,7 @@ export class ChatLog implements DurableObject {
     }
     if (effects.answered) called.add(effects.answered)
     called.delete(logged.author)
+    for (const id of this.blockersOf(logged.author)) called.delete(`user:${id}`)
     for (const who of called) {
       sql.exec('insert or ignore into mentioned (who, seq) values (?, ?)', who, logged.seq)
       sql.exec('insert into members (who, dirty) values (?, 1) on conflict(who) do update set dirty = 1', who)
@@ -745,7 +745,14 @@ export class ChatLog implements DurableObject {
       ),
     ])
   }
-  private async reachersNow(): Promise<{ id: string; guest: boolean }[]> {
+  private blockersOf(author: Who): Set<string> {
+    const blockers = new Set<string>()
+    for (const one of this.reachers?.list ?? []) {
+      if (!one.guest && one.blocked.includes(author)) blockers.add(one.id)
+    }
+    return blockers
+  }
+  private async reachersNow(): Promise<Reacher[]> {
     const now = Date.now()
     if (this.reachers && now - this.reachers.at < REACHERS_FOR) return this.reachers.list
     const chat = this.chatId()
@@ -773,7 +780,7 @@ export class ChatLog implements DurableObject {
     )
   }
   private async poke(logged: Logged, called: readonly Who[]): Promise<void> {
-    let reachers: { id: string; guest: boolean }[]
+    let reachers: Reacher[]
     try {
       reachers = await this.reachersNow()
     } catch (error) {
@@ -786,7 +793,7 @@ export class ChatLog implements DurableObject {
     const sql = this.sql
     const sendNow: string[] = []
     for (const one of reachers) {
-      if (open.has(one.id)) continue
+      if (open.has(one.id) || (!one.guest && one.blocked.includes(logged.author))) continue
       const row = sql
         .exec<{ sent_at: number; mention: number }>('select sent_at, mention from pokes where id = ?', one.id)
         .toArray()[0]

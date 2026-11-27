@@ -115,6 +115,8 @@ export function erased(): readonly (readonly [table: string, sql: string])[] {
     ['ai_accounts', 'delete from ai_accounts where user_id = ?1'],
     ...hooks().pass.erased,
     ['push_targets', 'delete from push_targets where user_id = ?1'],
+    ['chat_blocks', "delete from chat_blocks where user_id = ?1 or blocked = 'user:' || ?1"],
+    ['chat_reports', "update chat_reports set reporter = '' where reporter = ?1"],
     ['push_reminders', 'delete from push_reminders where user_id = ?1'],
     ['time_entries', 'delete from time_entries where user_id = ?1'],
     ['time_cursor', 'delete from time_cursor where user_id = ?1'],

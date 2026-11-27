@@ -32,6 +32,7 @@ import {
 import { askChat, CHAT_AWAY, chatsMoved } from './ask'
 import { INVALID, RATE } from './placing'
 import { askingOf, reachChat, type Reached } from './reach'
+import { safety } from './safety'
 
 interface App {
   Bindings: Env
@@ -531,3 +532,4 @@ chats.get('/:chat/files/:hash', async (context) => {
     },
   })
 })
+chats.route('/', safety)

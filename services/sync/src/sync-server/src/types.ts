@@ -33,6 +33,7 @@ export interface Env {
   EMAIL?: EmailSender
   MAIL_FROM?: string
   FEEDBACK_TO?: string
+  CHAT_REPORTS_TO?: string
   FEEDBACK_REPO?: string
   GITHUB_FEEDBACK_TOKEN?: string
   FEEDBACK_PROJECT?: string

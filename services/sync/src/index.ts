@@ -99,7 +99,16 @@ import {
 import { blobs, publicBlobs, siteIcons } from './sync-server-blobs/src/api'
 import { serveBlog } from './sync-server-blog/src/api'
 import { crashes, feedback, openWaitingIssues, sweepCrashes } from './sync-server-feedback/src/api'
-import { chatDoor, chats, sweepChats, oauth, oauthMetadata, expireClients } from './sync-server-chats/src/api'
+import {
+  chatDoor,
+  chats,
+  mailReports,
+  sweepReports,
+  sweepChats,
+  oauth,
+  oauthMetadata,
+  expireClients,
+} from './sync-server-chats/src/api'
 import { openLink, pass, sweepPassLinks, servePassLink } from './sync-server-pass/src/api'
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 app.onError(failed)
@@ -333,6 +342,7 @@ function scheduled(event: ScheduledEvent, given: Env, context: ExecutionContext)
   if (event.cron === EVERY_MINUTE) {
     context.waitUntil(sendDue(env, at))
     context.waitUntil(openWaitingIssues(env, at))
+    context.waitUntil(mailReports(env))
     return
   }
   context.waitUntil(purgeExpired(env, at))
@@ -345,6 +355,7 @@ function scheduled(event: ScheduledEvent, given: Env, context: ExecutionContext)
   context.waitUntil(sweepTreeOps(env, at))
   context.waitUntil(sweepAnswers(env, at))
   context.waitUntil(sweepChats(env, at))
+  context.waitUntil(sweepReports(env, at))
   context.waitUntil(sweepAudit(env, at))
   context.waitUntil(sweepCrashes(env, at))
   context.waitUntil(forgetHalfDone(env, at))
