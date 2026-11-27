@@ -981,13 +981,11 @@ describe('the OpenCode every desktop installer carries', () => {
       expect(digest, platform).toMatch(/^[A-Za-z0-9+/]{86}==$/)
   })
   test('lies beside the program it serves, and never on the PATH', () => {
-    for (const triple of [
-      'aarch64-apple-darwin',
-      'x86_64-apple-darwin',
-      'x86_64-pc-windows-msvc',
-      'aarch64-pc-windows-msvc',
-    ]) {
+    for (const triple of ['aarch64-apple-darwin', 'x86_64-apple-darwin']) {
       expect(merged(triple).bundle.externalBin, triple).toEqual(['binaries/opencode'])
+    }
+    for (const triple of ['x86_64-pc-windows-msvc', 'aarch64-pc-windows-msvc']) {
+      expect(merged(triple).bundle.externalBin, triple).toEqual(['binaries/opencode', 'binaries/orden-shell'])
     }
     for (const triple of ['x86_64-unknown-linux-gnu', 'aarch64-unknown-linux-gnu']) {
       const { bundle } = merged(triple)
@@ -1011,6 +1009,7 @@ describe('the OpenCode every desktop installer carries', () => {
     }
     expect(release.match(/node scripts\/opencode\.mjs fetch \$\{\{ matrix\.target \}\}/g)).toHaveLength(2)
     expect(release).toContain('run: node scripts/opencode.mjs newest')
+    expect(release).toContain('cargo build -p orden-opencode --bin orden-shell --release --target ${{ matrix.target }}')
     expect(
       release.match(/scripts\/opencode-app-drive\.py --identifier so\.orden\.Orden --exe/g),
       'Orden itself finds it',
