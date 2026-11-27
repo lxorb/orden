@@ -14,6 +14,50 @@ export interface Later {
 }
 type Asked = RequestInit & { cf?: { cacheTtl: number; cacheEverything: boolean } }
 type Fetcher = (input: string, init?: Asked) => Promise<Response>
+const AGAIN = 2000
+export interface Seen {
+  first(client: string): Promise<boolean>
+}
+interface Kept {
+  match(key: string): Promise<Response | undefined>
+  put(key: string, answer: Response): Promise<void>
+}
+export function seenIn(kept: Kept | null, now: () => number = Date.now): Seen {
+  const recent = new Map<string, number>()
+  return {
+    async first(client) {
+      const at = now()
+      for (const [one, when] of recent) if (at - when >= AGAIN) recent.delete(one)
+      if (recent.has(client)) return false
+      recent.set(client, at)
+      if (!kept) return true
+      const key = `https://orden.so/download-seen/${client}`
+      if (await kept.match(key)) return false
+      await kept.put(key, new Response('', { headers: { 'cache-control': `max-age=${AGAIN / 1000}` } }))
+      return true
+    },
+  }
+}
+let shared: Seen | null = null
+function edgeSeen(): Seen {
+  shared ??= seenIn((globalThis as { caches?: { default?: Kept } }).caches?.default ?? null)
+  return shared
+}
+async function clientOf(request: Request): Promise<string | null> {
+  const address = request.headers.get('cf-connecting-ip')
+  if (!address) return null
+  const day = new Date().toISOString().slice(0, 10)
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`orden-site ${day} ${address}`))
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+async function firstFrom(request: Request, seen: Seen): Promise<boolean> {
+  try {
+    const client = await clientOf(request)
+    return client === null || (await seen.first(client))
+  } catch {
+    return true
+  }
+}
 interface Release {
   tag: string | null
   body: unknown
@@ -60,6 +104,7 @@ export async function downloadAnswer(
   env: Counter,
   later: Later,
   fetcher: Fetcher = fetch,
+  seen: Seen = edgeSeen(),
 ): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'HEAD')
     return new Response(null, { status: 405, headers: { allow: 'GET, HEAD' } })
@@ -69,13 +114,18 @@ export async function downloadAnswer(
   const release = await latest(fetcher)
   const target = assetFor(platform, releaseAssets(release.body))
   const from = url.searchParams.get('from')
-  if (env.POSTHOG_KEY && counts(request))
+  const key = env.POSTHOG_KEY
+  if (key && counts(request))
     later.waitUntil(
-      count(fetcher, env.POSTHOG_KEY, {
-        platform: platform ?? 'none',
-        button: BUTTONS.find((one) => one === from) ?? 'other',
-        release: release.tag ?? 'unknown',
-      }),
+      firstFrom(request, seen).then((first) =>
+        first
+          ? count(fetcher, key, {
+              platform: platform ?? 'none',
+              button: BUTTONS.find((one) => one === from) ?? 'other',
+              release: release.tag ?? 'unknown',
+            })
+          : undefined,
+      ),
     )
   return new Response(null, {
     status: 302,

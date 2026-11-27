@@ -11,7 +11,7 @@ export {
   type DemoCue,
   type DemoPlay,
 } from './demo-cue'
-export { CAPTURE, counts, DOWNLOAD_EVENT, downloadAnswer, isDownloadPath } from './download'
+export { CAPTURE, counts, DOWNLOAD_EVENT, downloadAnswer, isDownloadPath, seenIn } from './download'
 export {
   ageInWords,
   APP_ORIGIN,
