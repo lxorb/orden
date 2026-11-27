@@ -36,9 +36,11 @@ let events: EventTarget
 let doc: EventTarget & {
   hidden: boolean
   activeElement: Element | null
+  documentElement: { dataset: Record<string, string> }
   querySelector: () => unknown
 }
 let reload: Mock<() => void>
+let replace: Mock<(href: string) => void>
 let serve: Mock<() => Promise<Response>>
 let storage: Map<string, string>
 beforeEach(() => {
@@ -50,11 +52,13 @@ beforeEach(() => {
   doc = Object.assign(new EventTarget(), {
     hidden: false,
     activeElement: null,
+    documentElement: { dataset: {} },
     querySelector: () => ({ getAttribute: () => RUNNING }),
   })
   vi.stubGlobal('document', doc)
   reload = vi.fn()
-  vi.stubGlobal('location', { reload })
+  replace = vi.fn()
+  vi.stubGlobal('location', { reload, replace, search: '?demo=desktop', href: 'https://app.orden.so/?demo=desktop' })
   serve = vi.fn(() => Promise.resolve(new Response(page('/assets/index-new.js'))))
   vi.stubGlobal('fetch', serve)
   storage = new Map()
@@ -184,6 +188,29 @@ describe('a piece that did not arrive', () => {
     failedImport()
     await vi.advanceTimersByTimeAsync(0)
     expect(reload).toHaveBeenCalledOnce()
+  })
+  test('the demo, which holds nothing of a person, goes at once whatever is open (#2586)', async () => {
+    doc.documentElement.dataset.demo = 'desktop'
+    const settled = vi.fn(() => Promise.resolve(false))
+    const { overlays } = await watching(settled)
+    const close = overlays.show(() => undefined)
+    failedImport()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(replace).toHaveBeenCalledExactlyOnceWith(
+      'https://app.orden.so/?demo=desktop&reloaded=%2Fassets%2Findex-new.js',
+    )
+    expect(reload).not.toHaveBeenCalled()
+    close()
+  })
+  test('the demo, whose storage is forgotten with every load, goes once by what its address says', async () => {
+    doc.documentElement.dataset.demo = 'desktop'
+    Object.assign(location, { search: '?demo=desktop&reloaded=%2Fassets%2Findex-new.js' })
+    const { reloading } = await watching()
+    failedImport()
+    await vi.advanceTimersByTimeAsync(HANDS_OFF)
+    expect(replace).not.toHaveBeenCalled()
+    expect(reload).not.toHaveBeenCalled()
+    expect(reloading.offered).toBe(true)
   })
   test('waits for what is owed to the disk', async () => {
     const owed = [false, true]

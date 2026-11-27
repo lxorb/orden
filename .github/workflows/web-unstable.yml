@@ -91,17 +91,42 @@ jobs:
           export ORDEN_RELEASE=unstable ORDEN_VERSION="$major.$minor.$((patch + 1))-$GITHUB_RUN_NUMBER"
           VITE_ORDEN_CHANNEL=unstable pnpm --filter @orden/desktop build --mode web
 
-      - name: Build the release's web app and put the two together
+      - name: The release's web app, where an earlier run built it
+        id: release
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ runner.temp }}/release-dist
+          key: web-release-${{ steps.live.outputs.main }}
+
+      - name: Build the release's web app once and put the two together
         working-directory: ${{ runner.temp }}/main
+        env:
+          BUILT: ${{ steps.release.outputs.cache-hit }}
         run: |
-          pnpm --filter ./apps/desktop build --mode web
+          if [ "$BUILT" = true ]; then
+            rm -rf apps/desktop/dist
+            cp -R "$RUNNER_TEMP/release-dist" apps/desktop/dist
+          else
+            latest=$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/v||' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)
+            ORDEN_RELEASE=true ORDEN_VERSION="$latest" pnpm --filter ./apps/desktop build --mode web
+            rm -rf "$RUNNER_TEMP/release-dist"
+            cp -R apps/desktop/dist "$RUNNER_TEMP/release-dist"
+          fi
           bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
 
+      - name: Keep the assets of the builds before this one, for the pages still open on them
+        id: keep
+        env:
+          MAIN: ${{ steps.live.outputs.main }}
+        run: node scripts/web-keep.mjs "$RUNNER_TEMP/main/apps/desktop/dist" https://app.orden.so 7 "$MAIN"
+
       - name: Build ordend for the Worker's bundle
+        if: steps.keep.outputs.same != 'true'
         working-directory: ${{ runner.temp }}/main
         run: pnpm --filter ./services/machine build
 
       - name: Deploy the Worker with the edge's pages
+        if: steps.keep.outputs.same != 'true'
         working-directory: ${{ runner.temp }}/main
         run: |
           pnpm --filter ./services/sync run deploy \

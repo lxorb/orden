@@ -3,6 +3,7 @@ import { keep, storedText, isNative, afterQuiet } from '../../platform/src/api'
 
 const HANDS_OFF = 3000
 const RELOADED_FOR = 'orden:reloaded-for'
+const RELOADED = 'reloaded'
 const HANDS = ['keydown', 'pointerdown', 'pointerup', 'pointercancel', 'pointermove', 'wheel']
 interface Missing {
   held: () => boolean
@@ -23,8 +24,14 @@ export function verdict(running: string | null, served: string, reloadedFor: str
 export async function answer(page: Missing): Promise<boolean> {
   const served = isNative ? entryRunning() : await entryServed()
   if (served === null) return false
-  if (verdict(entryRunning(), served, storedText(RELOADED_FOR)) === 'offer') page.offer()
-  else {
+  const demo = Boolean(document.documentElement.dataset.demo)
+  const went = demo ? new URLSearchParams(location.search).get(RELOADED) : storedText(RELOADED_FOR)
+  if (verdict(entryRunning(), served, went) === 'offer') page.offer()
+  else if (demo) {
+    const again = new URL(location.href)
+    again.searchParams.set(RELOADED, served)
+    location.replace(again.href)
+  } else {
     do {
       await handsOff(page)
     } while (!(await page.settled()))
