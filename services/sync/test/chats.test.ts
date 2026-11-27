@@ -184,6 +184,39 @@ describe('chats', () => {
       expect(await list(people.stranger)).toEqual([])
       expect((await call(env, `/v2/chats/${chat}/events`, { token: people.stranger })).status).toBe(404)
     })
+    test('is listed by the name of its pointer file, wherever that lies, and by none before it has one', async () => {
+      const bare = await chatOfOwner()
+      const named = await chatOfOwner()
+      const file = await chatFile('Projects/Thesis talk.chat', chatText({ v: 1, chat: named }))
+      for (const token of [people.reader, people.guestReader]) {
+        const listed = await list(token)
+        expect(listed.map((one) => [one.id, one.name, one.file]).sort()).toEqual(
+          [
+            [bare, undefined, undefined],
+            [named, 'Thesis talk', file],
+          ].sort(),
+        )
+      }
+    })
+    test('its name goes to whoever may read its pointer and to nobody else', async () => {
+      const named = await chatOfOwner()
+      const file = await chatFile('Private.chat', chatText({ v: 1, chat: named }))
+      const other = await chatFile('Other.md', 'A note beside it\n')
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${other}`, {
+        token: people.owner,
+        body: { email: 'stranger@example.com', role: 'read' },
+      })
+      expect(await list(people.stranger)).toEqual([])
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${file}`, {
+        token: people.owner,
+        body: { email: 'stranger@example.com', role: 'read' },
+      })
+      expect((await list(people.stranger)).map((one) => [one.id, one.name, one.file])).toEqual([
+        [named, 'Private', file],
+      ])
+      await call(env, `/v1/notes/${file}`, { method: 'DELETE', token: people.owner })
+      expect((await list(people.owner)).map((one) => one.id)).not.toContain(named)
+    })
     test('its members are everybody the space reaches, by name and role, with no address', async () => {
       const chat = await chatOfOwner()
       const { json } = await call<{ members: { who: string; role: string }[] }>(env, `/v2/chats/${chat}/members`, {

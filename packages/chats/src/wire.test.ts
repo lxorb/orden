@@ -343,6 +343,12 @@ describe('HTTP', () => {
     })
     expect(chatListOf({ chats: 'all' })).toBeNull()
   })
+  it('reads the name and the file of a chat’s pointer where the server sends them', () => {
+    const named = { ...row, name: 'Thesis', file: 'note-1' }
+    expect(chatListOf(wired({ chats: [named] }))).toEqual({ chats: [named] })
+    expect(chatListOf(wired({ chats: [{ ...row, name: null, file: null }] }))).toEqual({ chats: [row] })
+    expect(chatListOf(wired({ chats: [{ ...row, name: '  ', file: 7 }] }))).toEqual({ chats: [row] })
+  })
   it('reads a new chat’s space', () => {
     expect(newChatOf({ space: 'space-1' })).toEqual({ space: 'space-1' })
     expect(newChatOf({ space: '' })).toBeNull()
