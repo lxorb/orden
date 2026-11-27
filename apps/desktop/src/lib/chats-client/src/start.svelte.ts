@@ -1,7 +1,7 @@
 import { registerSidebarPart } from '@orden/contracts'
 import { untrack } from 'svelte'
 import { account } from '../../accounts/src/api'
-import { hub } from '../../sync-client/src/api'
+import { hub } from '../../hub/src/api'
 import { chatsOn } from '../../gates/src/api'
 import { isMobile } from '../../platform/src/api'
 import { places } from './where'

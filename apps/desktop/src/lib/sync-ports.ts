@@ -9,6 +9,10 @@ import { hearWrites } from './file-writes/src/api'
 protection.seesFiles((path) =>
   workspace.files.filter((one) => within(folderOf(path), one.path) !== null).map((one) => one.path),
 )
+providePort('hub.device', {
+  deviceOf: async (account) => (await import('./sync-client/src/api')).runner.deviceOf(account),
+  name: async () => (await import('./collab/src/api')).deviceName('Browser'),
+})
 providePort('sync.workspace', {
   get spaces() {
     return workspace.spaces

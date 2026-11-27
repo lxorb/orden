@@ -19,8 +19,5 @@ export function invoke<T>(command: string, args?: Record<string, unknown>): Prom
 }
 export const joinPath = (dir: string, relative: string) => host().joinPath(dir, relative)
 export const stored = (key: string) => storage().json(key)
-export const storedText = (key: string) => storage().text(key)
-export const keepText = (key: string, value: string) => storage().keepText(key, value)
 export const keepJson = (key: string, value: unknown) => storage().keepJson(key, value)
-export const forget = (key: string) => storage().forget(key)
 export const waited = (ms?: number) => clock().waited(ms)

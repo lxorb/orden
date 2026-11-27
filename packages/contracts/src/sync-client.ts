@@ -208,7 +208,12 @@ export interface SyncPairing {
 export interface SyncPairingPort {
   pairSpaces(token: string, pairing: SyncPairing): Promise<void>
 }
+interface HubDevicePort {
+  deviceOf(account: string): Promise<string | null>
+  name(): Promise<string>
+}
 export interface SyncPorts {
+  readonly 'hub.device': HubDevicePort
   readonly 'sync.host': SyncHostPort
   readonly 'sync.storage': SyncStoragePort
   readonly 'sync.clock': SyncClockPort
