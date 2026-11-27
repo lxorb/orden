@@ -8,6 +8,18 @@ on:
         type: choice
         required: true
         options: [notes, track, todo, chat, all]
+      night:
+        description: 'Also build the app as it ships and time its cold start, as the nightly run does'
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      app:
+        type: string
+        required: true
+      night:
+        type: boolean
+        default: false
   push:
     branches: [unstable]
 
@@ -15,7 +27,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: phone-${{ github.ref }}
+  group: phone-${{ github.ref }}-${{ inputs.night && 'night' || 'push' }}
   cancel-in-progress: true
 
 jobs:
@@ -97,12 +109,34 @@ jobs:
         with:
           env-vars: ImageVersion
           workspaces: apps/desktop/src-tauri
-          shared-key: android-debug
+          shared-key: android-phone
           cache-on-failure: true
 
       - run: pnpm install --frozen-lockfile
 
       - run: pip install websocket-client playwright
+
+      - name: Build the app as it ships, to time its cold start
+        if: inputs.night
+        working-directory: apps/desktop
+        env:
+          APP: ${{ matrix.app }}
+          ORG_GRADLE_PROJECT_ordenApp: ${{ matrix.app }}
+          VITE_ORDEN_API: http://127.0.0.1:8799
+        run: |
+          android=$PWD/src-tauri/gen/android
+          keytool -genkeypair -keystore "$android/measure.jks" -alias orden -keyalg RSA -keysize 2048 \
+            -validity 2 -storepass orden-measure -keypass orden-measure -dname 'CN=Orden measure'
+          {
+            echo "storeFile=$android/measure.jks"
+            echo "storePassword=orden-measure"
+            echo "keyAlias=orden"
+            echo "keyPassword=orden-measure"
+          } >"$android/keystore.properties"
+          pnpm exec tauri android build --apk --target x86_64 --config "src-tauri/tauri.$APP.conf.json"
+          mkdir -p ../../out
+          cp "$android/app/build/outputs/apk/universal/release/app-universal-release.apk" "../../out/$APP-release.apk"
+          rm "$android/keystore.properties" "$android/measure.jks"
 
       - name: Build the app, driveable, against a server on this machine
         env:
@@ -129,6 +163,11 @@ jobs:
           target: google_apis
           disable-animations: true
           script: python3 apps/desktop/test/e2e/${{ matrix.app }}-phone.py
+
+      - name: What was measured is within the app's budgets
+        env:
+          APP: ${{ matrix.app }}
+        run: node scripts/phone-budget.mjs "$APP" "--from=apps/desktop/test/e2e/shots/$APP-phone/gates.json"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

@@ -24,6 +24,7 @@ export interface OrdenSystem {
   pushTaken(said: string): string
   trackState(said: string, json: string): void
   trackTaken(said: string): string
+  drawn(): void
 }
 export function method<K extends keyof OrdenSystem>(name: K): OrdenSystem[K] | undefined {
   const found: unknown = (globalThis as { __ORDEN_SYSTEM__?: unknown }).__ORDEN_SYSTEM__

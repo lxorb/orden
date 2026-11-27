@@ -59,11 +59,111 @@ describe('what a phone drive calls a crash (#2286)', () => {
   test('another app falling over, and the phone killing the app with Play services, are not', () => {
     expect(asked(OTHERS, 'so.orden.Orden').crashes).toEqual([])
   })
+  test('the graphics library of the emulator aborting as the app exits is not, and any other abort is', () => {
+    const signal = `${at} F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 5680 (Thread-3), pid 4945 (so.orden.Orden)`
+    const dump = '11-27 11:25:07.350  6474  6474 F DEBUG   :'
+    const exiting = [
+      signal,
+      `${dump} Abort message: 'FORTIFY: pthread_mutex_lock called on a destroyed mutex (0x7f7fd6d39018)'`,
+      `${dump}       #08 pc 000000000000ae4b  /vendor/lib64/egl/libEGL_emulation.so (eglDisplay::~eglDisplay()+11)`,
+      `${dump}       #10 pc 00000000000c334e  /apex/com.android.runtime/lib64/bionic/libc.so (exit+14)`,
+    ]
+    expect(asked(exiting.join('\n'), 'so.orden.Orden').crashes).toEqual([])
+    for (const missing of [1, 2, 3]) {
+      const other = exiting.filter((_, index) => index !== missing).join('\n')
+      expect(asked(other, 'so.orden.Orden').crashes, String(missing)).toHaveLength(1)
+    }
+  })
   test('the scan runs at the end of every drive, whatever its steps did', () => {
     const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
     const ending = kit.slice(kit.indexOf('        finally:'))
     expect(ending).toContain('for one in crashes(log, self.package):')
     expect(ending).toContain('self.wrong(one)')
+  })
+})
+const MEASURING = `
+import json, sys, types
+
+api = types.ModuleType("playwright.sync_api")
+api.Page = type("Page", (), {"on": lambda self, event, handler: None})
+sys.modules["playwright"] = types.ModuleType("playwright")
+sys.modules["playwright.sync_api"] = api
+sys.path.insert(0, sys.argv[1])
+import phone_kit
+asked = json.loads(sys.argv[2])
+print(json.dumps({
+  "frames": phone_kit.frames(asked["stats"]),
+  "janky": phone_kit.janky(asked["stats"]),
+  "drawn": phone_kit.fully_drawn(asked["log"], "so.orden.Orden"),
+  "ranked": [phone_kit.ranked(asked["values"], one) for one in asked["percents"]],
+  "launched": phone_kit.launched(asked["start"]),
+}))
+`
+function measured(asked: { stats: string; values: number[]; percents: number[]; start: string; log: string }) {
+  const said = execFileSync('python3', ['-c', MEASURING, E2E, JSON.stringify(asked)], { encoding: 'utf8' })
+  return JSON.parse(said) as {
+    frames: [number, boolean][]
+    janky: number | null
+    drawn: number[]
+    ranked: number[]
+    launched: number
+  }
+}
+describe('what a phone drive measures (#2286)', () => {
+  const columns =
+    'Flags,FrameTimelineVsyncId,IntendedVsync,Vsync,InputEventId,HandleInputStart,AnimationStart,' +
+    'PerformTraversalsStart,DrawStart,FrameDeadline,FrameInterval,FrameStartTime,SyncQueued,SyncStart,' +
+    'IssueDrawCommandsStart,SwapBuffers,FrameCompleted,DequeueBufferDuration,QueueBufferDuration,GpuCompleted,'
+  const frame = (flags: number, began: number, ended: number) =>
+    `${flags},7,${began},${began},0,1,1,1,1,${began + 18_000_000},16666666,1,1,1,1,1,${ended},1,1,1,`
+  const old = 'Flags,IntendedVsync,Vsync,OldestInputEvent,NewestInputEvent,HandleInputStart,FrameCompleted,'
+  const asked = {
+    stats: [
+      'Stats since: 1ns',
+      'Janky frames: 40 (33.33%)',
+      '---PROFILEDATA---',
+      columns,
+      frame(0, 1_000_000_000, 1_017_500_000),
+      frame(1, 2_000_000_000, 2_900_000_000),
+      frame(0, 3_000_000_000, 3_040_000_000),
+      frame(0, 4_000_000_000, 0),
+      '---PROFILEDATA---',
+      old,
+      '0,5000000000,5000000000,0,0,1,5008000000,',
+      '---PROFILEDATA---',
+    ].join('\n'),
+    values: [...Array(20).keys()].map((one) => one + 1),
+    percents: [50, 95, 100],
+    start: 'Status: ok\nLaunchState: COLD\nTotalTime: 812\nWaitTime: 820',
+    log: [
+      '11-27 10:00:01.000   520   544 I ActivityTaskManager: Displayed so.orden.Orden/.MainActivity: +540ms',
+      '11-27 10:00:02.000   520   544 I ActivityTaskManager: Fully drawn so.orden.Orden/.MainActivity: +1s234ms',
+      '11-27 10:00:03.000   520   544 I ActivityTaskManager: Fully drawn so.orden.Ordering/.Main: +2s1ms',
+      '11-27 10:00:04.000   520   544 I ActivityTaskManager: Fully drawn so.orden.Orden/.MainActivity: +870ms',
+      '11-27 10:00:05.000   520   544 I ActivityTaskManager: Fully drawn so.orden.Orden/.MainActivity: +1m2s3ms',
+    ].join('\n'),
+  }
+  test('a frame is in time when it ends by its deadline, not by a fixed 16.7 ms', () => {
+    expect(measured(asked).frames).toEqual([
+      [17.5, true],
+      [40, false],
+      [8, true],
+    ])
+  })
+  test('without a deadline column, the deadline is one vsync after the intended one', () => {
+    const late = { ...asked, stats: asked.stats.replace('5008000000', '5017000000') }
+    expect(measured(late).frames.at(-1)?.[1]).toBe(false)
+  })
+  test('the count the phone itself keeps of janky frames is read beside it', () => {
+    expect(measured(asked).janky).toBe(33.33)
+    expect(measured({ ...asked, stats: '' }).janky).toBe(null)
+  })
+  test('a cold start ends when the phone says the app is fully drawn, read from its own log line', () => {
+    expect(measured(asked).drawn).toEqual([1234, 870, 62_003])
+  })
+  test('the median and the 95th of twenty starts are the tenth and the nineteenth', () => {
+    expect(measured(asked).ranked).toEqual([10, 19, 20])
+    expect(measured(asked).launched).toBe(812)
   })
 })
 describe('the phone apps CI builds and drives (#2286)', () => {
@@ -88,6 +188,29 @@ describe('the phone apps CI builds and drives (#2286)', () => {
     expect(workflow).toContain('app: ${{ fromJson(needs.apps.outputs.apps) }}')
     expect(workflow).toContain('apps/desktop/test/e2e/${{ matrix.app }}-phone.py')
     expect(workflow).toContain('branches: [unstable]')
+    expect(workflow).toContain(
+      'node scripts/phone-budget.mjs "$APP" "--from=apps/desktop/test/e2e/shots/$APP-phone/gates.json"',
+    )
+    expect(workflow).toContain('cp "$android/app/build/outputs/apk/universal/release/app-universal-release.apk"')
+    expect(workflow).not.toContain('secrets.')
+  })
+  test('the app as it ships is built and timed only at night, in the run that builds the edge APKs', () => {
+    const workflow = readFileSync(join(ROOT, '.github', 'workflows', 'phone.yml'), 'utf8')
+    const built = /- name: Build the app as it ships, to time its cold start\n([\s\S]*?)(?=\n {6}- )/.exec(
+      workflow,
+    )?.[1]
+    expect(built).toContain('if: inputs.night')
+    expect(built).toContain('VITE_ORDEN_API: http://127.0.0.1:8799')
+    expect(built).toContain("-dname 'CN=Orden measure'")
+    expect(workflow).toMatch(/workflow_call:\n {4}inputs:\n {6}app:/)
+    const nightly = readFileSync(join(ROOT, '.github', 'workflows', 'publish-mobile.yml'), 'utf8')
+    const gates = /\n {2}gates:\n([\s\S]*?)(?=\n {2}[\w-]+:\n)/.exec(nightly)?.[1] ?? ''
+    expect(gates).toContain('uses: ./.github/workflows/phone.yml')
+    expect(gates).toContain('night: true')
+    expect(gates).toContain("inputs.platforms == 'all' && inputs.apps == 'all'")
+    expect(readFileSync(join(E2E, 'phone_kit.py'), 'utf8')).toContain(
+      'the cold start of a release build is not measured',
+    )
     expect(workflow).toContain('git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE "$NATIVE" || go=false')
     expect(workflow).not.toContain('apps/desktop/src-tauri/src/**')
   })

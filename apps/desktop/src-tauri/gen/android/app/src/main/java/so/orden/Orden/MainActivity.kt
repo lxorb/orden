@@ -81,6 +81,7 @@ class MainActivity : TauriActivity() {
   @Volatile private var ticking = ""
   @Volatile private var tickingIn = ""
   @Volatile private var link = ""
+  private var drawn = false
   @Volatile private var reply = ""
 
   private var page: WebView? = null
@@ -256,6 +257,16 @@ class MainActivity : TauriActivity() {
 
   private inner class Bridge {
     @JavascriptInterface fun insets(): String = edges
+
+    @JavascriptInterface
+    fun drawn() {
+      runOnUiThread {
+        if (!drawn) {
+          drawn = true
+          reportFullyDrawn()
+        }
+      }
+    }
 
     @JavascriptInterface
     fun askForTheFrame() {

@@ -104,6 +104,16 @@ describe('the size of the text', () => {
     expect(manifest).toMatch(/android:configChanges="[^"]*fontScale/)
   })
 })
+describe('when the first screen can be used', () => {
+  test('the page says so once the shell is painted, and the activity tells the phone, once', () => {
+    const trace = read(SOURCE, 'lib', 'platform', 'src', 'trace.ts')
+    expect(trace).toContain("if (step === 'shell painted') method('drawn')?.()")
+    expect(read(SOURCE, 'main.ts')).toContain("markPainted('shell painted')")
+    const told = /fun drawn\(\) \{[\s\S]*?\n {4}\}/.exec(activity)?.[0] ?? ''
+    expect(told).toContain('if (!drawn) {')
+    expect(told).toContain('reportFullyDrawn()')
+  })
+})
 describe('the press that started the app', () => {
   test('is not read again when the activity comes back', () => {
     const created = /override fun onCreate\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
@@ -219,7 +229,7 @@ describe('the lock screen widget', () => {
 describe('the bridge the page talks over', () => {
   const kotlin = [...activity.matchAll(/@JavascriptInterface\s+fun\s+(\w+)/g)].map((one) => one[1])
   const typed = [...bridge.matchAll(/^ {2}(\w+)\(/gm)].map((one) => one[1])
-  const HARMLESS = ['insets', 'askForTheFrame', 'bars', 'dictates', 'exactAlarms', 'askExactAlarms']
+  const HARMLESS = ['insets', 'askForTheFrame', 'bars', 'dictates', 'exactAlarms', 'askExactAlarms', 'drawn']
   const GUARDED = kotlin.filter((name) => name !== undefined && !HARMLESS.includes(name))
   test('wants the word for everything but how the window looks', () => {
     expect(GUARDED).toEqual(expect.arrayContaining(['handed', 'shared', 'sharedBytes', 'sharedDone', 'widgets']))

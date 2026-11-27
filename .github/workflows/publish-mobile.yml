@@ -207,6 +207,15 @@ jobs:
           if-no-files-found: error
           path: out/*.apk
 
+  gates:
+    if: ${{ github.ref == 'refs/heads/unstable' && github.event_name == 'workflow_dispatch' && inputs.platforms == 'all' && inputs.apps == 'all' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/phone.yml
+    with:
+      app: all
+      night: true
+
   ios:
     needs: version
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' ios ') }}
