@@ -668,6 +668,9 @@
           {/if}
 
           {#if id === 'tree'}
+            {#await import('./SyncNotice.svelte') then notice}
+              <notice.default />
+            {/await}
             {#if listing}
               <Bookmarks onsearch={runBookmarked} nameOf={headingName} />
 
