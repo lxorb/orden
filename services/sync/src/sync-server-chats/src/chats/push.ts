@@ -21,7 +21,8 @@ const OWED = `select t.id, t.user_id, t.kind, t.token, t.keys, t.zone, t.app,
        r.notify as notify, r.muted_until as muted_until
   from push_targets t
   left join chat_reads r on r.chat_id = ?1 and r.who = t.user_id
- where t.app = 'chat' and t.user_id in (select value from json_each(?2)) and ${liveTarget('?3')}`
+ where t.app = 'chat' and t.user_id in (select value from json_each(?2)) and ${liveTarget('?3')}
+   and not exists (select 1 from chat_blocks b where b.user_id = t.user_id and b.blocked = ?4)`
 function reasonFor(posted: Posted, id: string, notify: string | null): ChatPushReason | null {
   if (notify === 'nothing') return null
   if (posted.everyone || posted.named.some((who) => who === `user:${id}`)) return 'mention'
@@ -45,7 +46,7 @@ export async function pushPost(env: Env, posted: Posted, now: number): Promise<n
     .filter((one) => !one.guest && one.id !== author && !posted.open.has(one.id))
     .map((one) => one.id)
   if (!owed.length) return 0
-  const { results } = await env.DB.prepare(OWED).bind(posted.chat, JSON.stringify(owed), now).all<Row>()
+  const { results } = await env.DB.prepare(OWED).bind(posted.chat, JSON.stringify(owed), now, logged.author).all<Row>()
   if (!results.length) return 0
   const text = pushText(logged.body)
   const name = await nameOf(env, logged.author)

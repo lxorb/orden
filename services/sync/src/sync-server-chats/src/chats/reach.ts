@@ -110,8 +110,21 @@ people as (
     from c join guest_members g on g.space_id = c.space_id
                                and (g.item = '' or g.item = c.file_id) and g.joined_at is not null
 )
-select id, guest, max(rank) as rank from people group by id, guest`
-export async function reaching(env: Env, chat: string): Promise<{ id: string; guest: boolean }[]> {
-  const { results } = await env.DB.prepare(PEOPLE).bind(chat).all<{ id: string; guest: number }>()
-  return results.map((one) => ({ id: one.id, guest: one.guest === 1 }))
+select id, guest, max(rank) as rank,
+       (select json_group_array(b.blocked) from chat_blocks b where guest = 0 and b.user_id = people.id) as blocked
+  from people group by id, guest`
+export interface Reacher {
+  id: string
+  guest: boolean
+  blocked: readonly string[]
+}
+export async function reaching(env: Env, chat: string): Promise<Reacher[]> {
+  const { results } = await env.DB.prepare(PEOPLE)
+    .bind(chat)
+    .all<{ id: string; guest: number; blocked: string | null }>()
+  return results.map((one) => ({
+    id: one.id,
+    guest: one.guest === 1,
+    blocked: one.blocked ? (JSON.parse(one.blocked) as string[]) : [],
+  }))
 }
