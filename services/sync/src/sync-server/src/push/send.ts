@@ -5,6 +5,8 @@ import { sendWebPush, type SubscriptionKeys } from './webpush'
 
 export type Delivery = 'sent' | 'gone' | 'failed' | 'busy' | 'off'
 export type TargetKind = 'webpush' | 'fcm' | 'apns'
+export const PUSH_APPS = ['orden', 'notes', 'track', 'todo', 'chat'] as const
+type PushApp = (typeof PUSH_APPS)[number]
 export interface Target {
   id: string
   user_id: string
@@ -12,6 +14,7 @@ export interface Target {
   token: string
   keys: string | null
   zone: string | null
+  app: PushApp
 }
 export interface Message {
   kind: 'reminder' | 'chat'
@@ -29,6 +32,9 @@ function keysOf(target: Target): SubscriptionKeys | null {
   } catch {
     return null
   }
+}
+function apnsTopic(env: Env, app: PushApp): string | undefined {
+  return app === 'chat' ? env.APNS_TOPIC_CHAT : env.APNS_TOPIC
 }
 export function configured(env: Env) {
   return {
@@ -70,21 +76,33 @@ export async function push(
       }
     } else if (target.kind === 'fcm') {
       if (env.FCM_SERVICE_ACCOUNT) {
-        delivery = await sendFcm(target.token, data, env.FCM_SERVICE_ACCOUNT, { now, fetch: send })
+        delivery = await sendFcm(target.token, data, env.FCM_SERVICE_ACCOUNT, {
+          now,
+          fetch: send,
+          ...(env.FCM_ORIGIN ? { origin: env.FCM_ORIGIN } : {}),
+        })
       }
-    } else if (env.APNS_KEY && env.APNS_KEY_ID && env.APNS_TEAM_ID && env.APNS_TOPIC) {
-      delivery = await sendApns(
-        target.token,
-        { title: message.title, body: message.body, id: message.id },
-        {
-          key: env.APNS_KEY,
-          keyId: env.APNS_KEY_ID,
-          teamId: env.APNS_TEAM_ID,
-          topic: env.APNS_TOPIC,
-          sandbox: env.APNS_SANDBOX === 'true',
-        },
-        { now, fetch: send },
-      )
+    } else {
+      const topic = apnsTopic(env, target.app)
+      if (env.APNS_KEY && env.APNS_KEY_ID && env.APNS_TEAM_ID && topic) {
+        delivery = await sendApns(
+          target.token,
+          {
+            title: message.title,
+            body: message.body,
+            id: message.id,
+            ...(message.kind === 'chat' ? { category: 'orden.chat', fields: message.fields } : {}),
+          },
+          {
+            key: env.APNS_KEY,
+            keyId: env.APNS_KEY_ID,
+            teamId: env.APNS_TEAM_ID,
+            topic,
+            sandbox: env.APNS_SANDBOX === 'true',
+          },
+          { now, fetch: send },
+        )
+      }
     }
   } catch {
     delivery = 'busy'

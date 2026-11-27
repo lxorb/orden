@@ -32,6 +32,7 @@ import {
   setMeta,
 } from './placing'
 import { askChat } from './ask'
+import { pushPost } from './push'
 import { hubIdOf, reachAs, reachByToken, reaching } from './reach'
 import { SCHEMA } from './schema'
 export type ChatAsk =
@@ -358,7 +359,14 @@ export class ChatLog implements DurableObject {
     } catch (error) {
       note(`chat ${this.chatId()} files`, error, null)
     }
-    if (logged.kind === 'post') await this.poke(logged, called)
+    if (logged.kind === 'post') {
+      await this.poke(logged, called)
+      this.ctx.waitUntil(
+        this.push(logged, effects).catch((error: unknown) => {
+          note(`chat ${this.chatId()} push`, error, null)
+        }),
+      )
+    }
     await this.plan()
   }
   private async holds(person: Person, event: Event): Promise<boolean> {
@@ -744,6 +752,25 @@ export class ChatLog implements DurableObject {
     const list = chat ? await reaching(this.env, chat) : []
     this.reachers = { at: now, list }
     return list
+  }
+  private async push(logged: Logged & Post, effects: Effects): Promise<void> {
+    const chat = this.chatId()
+    const space = readMeta(this.sql, 'space')
+    if (!chat || !space) return
+    await pushPost(
+      this.env,
+      {
+        chat,
+        space,
+        logged,
+        named: effects.called.filter(isWho),
+        everyone: effects.called.includes('everyone'),
+        answered: effects.answered,
+        reachers: await this.reachersNow(),
+        open: new Set(this.here().map(hubIdOf)),
+      },
+      Date.now(),
+    )
   }
   private async poke(logged: Logged, called: readonly Who[]): Promise<void> {
     let reachers: { id: string; guest: boolean }[]

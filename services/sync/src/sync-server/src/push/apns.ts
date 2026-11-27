@@ -10,7 +10,7 @@ export interface ApnsConfig {
 }
 export async function sendApns(
   token: string,
-  alert: { title: string; body: string; id: string },
+  alert: { title: string; body: string; id: string; category?: string; fields?: Record<string, string> },
   config: ApnsConfig,
   options: { now: number; fetch?: typeof fetch },
 ): Promise<Delivery> {
@@ -31,10 +31,11 @@ export async function sendApns(
       'content-type': 'application/json',
     },
     body: JSON.stringify({
+      ...alert.fields,
       aps: {
         alert: { title: alert.title, body: alert.body },
         sound: 'default',
-        category: 'orden.reminder',
+        category: alert.category ?? 'orden.reminder',
       },
       id: alert.id,
     }),

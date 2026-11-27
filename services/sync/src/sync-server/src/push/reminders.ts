@@ -59,8 +59,8 @@ export async function sendDue(
     if (!theirs) {
       theirs = (
         await env.DB.prepare(
-          `select t.id, t.user_id, t.kind, t.token, t.keys, t.zone from push_targets t
-            where t.user_id = ?1 and ${liveTarget('?2')}`,
+          `select t.id, t.user_id, t.kind, t.token, t.keys, t.zone, t.app from push_targets t
+            where t.user_id = ?1 and t.app = 'orden' and ${liveTarget('?2')}`,
         )
           .bind(one.user_id, Date.now())
           .all<Target>()

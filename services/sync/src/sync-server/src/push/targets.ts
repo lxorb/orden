@@ -3,7 +3,7 @@ import { readBody } from '../body'
 import { tokenIn } from '../said'
 import { newId, now, sha256 } from '../crypto'
 import type { Env, Variables } from '../types'
-import { configured, type TargetKind } from './send'
+import { configured, PUSH_APPS, type TargetKind } from './send'
 
 const KINDS: readonly TargetKind[] = ['webpush', 'fcm', 'apns']
 const LONGEST_TOKEN = 2048
@@ -30,6 +30,7 @@ push.post('/targets', async (context) => {
   const auth = body.text('auth', LONGEST_KEY)
   const zone = body.text('zone', LONGEST_ZONE)
   const device = body.text('device', 100)
+  const named = body.text('app', 10)
   if (body.problem) return context.json({ error: body.problem }, 400)
   const known = KINDS.find((one) => one === kind)
   if (!known || !token) return context.json({ error: NOT_A_TARGET }, 400)
@@ -37,19 +38,21 @@ push.post('/targets', async (context) => {
     return context.json({ error: NOT_A_TARGET }, 400)
   }
   if (zone !== undefined && !isZone(zone)) return context.json({ error: NOT_A_TARGET }, 400)
+  const app = PUSH_APPS.find((one) => one === (named ?? 'orden'))
+  if (!app) return context.json({ error: NOT_A_TARGET }, 400)
   const keys = known === 'webpush' ? JSON.stringify({ p256dh, auth }) : null
   const session = await sha256(tokenIn(context.req.header('authorization')) ?? '')
   const id = newId()
   await context.env.DB.prepare(
     `insert into push_targets (id, user_id, device_id, kind, token, keys, zone, created_at,
-                               session_hash)
-     values (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               session_hash, app)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      on conflict (user_id, token) do update
        set kind = excluded.kind, keys = excluded.keys, zone = excluded.zone,
            device_id = excluded.device_id, created_at = excluded.created_at, failed_at = null,
-           session_hash = excluded.session_hash`,
+           session_hash = excluded.session_hash, app = excluded.app`,
   )
-    .bind(id, user.id, device ?? null, known, token, keys, zone ?? null, now(), session)
+    .bind(id, user.id, device ?? null, known, token, keys, zone ?? null, now(), session, app)
     .run()
   await context.env.DB.prepare(
     `delete from push_targets where user_id = ?1 and id not in
