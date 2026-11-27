@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LogoTile from './LogoTile.svelte'
+  import { LogoTile } from '../../sign-in/src/api'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 

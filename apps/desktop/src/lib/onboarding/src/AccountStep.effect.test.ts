@@ -34,14 +34,14 @@ describe('the log in during setup', () => {
   })
 })
 describe('a code taken in', () => {
-  function entering(answer: () => Promise<boolean>) {
+  function entering(answer: () => Promise<boolean>, props: { phone?: boolean } = {}) {
     setup.begin(false)
     account.email = 'me@example.com'
     account.step = 'code'
     account.code = answer
     const target = document.createElement('div')
     document.body.append(target)
-    const made = mount(AccountStep, { target })
+    const made = mount(AccountStep, { target, props })
     close = () => void unmount(made)
     flushSync()
     const first = target.querySelector<HTMLInputElement>('.digits input')!
@@ -61,6 +61,19 @@ describe('a code taken in', () => {
       close = undefined
       await elapse(2000)
       expect(setup.step).toBe(at)
+    } finally {
+      account.code = code
+      vi.useRealTimers()
+    }
+  })
+  test('on a phone app opens the app, with none of the steps a computer goes on to (#2286)', async () => {
+    vi.useFakeTimers()
+    const code = account.code.bind(account)
+    try {
+      entering(() => Promise.resolve(true), { phone: true })
+      await elapse(2000)
+      expect(setup.showing).toBe(false)
+      expect(localStorage.getItem('orden:setup')).toBe('"done"')
     } finally {
       account.code = code
       vi.useRealTimers()

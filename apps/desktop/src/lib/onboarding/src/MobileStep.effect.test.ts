@@ -18,14 +18,18 @@ afterEach(() => {
   viewport.device = 'desktop'
   localStorage.clear()
 })
-function opened(device: 'phone' | 'tablet' | 'desktop', name: string): HTMLElement {
+function opened(
+  device: 'phone' | 'tablet' | 'desktop',
+  name: string,
+  app: 'orden' | 'notes' | 'todo' | 'chat' | 'track' = 'orden',
+): HTMLElement {
   viewport.device = device
   machine.name = name
   localStorage.clear()
   setup.begin(false)
   const target = document.createElement('div')
   document.body.append(target)
-  const made = mount(Setup, { target, intro: false })
+  const made = mount(Setup, { target, intro: false, props: { app } })
   close = () => void unmount(made)
   flushSync()
   return target
@@ -58,5 +62,35 @@ describe('the setup on a mobile device', () => {
     const target = opened('desktop', 'Mac desktop')
     expect(target.querySelector('h1')?.textContent).toBe('Log in or sign up')
     expect(words(target)).not.toContain('not available on mobile')
+  })
+})
+describe('the first screen of a phone app (#2286)', () => {
+  test('is the log in, with no notice about a computer', () => {
+    for (const app of ['notes', 'todo', 'chat', 'track'] as const) {
+      const target = opened('phone', 'Android phone', app)
+      expect(target.querySelector('h1')?.textContent, app).toBe(`Orden ${app[0]?.toUpperCase() ?? ''}${app.slice(1)}`)
+      expect(words(target), app).toContain('Log in or sign up')
+      expect(words(target), app).not.toContain('not available on mobile')
+      expect(target.querySelector('input[type="email"]'), app).not.toBeNull()
+      expect(target.querySelector('.setup')?.getAttribute('data-step'), app).toBe('account')
+      close?.()
+      close = undefined
+    }
+  })
+  test('lets Orden Notes go on without an account, straight into the app', () => {
+    const target = opened('phone', 'Android phone', 'notes')
+    button(target, 'Use without an account')?.click()
+    flushSync()
+    expect(setup.showing).toBe(false)
+    expect(localStorage.getItem('orden:setup')).toBe('"done"')
+  })
+  test('asks the apps that need the account for it, with no way round', () => {
+    for (const app of ['todo', 'chat', 'track'] as const) {
+      const target = opened('phone', 'iPhone', app)
+      expect(button(target, 'Use without an account'), app).toBeUndefined()
+      expect(button(target, 'Continue'), app).toBeDefined()
+      close?.()
+      close = undefined
+    }
   })
 })

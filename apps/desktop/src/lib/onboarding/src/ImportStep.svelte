@@ -2,7 +2,7 @@
   import { bringing } from './bring'
   import { BROWSERS } from './catalog'
   import Logo from './Logo.svelte'
-  import LogoTile from './LogoTile.svelte'
+  import { LogoTile } from '../../sign-in/src/api'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 

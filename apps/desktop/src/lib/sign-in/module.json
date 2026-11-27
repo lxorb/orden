@@ -1,0 +1,5 @@
+{
+  "name": "sign-in",
+  "layer": "shell",
+  "dependsOn": ["contracts", "accounts", "ui-kit"]
+}
