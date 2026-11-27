@@ -68,9 +68,15 @@ export function steadyDb(db: D1Database): D1Database {
   steadyOnes.add(held)
   return held
 }
+function notesOf(env: Env): R2Bucket {
+  if (env.NOTES_HOME !== 'eu') return env.NOTES
+  if (!env.NOTES_EU) throw new Error('NOTES_HOME is eu, but no NOTES_EU bucket is bound')
+  return env.NOTES_EU
+}
 export function steadyEnv(env: Env): Env {
   return new Proxy(env, {
     get(target, key) {
+      if (key === 'NOTES') return notesOf(target)
       const value: unknown = Reflect.get(target, key, target)
       return key === 'DB' && typeof value === 'object' && value !== null ? steadyDb(value as D1Database) : value
     },

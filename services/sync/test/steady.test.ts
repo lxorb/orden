@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import { steadyDb } from '../src/sync-server/src/steady'
+import { steadyDb, steadyEnv } from '../src/sync-server/src/steady'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
 let env: TestEnv | null = null
@@ -68,5 +68,61 @@ describe('the database a request reads', () => {
     const stuck = failing(10, 'D1_ERROR: database is locked: SQLITE_BUSY')
     await expect(stuck.db.prepare('select 1').all()).rejects.toThrow('SQLITE_BUSY')
     expect(stuck.asked).toHaveLength(4)
+  })
+})
+describe('the bucket notes and files are kept in', () => {
+  let eu: TestEnv | null = null
+  afterEach(() => {
+    eu?.close()
+    eu = null
+  })
+  async function written(home: string | undefined): Promise<{ old: string[]; moved: string[]; read: number }> {
+    eu = testEnv()
+    env = testEnv({ NOTES_EU: eu.NOTES, ...(home === undefined ? {} : { NOTES_HOME: home }) })
+    const token = await signIn(env, 'moving@example.com')
+    const before = { old: env.keys().length, moved: eu.keys().length }
+    const space = (await call(env, '/v1/spaces', { token, body: { name: 'Moved' } })).json.space.id
+    const made = await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'kept.md', content: 'kept\n' } })
+    const read = await call(env, `/v1/notes/${made.json.note.id}`, { token })
+    return {
+      old: env.keys().slice(before.old),
+      moved: eu.keys().slice(before.moved),
+      read: read.status,
+    }
+  }
+  test.each([undefined, 'enam', 'EU', ''])('is the first one while NOTES_HOME says %s', async (home) => {
+    const { old, moved, read } = await written(home)
+    expect(old.length).toBeGreaterThan(0)
+    expect(moved).toEqual([])
+    expect(read).toBe(200)
+  })
+  test('is the EU one once NOTES_HOME says eu, for every write and read, and the first is left alone', async () => {
+    const { old, moved, read } = await written('eu')
+    expect(moved.length).toBeGreaterThan(0)
+    expect(old).toEqual([])
+    expect(read).toBe(200)
+  })
+  test('is refused aloud when NOTES_HOME says eu and no EU bucket is bound, rather than written to the old one', () => {
+    env = testEnv({ NOTES_HOME: 'eu' })
+    const held = steadyEnv(env)
+    expect(() => held.NOTES).toThrow('no NOTES_EU bucket is bound')
+    expect(held.DB).toBeDefined()
+  })
+  test('every Durable Object and the nightly job read their bucket the same way', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs')
+    const { fileURLToPath } = await import('node:url')
+    const root = fileURLToPath(new URL('../src/', import.meta.url))
+    const under = (folder: string): string[] =>
+      readdirSync(root + folder).flatMap((name) =>
+        statSync(root + folder + name).isDirectory() ? under(`${folder}${name}/`) : [folder + name],
+      )
+    const files = under('').filter((name) => name.endsWith('.ts') && !name.includes('/test/'))
+    const objects = files.filter((name) => /implements DurableObject\b/.test(readFileSync(root + name, 'utf8')))
+    expect(objects.length).toBeGreaterThanOrEqual(5)
+    const bare = objects.filter((name) => !readFileSync(root + name, 'utf8').includes('this.env = steadyEnv(env)'))
+    expect(bare).toEqual([])
+    const index = readFileSync(`${root}index.ts`, 'utf8')
+    expect(index).toContain('const env = steadyEnv(given)')
+    expect(index).toContain('app.fetch(request, steadyEnv(env), context)')
   })
 })

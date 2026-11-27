@@ -43,6 +43,7 @@
 
   "r2_buckets": [
     { "binding": "NOTES", "bucket_name": "orden-notes" },
+    { "binding": "NOTES_EU", "bucket_name": "orden-notes-eu", "jurisdiction": "eu" },
     { "binding": "HOMES", "bucket_name": "orden-homes", "jurisdiction": "eu" },
   ],
 
@@ -58,6 +59,7 @@
   "send_email": [{ "name": "EMAIL" }],
 
   "vars": {
+    "NOTES_HOME": "enam",
     "BLOG_ROOT": "orden.so",
     "BLOG_CNAME_TARGET": "cname.orden.so",
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
