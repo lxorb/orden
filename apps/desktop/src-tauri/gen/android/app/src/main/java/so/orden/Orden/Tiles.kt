@@ -51,3 +51,7 @@ class SearchTile : OrdenTile() {
 class RecordTile : OrdenTile() {
   override val command = "record"
 }
+
+class AddTodoTile : OrdenTile() {
+  override val command = "quick-add"
+}

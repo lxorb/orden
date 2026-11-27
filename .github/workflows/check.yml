@@ -399,7 +399,27 @@ jobs:
 
       - name: The Kotlin's unit tests
         working-directory: apps/desktop/src-tauri/gen/android
-        run: ./gradlew :app:testUniversalReleaseUnitTest --console=plain
+        run: |
+          ./gradlew :app:testUniversalReleaseUnitTest --console=plain
+          grep -h -o '<testsuite name="[^"]*" tests="[0-9]*"' app/build/test-results/testUniversalReleaseUnitTest/*.xml
+          for suite in AlarmListTest ChatPushesTest TrackTimerTest TextSizeTest; do
+            ls "app/build/test-results/testUniversalReleaseUnitTest/TEST-so.orden.Orden.$suite.xml"
+          done
+
+      - name: Each app's manifest carries its own tiles, widgets and permissions, and no other app's
+        working-directory: apps/desktop/src-tauri/gen/android
+        run: |
+          wrong=0
+          for app in orden notes track todo chat; do
+            ./gradlew :app:processUniversalReleaseManifest "-PordenApp=$app" --console=plain -q
+            merged=$(find app/build/intermediates/merged_manifests/universalRelease -name AndroidManifest.xml | head -1)
+            (cd ../../../../.. && node scripts/phone-manifest.mjs "$app" "apps/desktop/src-tauri/gen/android/$merged") || wrong=1
+          done
+          exit "$wrong"
+
+      - name: Orden Chat's push compiles, with no Firebase project
+        working-directory: apps/desktop/src-tauri/gen/android
+        run: ./gradlew :app:compileUniversalReleaseKotlin -PordenApp=chat --console=plain
 
       - name: What R8 could not resolve
         if: always()

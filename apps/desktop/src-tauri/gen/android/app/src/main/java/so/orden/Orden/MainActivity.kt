@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.hardware.biometrics.BiometricManager
 import android.hardware.biometrics.BiometricPrompt
@@ -35,6 +36,10 @@ class MainActivity : TauriActivity() {
     const val EXTRA_TICK = "so.orden.Orden.tick"
     const val EXTRA_TICK_SPACE = "so.orden.Orden.tick.space"
 
+    const val EXTRA_LINK = "so.orden.Orden.link"
+
+    const val EXTRA_TRACK = "so.orden.Orden.track"
+
     private const val EXTRA_READ = "so.orden.Orden.read"
 
     private const val EXTRA_SEAL = "so.orden.Orden.seal"
@@ -61,6 +66,10 @@ class MainActivity : TauriActivity() {
 
     @Volatile private var live: java.lang.ref.WeakReference<MainActivity>? = null
 
+    fun told(script: String) {
+      live?.get()?.tell(script)
+    }
+
   }
 
   override val handleBackNavigation = true
@@ -71,6 +80,8 @@ class MainActivity : TauriActivity() {
   @Volatile private var opening = ""
   @Volatile private var ticking = ""
   @Volatile private var tickingIn = ""
+  @Volatile private var link = ""
+  @Volatile private var reply = ""
 
   private var page: WebView? = null
 
@@ -89,12 +100,18 @@ class MainActivity : TauriActivity() {
     val fresh = savedInstanceState == null &&
       ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0
     if (fresh) read(intent)
+    PushSource.start(this)
   }
 
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
     if (read(intent)) tell("window.__ordenHanded?.()")
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    page?.settings?.textZoom = TextSize.zoom(newConfig.fontScale, BuildConfig.ORDEN_TEXT_FOLLOWS)
   }
 
   override fun onDestroy() {
@@ -117,19 +134,29 @@ class MainActivity : TauriActivity() {
       tickingIn = intent.getStringExtra(EXTRA_TICK_SPACE) ?: ""
     }
 
+    val linked = if (ours) intent.getStringExtra(EXTRA_LINK) ?: "" else ""
+    if (linked.isNotEmpty()) {
+      link = linked
+      reply = ChatNotes.replied(intent)
+      ChatNotes.clear(this, ChatPushes.chatOf(linked))
+    }
+
     if (ours) {
       Reminders.carried(intent)?.let {
         Reminders.pressed(this, "open", it)
       }
+      intent.getStringExtra(EXTRA_TRACK)?.let { Track.pressed(this, it) }
     }
 
     val shared = Shared.take(this, intent)
-    return shared || asked.isNotEmpty() || note.isNotEmpty() || tick.isNotEmpty()
+    return shared || asked.isNotEmpty() || note.isNotEmpty() || tick.isNotEmpty() || linked.isNotEmpty()
   }
 
   override fun onWebViewCreate(webView: WebView) {
     page = webView
     webView.addJavascriptInterface(Bridge(), "__ORDEN_SYSTEM__")
+    webView.settings.textZoom =
+      TextSize.zoom(resources.configuration.fontScale, BuildConfig.ORDEN_TEXT_FOLLOWS)
 
     ViewCompat.setOnApplyWindowInsetsListener(webView) { _: View, insets: WindowInsetsCompat ->
       val keys = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
@@ -269,6 +296,10 @@ class MainActivity : TauriActivity() {
       json.put("open", opening)
       json.put("tick", ticking)
       json.put("tickSpace", tickingIn)
+      json.put("link", link)
+      json.put("reply", reply)
+      link = ""
+      reply = ""
       command = ""
       opening = ""
       ticking = ""
@@ -322,5 +353,35 @@ class MainActivity : TauriActivity() {
     fun askExactAlarms() {
       Reminders.openExactSwitch(this@MainActivity)
     }
+
+    @JavascriptInterface
+    fun pushToken(said: String): String {
+      if (said != frame) return ""
+      Showing.askOnce(this@MainActivity)
+      return ChatNotes.token(this@MainActivity)
+    }
+
+    @JavascriptInterface
+    fun pushClear(said: String, chat: String) {
+      if (said == frame) ChatNotes.clear(this@MainActivity, chat)
+    }
+
+    @JavascriptInterface
+    fun pushQuiet(said: String, json: String) {
+      if (said == frame) ChatNotes.quiet(this@MainActivity, json)
+    }
+
+    @JavascriptInterface
+    fun pushTaken(said: String): String =
+      if (said == frame) ChatNotes.taken(this@MainActivity) else "[]"
+
+    @JavascriptInterface
+    fun trackState(said: String, json: String) {
+      if (said == frame) Track.set(this@MainActivity, json)
+    }
+
+    @JavascriptInterface
+    fun trackTaken(said: String): String =
+      if (said == frame) Track.taken(this@MainActivity) else "[]"
   }
 }

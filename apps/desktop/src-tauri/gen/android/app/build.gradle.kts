@@ -29,6 +29,8 @@ val ordenApps = mapOf(
     "track" to Triple("so.orden.track", "Orden Track", "orden-track"),
 )
 val (ordenId, ordenLabel, ordenScheme) = ordenApps[ordenApp] ?: error("ordenApp=$ordenApp is not an Orden app")
+val ordenPush = ordenApp == "chat"
+val ordenFirebase = listOf("APP_ID", "API_KEY", "PROJECT_ID", "SENDER_ID")
 
 android {
     compileSdk = 36
@@ -39,6 +41,11 @@ android {
         applicationId = ordenId
         resValue("string", "app_name", ordenLabel)
         resValue("string", "main_activity_title", ordenLabel)
+        buildConfigField("boolean", "ORDEN_TEXT_FOLLOWS", "${ordenApp != "orden"}")
+        for (name in ordenFirebase) {
+            val held = if (ordenPush) System.getenv("ORDEN_FIREBASE_$name") ?: "" else ""
+            buildConfigField("String", "ORDEN_FIREBASE_$name", "\"${held.replace("\\", "").replace("\"", "")}\"")
+        }
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
@@ -77,6 +84,9 @@ android {
         }
     }
     sourceSets {
+        getByName("main") {
+            java.srcDir("src/${if (ordenPush) "chat" else "nopush"}/java")
+        }
         for (kind in listOf("debug", "release")) {
             getByName(kind) {
                 manifest.srcFile("src/$ordenApp/AndroidManifest.xml")
@@ -103,7 +113,9 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
     implementation("androidx.security:security-crypto:1.1.0")
+    if (ordenPush) implementation("com.google.firebase:firebase-messaging:24.1.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
 }

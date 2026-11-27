@@ -1,2 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <activity android:name="so.orden.Orden.MainActivity">
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter tools:node="remove">
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+        <service android:name="so.orden.Orden.NewNoteTile" tools:node="remove" />
+        <service android:name="so.orden.Orden.SearchTile" tools:node="remove" />
+        <service android:name="so.orden.Orden.RecordTile" tools:node="remove" />
+        <receiver android:name="so.orden.Orden.NotesWidget" tools:node="remove" />
+
+        <service
+            android:name="so.orden.Orden.AddTodoTile"
+            android:exported="true"
+            android:icon="@drawable/ic_new"
+            android:label="@string/tile_add_todo"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

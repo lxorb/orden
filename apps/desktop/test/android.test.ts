@@ -79,6 +79,31 @@ describe('what another app may share with Orden', () => {
     expect(activity).toContain('Shared.take(this, intent)')
   })
 })
+describe('what the phone may change under the app', () => {
+  test('none of it starts the activity again, so the open note and the text being typed stay', () => {
+    const handled = /android:configChanges="([^"]+)"/.exec(manifest)?.[1]?.split('|') ?? []
+    for (const change of ['orientation', 'screenSize', 'smallestScreenSize', 'screenLayout', 'uiMode']) {
+      expect(handled, change).toContain(change)
+    }
+    for (const change of ['keyboard', 'keyboardHidden', 'locale', 'fontScale', 'density']) {
+      expect(handled, change).toContain(change)
+    }
+  })
+})
+describe('the size of the text', () => {
+  const gradle = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'build.gradle.kts')
+  test('follows the phone in the four apps and stays as it was in the whole Orden, decided in one place', () => {
+    expect(gradle).toContain('buildConfigField("boolean", "ORDEN_TEXT_FOLLOWS", "${ordenApp != "orden"}")')
+    expect(activity.match(/BuildConfig\.ORDEN_TEXT_FOLLOWS/g)).toHaveLength(2)
+  })
+  test('is set when the page is made and again when the phone changes it, with no restart', () => {
+    const made = /override fun onWebViewCreate\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    expect(made).toContain('TextSize.zoom(resources.configuration.fontScale, BuildConfig.ORDEN_TEXT_FOLLOWS)')
+    const changed = /override fun onConfigurationChanged\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    expect(changed).toContain('page?.settings?.textZoom = TextSize.zoom(newConfig.fontScale')
+    expect(manifest).toMatch(/android:configChanges="[^"]*fontScale/)
+  })
+})
 describe('the press that started the app', () => {
   test('is not read again when the activity comes back', () => {
     const created = /override fun onCreate\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
@@ -121,8 +146,8 @@ describe('the quick settings tiles', () => {
   })
   test('carry command ids the app has, and every one of them is on', () => {
     const ids = [...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1])
-    expect(ids).toEqual(['new', 'search-space', 'record'])
-    for (const id of ids) expect(commands, id).toContain(`id: '${id}'`)
+    expect(ids).toEqual(['new', 'search-space', 'record', 'quick-add'])
+    for (const id of ids) expect(commands, id).toMatch(new RegExp(`id: '${id}'|keyed\\('${id}',`))
     for (const [, name, body = ''] of declared) {
       expect(body.includes('android:enabled="false"'), name).toBe(false)
     }
