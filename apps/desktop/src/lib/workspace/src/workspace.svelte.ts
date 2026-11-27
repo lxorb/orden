@@ -291,8 +291,9 @@ function papers() {
   return paperIndex
 }
 const unfetched = () => undefined
+const readOnly = (tab: Tab) => tab.note.reads && tab.path === null && tab.note.shared === null
 function worthReopening(tab: Tab): boolean {
-  return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
+  return !tab.inPrivate && !tab.nowhere && !readOnly(tab) && (!isDraft(tab.note) || hasWords(tab.note))
 }
 export const tabOverview = $state<{ open: boolean; out: string[]; lifted: string[] }>({
   open: false,
@@ -1124,7 +1125,7 @@ class Workspace {
     this.flush()
     return {
       frame: frameDraft(frame, (pane) => {
-        const tabs = this.tabsIn(pane.id).filter((tab) => !tab.inPrivate)
+        const tabs = this.tabsIn(pane.id).filter((tab) => !tab.inPrivate && !readOnly(tab))
         const ids = tabs.map((tab) => tab.id)
         const shown = pane.activeTabId ?? this.panes.lastOf(ids)
         return {
@@ -1269,6 +1270,20 @@ class Workspace {
       this.showNote()
       this.dropScaffolding(tab)
     }
+    this.persist()
+    return tab
+  }
+  openReadOnly(name: string, text: string): Tab {
+    const held = this.tabs.find((one) => readOnly(one) && one.name === name)
+    if (held) {
+      this.activate(held.id)
+      return held
+    }
+    const note = this.document({ kind: 'note', path: null, name, text, dirty: false })
+    note.reads = true
+    const tab = this.add(new Tab(note, this.panes.focusedId))
+    tab.reading = true
+    this.showNote()
     this.persist()
     return tab
   }
@@ -1921,7 +1936,7 @@ class Workspace {
   }
   private dropScaffolding(kept: Tab) {
     for (const other of this.tabsIn(kept.paneId)) {
-      if (other.id === kept.id || other.kind !== 'note' || other.path !== null || other.dirty) {
+      if (other.id === kept.id || other.kind !== 'note' || other.path !== null || other.dirty || other.note.reads) {
         continue
       }
       this.close(other.id)

@@ -83,7 +83,7 @@ export class Saving {
     this.ws.scheduleSession()
   }
   owed(note: NoteDoc) {
-    if (note.shared !== null || !holdsWords(note.kind) || isDraft(note)) return
+    if (note.shared !== null || note.reads || !holdsWords(note.kind) || isDraft(note)) return
     this.waiting.add(note)
     this.soon()
   }
