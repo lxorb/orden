@@ -9,12 +9,15 @@ import {
   matching,
   offersApiKey,
   phoneBringing,
+  phoneFirst,
+  phoneName,
   type Reach,
   shows,
   type Step,
   stepAfter,
   STEPS,
   typedName,
+  worksAlone,
 } from './flow'
 import { keptProgress } from './kept'
 
@@ -234,5 +237,25 @@ describe('what the setup keeps', () => {
       step: 'ai',
       answers: { browser: null, notes: null, code: null },
     })
+  })
+})
+describe('the first screen of a phone app (#2286)', () => {
+  test('is the log in for the apps that hold one part of Orden, and the notice for the whole Orden', () => {
+    expect(phoneFirst('orden')).toBe('notice')
+    for (const app of ['notes', 'todo', 'chat', 'track'] as const) expect(phoneFirst(app), app).toBe('sign-in')
+  })
+  test('is headed by the name of its app', () => {
+    expect(phoneName('orden')).toBeNull()
+    expect((['notes', 'todo', 'chat', 'track'] as const).map(phoneName)).toEqual([
+      'Orden Notes',
+      'Orden Todo',
+      'Orden Chat',
+      'Orden Track',
+    ])
+  })
+  test('offers going on without an account only where notes can live on the phone alone', () => {
+    expect(worksAlone('notes')).toBe(true)
+    expect(worksAlone('orden')).toBe(true)
+    for (const app of ['todo', 'chat', 'track'] as const) expect(worksAlone(app), app).toBe(false)
   })
 })

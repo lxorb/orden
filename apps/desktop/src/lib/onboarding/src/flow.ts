@@ -110,3 +110,20 @@ export function continuesOn(device: string, named: string): 'MacBook' | 'compute
   if (device === 'desktop') return null
   return /^(iPhone|iPad|iOS)\b/.test(named) ? 'MacBook' : 'computer'
 }
+export type PhoneFirst = 'notice' | 'sign-in'
+export function phoneFirst(app: typeof __ORDEN_APP__): PhoneFirst {
+  return app === 'orden' ? 'notice' : 'sign-in'
+}
+export function worksAlone(app: typeof __ORDEN_APP__): boolean {
+  return app === 'orden' || app === 'notes'
+}
+const NAMES: Record<typeof __ORDEN_APP__, string | null> = {
+  orden: null,
+  notes: 'Orden Notes',
+  todo: 'Orden Todo',
+  chat: 'Orden Chat',
+  track: 'Orden Track',
+}
+export function phoneName(app: typeof __ORDEN_APP__): string | null {
+  return NAMES[app]
+}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { feedback } from '../../feedback/src/api'
   import { Mascot } from '../../mascot/src/api'
-  import LogoTile from './LogoTile.svelte'
+  import { LogoTile } from '../../sign-in/src/api'
   import Screen from './Screen.svelte'
   import { setup } from './setup-state.svelte'
 
