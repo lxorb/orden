@@ -86,8 +86,7 @@ Us
 \________________________  
 Name: Emil Vinu  
 Title: Maintainer of Orden  
-Address: ________________________  
-\________________________
+Address: contributors@orden.so
 
 This work is licensed under a Creative Commons Attribution 3.0 Unported License.
 
