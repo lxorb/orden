@@ -116,12 +116,19 @@
       <p class="title">{prompt.title}</p>
 
       {#if prompt.mode === 'text'}
-        <input bind:value={prompt.value} placeholder={prompt.placeholder} spellcheck="false" use:selectAll />
+        <input
+          bind:value={prompt.value}
+          placeholder={prompt.placeholder}
+          aria-label={prompt.title}
+          spellcheck="false"
+          use:selectAll
+        />
       {:else if prompt.mode === 'find'}
         <!-- svelte-ignore a11y_autofocus -->
         <input
           bind:value={prompt.value}
           placeholder={prompt.placeholder}
+          aria-label={prompt.title}
           spellcheck="false"
           onkeydown={onFindKey}
           autofocus

@@ -242,6 +242,7 @@
             value={publish.subdomain}
             oninput={(event) => publish.typeSubdomain(event.currentTarget.value)}
             placeholder="your-name"
+            aria-label="Address at orden.so"
             spellcheck="false"
             autocapitalize="off"
           />
@@ -264,6 +265,7 @@
           class="field"
           bind:value={publish.domain}
           placeholder="notes.example.com"
+          aria-label="Your own domain"
           spellcheck="false"
           autocapitalize="off"
         />
