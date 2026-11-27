@@ -68,6 +68,12 @@ impl Line {
 }
 impl Running {
     pub fn start(launch: Launch) -> Result<Running, String> {
+        Running::start_with(launch, &[])
+    }
+    pub(crate) fn start_with(
+        launch: Launch,
+        outside: &[(&str, &std::path::Path)],
+    ) -> Result<Running, String> {
         let user = |var: &str| std::env::var(var).ok();
         let real = real_shell(&user);
         shell::prepare(&launch.dirs, &real, launch.wrapper.as_deref())
@@ -83,6 +89,7 @@ impl Running {
             .args(["serve", "--hostname", "127.0.0.1", "--port", &line.port.to_string()])
             .current_dir(&launch.dirs.root)
             .envs(env_of(&launch, &line.password, &real, user))
+            .envs(outside.iter().copied())
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
