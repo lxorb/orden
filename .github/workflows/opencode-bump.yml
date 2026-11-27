@@ -38,7 +38,7 @@ jobs:
           name: opencode
           path: |
             apps/desktop/src-tauri/opencode.json
-            apps/desktop/src-tauri/licenses/opencode.txt
+            apps/desktop/src/lib/opencode-client/src/licences.txt
             packaging/nix/opencode.json
           if-no-files-found: error
 
@@ -111,7 +111,7 @@ jobs:
           version=$(node -p "require('./apps/desktop/src-tauri/opencode.json').version")
           git config user.name lxorbs-minion
           git config user.email 43935334+lxorbs-minion@users.noreply.github.com
-          git add apps/desktop/src-tauri/opencode.json apps/desktop/src-tauri/licenses/opencode.txt packaging/nix/opencode.json
+          git add apps/desktop/src-tauri/opencode.json apps/desktop/src/lib/opencode-client/src/licences.txt packaging/nix/opencode.json
           git commit -m "chore: OpenCode $version" -m "Co-authored-by: lxorb <101118850+lxorb@users.noreply.github.com>"
           pushed=
           for _ in 1 2 3; do

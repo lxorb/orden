@@ -1013,7 +1013,7 @@ describe('the OpenCode Orden downloads on first use', () => {
     expect(read('nix', 'flake.nix')).toContain('--set ORDEN_OPENCODE_BIN ${opencodeFor pkgs}/bin/opencode')
   })
   test('has its licence and the licence of the Bun it runs on, for the pinned versions', () => {
-    const text = repo('apps', 'desktop', 'src-tauri', 'licenses', 'opencode.txt')
+    const text = repo('apps', 'desktop', 'src', 'lib', 'opencode-client', 'src', 'licences.txt')
     expect(text).toMatch(new RegExp(`^# OpenCode ${pin.version}$`, 'm'))
     expect(text).toMatch(new RegExp(`^# Bun ${pin.bun}, `, 'm'))
     expect(text).toContain('MIT License')

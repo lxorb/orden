@@ -336,6 +336,7 @@ export function generalPane(): Pane {
               ] satisfies Field[])
             : []),
           versionField(),
+          ...settingFieldsIn('general', 'Updates'),
         ],
       },
     ],

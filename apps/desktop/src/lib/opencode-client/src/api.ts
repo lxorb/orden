@@ -1,3 +1,4 @@
+import './licences'
 export type {
   Agent,
   Event,

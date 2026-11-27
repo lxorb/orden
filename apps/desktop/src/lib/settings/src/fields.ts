@@ -46,13 +46,6 @@ export type Field = Common &
         set(value: string): void
         sides: PictureSide[]
       }
-    | {
-        kind: 'value'
-        initial?: undefined
-        get(): string
-        does: string
-        press(): void
-      }
   )
 export interface Caption {
   text: string

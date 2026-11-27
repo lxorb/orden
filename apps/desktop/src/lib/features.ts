@@ -24,7 +24,7 @@ import { iconChoice } from './icon-picker/src/api'
 import { serveLinks } from './link-index/src/api'
 import { loadSearchPanel, search, searchFrom, searchSpace, showSearch } from './search/src/api'
 import { partView, reloadWhen } from './ui-kit/src/api'
-import { samePath, breathe } from './platform/src/api'
+import { samePath, breathe, isDesktop } from './platform/src/api'
 import { hiddenKinds } from './gates/src/api'
 import { loadSettingsPanel, settings } from './settings/src/api'
 import { paletteDoor } from './palette/src/api'
@@ -223,6 +223,7 @@ if (__ORDEN_APP__ === 'orden')
 if (__AI__) {
   registerFeature(() => import('./agents/src/api'))
   registerFeature(() => import('./mcp-servers/src/api'))
+  if (isDesktop) registerFeature(() => import('./opencode-client/src/api'))
 }
 if (__ORDEN_APP__ === 'orden') registerFeature(() => import('./chats-client/src/api'))
 registerFeature(() => import('./crash-reports/src/api'))

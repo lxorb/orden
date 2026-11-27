@@ -8,7 +8,7 @@ import { gunzipSync } from 'node:zlib'
 const APP = fileURLToPath(new URL('../apps/desktop/src-tauri/', import.meta.url))
 const PIN = join(APP, 'opencode.json')
 const NIX_PIN = fileURLToPath(new URL('../packaging/nix/opencode.json', import.meta.url))
-const LICENSES = 'licenses/opencode.txt'
+const LICENSES = fileURLToPath(new URL('../apps/desktop/src/lib/opencode-client/src/licences.txt', import.meta.url))
 const REGISTRY = 'https://registry.npmjs.org'
 const PLATFORMS = {
   'x86_64-unknown-linux-gnu': 'linux-x64-baseline',
@@ -98,8 +98,7 @@ async function licenses({ version, bun }) {
     runtime.trim(),
     '',
   ].join('\n')
-  mkdirSync(join(APP, 'licenses'), { recursive: true })
-  writeFileSync(join(APP, LICENSES), text)
+  writeFileSync(LICENSES, text)
 }
 async function bump() {
   const now = pin()

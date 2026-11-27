@@ -1,5 +1,5 @@
 {
   "name": "opencode-client",
   "layer": "content",
-  "dependsOn": ["ai-providers", "crate", "platform"]
+  "dependsOn": ["contracts", "ai-providers", "crate", "platform", "workspace"]
 }

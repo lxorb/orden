@@ -50,6 +50,13 @@ export type SettingControl =
       preview?(value: number): void
       set(value: number): void
     }
+  | {
+      kind: 'value'
+      initial?: undefined
+      get(): string
+      does: string
+      press(): void
+    }
 export type SettingField = SettingCommon & SettingControl
 export interface SettingFields {
   readonly section: SettingsSectionId
