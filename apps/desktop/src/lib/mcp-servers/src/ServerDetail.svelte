@@ -2,6 +2,7 @@
   import { Select, Switch } from '../../ui-controls/src/api'
   import { commandLine, type Permission, PERMISSIONS, type ServerView, stateWords } from './mcp'
   import { mcp } from './servers.svelte'
+  import SignIn from './SignIn.svelte'
 
   const { view, onback, onedit }: { view: ServerView; onback: () => void; onedit: () => void } = $props()
   let restarting = $state(false)
@@ -29,6 +30,7 @@
       {stateWords(view)}
       <small class="detail">{commandLine(view.transport)}</small>
     </span>
+    <SignIn {view} />
     <Switch on={view.on} label={`Use ${view.name}`} onchange={(on: boolean) => void mcp.switch(view.id, on)} />
   </div>
   {#if view.state === 'failed' && view.error}

@@ -5,6 +5,7 @@
   import { type Found, scanMcp, said, type ServerView, stateWords } from './mcp'
   import ServerDetail from './ServerDetail.svelte'
   import ServerForm from './ServerForm.svelte'
+  import SignIn from './SignIn.svelte'
   import { mcp } from './servers.svelte'
 
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
@@ -62,6 +63,7 @@
                 {one.name}
                 <small class:bad={one.state === 'failed'}>{stateWords(one)}</small>
               </span>
+              <SignIn view={one} />
               <Switch on={one.on} label={`Use ${one.name}`} onchange={(on: boolean) => void mcp.switch(one.id, on)} />
             </div>
           {/each}

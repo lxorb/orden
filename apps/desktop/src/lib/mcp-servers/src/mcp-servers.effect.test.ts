@@ -3,12 +3,15 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { settle } from '../../../../test/effects/settle'
 import type { Found, Server, ServerView } from './mcp'
 
+const NEEDED = vi.hoisted(() => 'This server signs in with OAuth. Sign in to use it.')
 const back = vi.hoisted(() => {
   const state = {
     calls: [] as { command: string; args: Record<string, unknown> }[],
     servers: [] as ServerView[],
     found: [] as Found[],
     missing: false,
+    refusal: '',
+    held: null as Promise<void> | null,
     heard: null as ((event: { payload: unknown }) => void) | null,
     listened: '',
     answer(command: string, args: Record<string, unknown>): unknown {
@@ -39,6 +42,7 @@ const back = vi.hoisted(() => {
             error: null,
             listed: old?.listed ?? [],
             secretsSet: names.filter((one) => set.has(one)),
+            signIn: old?.signIn ?? 'none',
           })
         }
         case 'mcp_server_switch': {
@@ -59,6 +63,16 @@ const back = vi.hoisted(() => {
           const view = at(args.id)
           return view && swap({ ...view, state: 'ready', error: null })
         }
+        case 'mcp_server_sign_in': {
+          const view = at(args.id)
+          if (state.refusal) return Promise.reject(new Error(state.refusal))
+          const signed = view && { ...view, state: 'ready' as const, error: null, signIn: 'signedIn' as const }
+          return (state.held ?? Promise.resolve()).then(() => signed && swap(signed))
+        }
+        case 'mcp_server_sign_out': {
+          const view = at(args.id)
+          return view && swap({ ...view, state: 'failed', error: NEEDED, signIn: 'needed' })
+        }
         case 'mcp_server_remove':
           state.servers = state.servers.filter((one) => one.id !== args.id)
           return null
@@ -74,6 +88,7 @@ const back = vi.hoisted(() => {
             state: 'starting',
             listed: [],
             secretsSet: [],
+            signIn: 'none',
           }))
       }
       return null
@@ -116,6 +131,19 @@ const FILES: ServerView = {
     { name: 'shout', description: 'Says it loud', inputSchema: {}, readOnly: false, permission: 'off' },
   ],
   secretsSet: ['TOKEN'],
+  signIn: 'none',
+}
+const REMOTE: ServerView = {
+  id: 'remote',
+  name: 'Remote',
+  on: true,
+  transport: { kind: 'http', url: 'https://mcp.example.com/mcp', headers: [] },
+  tools: {},
+  state: 'failed',
+  error: NEEDED,
+  listed: [],
+  secretsSet: [],
+  signIn: 'needed',
 }
 let target: HTMLElement
 let close: (() => void) | undefined
@@ -154,6 +182,8 @@ beforeEach(() => {
   back.servers = [structuredClone(FILES)]
   back.found = []
   back.missing = false
+  back.refusal = ''
+  back.held = null
 })
 afterEach(async () => {
   close?.()
@@ -388,5 +418,56 @@ describe('the MCP import', () => {
     await press('Import from other apps')
     expect(document.body.textContent).toContain('No new servers in other apps.')
     expect(asked('mcp_import_scan')).toHaveLength(1)
+  })
+})
+describe('the OAuth sign-in of an MCP server', () => {
+  const chip = (name: string) => target.querySelector<HTMLButtonElement>(`[aria-label="${name}"] .orden-chip`)
+  test('offers Sign in on a row that needs it, signs in there and then offers Sign out', async () => {
+    back.servers = [structuredClone(FILES), structuredClone(REMOTE)]
+    let release: () => void = () => undefined
+    back.held = new Promise((done) => (release = done))
+    await shown(McpServers, {})
+    expect(chip('Files')).toBeNull()
+    expect(chip('Remote')?.textContent.trim()).toBe('Sign in')
+    chip('Remote')?.click()
+    await settle()
+    expect(asked('mcp_server_sign_in')).toEqual([{ id: 'remote' }])
+    expect(chip('Remote')?.disabled).toBe(true)
+    expect(chip('Remote')?.getAttribute('aria-busy')).toBe('true')
+    expect(target.querySelector('[role="button"][aria-label="Remote"]')).not.toBeNull()
+    release()
+    await settle()
+    expect(chip('Remote')?.textContent.trim()).toBe('Sign out')
+    expect(chip('Remote')?.disabled).toBe(false)
+    expect(target.textContent).toContain('Connected, 0 tools')
+  })
+  test('signs out, and the row asks for a sign-in again', async () => {
+    back.servers = [{ ...structuredClone(REMOTE), state: 'ready', error: null, signIn: 'signedIn' }]
+    await shown(McpServers, {})
+    chip('Remote')?.click()
+    await settle()
+    expect(asked('mcp_server_sign_out')).toEqual([{ id: 'remote' }])
+    expect(chip('Remote')?.textContent.trim()).toBe('Sign in')
+    expect(target.textContent).toContain('Failed')
+  })
+  test('says why a sign-in did not finish', async () => {
+    back.servers = [structuredClone(REMOTE)]
+    back.refusal = 'The sign-in was not finished in time'
+    await shown(McpServers, {})
+    chip('Remote')?.click()
+    await settle()
+    expect(target.textContent).toContain('The sign-in was not finished in time')
+    expect(chip('Remote')?.textContent.trim()).toBe('Sign in')
+    expect(chip('Remote')?.disabled).toBe(false)
+  })
+  test('offers Sign in on the server page too, beside the error', async () => {
+    back.servers = [structuredClone(REMOTE)]
+    await shown(McpServers, {})
+    await openServer('Remote')
+    expect(target.textContent).toContain(NEEDED)
+    await press('Sign in')
+    expect(asked('mcp_server_sign_in')).toEqual([{ id: 'remote' }])
+    expect(asked('mcp_server_switch')).toEqual([])
+    expect(button('Sign out')).toBeTruthy()
   })
 })

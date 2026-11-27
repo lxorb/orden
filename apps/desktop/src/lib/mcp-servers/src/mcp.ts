@@ -26,6 +26,7 @@ export interface ServerView extends Server {
   error?: string | null
   listed: ToolInfo[]
   secretsSet: string[]
+  signIn: 'none' | 'needed' | 'signedIn'
 }
 export interface Secrets {
   env: Record<string, string>
