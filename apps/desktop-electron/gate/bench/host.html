@@ -6,7 +6,7 @@
 #mark{width:6px;background:#ffff00;flex:none}
 #menu{position:absolute;left:300px;top:250px;width:200px;height:200px;background:#ff00ff;border-radius:12px;box-shadow:0 0 24px 8px rgba(0,0,0,.8);display:none;z-index:5}
 #scrim{position:absolute;inset:0;backdrop-filter:blur(16px);background:rgba(0,0,0,.3);display:none;z-index:4}
-#hostin{position:absolute;left:10px;top:10px;width:150px;height:30px}
+#hostin{position:absolute;left:10px;top:55px;width:150px;height:30px}
 #hostafter{position:absolute;left:10px;top:700px;width:150px;height:30px}
 #hdrag{position:absolute;left:10px;top:100px;width:150px;height:40px;background:#fff;font:20px sans-serif;line-height:40px;user-select:none}
 #hdrop{position:absolute;left:10px;top:200px;width:150px;height:80px;background:#ddd;font:12px sans-serif}
@@ -36,8 +36,9 @@ const hdrop=document.getElementById('hdrop');
 hdrop.addEventListener('dragover',e=>e.preventDefault());
 hdrop.addEventListener('drop',e=>{e.preventDefault();window.drops.push(e.dataTransfer.getData('text/plain'));hdrop.textContent=window.drops.join(',')});
 window.steps={
-  async motion(){const t=[];for(let i=0;i<60;i++){pane.style.width=(600+i*5)+'px';await frames(1);t.push(performance.now())}
-                 for(let i=60;i>=0;i--){pane.style.width=(600+i*5)+'px';await frames(1);t.push(performance.now())}return t},
+  async motion(){const t=[];const tick=()=>new Promise(r=>requestAnimationFrame(r));
+                 for(let i=0;i<=60;i++){pane.style.width=(600+i*5)+'px';t.push(await tick())}
+                 for(let i=60;i>=0;i--){pane.style.width=(600+i*5)+'px';t.push(await tick())}return t},
   async menu(on){document.getElementById('menu').style.display=on?'block':'none';await frames(2)},
   async scrim(on){document.getElementById('scrim').style.display=on?'block':'none';await frames(2)},
   async shape(on){pane.style.cssText=on?'transform:scale(.5);border-radius:60px;overflow:hidden;opacity:.6':'';await frames(2)},

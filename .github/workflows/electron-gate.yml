@@ -95,6 +95,13 @@ jobs:
       - name: Machine
         run: |
           node -e "const os=require('os');console.log(JSON.stringify({cpus:os.cpus().length,model:os.cpus()[0].model,memGB:Math.round(os.totalmem()/2**30),release:os.release(),arch:os.arch()}))" | tee machine.json
+      - name: A desktop to drive
+        if: runner.os == 'Windows'
+        run: |
+          mkdir -p out
+          "$GATE_PY" gate/osio.py grab out/desktop-before.png || true
+          for at in "866 656" "866 656" "866 656" "866 656"; do "$GATE_PY" gate/osio.py click $at || true; sleep 2; done
+          "$GATE_PY" gate/osio.py grab out/desktop-after.png || true
       - name: Gate
         run: |
           export GATE_ASSETS="$PWD/assets" GATE_OUT="$PWD/out"
@@ -106,21 +113,7 @@ jobs:
             node gate/run.cjs || true
           fi
       - name: Package
-        run: |
-          npx electron-packager . OrdenElectronGate --out pack --overwrite --asar --ignore='^/(pack|out|assets)'
-          dir=$(ls -d pack/*/ | head -1)
-          node -e "
-            const fs=require('fs'),path=require('path'),{execFileSync}=require('child_process');
-            const size=d=>fs.readdirSync(d,{withFileTypes:true}).reduce((s,e)=>{const p=path.join(d,e.name);return s+(e.isSymbolicLink()?0:e.isDirectory()?size(p):fs.statSync(p).size)},0);
-            const dir=process.argv[1];
-            fs.writeFileSync('out/size.json',JSON.stringify({check:'size',unpackedMB:+(size(dir)/2**20).toFixed(1)}));
-          " "$dir"
-          if [ "$RUNNER_OS" = Windows ]; then
-            (cd pack && 7z a -tzip -mx=9 ../gate-${{ matrix.name }}.zip . >/dev/null)
-          else
-            (cd pack && zip -qry9 ../gate-${{ matrix.name }}.zip .)
-          fi
-          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('out/size.json'));s.zipMB=+(fs.statSync(process.argv[1]).size/2**20).toFixed(1);fs.writeFileSync('out/size.json',JSON.stringify(s));console.log(s)" gate-${{ matrix.name }}.zip
+        run: node gate/pack.cjs gate-${{ matrix.name }}
       - name: Results
         if: always()
         run: |

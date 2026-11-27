@@ -125,19 +125,23 @@ def click(x, y):
 
 def drag(x1, y1, x2, y2):
     move(x1, y1)
-    time.sleep(0.2)
+    time.sleep(0.3)
     button(True)
-    time.sleep(0.3)
-    steps = 30
+    time.sleep(0.4)
+    for i in range(1, 9):
+        move(x1 + i * 2, y1 + i)
+        time.sleep(0.08)
+    time.sleep(0.5)
+    steps = 40
     for i in range(1, steps + 1):
-        move(x1 + (x2 - x1) * i / steps, y1 + (y2 - y1) * i / steps)
-        time.sleep(0.03)
-    for _ in range(4):
-        move(x2 + 1, y2)
+        move(x1 + 16 + (x2 - x1 - 16) * i / steps, y1 + 8 + (y2 - y1 - 8) * i / steps)
         time.sleep(0.05)
+    for _ in range(6):
+        move(x2 + 2, y2 + 1)
+        time.sleep(0.08)
         move(x2, y2)
-        time.sleep(0.05)
-    time.sleep(0.3)
+        time.sleep(0.08)
+    time.sleep(0.4)
     button(False)
 
 

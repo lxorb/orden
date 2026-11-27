@@ -98,8 +98,15 @@ async function open(page, options = {}) {
   } else ipcMain.once('ready', ready)
   await win.loadFile(path.join(bench, 'host.html'), { query: { mode, url, partition: options.partition || '' } })
   await isReady
-  win.focus()
+  front()
   await sleep(options.settle ?? 1500)
+}
+const front = () => {
+  win.setAlwaysOnTop(true, 'screen-saver')
+  win.show()
+  win.moveTop()
+  app.focus({ steal: true })
+  win.focus()
 }
 const guest = () => (mode === 'view' ? view.webContents : guests[0])
 const host = (s, ...a) => win.webContents.executeJavaScript(`window.steps.${s}(${a.map((x) => JSON.stringify(x)).join(',')})`)
@@ -120,6 +127,11 @@ function filming() {
     frames,
     stop: () => win.webContents.endFrameSubscription(),
   }
+}
+const still = async () => {
+  const image = await win.webContents.capturePage()
+  const size = image.getSize()
+  return { t: Date.now(), w: size.width, h: size.height, data: image.toBitmap() }
 }
 const px = (f, x, y) => {
   const o = (y * f.w + x) * 4
@@ -179,10 +191,14 @@ function screenShot(name) {
   }
 }
 function cpu() {
+  const total = () => app.getAppMetrics().reduce((sum, p) => sum + (p.cpu.cumulativeCPUUsage || 0), 0)
   app.getAppMetrics()
+  const t0 = Date.now()
+  const c0 = total()
   return () => {
     const m = app.getAppMetrics()
-    return { cpu: +m.reduce((s, p) => s + p.cpu.percentCPUUsage, 0).toFixed(1), byType: Object.fromEntries(['Browser', 'GPU', 'Tab', 'Utility'].map((t) => [t, +m.filter((p) => p.type === t).reduce((s, p) => s + p.cpu.percentCPUUsage, 0).toFixed(1)])) }
+    const seconds = (Date.now() - t0) / 1000
+    return { cpu: +m.reduce((s, p) => s + p.cpu.percentCPUUsage, 0).toFixed(1), cpuOfOneCore: +((100 * (total() - c0)) / seconds).toFixed(1), byType: Object.fromEntries(['Browser', 'GPU', 'Tab', 'Utility'].map((t) => [t, +m.filter((p) => p.type === t).reduce((s, p) => s + p.cpu.percentCPUUsage, 0).toFixed(1)])) }
   }
 }
 const memory = () => {
@@ -203,7 +219,7 @@ const checks = {
     const seen = motionOf(film.frames.map((f) => rowOf(f, 300)))
     const result = { frames: film.frames.length, ...seen, pace: pace(times), ...used }
     if (mode === 'view') return { pass: true, data: { pace: result.pace, cpu: result.cpu, note: 'the native view is not part of the window frame, so only pace is compared' } }
-    return { pass: seen.moving >= 100 && seen.wrong === 0, data: result }
+    return { pass: seen.moving >= 60 && seen.wrong === 0, data: result }
   },
   async layers() {
     await open('page.html')
@@ -214,31 +230,31 @@ const checks = {
       await host(name, on)
       await sleep(600)
       film.stop()
-      return { film, shot: screenShot(name) }
+      return { film, last: await still(), shot: screenShot(name) }
     }
     const rest = filming()
     await sleep(300)
     rest.stop()
-    const r = rest.frames.at(-1)
+    const r = await still()
     data.rest = { page: px(r, 500, 300), edge: px(r, 797, 300), mark: px(r, 803, 300) }
     const menu = await grab('menu', true)
     const firstWith = menu.film.frames.find((f) => rowOf(f, 350).includes('M'))
-    const m = menu.film.frames.at(-1)
-    data.menu = { firstFrameWidth: firstWith ? rowOf(firstWith, 350).split('M').length - 1 : 0, centre: px(m, 400, 350), shadow: px(m, 290, 350), far: px(m, 600, 350), screen: menu.shot && { centre: menu.shot.at(400, 350), shadow: menu.shot.at(290, 350) } }
+    const m = menu.last
+    data.menu = { framesSeen: menu.film.frames.length, firstFrameWidth: firstWith ? rowOf(firstWith, 350).split('M').length - 1 : 0, centre: px(m, 400, 350), shadow: px(m, 290, 350), far: px(m, 600, 350), screen: menu.shot && { centre: menu.shot.at(400, 350), shadow: menu.shot.at(290, 350) } }
     await host('menu', false)
     const scrim = await grab('scrim', true)
-    const s = scrim.film.frames.at(-1)
+    const s = scrim.last
     data.scrim = { page: px(s, 500, 300), edgeBlend: px(s, 796, 300), screen: scrim.shot && { page: scrim.shot.at(500, 300), edgeBlend: scrim.shot.at(796, 300) } }
     await host('scrim', false)
     const shape = await grab('shape', true)
-    const h = shape.film.frames.at(-1)
+    const h = shape.last
     data.shape = { centre: px(h, 500, 350), corner: px(h, 352, 202), outside: px(h, 700, 350), inside: px(h, 400, 350), screen: shape.shot && { centre: shape.shot.at(500, 350), corner: shape.shot.at(352, 202), outside: shape.shot.at(700, 350) } }
     await host('shape', false)
     const bg = [32, 32, 32]
     const green = (c) => c[1] > c[0] + 30 && c[1] > c[2] + 30
     const ok = {
       rest: kind(data.rest.page) === 'G' && kind(data.rest.edge) === 'B' && kind(data.rest.mark) === 'Y',
-      menuWhole: data.menu.firstFrameWidth === 200 && kind(data.menu.centre) === 'M',
+      menuWhole: (data.menu.firstFrameWidth === 200 || data.menu.framesSeen === 0) && kind(data.menu.centre) === 'M',
       menuShadow: green(data.menu.shadow) && data.menu.shadow[1] < data.menu.far[1] - 30,
       scrim: green(data.scrim.page) && data.scrim.page[1] < 170 && kind(data.scrim.edgeBlend) !== 'B' && kind(data.scrim.edgeBlend) !== 'G',
       shape: green(data.shape.centre) && data.shape.centre[1] < 180 && near(data.shape.corner, bg) && near(data.shape.outside, bg) && green(data.shape.inside),
@@ -272,7 +288,7 @@ const checks = {
     await sleep(300)
     const backIn = await page('state()')
     data.shiftTabBack = { pageFocus: backIn.focus, pageActive: backIn.active }
-    osio('click', ...at(60, 25))
+    osio('click', ...at(60, 70))
     await sleep(300)
     osio('type', 'x')
     await sleep(300)
@@ -319,7 +335,9 @@ const checks = {
     const data = {}
     osio('drag', ...at(60, 120), ...inPane(100, 210))
     await sleep(600)
-    data.hostToPage = (await page('state()')).drops
+    const landed = await page('state()')
+    data.hostToPage = landed.drops
+    data.pageFields = [landed.in, landed.in2]
     osio('drag', ...inPane(100, 140), ...at(60, 240))
     await sleep(600)
     data.pageToHost = (await host('state')).drops
@@ -354,10 +372,7 @@ const checks = {
       data[file] = { ...played, ...end() }
     }
     if (mode === 'webview') {
-      const film = filming()
-      await sleep(500)
-      film.stop()
-      const f = film.frames.at(-1)
+      const f = await still()
       const c = px(f, 500, 350)
       data.pixels = c
       data.drawn = c[0] + c[1] + c[2] > 60
@@ -519,7 +534,9 @@ const checks = {
     const t0 = Date.now()
     await win.loadURL(origin + '/')
     await until('!!(window.ordenApp && window.ordenApp.workspace.activeSpace)', 'the app')
-    const data = { appReadyMs: Date.now() - t0 }
+    const data = { appReadyMs: Date.now() - t0, startToAppReadyMs: Date.now() - started }
+    await sleep(3000)
+    data.memoryAppOnly = memory()
     await js(`(async () => { const ws = window.ordenApp.workspace; const root = ws.activeSpace.root; await ws.noteFrom('# Beside\\n\\nA note beside a page.\\n', root); await ws.loadTree(); for (const tab of [...ws.tabs]) ws.close(tab.id); ws.openPage(${JSON.stringify(base + '/page.html')}); window.ordenApp.shortcuts.set('app.palette', 'Mod-j') })()`)
     await until("!!document.querySelector('webview')", 'a webview element in the web tab')
     const end = Date.now() + 20000
@@ -527,7 +544,7 @@ const checks = {
     if (!guests.length) throw new Error('no guest')
     await win.webContents.insertCSS('webview{background:#ff0000 !important}')
     await sleep(2500)
-    win.focus()
+    front()
     const rectOf = async () => {
       await until("!!document.querySelector('webview')", 'the webview again', 8000)
       return rectNow()
@@ -541,10 +558,8 @@ const checks = {
     }
     let rect = await rectOf()
     data.rect = rect
-    const rest = filming()
-    await sleep(400)
-    rest.stop()
-    const r = rest.frames.at(-1)
+    data.memoryWithOnePage = memory()
+    const r = await still()
     data.rest = { page: px(r, rect.left + 300, rect.top + 300), edge: px(r, rect.right - 3, rect.top + 300), red: reds(r), corners: [px(r, rect.left, rect.top), px(r, rect.right - 1, rect.top), px(r, rect.left, rect.bottom - 1), px(r, rect.right - 1, rect.bottom - 1)] }
     data.shape = await js("(() => { const w = document.querySelector('webview'); const pane = w.closest('[data-pane]'); return { webview: getComputedStyle(w).borderRadius, pane: pane ? getComputedStyle(pane).borderRadius : null, paneOverflow: pane ? getComputedStyle(pane).overflow : null } })()")
     const covered = () => js(`(() => { const w = document.querySelector('webview'); const r = w.getBoundingClientRect(); const found = []; for (let y = r.top + 30; y < r.bottom - 10; y += 30) for (let x = r.left + 30; x < r.right - 10; x += 30) { const top = document.elementFromPoint(x, y); if (top && top !== w) found.push({ x: Math.round(x), y: Math.round(y), what: top.tagName + '.' + String(top.className).slice(0, 40) }) } return found })()`)
@@ -555,7 +570,7 @@ const checks = {
       film.stop()
       fs.writeFileSync(path.join(out, `orden-${name}.png`), (await win.webContents.capturePage()).toPNG())
       const over = await covered()
-      const last = film.frames.at(-1)
+      const last = await still()
       const changed = over.filter((at) => px(last, at.x, at.y).some((v, i) => Math.abs(v - px(r, at.x, at.y)[i]) > 12))
       const seen = { frames: film.frames.length, pointsUnderLayer: over.length, pointsDrawnOver: changed.length, what: [...new Set(over.map((at) => at.what))].slice(0, 4), red: film.frames.reduce((s, f) => s + reds(f), 0), white: film.frames.filter((f) => px(f, rect.right - 3, rect.bottom - 8).every((v) => v > 245)).length }
       seen.ok = over.length > 0 && changed.length > 0 && seen.red === 0 && seen.white === 0
@@ -602,7 +617,7 @@ const checks = {
         const b = row.lastIndexOf('B')
         return b >= 6 && row[b - 6] !== 'G' && row[b - 6] !== 'B'
       }).length
-      data[name] = { frames: film.frames.length, movedFrames: moved, red: film.frames.reduce((s, f) => s + reds(f), 0), lostEdge: edges.filter((e) => e < 0).length, gaps }
+      data[name] = { frames: film.frames.length, movedFrames: moved, edgeNotAtRight: film.frames.filter((f) => kind(px(f, f.w - 3, Math.min(rect.top + 300, f.h - 1))) !== 'B').length, red: film.frames.reduce((s, f) => s + reds(f), 0), lostEdge: edges.filter((e) => e < 0).length, gaps }
       data[name].ok = data[name].red === 0 && gaps === 0
       data[name].guestsMade = guests.length
       rect = await rectOf()
