@@ -14,6 +14,7 @@ import {
   isDownloadPath,
   isDownloadPlatform,
   releaseTag,
+  seenIn,
   DEMO_LOOP_SCENES,
   DEMO_PHONE_SRC,
   DEMO_SCENES,
@@ -480,16 +481,27 @@ describe('the download short links on orden.so', () => {
       return Promise.resolve(new Response(JSON.stringify(release)))
     }
     const later = { waitUntil: (promise: Promise<unknown>) => void waited.push(promise) }
+    let clock = 0
+    const seen = seenIn(null, () => clock)
+    let address = 0
     const click = async (path: string, init: RequestInit = {}, key: string | null = 'phc_test') => {
+      address += 1
       const request = new Request(`https://orden.so${path}`, {
         ...init,
-        headers: { 'user-agent': BROWSER, ...(init.headers as Record<string, string> | undefined) },
+        headers: {
+          'user-agent': BROWSER,
+          'cf-connecting-ip': `203.0.113.${address}`,
+          ...(init.headers as Record<string, string> | undefined),
+        },
       })
-      const answer = await downloadAnswer(request, { POSTHOG_KEY: key ?? undefined }, later, fetcher)
+      const answer = await downloadAnswer(request, { POSTHOG_KEY: key ?? undefined }, later, fetcher, seen)
       await Promise.all(waited)
       return answer
     }
-    return { sent, click }
+    const wait = (ms: number) => {
+      clock += ms
+    }
+    return { sent, click, wait }
   }
   test('sends each platform to its own file of the latest release', async () => {
     const { click } = world()
@@ -571,6 +583,54 @@ describe('the download short links on orden.so', () => {
     expect(asked({ 'sec-purpose': 'prefetch;prerender' })).toBe(false)
     expect(asked({ 'sec-purpose': 'prefetch' })).toBe(false)
     expect(asked({ purpose: 'prefetch' })).toBe(false)
+  })
+  test('counts one client taking several links within two seconds only once, and again after', async () => {
+    const { sent, click, wait } = world()
+    const one = { headers: { 'cf-connecting-ip': '198.51.100.7' } }
+    expect((await click('/download?from=hero', one)).status).toBe(302)
+    expect((await click('/download?from=footer', one)).status).toBe(302)
+    wait(1999)
+    expect((await click('/download/macos?from=hero', one)).status).toBe(302)
+    expect(sent).toHaveLength(1)
+    await click('/download/macos', { headers: { 'cf-connecting-ip': '198.51.100.8' } })
+    expect(sent).toHaveLength(2)
+    wait(2001)
+    await click('/download/macos', one)
+    expect(sent).toHaveLength(3)
+  })
+  test('keeps no address: the window is keyed by a hash of it that lives two seconds', async () => {
+    const stored: string[] = []
+    const kept = {
+      match: (key: string) => Promise.resolve(stored.includes(key) ? new Response('') : undefined),
+      put: (key: string, answer: Response) => {
+        stored.push(key)
+        expect(answer.headers.get('cache-control')).toBe('max-age=2')
+        return Promise.resolve()
+      },
+    }
+    const seen = seenIn(kept, () => 0)
+    expect(await seen.first('a'.repeat(64))).toBe(true)
+    expect(await seenIn(kept, () => 0).first('a'.repeat(64))).toBe(false)
+    const sent: unknown[] = []
+    const fetcher = (url: string) => {
+      if (url === CAPTURE) sent.push(url)
+      return Promise.resolve(new Response('{}'))
+    }
+    const waited: Promise<unknown>[] = []
+    const request = new Request('https://orden.so/download/android', {
+      headers: { 'user-agent': BROWSER, 'cf-connecting-ip': '192.0.2.44' },
+    })
+    await downloadAnswer(
+      request,
+      { POSTHOG_KEY: 'phc_test' },
+      { waitUntil: (p) => void waited.push(p) },
+      fetcher,
+      seenIn(kept, () => 0),
+    )
+    await Promise.all(waited)
+    expect(sent).toHaveLength(1)
+    expect(stored.some((key) => key.includes('192.0.2.44'))).toBe(false)
+    expect(stored.at(-1)).toMatch(/\/download-seen\/[0-9a-f]{64}$/)
   })
   test('answers only its own paths', () => {
     for (const path of ['/download', '/download/', '/download/macos']) expect(isDownloadPath(path), path).toBe(true)
