@@ -37,6 +37,7 @@ function terminals(): boolean {
   const local = isDesktop && (hiddenKinds.offers('terminal') || hiddenKinds.offers('remote'))
   return local || (account.user !== null && hiddenKinds.offers('online'))
 }
+export const GROUP_NAMES = ['App', 'Account', 'Data']
 export function sectionGroups(): Item[][] {
   return [
     [

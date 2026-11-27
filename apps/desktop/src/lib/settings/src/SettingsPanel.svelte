@@ -45,7 +45,7 @@
   import { landing } from './landing.svelte'
   import { places as paneRows } from './places'
   import { offers } from './ask-settings'
-  import { ICONS, sectionGroups } from './sections'
+  import { GROUP_NAMES, ICONS, sectionGroups } from './sections'
   import { type Place, search } from './settings-search'
   import { sync } from '../../sync-store/src/api'
   import { isDesktop, openExternal } from '../../platform/src/api'
@@ -147,6 +147,11 @@
     go(section)
     landing.label = label || null
   }
+  const listed = (field: Extract<Field, { kind: 'select' }>) =>
+    !field.open &&
+    field.options.length > 1 &&
+    field.options.length <= 4 &&
+    (!!field.hint || field.options.some((one) => one.note))
   const fraction = (field: Extract<Field, { kind: 'slider' }>, value: number) =>
     ((value - field.min) / (field.max - field.min)) * 100
   function dialled(field: Extract<Field, { kind: 'slider' }>, input: HTMLInputElement, kept: boolean) {
@@ -328,19 +333,22 @@
         {@render results()}
       {:else}
         {#each GROUPS as group, index (index)}
-          <div class="group">
-            {#each group as item (item.id)}
-              <button
-                class="item orden-row"
-                class:is-on={!stacked && !query && settings.section === item.id}
-                onclick={() => go(item.id)}
-              >
-                <svg class="glyph orden-row-mark" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
-                <span class="orden-row-label">{item.label}</span>
-                <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
-              </button>
-            {/each}
-          </div>
+          <section class="group">
+            <h2 class="over">{GROUP_NAMES[index]}</h2>
+            <div class="rows">
+              {#each group as item (item.id)}
+                <button
+                  class="item orden-row"
+                  class:is-on={!stacked && !query && settings.section === item.id}
+                  onclick={() => go(item.id)}
+                >
+                  <svg class="glyph orden-row-mark" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
+                  <span class="orden-row-label">{item.label}</span>
+                  <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
+                </button>
+              {/each}
+            </div>
+          </section>
         {/each}
       {/if}
     </nav>
@@ -465,20 +473,45 @@
     {@const held = field.get()}
     <div class="orden-setting setting">
       {@render named(field, where)}
-      <div class="orden-segmented" role="radiogroup" aria-label={field.label} use:segmented>
-        {#each field.options as one (one.value)}
-          <button
-            type="button"
-            role="radio"
-            aria-checked={one.value === held}
-            class:on={one.value === held}
-            disabled={one.disabled}
-            onclick={() => field.set(one.value)}
-          >
-            {one.label}
-          </button>
-        {/each}
-      </div>
+      {#if field.key === 'appearance.mode' && !where}
+        <div class="looks" role="radiogroup" aria-label={field.label}>
+          {#each field.options as one (one.value)}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={one.value === held}
+              class:on={one.value === held}
+              disabled={one.disabled}
+              onclick={() => field.set(one.value)}
+            >
+              <span class="view" aria-hidden="true">
+                {#each one.value === 'system' ? ['light', 'dark'] : [one.value] as scheme (scheme)}
+                  <span class="half" data-theme={scheme}>
+                    <i class="side"><b></b><b></b><b></b></i>
+                    <i class="page"><b></b><b></b><b></b><b></b></i>
+                  </span>
+                {/each}
+              </span>
+              <span class="said"><span class="ring" aria-hidden="true"></span>{one.label}</span>
+            </button>
+          {/each}
+        </div>
+      {:else}
+        <div class="orden-segmented" role="radiogroup" aria-label={field.label} use:segmented>
+          {#each field.options as one (one.value)}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={one.value === held}
+              class:on={one.value === held}
+              disabled={one.disabled}
+              onclick={() => field.set(one.value)}
+            >
+              {one.label}
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
   {:else if field.kind === 'swatches'}
     <div class="orden-setting setting">
@@ -576,17 +609,37 @@
       </label>
     {/if}
   {:else if field.kind === 'select'}
+    {@const held = field.get()}
     <div class="orden-setting setting">
       {@render named(field, where)}
-      <div class="orden-setting-value">
-        <Select
-          value={field.get()}
-          options={field.options}
-          onchange={(value: string) => field.set(value)}
-          label={field.label}
-          plain
-        />
-      </div>
+      {#if listed(field) && !where}
+        <div class="choices" role="radiogroup" aria-label={field.label}>
+          {#each field.options as one (one.value)}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={one.value === held}
+              class:on={one.value === held}
+              onclick={() => field.set(one.value)}
+            >
+              <span class="ring" aria-hidden="true"></span>
+              <span class="said"
+                >{one.label}{#if one.note}<small>{one.note}</small>{/if}</span
+              >
+            </button>
+          {/each}
+        </div>
+      {:else}
+        <div class="orden-setting-value">
+          <Select
+            value={field.get()}
+            options={field.options}
+            onchange={(value: string) => field.set(value)}
+            label={field.label}
+            plain
+          />
+        </div>
+      {/if}
     </div>
   {/if}
 {/snippet}
@@ -975,7 +1028,7 @@
 <style>
   .sheet {
     display: grid;
-    grid-template-columns: clamp(10rem, 28%, 15rem) minmax(0, 1fr);
+    grid-template-columns: clamp(11rem, 26%, 16rem) minmax(0, 1fr);
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -984,8 +1037,8 @@
   nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: var(--space-4) var(--space-3);
+    gap: 0;
+    padding: var(--space-5) var(--space-3);
     border-inline-end: 1px solid var(--line);
     background: var(--bg);
     overflow-y: auto;
@@ -994,24 +1047,42 @@
     flex: none;
   }
   nav h1 {
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-4);
     padding: 0 var(--row-pad);
     font-family: var(--font-ui);
-    font-size: var(--text-base);
-    font-weight: var(--weight-strong);
+    font-size: calc(var(--text-base) * 1.2);
+    font-weight: 700;
+    letter-spacing: -0.01em;
     color: var(--text-strong);
   }
   .search {
     flex: none;
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-5);
   }
-  .group {
+  .group,
+  .rows {
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
   .group + .group {
-    margin-top: var(--space-2);
+    margin-top: var(--space-5);
+  }
+  .over {
+    margin: 0 0 var(--space-1);
+    padding: 0 var(--row-pad);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-strong);
+    letter-spacing: 0.02em;
+    color: var(--muted);
+  }
+  .sheet:not(.phone) .item {
+    min-height: calc(var(--row-height) + var(--space-1));
+    gap: var(--space-3);
+  }
+  .item.is-on .glyph {
+    color: var(--accent);
   }
   .setting .name .what,
   .setting .value {
@@ -1031,7 +1102,7 @@
     white-space: normal;
   }
   .body {
-    padding: var(--space-5) var(--space-6);
+    padding: var(--space-6) var(--space-7) var(--space-7);
     overflow-y: auto;
   }
   .pane {
@@ -1062,23 +1133,26 @@
     display: contents;
   }
   .sheet:not(.phone) .pane {
-    gap: var(--space-5);
+    gap: var(--space-3);
   }
   .sheet:not(.phone) .pane h2 {
-    margin: 0;
-    font-size: calc(var(--text-base) * 1.45);
+    margin: 0 0 var(--space-3);
+    font-size: calc(var(--text-base) * 1.75);
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
   .sheet:not(.phone) .pane :global(h3) {
-    margin: 0 0 calc(-1 * var(--space-3));
-    padding-inline: var(--space-1);
-    font-size: var(--text-sm);
+    margin: var(--space-5) 0 0;
+    font-size: var(--text-base);
     font-weight: var(--weight-strong);
-    color: var(--muted);
+    color: var(--text-strong);
+  }
+  .sheet:not(.phone) .pane :global(.orden-pane-head + h3),
+  .sheet:not(.phone) .pane :global(h3:first-child) {
+    margin-top: 0;
   }
   .sheet:not(.phone) .pane :global(.card) {
-    padding: 0 var(--space-4);
+    padding: var(--space-1) var(--space-5);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     background: var(--bg);
@@ -1087,23 +1161,163 @@
     display: none;
   }
   .sheet:not(.phone) .pane :global(.card :is(.orden-setting, .orden-action)) {
-    min-height: calc(var(--row-height) + var(--space-4));
+    min-height: calc(var(--row-height) + var(--space-5));
+    padding-block: var(--space-3);
+    position: relative;
   }
-  .sheet:not(.phone) .pane :global(.card :is(.orden-setting, .orden-action) + :is(.orden-setting, .orden-action)) {
-    border-top: 1px solid var(--line);
+  .sheet:not(.phone)
+    .pane
+    :global(.card :is(.orden-setting, .orden-action) + :is(.orden-setting, .orden-action)::before) {
+    content: '';
+    position: absolute;
+    top: 0;
+    inset-inline: calc(-1 * var(--space-5));
+    height: 1px;
+    background: var(--line);
   }
-  .sheet:not(.phone) .pane :global(.card .orden-setting > .name > :is(.what, .orden-named)) {
-    font-weight: var(--weight-row);
+  .sheet:not(.phone) .pane :global(.card .orden-setting > .name) {
+    font-size: var(--text-row);
+    font-weight: var(--weight-strong);
     color: var(--text-strong);
+  }
+  .sheet:not(.phone) .pane :global(.card .orden-setting > .name small) {
+    font-weight: 400;
   }
   .sheet:not(.phone) .setting .value.said {
     font-family: var(--font-ui);
   }
   .sheet:not(.phone) .card > .stack {
-    padding-block: var(--space-3);
+    padding-block: var(--space-4);
   }
   .sheet:not(.phone) .hint.caption {
+    margin-top: calc(-1 * var(--space-1));
     padding-inline: var(--space-1);
+  }
+  .ring {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    border: 1.5px solid var(--line-strong);
+    border-radius: 50%;
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+  .on > .ring,
+  .on > .said > .ring {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .on > .ring::after,
+  .on > .said > .ring::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-ink);
+  }
+  .choices,
+  .looks {
+    flex: 1 0 100%;
+    margin: 0;
+  }
+  .choices {
+    display: flex;
+    flex-direction: column;
+  }
+  .choices button,
+  .looks button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: start;
+    cursor: default;
+  }
+  .choices button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: calc(var(--row-height) + var(--space-1));
+  }
+  .choices .said {
+    display: flex;
+    flex-direction: column;
+  }
+  .choices .said small {
+    font-size: var(--text-sm);
+    color: var(--muted);
+  }
+  .looks {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 10rem));
+    gap: var(--space-4);
+    padding-block: var(--space-2) var(--space-1);
+  }
+  .looks button {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .looks .said {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .looks .on .said {
+    color: var(--text-strong);
+  }
+  .view {
+    display: flex;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 0 1px var(--line-strong);
+    overflow: hidden;
+    transition: box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .on .view {
+    box-shadow:
+      0 0 0 2px var(--bg),
+      0 0 0 4px var(--accent);
+  }
+  .half {
+    flex: 1;
+    display: flex;
+    background: var(--surface);
+  }
+  .half i {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+  }
+  .half .side {
+    width: 34%;
+    border-inline-end: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .half .page {
+    flex: 1;
+    padding: var(--space-3) var(--space-2);
+  }
+  .half b {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+  .half .side b:first-child {
+    background: var(--accent);
+  }
+  .half .page b:first-child {
+    width: 55%;
+    height: 4px;
+    background: var(--muted-strong);
+  }
+  .half .page b:last-child {
+    width: 70%;
   }
   .card {
     display: flex;
@@ -1480,7 +1694,12 @@
     margin-bottom: var(--space-4);
     background: var(--surface);
   }
-  .sheet.phone .group {
+  .sheet.phone .over {
+    margin: 0 0 var(--space-2);
+    padding: 0 var(--touch-pad);
+    font-size: 13px;
+  }
+  .sheet.phone .rows {
     gap: 0;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
@@ -1488,7 +1707,10 @@
     overflow: clip;
   }
   .sheet.phone .group + .group {
-    margin-top: var(--space-4);
+    margin-top: var(--space-5);
+  }
+  .sheet.phone .item.is-on .glyph {
+    color: var(--accent);
   }
   .sheet.phone .item {
     position: relative;
@@ -1499,8 +1721,7 @@
     content: '';
     position: absolute;
     top: 0;
-    inset-inline-start: calc(var(--touch-pad) + var(--touch-icon) + var(--touch-gap));
-    inset-inline-end: 0;
+    inset-inline: 0;
     height: 1px;
     background: var(--line);
   }
@@ -1560,14 +1781,26 @@
   .sheet.phone :global(.orden-setting > .name > small) {
     font-size: var(--text-base);
   }
+  .sheet.phone .choices {
+    margin-top: calc(-1 * var(--space-1));
+  }
+  .sheet.phone .choices button {
+    min-height: calc(var(--touch-target) - var(--space-1));
+  }
+  .sheet.phone .looks {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .sheet.phone .looks .said {
+    font-size: var(--text-base);
+  }
   .sheet.phone :global(.orden-setting + .orden-setting::before),
   .sheet.phone :global(.orden-action + .setting::before),
   .sheet.phone :global(.orden-action + .orden-action::before) {
     content: '';
     position: absolute;
     top: 0;
-    inset-inline-start: var(--touch-pad);
-    inset-inline-end: 0;
+    inset-inline: 0;
     height: 1px;
     background: var(--line);
   }

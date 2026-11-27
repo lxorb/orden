@@ -8,7 +8,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.stubGlobal('localStorage', memoryStorage())
 const { modes } = await import('../../modes/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
-const { sectionGroups } = await import('./sections')
+const { GROUP_NAMES, sectionGroups } = await import('./sections')
 const listed = () =>
   sectionGroups()
     .flat()
@@ -38,5 +38,12 @@ describe('the Mobile section', () => {
 describe('the Archived spaces section', () => {
   test('is offered beside Recently deleted', () => {
     expect(listed().indexOf('archived')).toBe(listed().indexOf('trash') + 1)
+  })
+})
+describe('the groups of the list', () => {
+  test('each carry a heading of their own (#2580)', () => {
+    expect(GROUP_NAMES).toHaveLength(sectionGroups().length)
+    expect(new Set(GROUP_NAMES).size).toBe(GROUP_NAMES.length)
+    for (const name of GROUP_NAMES) expect(name.trim()).not.toBe('')
   })
 })
