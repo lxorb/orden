@@ -2,7 +2,7 @@
   import { tick } from 'svelte'
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
-  import { iconChoice } from '../../icon-picker/src/api'
+  import { iconChoosing } from '@orden/contracts'
   import { accentColour, accentIdFor, ACCENTS, theme } from '../../theme/src/api'
   import { Sheet, Swatches } from '../../ui-controls/src/api'
   import { DIVIDER, dropOver, hang, menu, overlays, prompt, Twist } from '../../ui-kit/src/api'
@@ -162,7 +162,8 @@
       aria-label="Icon"
       title="Icon"
       data-activity-icon
-      onclick={() => iconChoice.pass(activity.icon, (icon) => time.changeActivity(activity.id, { icon }))}
+      disabled={iconChoosing() === null}
+      onclick={() => iconChoosing()?.pass(activity.icon, (icon) => time.changeActivity(activity.id, { icon }))}
     >
       <ActivityMark activity={activity.id} size={16} />
     </button>

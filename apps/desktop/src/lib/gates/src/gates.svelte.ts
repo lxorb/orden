@@ -87,8 +87,8 @@ const passOnly = typeof document !== 'undefined' && document.documentElement.dat
 export function passOn(): boolean {
   return passOnly || (WHOLE && tried(PASS_WORD))
 }
-export function timeOn(): boolean {
-  return WHOLE && tried(TIME_WORD)
+export function timeOn(app: OrdenApp = __ORDEN_APP__): boolean {
+  return app === 'track' || (app === 'orden' && tried(TIME_WORD))
 }
 export function basesOn(): boolean {
   return tried(BASES_WORD)

@@ -182,6 +182,9 @@ export {
   searching,
   settingsWindow,
   showQuickAdd,
+  showTime,
+  iconChoosing,
+  timePlaces,
   syncStore,
   webPages,
   whenPortProvided,
@@ -210,6 +213,7 @@ export {
   type SurfacePorts,
   surfaceLoad,
   whenNoSurface,
+  type IconChoicePort,
 } from './surfaces'
 export {
   type AgentAnswer,
@@ -339,4 +343,15 @@ export {
   type WorkspaceTab,
   type WorkspaceViewPort,
 } from './workspace'
+export {
+  NO_TIME_PLACES,
+  type TimeOpenPort,
+  type TimePlacesPort,
+  type TimePorts,
+  type TimeRange,
+  type TimeSpecSeen,
+  type TimeSpaceSeen,
+  type TimeTabHeld,
+  type TimeTabSeen,
+} from './time'
 export { isUntouchedWelcome, WELCOME, WELCOME_NAME, WELCOME_PATH, WELCOME_SPACE } from './welcome'

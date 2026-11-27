@@ -1,5 +1,1 @@
-{
-  "name": "panes",
-  "layer": "foundation",
-  "dependsOn": ["contracts", "platform", "editor"]
-}
+{ "name": "panes", "layer": "foundation", "dependsOn": ["contracts", "platform", "editor"] }

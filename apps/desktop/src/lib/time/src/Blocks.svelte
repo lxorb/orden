@@ -1,7 +1,9 @@
 <script lang="ts">
   import { midnightOf } from '../../platform/src/api'
   import { localDate } from '../../platform/src/api'
-  import { DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
+  import { closeOnBack, DIVIDER, longPress, menu, type MenuEntry } from '../../ui-kit/src/api'
+  import { tick } from '../../ui-controls/src/api'
+  import ActivityFind from './ActivityFind.svelte'
   import ActivityLayer from './ActivityLayer.svelte'
   import BlockEditor from './BlockEditor.svelte'
   import Chip from './Chip.svelte'
@@ -12,7 +14,9 @@
   import { type Row, daysOf } from './rows'
   import { mergeBlocks, placeBlock, rangeTotals, removeBlock, setActivity, splitBlock } from './schedule'
   import { Selection } from '../../tree/src/api'
+  import { undoToast } from '../../undo-toast/src/api'
   import { time } from './time.svelte'
+  import BottomSheet from './track/BottomSheet.svelte'
 
   const {
     from,
@@ -21,6 +25,8 @@
     minutes,
     untracked,
     single = false,
+    phone = false,
+    only: shownOnly = null,
     onmanage,
   }: {
     from: number
@@ -29,6 +35,8 @@
     minutes: readonly Minute[]
     untracked: boolean
     single?: boolean
+    phone?: boolean
+    only?: string | null
     onmanage: () => void
   } = $props()
   interface Asking {
@@ -37,7 +45,8 @@
     pick: (activity: string) => void
   }
   const STEP = 5 * MINUTE
-  const days = $derived(daysOf(time.spans, minutes, from, to, now, untracked))
+  const kept = $derived(shownOnly === null ? time.spans : time.spans.filter((one) => one.activity === shownOnly))
+  const days = $derived(daysOf(kept, shownOnly === null ? minutes : [], from, to, now, untracked && shownOnly === null))
   const blocks = $derived(
     days.flatMap((one) =>
       one.rows.flatMap((row) => (row.kind === 'block' ? [{ day: one.day, id: row.span.id, row }] : [])),
@@ -47,6 +56,7 @@
   let open = $state(false)
   let asking = $state<Asking | null>(null)
   let list = $state<HTMLElement | null>(null)
+  let selecting = $state(false)
   const order = $derived(blocks.map((one) => one.id))
   const only = $derived(picking.paths.length === 1 ? (picking.paths[0] ?? null) : null)
   const totalOf = (day: number) => rangeTotals(time.spans, minutes, day, daysAfter(day, 1), now, { untracked }).ms
@@ -61,13 +71,27 @@
     const same = (one: (typeof blocks)[number] | undefined) => (one && one.day === here?.day ? one.id : null)
     return { before: same(blocks[at - 1]), after: same(blocks[at + 1]) }
   }
+  $effect(() => {
+    if (selecting && !picking.paths.length) selecting = false
+  })
+  $effect(() => closeOnBack(phone && selecting, () => choose(null)))
+  const press = (node: HTMLElement, id: string) => (phone ? longPress(node, () => pressed(id)) : undefined)
+  function pressed(id: string) {
+    tick()
+    undoToast.dismiss()
+    if (!selecting) picking.clear()
+    selecting = true
+    open = false
+    picking.toggle(id)
+  }
   function choose(id: string | null, editing = true) {
     if (id === null) picking.clear()
     else picking.select(id)
     open = id !== null && editing
   }
   function clicked(event: MouseEvent, id: string) {
-    if (event.shiftKey) picking.range(id, order)
+    if (phone && selecting) picking.toggle(id)
+    else if (event.shiftKey) picking.range(id, order)
     else if (event.metaKey || event.ctrlKey) picking.toggle(id)
     else {
       const again = only === id && open
@@ -78,7 +102,7 @@
   }
   function ask(anchor: EventTarget | null, chosen: string | null, pick: (activity: string) => void) {
     if (!(anchor instanceof HTMLElement)) return
-    asking = asking?.anchor === anchor ? null : { anchor, chosen, pick }
+    asking = asking?.anchor === anchor && !phone ? null : { anchor, chosen, pick }
   }
   function changeOf(id: string, anchor: EventTarget | null) {
     ask(anchor, time.span(id)?.activity ?? null, (activity) =>
@@ -126,7 +150,7 @@
     const last = run?.at(-1)
     if (!first || !last) return
     edited(mergeBlocks(time.spans, first, last, now), 'moved')
-    choose(first, false)
+    choose(phone ? null : first, false)
   }
   function remove(ids: readonly string[]) {
     if (!ids.length) return
@@ -136,10 +160,11 @@
       ids.flatMap((id) => removeBlock(time.spans, id)),
       'deleted',
     )
-    choose(next, false)
+    choose(phone ? null : next, false)
   }
   function rowMenu(event: MouseEvent, id: string) {
     event.preventDefault()
+    if (phone) return
     if (!picking.has(id)) choose(id, false)
     const many = picking.paths.length > 1 ? [...picking.paths] : null
     if (many) {
@@ -198,7 +223,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="blocks" bind:this={list} onkeydown={keyed} data-time-blocks>
+<div class="blocks" class:phone bind:this={list} onkeydown={keyed} data-time-blocks>
   {#if !days.length}
     <p class="empty">Nothing tracked in this range</p>
   {/if}
@@ -224,6 +249,7 @@
                 class:running
                 data-time-block={id}
                 oncontextmenu={(event) => rowMenu(event, id)}
+                use:press={id}
               >
                 <Chip activity={row.span.activity} onclick={(event: MouseEvent) => changeOf(id, event.currentTarget)} />
                 <button
@@ -235,17 +261,17 @@
                 >
                   <span class="long">{running ? ticking(now - row.from) : length(row.to - row.from)}</span>
                 </button>
-                <button
-                  type="button"
-                  class="orden-glyph more"
-                  aria-label="More"
-                  title="More"
-                  aria-haspopup="menu"
-                  onclick={(event) => rowMenu(event, id)}>⋯</button
-                >
+                {#if !phone}<button
+                    type="button"
+                    class="orden-glyph more"
+                    aria-label="More"
+                    title="More"
+                    aria-haspopup="menu"
+                    onclick={(event) => rowMenu(event, id)}>⋯</button
+                  >{/if}
               </div>
             </div>
-            {#if only === id && open}
+            {#if only === id && open && !phone}
               {@const near = neighbours(id)}
               <BlockEditor
                 span={row.span}
@@ -300,7 +326,58 @@
     </section>
   {/each}
 </div>
-{#if asking}
+{#if phone}
+  {@const chosen = only !== null && open ? (blocks.find((one) => one.id === only) ?? null) : null}
+  {@const near = chosen ? neighbours(chosen.id) : null}
+  <BottomSheet open={chosen !== null} label="Block" onclose={() => (open = false)}>
+    {#if chosen && near}
+      <BlockEditor
+        span={chosen.row.span}
+        {now}
+        bare
+        hasBefore={near.before !== null}
+        hasAfter={near.after !== null}
+        onsplit={() => split(chosen.id)}
+        onmerge={(which: 'before' | 'after') => merge(chosen.id, which === 'before' ? near.before : near.after)}
+        ondelete={() => remove([chosen.id])}
+        onclose={() => (open = false)}
+      />
+      <button type="button" class="orden-row is-quiet select" data-time-select onclick={() => pressed(chosen.id)}
+        >Select blocks</button
+      >
+    {/if}
+  </BottomSheet>
+  <BottomSheet open={asking !== null} label="Activity" onclose={() => (asking = null)}>
+    {#if asking}
+      {@const ask = asking}
+      <ActivityFind
+        chosen={ask.chosen}
+        onpick={(activity: string) => {
+          asking = null
+          ask.pick(activity)
+        }}
+        onescape={() => (asking = null)}
+      />
+      <button type="button" class="orden-row is-quiet select" onclick={() => ((asking = null), onmanage())}
+        >Edit activities</button
+      >
+    {/if}
+  </BottomSheet>
+  {#if selecting}
+    {@const run = adjacent(picking.paths)}
+    <div class="picked" role="toolbar" aria-label="Selected blocks" data-time-picked>
+      <span class="count">{picking.paths.length}</span>
+      {#if run}<button type="button" class="orden-chip" onclick={() => mergeAll(run)}>Merge</button>{/if}
+      <button
+        type="button"
+        class="orden-chip is-danger"
+        data-time-picked-delete
+        onclick={() => remove([...picking.paths])}>Delete</button
+      >
+      <button type="button" class="orden-chip" onclick={() => choose(null)}>Done</button>
+    </div>
+  {/if}
+{:else if asking}
   <ActivityLayer
     from={asking.anchor}
     chosen={asking.chosen}
@@ -311,6 +388,41 @@
 {/if}
 
 <style>
+  .phone .block {
+    min-height: var(--touch-row);
+  }
+  .phone :global([data-time-chip]) {
+    height: var(--touch-target);
+    border-radius: 14px;
+  }
+  .select {
+    width: 100%;
+    min-height: var(--touch-target);
+    margin-top: var(--space-2);
+  }
+  .picked {
+    position: fixed;
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: calc(var(--inset-bottom, 0px) + 76px);
+    z-index: var(--z-raised);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+  .picked .count {
+    flex: 1;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  .picked :global(button) {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
   .blocks {
     display: flex;
     flex-direction: column;

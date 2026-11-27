@@ -68,6 +68,8 @@ export default {
         'src/pass-link.ts',
         'pass.html',
         'src/pass-web.ts',
+        'track.html',
+        'src/track.ts',
         'home.html',
         'src/home.ts',
         'vite.home.config.ts',

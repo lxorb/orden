@@ -70,6 +70,7 @@ providePort('sync.api', {
   statusOf: (error) => (error instanceof ApiError ? error.status : null),
   saidByServer: (error) => fromServer(error),
 })
-providePort('sync.pairing', {
-  pairSpaces: async (token, pairing) => (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
-})
+if (__ORDEN_APP__ === 'orden' || __ORDEN_APP__ === 'notes')
+  providePort('sync.pairing', {
+    pairSpaces: async (token, pairing) => (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
+  })

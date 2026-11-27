@@ -225,6 +225,7 @@ describe('tasks-model contract', () => {
           one === '@orden/sync-core' ||
           one === '@orden/bases' ||
           one === '../../held-database/src/api' ||
+          one === '../../platform/src/api' ||
           one === '@orden/markdown/task-line' ||
           one === '@orden/markdown/links'
         expect(allowed, `${name} imports ${one}`).toBe(true)

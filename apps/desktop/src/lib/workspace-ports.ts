@@ -1,4 +1,4 @@
-import { providePort, whenPortProvided } from '@orden/contracts'
+import { providePort, type TimeSpaceSeen, whenPortProvided } from '@orden/contracts'
 import { archiveAgain, showArchive } from './archive/src/api'
 import { beginSetup } from './onboarding/src/api'
 import { pdfTabs } from './pages/src/api'
@@ -18,6 +18,8 @@ import {
   webNotes,
   websiteConverting,
 } from './web-tab/src/api'
+import { sync } from './sync-store/src/api'
+import { workspace } from './workspace/src/api'
 import { serveWorkspace } from './workspace/src/services'
 
 serveWorkspace({
@@ -81,5 +83,35 @@ if (__ORDEN_APP__ === 'orden') {
       )
     }),
   )
+}
+if (__ORDEN_APP__ === 'orden') {
+  const seen = (space: { id: string; name: string; root: string }): TimeSpaceSeen => ({
+    id: space.id,
+    key: sync.remoteIdFor(space.root) ?? `name:${space.name}`,
+    name: space.name,
+    icon: workspace.iconFor(space.id),
+  })
+  providePort('time.places', {
+    get space() {
+      const space = workspace.activeSpace
+      return space ? seen(space) : null
+    },
+    get tab() {
+      return workspace.active
+    },
+    get spaces() {
+      return workspace.spaces.map(seen)
+    },
+    get tabs() {
+      return workspace.tabs
+    },
+  })
+  providePort('time.open', {
+    show: (spec) => {
+      const open = workspace.singleHere('time')
+      if (open) workspace.activate(open.id)
+      else workspace.openUnsaved('time', spec, 'Time tracker')
+    },
+  })
 }
 providePort('spaces.archived', { listed: async () => (await spaceArchiving()).listed() })

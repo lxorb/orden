@@ -20,6 +20,8 @@ describe('the kinds and the experiments that are on', () => {
   test('an experiment is on only while the experimental switch is on too', () => {
     gates.hiddenKinds.hidden = [gates.TIME_WORD]
     expect(gates.timeOn()).toBe(false)
+    expect(gates.timeOn('track')).toBe(true)
+    expect(gates.timeOn('notes')).toBe(false)
     gates.hiddenKinds.hidden = [gates.EXPERIMENTAL_WORD, gates.TIME_WORD, gates.BASES_WORD]
     expect(gates.experimentalOn()).toBe(true)
     expect(gates.timeOn()).toBe(true)

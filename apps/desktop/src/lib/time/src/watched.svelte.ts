@@ -1,4 +1,4 @@
-import { whileShown } from '../../panes/src/api'
+import { whileShown } from '../../platform/src/api'
 import type { Minute } from './minutes'
 import { time } from './time.svelte'
 

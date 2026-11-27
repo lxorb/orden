@@ -1,3 +1,4 @@
+import { dayOf } from '../../platform/src/api'
 import type { Todo } from './todo'
 
 export const SORTS = ['deadline', 'priority', 'manual'] as const
@@ -12,12 +13,7 @@ export interface Filter {
   readonly keep?: readonly string[]
 }
 export const ALL_LABELS = null
-export function dayOf(at: number | Date = new Date()): string {
-  const date = typeof at === 'number' ? new Date(at) : at
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${date.getFullYear()}-${month}-${day}`
-}
+export { dayOf }
 const started = (todo: Todo, today: string): boolean => todo.start === null || todo.start <= today
 const hasLabel = (todo: Todo, label: string | null): boolean => label === ALL_LABELS || todo.labels.includes(label)
 const stillShown = (todo: Todo, filter: Pick<Filter, 'done' | 'keep'>): boolean =>

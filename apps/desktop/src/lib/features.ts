@@ -20,6 +20,7 @@ import { loadFind, loadLineCommands, setBlocks } from '@orden/editor'
 import { askPart, loadRewriteSheet, rewritingStore } from './ai-chat/src/api'
 import { outlinePart } from './pages/src/api'
 import { scratchpadPart } from './scratchpad/src/api'
+import { iconChoice } from './icon-picker/src/api'
 import { serveLinks } from './link-index/src/api'
 import { loadSearchPanel, search, searchFrom, searchSpace, showSearch } from './search/src/api'
 import { partView, reloadWhen } from './ui-kit/src/api'
@@ -98,6 +99,7 @@ providePort('shell.notice', {
     void notices().then(({ gateNote }) => gateNote.show(words))
   },
 })
+providePort('icons.choice', iconChoice)
 if (__ORDEN_APP__ === 'orden')
   providePort('quick-add.show', {
     show: (prefill = {}) => {

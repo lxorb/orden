@@ -7,5 +7,8 @@
     "framesInTime": { "least": 95, "target": 90 },
     "flingsWithLongFrame": { "most": 1, "target": 0 },
     "textScaleFollowed": { "least": 1, "target": 1 }
+  },
+  "track": {
+    "apkBytes": { "most": 19750000, "target": 23068672 }
   }
 }

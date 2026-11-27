@@ -164,6 +164,8 @@ describe('the apps one project builds (#2286)', () => {
     const config = read(APP, 'vite.config.ts')
     expect(config).toContain('{ main: resolve(import.meta.dirname, entryOf(app)) }')
     expect(config).not.toMatch(/'notes'|"notes"/)
+    expect(config).toContain("...(entryOf(app) === 'index.html' ? [] : [asIndex(entryOf(app))])")
+    expect(config).toContain("if (page) page.fileName = 'index.html'")
   })
   test('with a page have all of an overlay, a list of what they leave out and a build script, or none of them', () => {
     const scripts = (JSON.parse(read(APP, 'package.json')) as { scripts: Record<string, string> }).scripts
@@ -189,6 +191,28 @@ describe('the apps one project builds (#2286)', () => {
     expect(config).toContain('include: [`src/**/*.${app}.test.ts`, `test/**/*.${app}.test.ts`]')
     expect(config).toContain('...APPS.map((app) => `**/*.${app}.test.ts`)')
     for (const app of ORDEN_APPS.filter((one) => one !== 'orden')) expect(config, app).not.toContain(`'${app}'`)
+  })
+  test('Orden Track carries no workspace, editor, tabs, panes, terminal, web tabs or chats', () => {
+    for (const name of [
+      'workspace',
+      'documents',
+      'editor',
+      'tab-strip',
+      'panes',
+      'terminal',
+      'web-tab',
+      'chats-client',
+      'tasks-views',
+      'sidebar',
+      'settings',
+      'onboarding',
+    ])
+      expect(leftOut('track'), name).toContain(name)
+    const time = JSON.parse(read(APP, 'src', 'lib', 'time', 'module.json')) as { dependsOn: string[] }
+    for (const name of ['workspace', 'documents', 'panes', 'icon-picker', 'sync-store'])
+      expect(time.dependsOn, name).not.toContain(name)
+    const start = read(APP, 'src', 'lib', 'time', 'src', 'start.svelte.ts')
+    expect(start).toContain("if (__ORDEN_APP__ === 'orden') void import('./sense.svelte')")
   })
   test('Orden Notes is checked for the modules it leaves out, on every push', () => {
     const guard = read(APP, '..', '..', 'scripts', 'app-modules.mjs')
