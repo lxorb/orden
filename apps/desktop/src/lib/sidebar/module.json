@@ -3,6 +3,8 @@
   "layer": "shell",
   "dependsOn": [
     "contracts",
+    "left-spaces",
+    "sync-store",
     "accounts",
     "away",
     "documents",
