@@ -193,11 +193,11 @@ describe('when and where a member last came in (#2555)', () => {
     expect(rowOf('bob').querySelector('.seen')).toBeNull()
     expect(rowOf('bob').querySelector('button.more')).toBeNull()
   })
-  test('tells everyone in the space that owners and admins see it, and says nothing on the sheet about one file', () => {
+  test('adds no sentence about who sees it under the list, for a space or for one file', () => {
     draw({ store: withAccess(), manages: false })
-    expect(target.querySelector('.told')?.textContent).toContain('last opened this space and roughly where from')
+    expect(target.textContent).not.toContain('Owners and admins see')
     close?.()
     draw({ store: storeWith({ id: 'note-1', path: 'Notes/plan.md' }), manages: true })
-    expect(target.querySelector('.told')).toBeNull()
+    expect(target.textContent).not.toContain('Owners and admins see')
   })
 })
