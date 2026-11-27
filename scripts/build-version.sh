@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "code=$((100000 + GITHUB_RUN_NUMBER))" >>"$GITHUB_OUTPUT"
+
 if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
   echo "version=${GITHUB_REF_NAME#v}" >>"$GITHUB_OUTPUT"
   echo "tag=$GITHUB_REF_NAME" >>"$GITHUB_OUTPUT"
