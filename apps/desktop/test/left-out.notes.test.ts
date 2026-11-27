@@ -15,6 +15,7 @@ const LIB = join(fileURLToPath(new URL('..', import.meta.url)), 'src', 'lib')
 const WHOLE: readonly PortName[] = [
   'chats',
   'chats.demo',
+  'chats.places',
   'terminal.going',
   'terminal.judge',
   'terminal.lines',
@@ -108,7 +109,7 @@ describe('an app that leaves a part of Orden out (#2286)', () => {
       expect(opened, port).toBeGreaterThan(-1)
       expect(/^\}/m.test(before.slice(opened)), port).toBe(false)
     }
-    for (const port of ['chats', 'chats.demo', 'web.lending']) guarded('chat-ports.ts', port)
+    for (const port of ['chats', 'chats.demo', 'chats.places', 'web.lending']) guarded('chat-ports.ts', port)
     for (const port of ['terminal.previews', 'terminal.making', 'terminal.judge', 'terminal.going', 'terminal.lines'])
       guarded('terminal-ports.ts', port)
     for (const port of ['explorer.show', 'explorer.carry', 'web.sites']) guarded('features.ts', port)

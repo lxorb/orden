@@ -77,8 +77,8 @@ export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
 export const BASES_WORD = 'experimental-bases'
 export const OPENCODE_WORD = 'experimental-opencode'
-export function chatsOn(): boolean {
-  return WHOLE && tried(CHATS_WORD)
+export function chatsOn(app: OrdenApp = __ORDEN_APP__): boolean {
+  return app === 'chat' || (app === 'orden' && tried(CHATS_WORD))
 }
 export function explorerOn(): boolean {
   return tried(EXPLORER_WORD)

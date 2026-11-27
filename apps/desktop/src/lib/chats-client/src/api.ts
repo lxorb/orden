@@ -4,6 +4,7 @@ export { hush } from './hush.svelte'
 export { sendRows } from './send-rows'
 export type { ChatEntry, Chats } from './shapes'
 export const chatStore = () => import('./store.svelte')
+export const chatPlaces = () => import('./places-here.svelte').then((one) => one.placesHere)
 export const chatOpening = () => import('./view/open')
 export const chatsDemo = () => import('./demo')
 export const chatDeleting = () => import('./deleting')
