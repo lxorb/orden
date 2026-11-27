@@ -14,8 +14,9 @@ fn the_server_lives_in_ordens_folder_and_says_its_state_plainly() {
         config: json!({}),
         auth: None,
         orden: None,
+        wrapper: None,
     };
-    let env = env_of(&launch, "pw", |_| None);
+    let env = env_of(&launch, "pw", std::path::Path::new("/bin/sh"), |_| None);
     for var in MOVED {
         let given = env.iter().find(|(name, _)| name == var).map(|(_, value)| PathBuf::from(value));
         assert!(given.is_some_and(|path| path.starts_with(&root)), "{var}");

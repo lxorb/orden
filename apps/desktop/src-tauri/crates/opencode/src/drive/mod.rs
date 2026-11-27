@@ -40,11 +40,25 @@ fn binary() -> Option<PathBuf> {
     std::env::var_os(BINARY_VAR).filter(|one| !one.is_empty()).map(PathBuf::from)
 }
 fn real(path: &Path) -> PathBuf {
-    if cfg!(windows) {
-        path.to_owned()
-    } else {
-        std::fs::canonicalize(path).expect("a real folder")
+    let full = std::fs::canonicalize(path).expect("a real folder");
+    let text = full.to_string_lossy();
+    match text.strip_prefix(r"\\?\") {
+        Some(plain) if !plain.starts_with("UNC") => PathBuf::from(plain),
+        _ => full,
     }
+}
+pub(crate) fn wrapper() -> Option<PathBuf> {
+    if !cfg!(windows) {
+        return None;
+    }
+    let here = std::env::current_exe().expect("the test's own path");
+    let built =
+        here.ancestors().map(|folder| folder.join("orden-shell.exe")).find(|one| one.is_file());
+    assert!(
+        built.is_some(),
+        "run cargo test -p orden-opencode, not --lib, so orden-shell.exe is built"
+    );
+    built
 }
 fn snapshot_file(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("src").join("drive").join(name)
@@ -97,6 +111,7 @@ impl Drive {
             config: config(model.port, mcp.port, preset),
             auth: None,
             orden: None,
+            wrapper: wrapper(),
         };
         let running = Running::start(launch).expect("ready");
         let stop = Arc::new(AtomicBool::new(false));
@@ -139,7 +154,11 @@ impl Drive {
             let left = WITHIN.saturating_sub(started.elapsed());
             let event = self.events.recv_timeout(left).unwrap_or_else(|_| {
                 let types: Vec<&Value> = self.heard.iter().map(|one| &one["type"]).collect();
-                panic!("no such event within {} s; heard {types:?}", WITHIN.as_secs())
+                panic!(
+                    "no such event within {} s; heard {types:?}; tools said {}",
+                    WITHIN.as_secs(),
+                    tools_said(&self.heard[from.min(self.heard.len())..])
+                )
             });
             self.heard.push(event.clone());
             if what(&event) {
@@ -195,7 +214,11 @@ impl Drive {
         self.prompt(&session, None, &format!("tool: orden_{tool}"));
         self.idle(from, &session);
         assert!(self.asked_none(from, &session), "orden_{tool} asked");
-        assert!(self.called(tool, since), "orden_{tool} did not reach Orden");
+        assert!(
+            self.called(tool, since),
+            "orden_{tool} did not reach Orden; tools said {}",
+            tools_said(&self.heard[from..])
+        );
         let answered = self.heard[from..].iter().any(|one| {
             let part = &one["properties"]["part"];
             part["tool"] == format!("orden_{tool}")
@@ -269,6 +292,20 @@ impl Drop for Drive {
             let _ = std::fs::remove_dir_all(config);
         }
     }
+}
+fn tools_said(heard: &[Value]) -> String {
+    let said: Vec<String> = heard
+        .iter()
+        .map(|one| &one["properties"]["part"])
+        .filter(|part| part["type"] == "tool")
+        .map(|part| {
+            let state = &part["state"];
+            let words = state["output"].as_str().or(state["error"].as_str()).unwrap_or_default();
+            let words: String = words.chars().take(400).collect();
+            format!("{} {} {words}", part["tool"], state["status"])
+        })
+        .collect();
+    said.join(" | ")
 }
 fn walked(path: &Path, into: &mut BTreeMap<PathBuf, Option<SystemTime>>) {
     let Ok(meta) = std::fs::symlink_metadata(path) else {
@@ -404,6 +441,7 @@ fn the_engine_s_schema_still_covers_every_route_orden_uses() {
         config: json!({ "enabled_providers": [] }),
         auth: None,
         orden: None,
+        wrapper: wrapper(),
     };
     let running = Running::start(launch).expect("ready");
     let doc = http::request(
@@ -447,7 +485,7 @@ fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
     std::fs::write(&kept, "x").expect("kept");
     let session = drive.session();
     let from = drive.mark();
-    drive.prompt(&session, None, &format!("bash: rm {}", gone.display()));
+    drive.prompt(&session, None, "bash: rm work/gone.txt");
     let asked = drive.asked(from, &session);
     assert_eq!(asked["properties"]["permission"], "bash");
     assert!(asked["properties"]["tool"]["callID"].is_string(), "{asked}");
@@ -459,9 +497,13 @@ fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
     drive.reply(&asked, "once", None);
     drive.until(from, |one| one["type"] == "permission.replied");
     drive.idle(from, &session);
-    assert!(!gone.exists(), "a command allowed once did not run");
+    assert!(
+        !gone.exists(),
+        "a command allowed once did not run; tools said {}",
+        tools_said(&drive.heard[from..])
+    );
     let from = drive.mark();
-    drive.prompt(&session, None, &format!("bash: rm {}", kept.display()));
+    drive.prompt(&session, None, "bash: rm work/kept.txt");
     let asked = drive.asked(from, &session);
     let from = drive.mark();
     drive.reply(&asked, "reject", Some("not now"));
@@ -530,6 +572,7 @@ fn the_engine_is_ready_within_a_few_times_what_reading_its_config_takes() {
         config: json!({ "enabled_providers": [] }),
         auth: None,
         orden: None,
+        wrapper: wrapper(),
     };
     let ready = || {
         let started = Instant::now();
@@ -544,7 +587,7 @@ fn the_engine_is_ready_within_a_few_times_what_reading_its_config_takes() {
         let done = std::process::Command::new(&binary)
             .args(["debug", "config"])
             .current_dir(&dirs.root)
-            .envs(env_of(&launch, "unused", |_| None))
+            .envs(env_of(&launch, "unused", Path::new("/bin/sh"), |_| None))
             .output()
             .expect("ran");
         assert!(done.status.success(), "{}", String::from_utf8_lossy(&done.stderr));

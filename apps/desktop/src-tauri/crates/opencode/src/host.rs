@@ -9,7 +9,7 @@ use orden_ai::ai_agent;
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::env::{env_of, Launch, MCP_TOKEN_VAR};
+use crate::env::{env_of, real_shell, Launch, MCP_TOKEN_VAR};
 use crate::{http, shell};
 
 const READY_WITHIN: Duration = Duration::from_secs(30);
@@ -68,7 +68,10 @@ impl Line {
 }
 impl Running {
     pub fn start(launch: Launch) -> Result<Running, String> {
-        shell::prepare(&launch.dirs).map_err(|why| format!("OpenCode's folders: {why}"))?;
+        let user = |var: &str| std::env::var(var).ok();
+        let real = real_shell(&user);
+        shell::prepare(&launch.dirs, &real, launch.wrapper.as_deref())
+            .map_err(|why| format!("OpenCode's folders: {why}"))?;
         let (port, password) = (free_port()?, orden_agents::grants::fresh_token()?);
         let token = match &launch.orden {
             Some(orden) => Some(ai_agent::lend_engine(orden.grant.clone(), orden.preset.mode())?),
@@ -79,7 +82,7 @@ impl Running {
         command
             .args(["serve", "--hostname", "127.0.0.1", "--port", &line.port.to_string()])
             .current_dir(&launch.dirs.root)
-            .envs(env_of(&launch, &line.password, |var| std::env::var(var).ok()))
+            .envs(env_of(&launch, &line.password, &real, user))
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
@@ -228,6 +231,7 @@ mod tests {
     use super::*;
     use crate::env::Dirs;
     use serde_json::json;
+    use std::path::PathBuf;
 
     #[test]
     fn a_session_answering_or_retrying_holds_a_restart_back() {
@@ -246,6 +250,7 @@ mod tests {
             config: json!({}),
             auth: None,
             orden: None,
+            wrapper: crate::drive::wrapper(),
         };
         assert!(Running::start(launch).is_err_and(|why| why.contains("would not start")));
     }
@@ -262,6 +267,7 @@ mod tests {
             config: json!({ "enabled_providers": [] }),
             auth: None,
             orden: None,
+            wrapper: crate::drive::wrapper(),
         };
         let running = Running::start(launch).expect("ready");
         assert_eq!(
@@ -273,13 +279,24 @@ mod tests {
         let config: Value = serde_json::from_str(&config.body).expect("json");
         assert_eq!(config["share"], "disabled");
         assert_eq!(config["autoupdate"], false);
+        let paths = running.line.asked("/path").expect("paths");
+        let paths: Value = serde_json::from_str(&paths.body).expect("json");
+        assert_eq!(paths["home"].as_str().map(PathBuf::from), Some(dirs.home()), "{paths}");
         std::thread::sleep(Duration::from_secs(5));
-        assert!(!dirs.own_config().join("node_modules").exists());
-        assert!(!dirs.own_config().join("package.json").exists());
+        let installed: Vec<String> = walk_names(&dirs.own_config().join("node_modules"));
+        assert!(installed.is_empty(), "OpenCode installed {installed:?}");
         let port = running.port();
         running.stop();
         std::thread::sleep(Duration::from_millis(500));
         assert!(http::get(port, "/global/health", None).is_err());
         let _ = std::fs::remove_dir_all(dirs.own_config());
+    }
+    fn walk_names(dir: &std::path::Path) -> Vec<String> {
+        std::fs::read_dir(dir)
+            .into_iter()
+            .flatten()
+            .flatten()
+            .map(|one| one.file_name().to_string_lossy().into_owned())
+            .collect()
     }
 }

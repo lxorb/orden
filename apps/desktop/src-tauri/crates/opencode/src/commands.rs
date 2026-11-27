@@ -12,23 +12,33 @@ use crate::proxy::{self, Answer};
 use orden_ai::ai_agent::Builtin;
 
 const BINARY_VAR: &str = "ORDEN_OPENCODE_BIN";
-const NAME: &str = if cfg!(windows) { "opencode.exe" } else { "opencode" };
-fn places(exe: &Path, appdir: Option<PathBuf>) -> Vec<PathBuf> {
-    let mut all: Vec<PathBuf> = exe.parent().map(|folder| folder.join(NAME)).into_iter().collect();
+const OPENCODE: &str = if cfg!(windows) { "opencode.exe" } else { "opencode" };
+const GUARD: &str = "orden-shell.exe";
+fn places(exe: &Path, appdir: Option<PathBuf>, name: &str) -> Vec<PathBuf> {
+    let mut all: Vec<PathBuf> = exe.parent().map(|folder| folder.join(name)).into_iter().collect();
     if let Some(appdir) = appdir.filter(|one| one.has_root()) {
-        all.push(appdir.join("shared").join("bin").join(NAME));
+        all.push(appdir.join("shared").join("bin").join(name));
     }
     all
+}
+fn beside_the_app(name: &str) -> Option<PathBuf> {
+    let here = std::env::current_exe().ok()?;
+    places(&here, std::env::var_os("APPDIR").map(PathBuf::from), name)
+        .into_iter()
+        .find(|one| one.is_file())
 }
 fn binary() -> Result<PathBuf, String> {
     if let Some(given) = std::env::var_os(BINARY_VAR).filter(|one| !one.is_empty()) {
         return Ok(PathBuf::from(given));
     }
-    let here = std::env::current_exe().map_err(|why| why.to_string())?;
-    places(&here, std::env::var_os("APPDIR").map(PathBuf::from))
-        .into_iter()
-        .find(|one| one.is_file())
-        .ok_or_else(|| "OpenCode is not installed with this build".to_owned())
+    beside_the_app(OPENCODE).ok_or_else(|| "OpenCode is not installed with this build".to_owned())
+}
+fn wrapper() -> Option<PathBuf> {
+    if cfg!(windows) {
+        beside_the_app(GUARD)
+    } else {
+        None
+    }
 }
 fn launch(app: &AppHandle, config: Value, preset: Preset) -> Result<Launch, String> {
     let root = app.path().app_local_data_dir().map_err(|why| why.to_string())?.join("opencode");
@@ -38,7 +48,14 @@ fn launch(app: &AppHandle, config: Value, preset: Preset) -> Result<Launch, Stri
         grant: orden_ai::ai_agent::grant_for(app, &engine)?.id,
         preset,
     };
-    Ok(Launch { binary: binary()?, dirs: Dirs { root }, config, auth: None, orden: Some(orden) })
+    Ok(Launch {
+        binary: binary()?,
+        dirs: Dirs { root },
+        config,
+        auth: None,
+        orden: Some(orden),
+        wrapper: wrapper(),
+    })
 }
 #[tauri::command]
 pub async fn opencode_start(
@@ -103,15 +120,21 @@ mod tests {
     #[test]
     fn opencode_is_looked_for_beside_the_app_and_inside_an_appimage() {
         let exe = PathBuf::from("/usr/share/Orden/orden");
-        assert_eq!(places(&exe, None), [PathBuf::from("/usr/share/Orden").join(NAME)]);
+        assert_eq!(
+            places(&exe, None, OPENCODE),
+            [PathBuf::from("/usr/share/Orden").join(OPENCODE)]
+        );
         let loader = PathBuf::from("/tmp/.mount_Orden/shared/lib/ld-linux-x86-64.so.2");
         assert_eq!(
-            places(&loader, Some(PathBuf::from("/tmp/.mount_Orden"))),
+            places(&loader, Some(PathBuf::from("/tmp/.mount_Orden")), OPENCODE),
             [
-                PathBuf::from("/tmp/.mount_Orden/shared/lib").join(NAME),
-                PathBuf::from("/tmp/.mount_Orden/shared/bin").join(NAME),
+                PathBuf::from("/tmp/.mount_Orden/shared/lib").join(OPENCODE),
+                PathBuf::from("/tmp/.mount_Orden/shared/bin").join(OPENCODE),
             ]
         );
-        assert_eq!(places(&exe, Some(PathBuf::from("relative"))).len(), 1);
+        assert_eq!(
+            places(&exe, Some(PathBuf::from("relative")), GUARD),
+            [PathBuf::from("/usr/share/Orden").join(GUARD)]
+        );
     }
 }

@@ -322,6 +322,7 @@ mod tests {
             config: serde_json::json!({ "enabled_providers": [] }),
             auth: None,
             orden: None,
+            wrapper: crate::drive::wrapper(),
         };
         let running = host::Running::start(launch).expect("ready");
         let line = running.line.clone();
