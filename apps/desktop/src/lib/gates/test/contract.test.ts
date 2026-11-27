@@ -27,6 +27,8 @@ describe('the kinds and the experiments that are on', () => {
     expect(gates.timeOn()).toBe(true)
     expect(gates.basesOn()).toBe(true)
     expect(gates.chatsOn()).toBe(false)
+    expect(gates.chatsOn('chat')).toBe(true)
+    expect(gates.chatsOn('notes')).toBe(false)
   })
   test('the hidden list comes back from what was kept', () => {
     localStorage.setItem(gates.KINDS_KEY, JSON.stringify(['canvas']))

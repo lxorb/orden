@@ -28,6 +28,9 @@ if (__ORDEN_APP__ === 'orden') {
       return ending(paths)
     },
   })
+  providePort('chats.places', {
+    load: () => import('./chats-client/src/api').then((one) => one.chatPlaces()),
+  })
   providePort('chats.demo', {
     stage: (me) =>
       import('./chats-client/src/api').then((one) => one.chatsDemo()).then(({ demoChats }) => demoChats(me)),

@@ -16,17 +16,16 @@ import {
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
 import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../../accounts/src/api'
-import { samePath, within, spaceHolding, keep, storedText, isNative, joinPath } from '../../platform/src/api'
-import { sync } from '../../sync-store/src/api'
-import { workspace } from '../../workspace/src/api'
+import type { ChatPlaces } from '@orden/contracts'
+import { samePath, within, keep, storedText, isNative, joinPath } from '../../platform/src/api'
 import type { ChatEntry, ChatMember, Chats, ChatView, Draft, HistoryAsk, Hit, Offer, Scheduled } from './shapes'
 import { type ChatCache, MemoryCache } from './cache'
 import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
 import { neverShared } from './web-notes'
 import { chatName, findPointers, makePointer, type Place, readPointer } from './pointers'
+import { places } from './where'
 import { forgetMoves, keepOwnPointer, ownPointer, ownPointers, startedFor } from './places'
-import { isRetiredChat } from '../../documents/src/api'
 import { type Host, View } from './view.svelte'
 import { dayOf } from './view/when'
 
@@ -74,6 +73,7 @@ class ChatsStore implements Chats {
   private looking: ReturnType<typeof setTimeout> | null = null
   private lookWait = LOOK_FIRST
   private missing = false
+  private where: ChatPlaces | null = null
   private stops: (() => void)[] = []
   get me(): Who | null {
     if (account.user) return `user:${account.user.id}`
@@ -86,6 +86,9 @@ class ChatsStore implements Chats {
     if (!id) return
     this.account = id
     startedFor(id)
+    const where = await places()
+    if (this.account !== id) return
+    this.where = where
     let cache: ChatCache = new MemoryCache()
     if (isNative && account.user) {
       const { nativeCache } = await import('./native-cache')
@@ -97,7 +100,7 @@ class ChatsStore implements Chats {
     this.cache = cache
     this.engine = engine
     for (const one of await cache.drafts().catch(() => [])) {
-      if (isRetiredChat(one.chat)) void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
+      if (where?.retired(one.chat)) void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
       else this.drafts.set(one.chat, one.text)
     }
     this.stops.push(
@@ -194,7 +197,7 @@ class ChatsStore implements Chats {
       const place = this.places.get(chat.id) ?? null
       let root = place?.root ?? spaces.get(row.space) ?? null
       if (!root) {
-        root = workspace.spaces.find((one) => this.remoteOf(one.root) === row.space)?.root ?? null
+        root = this.where?.rootOf(row.space) ?? null
         if (root) spaces.set(row.space, root)
       }
       const behind = row.lastSeq > row.readSeq && row.lastBy !== this.me
@@ -205,7 +208,7 @@ class ChatsStore implements Chats {
         space: row.space,
         root,
         path: place?.path ?? null,
-        name: place ? chatName(place.path) : null,
+        name: place ? chatName(place.path) : this.where ? null : (row.name ?? null),
         role: row.role,
         members: row.members,
         lastSeq: row.lastSeq,
@@ -221,7 +224,7 @@ class ChatsStore implements Chats {
     }
     entries.sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
     const before = new Map(this.list.map((one) => [one.id, one.members]))
-    this.list = entries.filter((one) => one.path !== null)
+    this.list = this.where ? entries.filter((one) => one.path !== null) : entries
     for (const one of entries) {
       const was = before.get(one.id)
       if (was === undefined || was === one.members) continue
@@ -229,13 +232,13 @@ class ChatsStore implements Chats {
       this.views.get(one.id)?.view.relist()
     }
     for (const listener of this.listeners) listener()
-    this.missing = entries.some((one) => !one.path)
+    this.missing = this.where !== null && entries.some((one) => !one.path)
     if (this.missing) this.awaitPointers()
     else this.lookWait = LOOK_FIRST
   }
   private awaitPointers(): void {
     if (this.looking) return
-    sync.nudge()
+    this.where?.nudge()
     this.looking = setTimeout(() => {
       this.looking = null
       this.lookWait = Math.min(this.lookWait * 2, LOOK_AGAIN)
@@ -253,7 +256,7 @@ class ChatsStore implements Chats {
     return home + (own !== null && samePath(own, place.path) ? 1 : 0)
   }
   private remoteOf(root: string): string | null {
-    return sync.remoteIdFor(root)
+    return this.where?.remoteOf(root) ?? null
   }
   private counting = new Set<string>()
   private countLater(chat: string): void {
@@ -273,6 +276,7 @@ class ChatsStore implements Chats {
     this.drawList()
   }
   private async lookForPointers(): Promise<void> {
+    if (!this.where) return
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and read in this call
     const ranked = new Map<string, Map<string, number>>()
     const unread: string[] = []
@@ -603,20 +607,21 @@ class ChatsStore implements Chats {
     this.waitingOffers.delete(key)
     return offer
   }
-  private remoteNote(path: string): { space: string; note: string } | null {
-    const root = spaceHolding(workspace.spaces, path)?.root
-    const space = root ? this.remoteOf(root) : null
-    const note = sync.tracked(path)?.id
+  private async remoteNote(path: string): Promise<{ space: string; note: string } | null> {
+    const where = this.where ?? (await places())
+    const root = where?.rootHolding(path)
+    const space = root ? (where?.remoteOf(root) ?? null) : null
+    const note = where?.noteId(path)
     return space && note ? { space, note } : null
   }
   async noteReach(chat: string, path: string) {
-    const at = this.remoteNote(path)
+    const at = await this.remoteNote(path)
     const reach = at ? await http.noteReachOf(chat, at.space, at.note) : null
     return reach && neverShared(path) ? { ...reach, share: false } : reach
   }
   async shareNote(chat: string, path: string): Promise<boolean> {
     if (neverShared(path)) return false
-    const at = this.remoteNote(path)
+    const at = await this.remoteNote(path)
     return at ? await http.shareNote(chat, at.space, at.note) : false
   }
   keepDraft(chat: string, text: string): void {
@@ -691,7 +696,7 @@ class ChatsStore implements Chats {
     if (before && !chat) this.gone.add(before[0])
     if (chat) this.gone.delete(chat)
     const row = chat ? (this.engine?.chats.get(chat)?.row ?? null) : null
-    const root = to ? (spaceHolding(workspace.spaces, to)?.root ?? null) : null
+    const root = to ? (this.where?.rootHolding(to) ?? null) : null
     const moved = before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
     if ((before && !chat) || (chat !== null && !row) || moved) {
       void this.engine?.refresh().catch(() => false)
