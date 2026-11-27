@@ -15,9 +15,15 @@ The agreements are the Harmony Contributor License Agreements 1.0, with only the
 
 ### How to sign
 
-Individuals: open your pull request. A bot comments on it with the agreement and how to sign with your GitHub account. You sign once, and it covers your later contributions too. The pull request cannot be merged until every author of its commits has signed.
+Individuals: open your pull request. A bot comments on it with a link to the agreement. Read it, then sign by posting this sentence, exactly, as a comment on the pull request:
 
-Companies: say so in the pull request. A person authorised to sign for the company signs the entity agreement, and the maintainer then records which GitHub accounts it covers.
+```
+I have read the CLA Document and I hereby sign the CLA
+```
+
+You sign once, and it covers your later contributions too. Every author of a commit in the pull request signs. Signatures are recorded with your GitHub account in the `cla-signatures` branch of this repository. A pull request is not merged until all its authors have signed.
+
+Companies: say so in the pull request, or write to contributors@orden.so. A person authorised to sign for the company signs the entity agreement, and the maintainer then records which GitHub accounts it covers.
 
 If you are employed and the work may belong to your employer, have your employer approve the individual agreement or sign the entity agreement.
 

@@ -7,7 +7,7 @@ Orden uses the Harmony Contributor License Agreements, version 1.0 (4 July 2011)
 | [HA-CLA-I.md](HA-CLA-I.md) | A person contributing in their own name |
 | [HA-CLA-E.md](HA-CLA-E.md) | A company or other legal entity |
 
-How to sign is described in [CONTRIBUTING.md](../../CONTRIBUTING.md).
+How to sign is described in [CONTRIBUTING.md](../../CONTRIBUTING.md). Individuals sign with a comment on their pull request; the workflow `.github/workflows/cla.yml` records each signature in `signatures/version1/cla.json` on the `cla-signatures` branch. The entity agreement is signed as a document and its accounts are then added to the workflow's allowlist.
 
 ## Source
 
