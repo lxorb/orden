@@ -30,6 +30,7 @@ const {
   hiddenKinds,
   KINDS_KEY,
   kindsHere,
+  opencodeOn,
   passOn,
   timeOn,
 } = settings
@@ -38,8 +39,8 @@ const { experimentalPane } = await import('../src/lib/settings/src/experimental-
 const { kindsPane } = await import('../src/lib/settings/src/kinds-pane')
 const { account } = await import('../src/lib/accounts/src/account.svelte')
 Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
-const FEATURES = ['chats', 'explorer', 'passwordManager', 'timeTracker', 'databases'] as const
-const ON = [chatsOn, explorerOn, passOn, timeOn, basesOn]
+const FEATURES = ['chats', 'explorer', 'opencode', 'passwordManager', 'timeTracker', 'databases'] as const
+const ON = [chatsOn, explorerOn, opencodeOn, passOn, timeOn, basesOn]
 function fields() {
   return experimentalPane().groups.flatMap((group) => group.fields)
 }

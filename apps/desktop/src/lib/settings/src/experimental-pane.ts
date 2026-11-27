@@ -8,6 +8,7 @@ import {
   experimentalOn,
   EXPLORER_WORD,
   hiddenKinds,
+  OPENCODE_WORD,
   PASS_WORD,
   TIME_WORD,
 } from '../../gates/src/api'
@@ -15,7 +16,7 @@ import { prompt } from '../../ui-kit/src/api'
 import { isDesktop, isMobile } from '../../platform/src/api'
 import type { Field, Pane } from './fields'
 
-const FEATURE_WORDS = [CHATS_WORD, EXPLORER_WORD, PASS_WORD, TIME_WORD, BASES_WORD]
+const FEATURE_WORDS = [CHATS_WORD, EXPLORER_WORD, PASS_WORD, TIME_WORD, BASES_WORD, OPENCODE_WORD]
 const EXPERIMENTAL_WORDS = ['experimental', 'beta', 'preview', 'labs', 'unstable', 'early', 'flags']
 async function turnFeature(word: string, on: boolean): Promise<void> {
   if (!on || experimentalOn()) {
@@ -85,6 +86,13 @@ function features(): Feature[] {
             label: 'File explorer',
             hint: 'Adds a file explorer for the folders on this computer.',
             words: ['explorer', 'files', 'folders', 'finder', 'show in folder'],
+          },
+          {
+            key: 'opencode',
+            word: OPENCODE_WORD,
+            label: 'OpenCode engine',
+            hint: 'Runs the AI chat through OpenCode, with its agents, models and permission presets; old chats stay readable.',
+            words: ['opencode', 'engine', 'agent', 'agents', 'ai', 'plan', 'build'],
           },
         ]
       : []),

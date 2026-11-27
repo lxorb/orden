@@ -13,6 +13,8 @@ export {
   type KindName,
   KINDS_KEY,
   kindsHere,
+  OPENCODE_WORD,
+  opencodeOn,
   type OrdenApp,
   panelHere,
   PASS_WORD,

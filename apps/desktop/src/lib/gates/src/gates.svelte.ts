@@ -76,6 +76,7 @@ export const EXPLORER_WORD = 'experimental-explorer'
 export const PASS_WORD = 'experimental-pass'
 export const TIME_WORD = 'experimental-time'
 export const BASES_WORD = 'experimental-bases'
+export const OPENCODE_WORD = 'experimental-opencode'
 export function chatsOn(): boolean {
   return WHOLE && tried(CHATS_WORD)
 }
@@ -91,4 +92,7 @@ export function timeOn(): boolean {
 }
 export function basesOn(): boolean {
   return tried(BASES_WORD)
+}
+export function opencodeOn(): boolean {
+  return isDesktop && tried(OPENCODE_WORD)
 }
