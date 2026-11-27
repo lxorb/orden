@@ -2,8 +2,14 @@ name: phone
 
 on:
   workflow_dispatch:
+    inputs:
+      app:
+        description: 'The phone app to build and drive'
+        type: choice
+        default: all
+        options: [all, notes, track, todo, chat]
   push:
-    branches: ['tmp/ci-phone*']
+    branches: ['tmp/ci-phone*', unstable]
 
 permissions:
   contents: read
@@ -13,9 +19,48 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  notes-android:
+  apps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      apps: ${{ steps.pick.outputs.apps }}
+      go: ${{ steps.touched.outputs.go }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Whether this push touched what a phone runs natively
+        id: touched
+        env:
+          BEFORE: ${{ github.event.before }}
+          NATIVE: '^(apps/desktop/src-tauri/gen/android/|apps/desktop/src-tauri/tauri\.[a-z]+\.conf\.json$|apps/desktop/test/e2e/[^/]*phone|apps/desktop/phone-budgets\.json$|scripts/phone-|\.github/workflows/phone\.yml$)'
+        run: |
+          go=true
+          if [ "$GITHUB_REF" = refs/heads/unstable ] && [ "$GITHUB_EVENT_NAME" = push ] \
+            && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qE "$NATIVE" || go=false
+          fi
+          echo "go=$go" >>"$GITHUB_OUTPUT"
+
+      - name: The apps that have an overlay and a drive
+        id: pick
+        env:
+          ONLY: ${{ inputs.app }}
+        run: |
+          apps=$(node scripts/phone-apps.mjs --driven "${ONLY:-all}")
+          echo "apps=$apps" >>"$GITHUB_OUTPUT"
+
+  android:
+    needs: apps
+    if: needs.apps.outputs.go == 'true'
+    name: ${{ matrix.app }}-android
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.apps.outputs.apps) }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
@@ -30,6 +75,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
+          cache-dependency-path: |
+            apps/desktop/src-tauri/gen/android/build.gradle.kts
+            apps/desktop/src-tauri/gen/android/app/build.gradle.kts
+            apps/desktop/src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
         with:
@@ -54,15 +104,16 @@ jobs:
 
       - run: pip install websocket-client playwright
 
-      - name: Build Orden Notes, driveable, against a server on this machine
+      - name: Build the app, driveable, against a server on this machine
         env:
-          ORG_GRADLE_PROJECT_ordenApp: notes
+          APP: ${{ matrix.app }}
+          ORG_GRADLE_PROJECT_ordenApp: ${{ matrix.app }}
         run: |
           pnpm --filter @orden/desktop exec tauri android build --debug --apk --target x86_64 \
-            --config src-tauri/tauri.notes.conf.json \
-            --config '{"build":{"beforeBuildCommand":"ORDEN_APP=notes VITE_ORDEN_API=http://127.0.0.1:8799 pnpm exec vite build --mode drive"}}'
+            --config "src-tauri/tauri.$APP.conf.json" \
+            --config "{\"build\":{\"beforeBuildCommand\":\"ORDEN_APP=$APP VITE_ORDEN_API=http://127.0.0.1:8799 pnpm exec vite build --mode drive\"}}"
           mkdir -p out
-          cp "$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*debug*.apk' | head -1)" out/notes.apk
+          cp "$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*debug*.apk' | head -1)" "out/$APP.apk"
 
       - name: Let the emulator use KVM
         run: |
@@ -70,17 +121,17 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Write, sign in and sync on an emulator, every field above the keyboard
+      - name: The main path on an emulator, with no crash, ANR or panic
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
           api-level: 34
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: python3 apps/desktop/test/e2e/notes-phone.py
+          script: python3 apps/desktop/test/e2e/${{ matrix.app }}-phone.py
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: notes-phone
-          path: apps/desktop/test/e2e/shots/notes-phone/
+          name: ${{ matrix.app }}-phone
+          path: apps/desktop/test/e2e/shots/${{ matrix.app }}-phone/
