@@ -143,6 +143,9 @@ account.delete('/', async (context) => {
       now() + LEFT_FOR,
     ),
     context.env.DB.prepare('delete from cached where scope = ? and value = ?').bind(TICKETS, user.id),
+    context.env.DB.prepare('delete from mcp_tokens where user_id = ?').bind(user.id),
+    context.env.DB.prepare('delete from oauth_grants where user_id = ?').bind(user.id),
+    context.env.DB.prepare('delete from oauth_codes where user_id = ?').bind(user.id),
   ])
   await endEverySession(context.env, user.id)
   try {

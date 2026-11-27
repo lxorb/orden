@@ -291,6 +291,37 @@ describe('thirty days to change its mind', () => {
     expect((await me(elsewhere)).status).toBe(401)
     expect(env.db.prepare('select count(*) as many from sessions').get()).toEqual({ many: 0 })
   })
+  test('asking ends every program’s way in too, and a program is no sign-in', async () => {
+    const id = (await me()).json.user?.id ?? ''
+    const program =
+      (await call<LeavingView>(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token ?? ''
+    env.db
+      .prepare(
+        `insert into oauth_grants
+           (id, user_id, client_id, client_name, read_only, access_hash, access_expires_at, refresh_hash, created_at)
+         values ('g', ?, 'c', 'Client', 0, 'a', ?, 'r', 1)`,
+      )
+      .run(id, Date.now() + A_DAY)
+    env.db
+      .prepare(
+        `insert into oauth_codes (code_hash, client_id, user_id, redirect_uri, challenge, read_only, expires_at)
+         values ('h', 'c', ?, 'https://client.example/back', 'x', 0, ?)`,
+      )
+      .run(id, Date.now() + A_DAY)
+    const other = await signIn(env, OTHER)
+    const minted = await call<LeavingView>(env, '/v1/mcp/token', { token: other, body: { readOnly: false } })
+    const theirs = minted.json.token ?? ''
+    expect((await call(env, '/v1/spaces', { token: program })).status).toBe(200)
+    await ask()
+    expect((await call(env, '/v1/spaces', { token: program })).status).toBe(401)
+    for (const table of ['mcp_tokens', 'oauth_grants', 'oauth_codes']) {
+      expect(env.db.prepare(`select count(*) as many from ${table} where user_id = ?`).get(id), table).toEqual({
+        many: 0,
+      })
+    }
+    expect(held()?.delete_after).not.toBeNull()
+    expect((await call(env, '/v1/spaces', { token: theirs })).status).toBe(200)
+  })
   test('asking mails the day to the address', async () => {
     const { code } = await askToLeave()
     const { json } = await verify(code)
