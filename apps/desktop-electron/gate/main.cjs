@@ -622,6 +622,21 @@ const checks = {
     const ok = { rest: green(data.rest.page) && data.rest.red === 0, palette: data.palette.ok, tabMenu: data.tabMenu.ok, overview: data.overview.ok, typedInPage: data.typedInPage === 'ab', paletteTakesKeys: data.paletteTyping.appTook.includes('mod+j') && /zz/.test(data.paletteTyping.active || '') && !data.paletteTyping.pageKeys.includes('z'), sidebar: data.sidebarClose.ok && data.sidebarOpen.ok && data.sidebarClose.movedFrames + data.sidebarOpen.movedFrames > 0, window: data.window.ok }
     return { pass: Object.values(ok).every(Boolean), data: { ok, ...data, errors } }
   },
+  async a11y() {
+    app.setAccessibilitySupportEnabled(true)
+    await open('page.html')
+    await sleep(1500)
+    const { execFile } = require('child_process')
+    const ask = (file, args) => new Promise((done) => execFile(file, args, { encoding: 'utf8', timeout: 60000 }, (error, stdout) => done(error && !stdout ? JSON.stringify({ error: String(error).slice(0, 300) }) : stdout)))
+    const said = process.platform === 'win32' ? await ask('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(__dirname, 'a11y.ps1'), '-ProcessId', String(process.pid)]) : await ask(process.env.GATE_A11Y_PY || py, [path.join(__dirname, 'a11y.py'), String(process.pid)])
+    let data
+    try {
+      data = JSON.parse(said.trim().split('\n').at(-1))
+    } catch {
+      data = { error: said.slice(0, 300) }
+    }
+    return { pass: !!data.host && !!data.page, data }
+  },
   async manual() {
     win = new BrowserWindow({ width: 1280, height: 800, webPreferences: { webviewTag: true, nodeIntegration: true, contextIsolation: false } })
     await win.loadFile(path.join(bench, 'host.html'), { query: { mode: 'webview', url: process.env.GATE_URL || base + '/page.html', partition: PARTITION } })

@@ -76,7 +76,8 @@ jobs:
           case "$RUNNER_OS" in
             Linux)
               sudo apt-get update -q
-              sudo apt-get install -y -q xvfb dbus-x11 openbox xdotool
+              sudo apt-get install -y -q xvfb dbus-x11 openbox xdotool at-spi2-core python3-gi gir1.2-atspi-2.0
+              echo "GATE_A11Y_PY=/usr/bin/python3" >>"$GITHUB_ENV"
               python3 -m venv "$RUNNER_TEMP/gate"
               "$RUNNER_TEMP/gate/bin/pip" install --quiet mss pillow
               echo "GATE_PY=$RUNNER_TEMP/gate/bin/python" >>"$GITHUB_ENV"
@@ -87,7 +88,7 @@ jobs:
               ;;
             macOS)
               python3 -m venv "$RUNNER_TEMP/gate"
-              "$RUNNER_TEMP/gate/bin/pip" install --quiet mss pillow pyobjc-framework-Quartz
+              "$RUNNER_TEMP/gate/bin/pip" install --quiet mss pillow pyobjc-framework-Quartz pyobjc-framework-ApplicationServices
               echo "GATE_PY=$RUNNER_TEMP/gate/bin/python" >>"$GITHUB_ENV"
               ;;
           esac

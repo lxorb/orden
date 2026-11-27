@@ -7,7 +7,7 @@ input{position:fixed;left:20px;width:200px;height:30px;font-size:20px;box-sizing
 #drop{position:fixed;left:20px;top:180px;width:200px;height:60px;background:#ddd;font:14px sans-serif}
 #live{position:fixed;left:0;top:400px;width:20px;height:20px;background:#fff;animation:m 1s linear infinite alternate}
 @keyframes m{to{transform:translateX(200px)}}</style>
-<div id=edge></div><input id=in><input id=in2>
+<div id=edge></div><input id=in aria-label="gate page field"><input id=in2>
 <div id=drag draggable=true>PAGEDRAG</div><div id=drop></div><div id=live></div>
 <script>
 window.dragLog={};for(const t of['dragstart','dragenter','dragover','drop','dragend'])addEventListener(t,()=>window.dragLog[t]=(window.dragLog[t]||0)+1,true);

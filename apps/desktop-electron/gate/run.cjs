@@ -22,6 +22,7 @@ const PLAN = [
   ['ext', ['webview'], 1],
   ['startup', ['webview'], 5],
   ['orden', ['webview'], 1],
+  ['a11y', ['webview'], 1],
 ]
 fs.mkdirSync(out, { recursive: true })
 const all = []
@@ -48,7 +49,7 @@ for (const [check, modes, rounds] of PLAN) {
         body = run(check, mode, { GATE_USERDATA: userData, GATE_PHASE: '2', GATE_PORT })
         body.data = { ...body.data, first: first.data }
         body.pass = body.pass && first.pass
-      } else body = run(check, mode)
+      } else body = run(check, mode, check === 'a11y' ? { GATE_A11Y: '1', ACCESSIBILITY_ENABLED: '1', GNOME_ACCESSIBILITY: '1' } : {})
       body.round = round
       all.push(body)
       console.log(`${body.pass ? 'PASS' : 'FAIL'} ${check} ${mode} #${round} ${JSON.stringify(body.data).slice(0, 600)}`)
