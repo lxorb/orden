@@ -44,6 +44,7 @@ import { added, estimate, noUsage, shouldCompact } from './usage'
 import type { Ask, ToolDef, Wire } from './wire'
 import { fitOutputs, limitOf, roomFor, tokensIn, windowOf } from './window'
 import { allows } from './reach'
+import { opencodeOn } from '../../../gates/src/api'
 
 function apiOf(kind: ProviderKind): Api | null {
   if (kind === 'anthropic') return 'anthropic'
@@ -473,7 +474,20 @@ export function registerLocalEngine(kind: LocalKind, load: (setup: Setup) => Pro
 }
 const localBuilt = new Map<LocalKind, WeakMap<Setup, Engine>>()
 const built = new WeakMap<Setup, Engine>()
+const openCodeBuilt = new WeakMap<Setup, Engine>()
+async function openCodeEngine(setup: Setup): Promise<Engine> {
+  const held = openCodeBuilt.get(setup)
+  if (held) return held
+  const [{ createOpenCodeEngine }, { openCodeWiring }] = await Promise.all([
+    import('../opencode/engine'),
+    import('../opencode/wiring'),
+  ])
+  const engine = watching(createOpenCodeEngine(setup, await openCodeWiring()))
+  openCodeBuilt.set(setup, engine)
+  return engine
+}
 export async function engineFor(kind: ProviderKind, setup: Setup): Promise<Engine> {
+  if (opencodeOn()) return await openCodeEngine(setup)
   if (isLocal(kind)) {
     const load = localEngines[kind]
     if (!load) throw new Error('That provider is not set up yet.')

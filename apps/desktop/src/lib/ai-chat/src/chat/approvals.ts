@@ -1,6 +1,7 @@
 import { invoke, isDesktop } from '../../../platform/src/api'
 import type { Thread } from '../../../ai-providers/src/api'
 
+const OPENCODE = 'per_'
 interface Asked {
   id: string
   agent: string
@@ -11,7 +12,7 @@ interface Asked {
   summary?: string
 }
 export interface Answers {
-  answer(id: string, allow: boolean): Promise<void>
+  answer(id: string, allow: boolean, always?: boolean): Promise<void>
   answered(id: string, signal: AbortSignal): Promise<boolean>
   asked(on: (asked: Asked) => void): Promise<() => void>
 }
@@ -42,7 +43,12 @@ async function heard(on: (payload: unknown) => void): Promise<() => void> {
   return listen<unknown>('orden://agent', ({ payload }) => on(payload))
 }
 export const crateAnswers: Answers = {
-  async answer(id, allow) {
+  async answer(id, allow, always = false) {
+    if (id.startsWith(OPENCODE)) {
+      const { opencode } = await import('../../../opencode-client/src/api')
+      await opencode.reply(id, !allow ? 'reject' : always ? 'always' : 'once').catch(() => false)
+      return
+    }
     await invoke('agents_answer', { id, allow, always: false }).catch(() => undefined)
   },
   answered(id, signal) {
