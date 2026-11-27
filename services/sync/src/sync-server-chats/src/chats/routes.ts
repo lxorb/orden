@@ -1,4 +1,4 @@
-import { type Event, type Message, matches, parseSearch, type Who } from '@orden/chats'
+import { CHAT_EXTENSION, type Event, type Message, matches, parseSearch, type Who } from '@orden/chats'
 import { EVENTS_A_MINUTE, LONGEST_SEARCH } from '@orden/chats/limits'
 import { newChatOf, postEventsOf } from '@orden/chats/wire'
 import { Hono } from 'hono'
@@ -90,8 +90,10 @@ select ch.id as id, ch.space_id as space,
        ch.last_seq as last_seq, ch.last_at as last_at, ch.last_by as last_by,
        ch.topic as topic, ch.posting as posting, ch.slowmode as slowmode,
        coalesce(r.read_seq, 0) as read_seq, coalesce(r.mentions, 0) as mentions,
-       r.notify as notify, r.muted_until as muted_until
+       r.notify as notify, r.muted_until as muted_until,
+       pointer.id as file, pointer.path as path
   from found f join chats ch on ch.id = f.id
+  left join notes pointer on pointer.id = ch.file_id and pointer.space_id = ch.space_id and pointer.deleted = 0
   left join chat_reads r on r.chat_id = ch.id
                         and r.who = (select coalesce(user_id, guest_id) from me)
  where ch.ended_at is null and (?4 is null or ch.space_id = ?4)
@@ -117,8 +119,15 @@ interface ListedRow {
   mentions: number
   notify: string | null
   muted_until: number | null
+  file: string | null
+  path: string | null
 }
 const ROLES = ['read', 'read', 'write', 'owner'] as const
+function nameIn(path: string | null): string | null {
+  if (!path) return null
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  return name.toLowerCase().endsWith(CHAT_EXTENSION) ? name.slice(0, -CHAT_EXTENSION.length) : name
+}
 function rowOf(row: ListedRow) {
   return {
     id: row.id,
@@ -132,6 +141,8 @@ function rowOf(row: ListedRow) {
     mentions: row.mentions,
     notify: row.notify,
     mutedUntil: row.muted_until,
+    name: nameIn(row.path),
+    file: row.file,
     meta: {
       topic: row.topic,
       posting: row.posting === 'owner' ? 'owner' : 'writers',

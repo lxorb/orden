@@ -70,6 +70,8 @@ export interface ChatRow {
   notify: Notify | null
   mutedUntil: number | null
   meta: Meta
+  name?: string
+  file?: string
 }
 export interface ChatList {
   chats: ChatRow[]
@@ -430,6 +432,8 @@ export function chatRowOf(value: unknown): ChatRow | null {
     notify,
     mutedUntil,
     meta,
+    ...(isLine(value.name, LONGEST_NAME) ? { name: value.name } : {}),
+    ...(isLine(value.file, LONGEST_DEVICE) ? { file: value.file } : {}),
   }
 }
 export function chatListOf(value: unknown): ChatList | null {
