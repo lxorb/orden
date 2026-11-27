@@ -21,6 +21,10 @@ STATUS = INVOKE + "const s = await i.invoke('opencode_status'); return s.state =
 HEALTH = INVOKE + "return await i.invoke('opencode_call', { method: 'GET', path: '/global/health' })"
 MCP = INVOKE + "return await i.invoke('opencode_call', { method: 'GET', path: '/mcp' })"
 STOP = INVOKE + "return await i.invoke('opencode_stop')"
+ENGINE = INVOKE + "return await i.invoke('opencode_engine')"
+CONSENT = INVOKE + "await i.invoke('opencode_background', { on: true }); return true"
+KICK = INVOKE + "try { await i.invoke('opencode_start', { config: { enabled_providers: [] }, preset: 'approve' }); return 'started' } catch (why) { return why }"
+LANDED = INVOKE + "const e = await i.invoke('opencode_engine'); return e.installed ? e : null"
 TAIL = 80
 def reached(config: pathlib.Path, secret: str, process: subprocess.Popen[bytes], seconds: float = 120) -> App | None:
     path = config / "automation.json"
@@ -70,6 +74,15 @@ def main() -> int:
             how = "still running" if code is None else f"ended with {code}"
             wrong.append(f"the app never wrote {config / 'automation.json'} ({how})")
         else:
+            engine = app.until(ENGINE, 90, 1)
+            print(f"opencode_engine said {json.dumps(engine)}", flush=True)
+            if isinstance(engine, dict) and not engine.get("installed"):
+                app.eval(CONSENT, 30)
+                print(f"opencode_start before the download said {json.dumps(app.eval(KICK, 30))}", flush=True)
+                landed = app.until(LANDED, 900, 2)
+                print(f"after the download opencode_engine said {json.dumps(landed)}", flush=True)
+                if failed(landed):
+                    wrong.append(f"the app did not download OpenCode {engine.get('version')} from {engine.get('source')}")
             started = app.until(START, 90, 1)
             print(f"opencode_start said {json.dumps(started)}", flush=True)
             ready = app.until(STATUS, 60, 0.5)

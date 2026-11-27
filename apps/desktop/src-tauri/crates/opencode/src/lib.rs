@@ -2,6 +2,7 @@
 pub mod commands;
 #[cfg(test)]
 mod drive;
+pub mod engine;
 pub mod env;
 mod feed;
 pub mod host;
