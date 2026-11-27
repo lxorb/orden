@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Avatar from './Avatar.svelte'
+  import { Avatar } from '../../faces/src/api'
   import { people } from '../../accounts/src/api'
 
   const { ids, most = 3 }: { ids: readonly string[]; most?: number } = $props()

@@ -4,7 +4,7 @@
   import { chooseFiles, PICTURES } from '../../ui-controls/src/api'
   import { type Box, Glyph } from '../../chat-kit/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import Avatar from './Avatar.svelte'
+  import { Avatar } from '../../faces/src/api'
   import AvatarSheet from './AvatarSheet.svelte'
   import type { Status } from '../../accounts/src/api'
   import { changeProfile, removeFace } from '../../accounts/src/api'

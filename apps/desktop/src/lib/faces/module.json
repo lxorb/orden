@@ -1,0 +1,5 @@
+{
+  "name": "faces",
+  "layer": "foundation",
+  "dependsOn": ["accounts", "theme", "ui-kit"]
+}

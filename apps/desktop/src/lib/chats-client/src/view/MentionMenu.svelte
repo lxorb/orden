@@ -3,7 +3,7 @@
   import type { Special } from './compose'
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../../platform/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../faces/src/api'
   import { faceOf, nameOf } from './people'
 
   const {

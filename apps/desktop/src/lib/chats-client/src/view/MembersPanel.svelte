@@ -4,7 +4,7 @@
   import { closeOnBack, menu, type MenuEntry, overlays, viewport } from '../../../ui-kit/src/api'
   import { copyText } from '../../../ui-controls/src/api'
   import { dur, fly, localNumber } from '../../../platform/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../faces/src/api'
   import { host } from './host'
   import { people } from '../../../accounts/src/api'
   import type { ChatPage } from './chat.svelte'

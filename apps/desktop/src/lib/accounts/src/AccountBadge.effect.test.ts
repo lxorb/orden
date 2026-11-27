@@ -13,7 +13,7 @@ vi.mock('./account.svelte', () => ({
 }))
 const { BASE } = await import('./client')
 const AccountBadge = (await import('./AccountBadge.svelte')).default
-const Avatar = (await import('../../accounts-ui/src/Avatar.svelte')).default
+const Avatar = (await import('../../faces/src/Avatar.svelte')).default
 let shown: ReturnType<typeof mount> | undefined
 function signedInWith(avatar: { s: string; l: string } | null) {
   const double = accountDouble('emil')
