@@ -9,7 +9,8 @@
   import { shortcuts } from '../../shortcuts/src/api'
   import { agentRows } from '../../surfaces/src/api'
   import { ordered, stateOf, type ThreadHead } from '../../ai-providers/src/api'
-  import { chat } from './chat-parts'
+  import { chat, openCodeSessions } from './chat-parts'
+  import { opencodeOn } from '../../gates/src/api'
   import ChatRow from './ChatRow.svelte'
   import ChatWindow from './ChatWindow.svelte'
 
@@ -26,15 +27,23 @@
     const words = chat.listQuery.toLowerCase().split(/\s+/).filter(Boolean)
     return chat.heads.filter((one) => matches(one, words))
   })
-  const archived = $derived(found.filter((one) => stateIn(one) === 'archived').sort((a, b) => b.updated - a.updated))
-  const active = $derived(ordered(found, chat.states, chat.unread))
+  const openCode = $derived(opencodeOn())
+  const latest = (a: ThreadHead, b: ThreadHead) => b.updated - a.updated
+  const before = $derived(openCode ? found.filter((one) => openCodeSessions.earlier(one)).sort(latest) : [])
+  const current = $derived(openCode ? found.filter((one) => !openCodeSessions.earlier(one)) : found)
+  const archived = $derived(current.filter((one) => stateIn(one) === 'archived').sort(latest))
+  const active = $derived(ordered(current, chat.states, chat.unread))
+  let earlierShown = $state(false)
   const shownArchived = $derived(archivedShown ? archived : [])
-  const rows = $derived([...active, ...shownArchived])
+  const shownEarlier = $derived(earlierShown ? before : [])
+  const rows = $derived([...active, ...shownArchived, ...shownEarlier])
   let upper = $state<{ reach: (index: number) => void }>()
   let lower = $state<{ reach: (index: number) => void }>()
+  let oldest = $state<{ reach: (index: number) => void }>()
   function reach(index: number) {
     if (index < active.length) upper?.reach(index)
-    else lower?.reach(index - active.length)
+    else if (index < active.length + shownArchived.length) lower?.reach(index - active.length)
+    else oldest?.reach(index - active.length - shownArchived.length)
   }
   $effect(() => {
     const last = Math.max(0, rows.length - 1)
@@ -101,6 +110,10 @@
   {@render chatRow(one, active.length + index, place)}
 {/snippet}
 
+{#snippet earlierRow(one: ThreadHead, index: number, place: Place)}
+  {@render chatRow(one, active.length + shownArchived.length + index, place)}
+{/snippet}
+
 <div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
   <div class="top">
     {#if rail}
@@ -152,6 +165,10 @@
         <li class="group archived" role="presentation">Archived</li>
         <ChatWindow bind:this={lower} heads={shownArchived} role="group" row={archivedRow} />
       {/if}
+      {#if shownEarlier.length}
+        <li class="group archived" role="presentation">Earlier chats</li>
+        <ChatWindow bind:this={oldest} heads={shownEarlier} role="group" row={earlierRow} />
+      {/if}
     {:else}
       <li class="empty" role="presentation">
         {chat.listQuery ? 'No matches' : 'No chats yet'}
@@ -162,6 +179,14 @@
         <button class="orden-row is-short shown-archived" onclick={() => (archivedShown = true)}>
           <span class="orden-row-label">Archived</span>
           <span class="orden-row-meta">{archived.length}</span>
+        </button>
+      </li>
+    {/if}
+    {#if before.length && !earlierShown}
+      <li role="presentation">
+        <button class="orden-row is-short shown-archived" onclick={() => (earlierShown = true)}>
+          <span class="orden-row-label">Earlier chats</span>
+          <span class="orden-row-meta">{before.length}</span>
         </button>
       </li>
     {/if}

@@ -14,7 +14,7 @@
   import { chat, dictation, estimateText, mentionAt, mentionOf, minutes } from './chat-parts'
   import { noteInFront, ranked, sameMention, SELECTION_CHIP, selectionHere } from './chat-parts'
   import { tokens, type Front, type Mention, type PanelCommand, type Row } from './chat-parts'
-  import { agentName, FIRST_AGENT, openCodeAgents } from './chat-parts'
+  import { agentName, FIRST_AGENT, openCodeAgents, openCodeSessions } from './chat-parts'
   import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
   import ModeMark from './ModeMark.svelte'
@@ -344,6 +344,8 @@
     const presets = MODES.filter((one) => one !== 'plan').map(row)
     menu.show(event, openCode ? presets : [...presets, DIVIDER, row('plan')], { title: 'Permissions' })
   }
+  const listedHead = $derived(head ? chat.heads.find((one) => one.id === head.id) : undefined)
+  const earlier = $derived(openCode && !!listedHead && openCodeSessions.earlier(listedHead))
   const told = $derived(head?.mode ?? FIRST_MODE)
   const mode = $derived(openCode && told === 'plan' ? 'approve' : told)
   const agent = $derived(head ? openCodeAgents.of(head.id) : FIRST_AGENT)
@@ -465,138 +467,168 @@
       <p class="reason">{goal.reason}</p>
     {/if}
   {/if}
-  <div class="box-wrap">
-    {#if rows.length}
-      <Suggest {rows} active={lit} onpick={(index: number) => pick(index)} onlight={(index: number) => (lit = index)} />
-    {/if}
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div
-      class="composer orden-field"
-      onclick={(event) => {
-        if (event.target === event.currentTarget) field?.focus()
-      }}
-    >
-      {#if frontOn || selectionOn || chat.chips.length > 0}
-        <div class="chips">
-          {#if front && frontOn}
-            <span class="chip implicit" title={shownPath(front.path)}>
-              <MentionMark kind="note" />
-              <span class="name" dir="auto">{front.name}</span>
-              {@render remove(() => chat.drop(front.key))}
-            </span>
-          {/if}
-          {#if selectionOn}
-            <span class="chip implicit" title={selection.slice(0, 400)}>
-              <MentionMark kind="selection" />
-              <span class="name quoted">{selection.trim().slice(0, 40)}</span>
-              {@render remove(() => chat.drop(selectionKey))}
-            </span>
-          {/if}
-          {#each chat.chips as chip (chip)}
-            <span
-              class="chip"
-              class:refused={chip.kind === 'picture' && chat.model?.images === false}
-              title={chip.kind === 'picture' && chat.model?.images === false
-                ? 'This model takes no pictures'
-                : shownPath(chip.label)}
-              transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
-            >
-              {#if chip.image}
-                <img class="thumb" alt="" draggable="false" src={`data:${chip.image.mime};base64,${chip.image.data}`} />
-              {:else}
-                <MentionMark kind={chip.kind} />
-              {/if}
-              <span class="name" dir="auto">{shownPath(chip.label)}</span>
-              {@render remove(() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip))))}
-            </span>
-          {/each}
-        </div>
+  {#if earlier}
+    <div class="earlier">
+      <span>This chat is from before OpenCode. It can be read, not continued.</span>
+      <button class="orden-button is-quiet" onclick={() => chat.newThread()}>New chat</button>
+    </div>
+  {:else}
+    <div class="box-wrap">
+      {#if rows.length}
+        <Suggest
+          {rows}
+          active={lit}
+          onpick={(index: number) => pick(index)}
+          onlight={(index: number) => (lit = index)}
+        />
       {/if}
-      <textarea
-        bind:this={field}
-        bind:value={chat.text}
-        use:grow={chat.text}
-        use:dictating={voiceField}
-        data-entry
-        rows="1"
-        placeholder="Ask anything, @ to add, / for more"
-        aria-label="Ask about this space"
-        onkeydown={onKey}
-        oninput={onInput}
-        onclick={onInput}
-        onkeyup={onInput}
-        onpaste={onPaste}
-        ondrop={onDrop}></textarea>
-      <div class="controls">
-        <button
-          class="orden-glyph plus"
-          title="Add"
-          aria-label="Add"
-          aria-haspopup="menu"
-          disabled={!head}
-          onclick={plusMenu}
-        >
-          <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 2.5v8M2.5 6.5h8" /></svg>
-        </button>
-        <button
-          class="mode"
-          {@attach mode === 'full'
-            ? shortcuts.tip(
-                'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting',
-              )
-            : shortcuts.tip('Next mode', 'ai.mode')}
-          aria-haspopup="menu"
-          onclick={modeMenu}
-          disabled={!head}
-        >
-          <ModeMark {mode} />
-          <span>{modeWord(mode)}</span>
-          <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
-        </button>
-        {#if openCode}
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <div
+        class="composer orden-field"
+        onclick={(event) => {
+          if (event.target === event.currentTarget) field?.focus()
+        }}
+      >
+        {#if frontOn || selectionOn || chat.chips.length > 0}
+          <div class="chips">
+            {#if front && frontOn}
+              <span class="chip implicit" title={shownPath(front.path)}>
+                <MentionMark kind="note" />
+                <span class="name" dir="auto">{front.name}</span>
+                {@render remove(() => chat.drop(front.key))}
+              </span>
+            {/if}
+            {#if selectionOn}
+              <span class="chip implicit" title={selection.slice(0, 400)}>
+                <MentionMark kind="selection" />
+                <span class="name quoted">{selection.trim().slice(0, 40)}</span>
+                {@render remove(() => chat.drop(selectionKey))}
+              </span>
+            {/if}
+            {#each chat.chips as chip (chip)}
+              <span
+                class="chip"
+                class:refused={chip.kind === 'picture' && chat.model?.images === false}
+                title={chip.kind === 'picture' && chat.model?.images === false
+                  ? 'This model takes no pictures'
+                  : shownPath(chip.label)}
+                transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
+              >
+                {#if chip.image}
+                  <img
+                    class="thumb"
+                    alt=""
+                    draggable="false"
+                    src={`data:${chip.image.mime};base64,${chip.image.data}`}
+                  />
+                {:else}
+                  <MentionMark kind={chip.kind} />
+                {/if}
+                <span class="name" dir="auto">{shownPath(chip.label)}</span>
+                {@render remove(() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip))))}
+              </span>
+            {/each}
+          </div>
+        {/if}
+        <textarea
+          bind:this={field}
+          bind:value={chat.text}
+          use:grow={chat.text}
+          use:dictating={voiceField}
+          data-entry
+          rows="1"
+          placeholder="Ask anything, @ to add, / for more"
+          aria-label="Ask about this space"
+          onkeydown={onKey}
+          oninput={onInput}
+          onclick={onInput}
+          onkeyup={onInput}
+          onpaste={onPaste}
+          ondrop={onDrop}></textarea>
+        <div class="controls">
           <button
-            class="mode agent"
-            {@attach shortcuts.tip(agentAbout || 'Agent')}
+            class="orden-glyph plus"
+            title="Add"
+            aria-label="Add"
             aria-haspopup="menu"
-            onclick={(event) => void agentMenu(event)}
+            disabled={!head}
+            onclick={plusMenu}
+          >
+            <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 2.5v8M2.5 6.5h8" /></svg>
+          </button>
+          <button
+            class="mode"
+            {@attach mode === 'full'
+              ? shortcuts.tip(
+                  'Full permissions: nothing is asked or handed back to you, not even signing in, paying, sending or deleting',
+                )
+              : shortcuts.tip('Next mode', 'ai.mode')}
+            aria-haspopup="menu"
+            onclick={modeMenu}
             disabled={!head}
           >
-            <svg class="agent-mark" viewBox="0 0 24 24" aria-hidden="true">
-              {#each agentIcon(agent) as [tag, attrs], index (index)}
-                <svelte:element this={tag} {...attrs} />
-              {/each}
-            </svg>
-            <span>{agentName(agent)}</span>
+            <ModeMark {mode} />
+            <span>{modeWord(mode)}</span>
             <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
           </button>
-        {/if}
-        <span class="gap"></span>
-        <Ring {next} />
-        <ModelPicker />
-        {#if showsDictateButton()}
-          <DictateButton owner={voiceField} />
-        {/if}
-        {#if button === 'stop'}
-          <button class="go" title="Stop" aria-label="Stop" onclick={() => chat.stop()}>
-            <svg viewBox="0 0 13 13"><rect class="square" x="2.5" y="2.5" width="8" height="8" rx="1.4" /></svg>
-          </button>
-        {:else if button === 'send'}
-          <button
-            class="go"
-            title="Send"
-            aria-label="Send"
-            disabled={!chat.text.trim() && !chat.chips.length}
-            onclick={() => void submit()}
-          >
-            <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
-          </button>
-        {/if}
+          {#if openCode}
+            <button
+              class="mode agent"
+              {@attach shortcuts.tip(agentAbout || 'Agent')}
+              aria-haspopup="menu"
+              onclick={(event) => void agentMenu(event)}
+              disabled={!head}
+            >
+              <svg class="agent-mark" viewBox="0 0 24 24" aria-hidden="true">
+                {#each agentIcon(agent) as [tag, attrs], index (index)}
+                  <svelte:element this={tag} {...attrs} />
+                {/each}
+              </svg>
+              <span>{agentName(agent)}</span>
+              <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+            </button>
+          {/if}
+          <span class="gap"></span>
+          <Ring {next} />
+          <ModelPicker />
+          {#if showsDictateButton()}
+            <DictateButton owner={voiceField} />
+          {/if}
+          {#if button === 'stop'}
+            <button class="go" title="Stop" aria-label="Stop" onclick={() => chat.stop()}>
+              <svg viewBox="0 0 13 13"><rect class="square" x="2.5" y="2.5" width="8" height="8" rx="1.4" /></svg>
+            </button>
+          {:else if button === 'send'}
+            <button
+              class="go"
+              title="Send"
+              aria-label="Send"
+              disabled={!chat.text.trim() && !chat.chips.length}
+              onclick={() => void submit()}
+            >
+              <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
+            </button>
+          {/if}
+        </div>
       </div>
     </div>
-  </div>
+  {/if}
 </div>
 
 <style>
+  .earlier {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
   .foot {
     position: relative;
     flex: none;
