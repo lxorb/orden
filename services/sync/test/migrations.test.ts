@@ -407,3 +407,16 @@ describe('0092, a chat its pointer brings back', () => {
     database.close()
   })
 })
+describe('0098, the pronouns a profile once held', () => {
+  test('are let go of, and the rest of the profile stays', () => {
+    const database = upTo('0096_space_blobs.sql')
+    seed(database)
+    database.exec(`update users set pronouns = 'they/them', bio = 'Still here.' where id = 'u'`)
+    database.exec(sql('0098_no_pronouns.sql'))
+    expect(database.prepare(`select pronouns, bio from users where id = 'u'`).get()).toEqual({
+      pronouns: null,
+      bio: 'Still here.',
+    })
+    database.close()
+  })
+})
