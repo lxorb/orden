@@ -14,6 +14,19 @@ AGENT = (
     "Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36"
     " (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36"
 )
+HELD = """
+(path) => new Promise((done) => {
+  const one = document.createElement('img')
+  let late = 0
+  const said = (found) => { clearInterval(late); one.remove(); done(found) }
+  one.addEventListener('error', () => said(one.src.startsWith('blob:') ? one.src : null))
+  one.addEventListener('load', () => said(one.src))
+  one.hidden = true
+  one.src = window.ordenApp.assetUrl(path)
+  document.body.append(one)
+  late = setInterval(() => { if (one.src.startsWith('blob:')) said(one.src) }, 50)
+})
+"""
 def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
     def chunk(kind: bytes, body: bytes) -> bytes:
         return (
@@ -275,8 +288,7 @@ def shared_at_a_cold_start(page: Page) -> str:
              const image = document.querySelector('.cm-content img.orden-image')
              if (!image) return null
 
-             const beside = window.ordenApp.assetUrl(window.ordenApp.workspace.active.path.replace(/[^/]+$/, 'assets/shot.png'))
-             return { src: image.src, beside, complete: image.complete, width: image.naturalWidth }
+             return { src: image.src, complete: image.complete, width: image.naturalWidth }
            }"""
     )
     say(f"[cold] the picture as the editor drew it: {json.dumps(drawn)}")
@@ -284,7 +296,8 @@ def shared_at_a_cold_start(page: Page) -> str:
     if not drawn:
         wrong("the shared picture is not in the note at all")
     else:
-        if not drawn["src"].startswith("blob:") or drawn["src"] != drawn["beside"]:
+        beside = page.evaluate(HELD, page.evaluate("() => window.ordenApp.workspace.active.path.replace(/[^/]+$/, 'assets/shot.png')"))
+        if not drawn["src"].startswith("blob:") or drawn["src"] != beside:
             wrong(f"the picture is not beside the note: {drawn['src']}")
         if not drawn["complete"] or drawn["width"] < 1:
             wrong(f"the shared picture did not draw: {drawn}")

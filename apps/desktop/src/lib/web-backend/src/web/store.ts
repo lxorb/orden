@@ -1,5 +1,5 @@
 import { breathe, fromBase64 } from '../../../platform/src/api'
-import { dropAsset, holdAsset } from './asset-blobs'
+import { assetGone, assetWritten, showAssets } from './asset-blobs'
 import { carriedName } from './carry-database'
 import type { PlaneMarks } from '@orden/scan/canvas'
 
@@ -266,61 +266,39 @@ const ownAssets = {
     }).then(() => unshown(path)),
 }
 const ASSET_CHANNEL = 'orden:assets'
-const ASSET_SLICE = 16
-let assetChannel: BroadcastChannel | null = null
-let filling: Promise<void> | null = null
-function showsAssets(): boolean {
-  return !native() && typeof document !== 'undefined' && typeof URL.createObjectURL === 'function'
-}
-function assetBus(): BroadcastChannel | null {
-  if (typeof BroadcastChannel !== 'function') return null
-  return (assetChannel ??= new BroadcastChannel(ASSET_CHANNEL))
-}
-async function held(row: AssetRow): Promise<void> {
+const onPage =
+  !native() &&
+  typeof document !== 'undefined' &&
+  typeof MutationObserver === 'function' &&
+  typeof URL.createObjectURL === 'function'
+const assetBus = onPage && typeof BroadcastChannel === 'function' ? new BroadcastChannel(ASSET_CHANNEL) : null
+function bytesOf(row: AssetRow | undefined): Uint8Array | null {
   try {
-    await holdAsset(row.path, fromBase64(row.data))
+    return row ? fromBase64(row.data) : null
   } catch {
-    dropAsset(row.path)
+    return null
   }
 }
+const bytesAt = async (path: string): Promise<Uint8Array | null> => bytesOf(await ownAssets.get(path))
 async function shown(row: AssetRow): Promise<void> {
-  if (!showsAssets()) return
-  await held(row)
-  assetBus()?.postMessage({ written: [row.path], gone: [] } satisfies RowChange)
+  if (!onPage) return
+  await assetWritten(row.path, () => bytesOf(row))
+  assetBus?.postMessage({ written: [row.path], gone: [] } satisfies RowChange)
 }
-function unshown(path: string): void {
-  if (!showsAssets()) return
-  dropAsset(path)
-  assetBus()?.postMessage({ written: [], gone: [path] } satisfies RowChange)
+async function unshown(path: string): Promise<void> {
+  if (!onPage) return
+  await assetGone(path)
+  assetBus?.postMessage({ written: [], gone: [path] } satisfies RowChange)
 }
-async function heard(change: RowChange): Promise<void> {
-  for (const path of change.gone) dropAsset(path)
-  for (const path of change.written) {
-    const row = await ownAssets.get(path)
-    if (row) await held(row)
-    else dropAsset(path)
-  }
-}
-async function fillAssets(): Promise<void> {
-  const listening = assetBus()
-  if (listening) {
-    listening.onmessage = (event: MessageEvent<unknown>) => {
-      if (isRowChange(event.data)) void heard(event.data).catch(() => undefined)
+if (onPage) {
+  showAssets(bytesAt)
+  if (assetBus) {
+    assetBus.onmessage = (event: MessageEvent<unknown>) => {
+      if (!isRowChange(event.data)) return
+      for (const path of event.data.gone) void assetGone(path)
+      for (const path of event.data.written) void assetWritten(path, () => bytesAt(path))
     }
   }
-  let after: string | null = null
-  for (;;) {
-    const rows: AssetRow[] = await slice<AssetRow>('assets', after, ASSET_SLICE)
-    for (const row of rows) await held(row)
-    const last = rows.at(-1)
-    if (rows.length < ASSET_SLICE || last === undefined) return
-    after = last.path
-    await breathe()
-  }
-}
-export function assetsShown(): Promise<void> {
-  if (!showsAssets()) return Promise.resolve()
-  return (filling ??= fillAssets().catch(() => undefined))
 }
 const ownStats = {
   holds: async (path: string) => {

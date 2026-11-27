@@ -1,6 +1,6 @@
 import type { EditorView } from '@orden/editor'
 import { busy, message } from '../../../ui-kit/src/api'
-import { region, assetUrl, joinPath } from '../../../platform/src/api'
+import { region, fileBytes, joinPath } from '../../../platform/src/api'
 import { links } from '../../../link-index/src/api'
 import { sayNotice } from '@orden/contracts'
 import { workspace } from '../../../workspace/src/api'
@@ -11,8 +11,8 @@ async function bytesOf(target: string, notePath: string | null): Promise<ArrayBu
   const found = !target.includes('/') ? links.fileFor(target, notePath) : null
   const path = found ?? (notePath ? joinPath(notePath.replace(/[\\/][^\\/]*$/, ''), target) : null)
   if (!path) return null
-  const response = await fetch(assetUrl(path)).catch(() => null)
-  return response?.ok ? response.arrayBuffer() : null
+  const bytes = await fileBytes(path).catch(() => null)
+  return bytes ? bytes.slice().buffer : null
 }
 export async function transcribeInto(view: EditorView, at: number, target: string) {
   const note = workspace.active
