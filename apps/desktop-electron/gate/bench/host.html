@@ -1,0 +1,47 @@
+<!doctype html><meta charset=utf-8><title>host</title>
+<style>html,body{margin:0;height:100%;background:#202020;overflow:hidden}
+#row{position:absolute;left:200px;top:50px;height:600px;display:flex}
+#pane{width:600px;height:600px;background:#ff0000;flex:none}
+#pane>*{width:100%;height:100%;display:flex}
+#mark{width:6px;background:#ffff00;flex:none}
+#menu{position:absolute;left:300px;top:250px;width:200px;height:200px;background:#ff00ff;border-radius:12px;box-shadow:0 0 24px 8px rgba(0,0,0,.8);display:none;z-index:5}
+#scrim{position:absolute;inset:0;backdrop-filter:blur(16px);background:rgba(0,0,0,.3);display:none;z-index:4}
+#hostin{position:absolute;left:10px;top:10px;width:150px;height:30px}
+#hostafter{position:absolute;left:10px;top:700px;width:150px;height:30px}
+#hdrag{position:absolute;left:10px;top:100px;width:150px;height:40px;background:#fff;font:20px sans-serif;line-height:40px;user-select:none}
+#hdrop{position:absolute;left:10px;top:200px;width:150px;height:80px;background:#ddd;font:12px sans-serif}
+#tabs{position:absolute;left:0;top:0;width:0;height:0;overflow:hidden}
+</style>
+<input id=hostin>
+<div id=hdrag draggable=true>HOSTDRAG</div><div id=hdrop></div>
+<div id=row><div id=pane></div><div id=mark></div></div>
+<input id=hostafter>
+<div id=scrim></div><div id=menu></div><div id=tabs></div>
+<script>
+window.dragLog={};for(const t of['dragstart','dragenter','dragover','drop','dragend'])addEventListener(t,()=>window.dragLog[t]=(window.dragLog[t]||0)+1,true);
+const {ipcRenderer}=require('electron');
+const q=new URLSearchParams(location.search), mode=q.get('mode'), url=q.get('url'), partition=q.get('partition')||'';
+const pane=document.getElementById('pane');
+let wv=null;
+if(mode==='webview'){wv=document.createElement('webview');if(partition)wv.partition=partition;wv.src=url;pane.appendChild(wv);
+  wv.addEventListener('dom-ready',()=>ipcRenderer.send('ready'),{once:true});}
+else{const stub=document.createElement('div');pane.appendChild(stub);
+  const send=()=>{const r=pane.getBoundingClientRect();ipcRenderer.send('bounds',{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)})};
+  new ResizeObserver(send).observe(pane);send();}
+const frames=n=>new Promise(r=>{const f=()=>{n--<=0?r():requestAnimationFrame(f)};requestAnimationFrame(f)});
+window.heard=[];window.drops=[];
+addEventListener('keydown',e=>window.heard.push(e.key));
+document.getElementById('hdrag').addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain','HOSTDRAG'));
+const hdrop=document.getElementById('hdrop');
+hdrop.addEventListener('dragover',e=>e.preventDefault());
+hdrop.addEventListener('drop',e=>{e.preventDefault();window.drops.push(e.dataTransfer.getData('text/plain'));hdrop.textContent=window.drops.join(',')});
+window.steps={
+  async motion(){const t=[];for(let i=0;i<60;i++){pane.style.width=(600+i*5)+'px';await frames(1);t.push(performance.now())}
+                 for(let i=60;i>=0;i--){pane.style.width=(600+i*5)+'px';await frames(1);t.push(performance.now())}return t},
+  async menu(on){document.getElementById('menu').style.display=on?'block':'none';await frames(2)},
+  async scrim(on){document.getElementById('scrim').style.display=on?'block':'none';await frames(2)},
+  async shape(on){pane.style.cssText=on?'transform:scale(.5);border-radius:60px;overflow:hidden;opacity:.6':'';await frames(2)},
+  state(){return{heard:window.heard,drops:window.drops,active:document.activeElement&&(document.activeElement.id||document.activeElement.tagName),hostin:document.getElementById('hostin').value,focus:document.hasFocus()}},
+  async tabs(n,u){const box=document.getElementById('tabs');const made=[];for(let i=0;i<n;i++){const w=document.createElement('webview');if(partition)w.partition=partition;w.style.cssText='width:800px;height:600px;display:flex';w.src=u+'?n='+i;box.appendChild(w);made.push(new Promise(r=>w.addEventListener('did-finish-load',r,{once:true})))}await Promise.all(made)}
+};
+</script>

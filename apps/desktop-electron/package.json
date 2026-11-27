@@ -1,0 +1,20 @@
+{
+  "name": "orden-electron-gate",
+  "productName": "OrdenElectronGate",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "main": "gate/main.cjs",
+  "scripts": {
+    "gate": "node gate/run.cjs",
+    "pack": "electron-packager . OrdenElectronGate --out pack --overwrite --asar --ignore=\"^/(pack|out|assets|node_modules/\\.cache)\""
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "2.11.6",
+    "electron-chrome-extensions": "4.10.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "18.3.6",
+    "electron": "45.5.0"
+  }
+}

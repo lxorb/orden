@@ -1,0 +1,128 @@
+name: electron-gate
+
+on:
+  push:
+    branches: ['tmp/electron-gate-*']
+  workflow_dispatch:
+
+concurrency:
+  group: electron-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  assets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg unzip
+          GITHUB_TOKEN=${{ github.token }} bash apps/desktop-electron/gate/assets.sh "$RUNNER_TEMP/assets"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gate-assets
+          path: ${{ runner.temp }}/assets
+          retention-days: 3
+
+  gate:
+    needs: assets
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            name: linux-x64
+          - runner: ubuntu-24.04-arm
+            name: linux-arm64
+          - runner: windows-latest
+            name: windows-x64
+          - runner: windows-11-arm
+            name: windows-arm64
+          - runner: macos-latest
+            name: macos-arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/desktop-electron
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: gate-assets
+          path: apps/desktop-electron/assets
+      - name: Install
+        run: |
+          npm install --no-audit --no-fund
+          case "$RUNNER_OS" in
+            Linux)
+              sudo apt-get update -q
+              sudo apt-get install -y -q xvfb dbus-x11 openbox xdotool
+              python3 -m venv "$RUNNER_TEMP/gate"
+              "$RUNNER_TEMP/gate/bin/pip" install --quiet mss pillow
+              echo "GATE_PY=$RUNNER_TEMP/gate/bin/python" >>"$GITHUB_ENV"
+              ;;
+            Windows)
+              python -m pip install --quiet mss pillow
+              echo "GATE_PY=python" >>"$GITHUB_ENV"
+              ;;
+            macOS)
+              python3 -m venv "$RUNNER_TEMP/gate"
+              "$RUNNER_TEMP/gate/bin/pip" install --quiet mss pillow pyobjc-framework-Quartz
+              echo "GATE_PY=$RUNNER_TEMP/gate/bin/python" >>"$GITHUB_ENV"
+              ;;
+          esac
+      - name: Machine
+        run: |
+          node -e "const os=require('os');console.log(JSON.stringify({cpus:os.cpus().length,model:os.cpus()[0].model,memGB:Math.round(os.totalmem()/2**30),release:os.release(),arch:os.arch()}))" | tee machine.json
+      - name: Gate
+        run: |
+          export GATE_ASSETS="$PWD/assets" GATE_OUT="$PWD/out"
+          mkdir -p out
+          cp machine.json out/
+          if [ "$RUNNER_OS" = Linux ]; then
+            xvfb-run -a -s '-screen 0 1600x1000x24' dbus-run-session -- bash -c 'openbox & sleep 1; exec node gate/run.cjs' || true
+          else
+            node gate/run.cjs || true
+          fi
+      - name: Package
+        run: |
+          npx electron-packager . OrdenElectronGate --out pack --overwrite --asar --ignore='^/(pack|out|assets)'
+          dir=$(ls -d pack/*/ | head -1)
+          node -e "
+            const fs=require('fs'),path=require('path'),{execFileSync}=require('child_process');
+            const size=d=>fs.readdirSync(d,{withFileTypes:true}).reduce((s,e)=>{const p=path.join(d,e.name);return s+(e.isSymbolicLink()?0:e.isDirectory()?size(p):fs.statSync(p).size)},0);
+            const dir=process.argv[1];
+            fs.writeFileSync('out/size.json',JSON.stringify({check:'size',unpackedMB:+(size(dir)/2**20).toFixed(1)}));
+          " "$dir"
+          if [ "$RUNNER_OS" = Windows ]; then
+            (cd pack && 7z a -tzip -mx=9 ../gate-${{ matrix.name }}.zip . >/dev/null)
+          else
+            (cd pack && zip -qry9 ../gate-${{ matrix.name }}.zip .)
+          fi
+          node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('out/size.json'));s.zipMB=+(fs.statSync(process.argv[1]).size/2**20).toFixed(1);fs.writeFileSync('out/size.json',JSON.stringify(s));console.log(s)" gate-${{ matrix.name }}.zip
+      - name: Results
+        if: always()
+        run: |
+          node gate/report.cjs out | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: gate-results-${{ matrix.name }}
+          path: apps/desktop-electron/out
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: gate-app-${{ matrix.name }}
+          path: apps/desktop-electron/gate-${{ matrix.name }}.zip
+          retention-days: 14
+          compression-level: 0

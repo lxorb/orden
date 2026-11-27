@@ -1,0 +1,6 @@
+node_modules
+out
+assets
+pack
+*.zip
+package-lock.json

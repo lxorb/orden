@@ -1,0 +1,11 @@
+<!doctype html><meta charset=utf-8><title>heavy</title>
+<style>body{font:14px sans-serif;margin:0}.row{display:flex;gap:8px;padding:8px;border-bottom:1px solid #ccc}.c{width:120px;height:80px}</style>
+<div id=list></div>
+<script>
+const list=document.getElementById('list');const data=[];
+for(let i=0;i<600;i++){const r=document.createElement('div');r.className='row';
+  const c=document.createElement('canvas');c.className='c';c.width=240;c.height=160;const x=c.getContext('2d');x.fillStyle=`hsl(${i*7%360} 70% 50%)`;x.fillRect(0,0,240,160);
+  const p=document.createElement('p');p.textContent='Row '+i+' '+'lorem ipsum dolor sit amet '.repeat(6);r.append(c,p);list.appendChild(r);data.push({i,s:'x'.repeat(2000)})}
+window.data=data;
+window.fps=()=>new Promise(res=>{const t=[];let last=performance.now();const end=last+5000;const f=n=>{t.push(n-last);last=n;n<end?requestAnimationFrame(f):res(t)};requestAnimationFrame(f)});
+</script>

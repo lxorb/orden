@@ -1,0 +1,6 @@
+<!doctype html><meta charset=utf-8><title>login</title>
+<script>
+const idb=(mode,fn)=>new Promise((res,rej)=>{const o=indexedDB.open('gate',1);o.onupgradeneeded=()=>o.result.createObjectStore('kv');o.onerror=()=>rej(o.error);o.onsuccess=()=>{const t=o.result.transaction('kv',mode);const r=fn(t.objectStore('kv'));t.oncomplete=()=>res(r.result);t.onerror=()=>rej(t.error)}});
+window.signIn=async()=>{await fetch('/login',{method:'POST'});localStorage.setItem('gate','kept');await idb('readwrite',s=>s.put('kept','gate'));return true};
+window.who=async()=>({cookie:await (await fetch('/whoami')).text(),local:localStorage.getItem('gate'),idb:await idb('readonly',s=>s.get('gate'))??null});
+</script>

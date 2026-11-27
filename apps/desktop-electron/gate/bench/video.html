@@ -1,0 +1,11 @@
+<!doctype html><meta charset=utf-8><title>video</title>
+<style>html,body{margin:0;height:100%;background:#000}video{width:100%;height:100%}</style>
+<video id=v muted playsinline loop></video>
+<script>
+const v=document.getElementById('v');
+window.can={h264:v.canPlayType('video/mp4; codecs="avc1.640028"'),aac:v.canPlayType('audio/mp4; codecs="mp4a.40.2"'),vp9:v.canPlayType('video/webm; codecs="vp09.00.40.08"'),av1:v.canPlayType('video/mp4; codecs="av01.0.08M.08"'),hevc:v.canPlayType('video/mp4; codecs="hvc1.1.6.L120.90"'),pip:document.pictureInPictureEnabled};
+window.widevine=async()=>{try{const a=await navigator.requestMediaKeySystemAccess('com.widevine.alpha',[{initDataTypes:['cenc'],videoCapabilities:[{contentType:'video/mp4; codecs="avc1.42E01E"'}]}]);return 'available:'+a.keySystem}catch(e){return 'unavailable:'+e.name}};
+window.play=async(src,secs)=>{v.src=src;try{await v.play()}catch(e){return{error:String(e)}}
+  const q0=v.getVideoPlaybackQuality();const t0=v.currentTime;await new Promise(r=>setTimeout(r,secs*1000));const q=v.getVideoPlaybackQuality();
+  return{total:q.totalVideoFrames-q0.totalVideoFrames,dropped:q.droppedVideoFrames-q0.droppedVideoFrames,played:v.currentTime-t0,w:v.videoWidth,h:v.videoHeight}};
+</script>

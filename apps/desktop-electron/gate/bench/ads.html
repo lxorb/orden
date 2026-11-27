@@ -1,0 +1,6 @@
+<!doctype html><meta charset=utf-8><title>ads</title>
+<div id=ad class="adsbygoogle ad-banner adsbox" style="width:300px;height:100px;background:#f00">ad</div>
+<script>
+const load=u=>new Promise(r=>{const s=document.createElement('script');s.src=u+(u.includes('?')?'&':'?')+'gate='+Date.now()+Math.random();s.onload=()=>r('loaded');s.onerror=()=>r('blocked-or-failed');document.head.appendChild(s);setTimeout(()=>r('timeout'),15000)});
+window.probe=async()=>({ads:await load('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'),tracker:await load('https://www.googletagmanager.com/gtag/js?id=G-GATE'),control:await load('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js'),cosmetic:getComputedStyle(document.getElementById('ad')).display});
+</script>
