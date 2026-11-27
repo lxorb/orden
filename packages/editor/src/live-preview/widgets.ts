@@ -44,13 +44,22 @@ export class CheckboxWidget extends OrdenWidget {
     box.className = 'orden-checkbox'
     box.checked = this.checked
     box.setAttribute('aria-label', 'Done')
-    box.addEventListener('mousedown', (event) => {
-      event.preventDefault()
+    const tick = () => {
       if (view.state.readOnly) return
       const from = view.posAtDOM(holder)
       const mark = view.state.sliceDoc(from, from + 3)
       if (!TASK_MARK.test(mark)) return
       view.dispatch({ changes: { from, to: from + 3, insert: /x/i.test(mark) ? '[ ]' : '[x]' } })
+    }
+    box.addEventListener('mousedown', (event) => {
+      event.preventDefault()
+      tick()
+    })
+    box.addEventListener('click', (event) => event.preventDefault())
+    box.addEventListener('keydown', (event) => {
+      if (event.key !== ' ' && event.key !== 'Enter') return
+      event.preventDefault()
+      tick()
     })
     holder.append(box)
     return holder
