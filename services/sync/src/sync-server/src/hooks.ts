@@ -9,6 +9,7 @@ type RevokedRole = 'none' | 'read'
 export interface Session {
   token: string
   user: { id: string; email: string; name: string | null; [more: string]: unknown }
+  deletionCancelled?: true
 }
 type CodeSent = { ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
 interface AccountHooks {

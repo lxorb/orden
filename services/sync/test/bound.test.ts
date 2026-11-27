@@ -160,6 +160,8 @@ test('deleting an account of many spaces, notes and pictures', async () => {
     body: { ticket: verified.json.ticket },
   })
   expect(gone.status).toBe(200)
+  const { sweepLeaving } = await import('../src/sync-server-accounts/src/account')
+  await sweepLeaving(env, Date.now() + 31 * 24 * 60 * 60 * 1000)
   withinTheLimit()
   expect(env.db.prepare('select count(*) as many from leftovers').get()).not.toEqual({ many: 0 })
 })

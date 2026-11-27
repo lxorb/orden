@@ -67,11 +67,10 @@ def drive(browser: Browser) -> None:
             PERSON, r"(\d{6}) deletes your Orden account", "the code that deletes", already
         ).group(1)
         say(f"[{scheme}] the mail that deletes says {mailed}")
-        change = page.locator('input[aria-label="Code to change sign-in"]')
         delete = page.locator('input[aria-label="App code to delete"]')
         delete.wait_for(timeout=10_000)
-        if change.count() != 1 or delete.count() != 1:
-            wrong(f"[{scheme}] the two app codes are not named apart: {change.count()}, {delete.count()}")
+        if delete.count() != 1:
+            wrong(f"[{scheme}] the app code that deletes is not named for it: {delete.count()}")
         if page.locator('input[aria-label="Code from the app"]').count():
             wrong(f"[{scheme}] a field on the pane is still called Code from the app")
         delete.scroll_into_view_if_needed()
@@ -83,23 +82,33 @@ def drive(browser: Browser) -> None:
         page.locator('input[aria-label="Code"]').fill(mailed)
         delete.fill(phone.code())
         page.get_by_role("button", name="Continue").click()
-        page.get_by_role("button", name="Delete now").click()
+        page.get_by_text("Signing in before then cancels the deletion").wait_for(timeout=10_000)
+        shot(page, "sure")
+        page.get_by_role("button", name="Delete in 30 days").click()
         DRIVE.wait_for(page, "() => !window.ordenApp.account.accountToken", "signed out")
-        say("deleted, and signed out")
-        shot(page, "gone")
+        say("asked, and signed out")
         worker.waits_for_mail(
-            PERSON, r"Your Orden account has been deleted", "the receipt", already
+            PERSON, r"Your Orden account will be deleted on", "the mail naming the day", already
         )
-        left = worker.query(f"select count(*) as n from users where email = '{PERSON}'")
-        if left and left[0].get("n"):
-            wrong("the account is still in the database")
+        held = worker.query(f"select delete_after from users where email = '{PERSON}'")
+        if not held or not held[0].get("delete_after"):
+            wrong("the account is not marked with a day to be deleted on")
+        if worker.query("select count(*) as n from sessions")[0].get("n"):
+            wrong("a session outlived the request")
+        page.evaluate("() => window.ordenApp.settings.show('account')")
+        page.get_by_text("cancels the deletion").first.wait_for(timeout=10_000)
+        if not page.get_by_text(PERSON).count():
+            wrong("the account page does not name the account that is leaving")
+        shot(page, "pending")
+        page.keyboard.press("Escape")
+        sign_in(page, worker, phone)
+        page.get_by_text("your account will not be deleted").wait_for(timeout=10_000)
+        page.wait_for_timeout(800)
+        shot(page, "cancelled")
+        held = worker.query(f"select delete_after from users where email = '{PERSON}'")
+        if not held or held[0].get("delete_after") is not None:
+            wrong("signing in did not cancel the deletion")
         else:
-            say("the Worker holds no account for that address, and the receipt came")
+            say("signing in kept the account, and said so")
         page.context.close()
-        token = worker.account(PERSON)
-        begun = worker.request("/v1/second", token, {})
-        phone = Authenticator(begun["secret"])
-        worker.request(
-            "/v1/second/confirm", token, {"holding": begun["holding"], "code": phone.code()}
-        )
 raise SystemExit(DRIVE.run(drive, "an account with a second factor deletes itself"))

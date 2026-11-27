@@ -79,6 +79,7 @@ import {
   resealBorrowed,
   second,
   sessions,
+  sweepLeaving,
 } from './sync-server-accounts/src/api'
 import { cors } from 'hono/cors'
 import {
@@ -361,6 +362,7 @@ function scheduled(event: ScheduledEvent, given: Env, context: ExecutionContext)
   context.waitUntil(forgetHalfDone(env, at))
   context.waitUntil(resealBorrowed(env))
   context.waitUntil(sweepLeftovers(env))
+  context.waitUntil(sweepLeaving(env, at))
   context.waitUntil(finishErasing(env))
   context.waitUntil(sweepMisnamed(env))
   context.waitUntil(fillFronts(env, null))

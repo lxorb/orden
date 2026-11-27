@@ -15,6 +15,8 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/ui-kit/src/Toast.svelte .toast.ios': 'an iPhone’s toast, a phone only, which builds no native page',
   'lib/phone/src/TabGrid.svelte .grid-sheet': 'a touch screen only, which builds no native page',
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
+  'lib/accounts-ui/src/SignIn.svelte .staying':
+    'a row of notices as App.svelte .notices is; data-notices makes the card in it a layer of the registry',
   'App.svelte .notices.over': 'the same row, over a drawer: see .notices and .panels',
   'App.svelte .notices.above': 'the same row, over the tab overview: see .notices',
   'App.svelte .panels': 'fixed only as a drawer, which is a phone or a tablet, and those build no native page',

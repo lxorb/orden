@@ -275,12 +275,15 @@ async function listen(
 export const routes = {
   requestCode: (email: string) => request<{ ok: true; resendIn: number }>('/v1/auth/code', { body: { email } }),
   verifyCode: (email: string, code: string, guest?: string) =>
-    request<{ token?: string; user?: Account; second?: boolean; holding?: string }>('/v1/auth/verify', {
-      body: { email, code, ...(guest ? { guest } : {}) },
-      device: true,
-    }),
+    request<{ token?: string; user?: Account; second?: boolean; holding?: string; deletionCancelled?: boolean }>(
+      '/v1/auth/verify',
+      {
+        body: { email, code, ...(guest ? { guest } : {}) },
+        device: true,
+      },
+    ),
   verifySecond: (holding: string, code: string) =>
-    request<{ token: string; user: Account }>('/v1/auth/second', {
+    request<{ token: string; user: Account; deletionCancelled?: boolean }>('/v1/auth/second', {
       body: { holding, code },
       device: true,
     }),

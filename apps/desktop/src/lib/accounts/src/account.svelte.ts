@@ -10,6 +10,7 @@ const STORAGE_KEY = 'orden:session'
 const SETTINGS_HEARD = 'orden:settings-heard'
 const UNSETTLED = 'orden:unsettled'
 const SETTLING = 'orden:settling'
+const LEAVING = 'orden:leaving'
 const locks = (): LockManager | null =>
   typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : null
 export type Step = 'email' | 'code' | 'second'
@@ -30,6 +31,7 @@ class Session {
   listed = $state(false)
   deletedSpaces = $state<string[]>([])
   open = $state(false)
+  staying = $state(false)
   ask() {
     this.open = true
   }
@@ -190,7 +192,7 @@ class Session {
       this.error = 'that code is not right'
       return false
     }
-    await this.settleIn(token, user)
+    await this.settleIn(token, user, session.deletionCancelled)
     return true
   }
   askForCode(email: string, resendIn: number) {
@@ -226,7 +228,8 @@ class Session {
     const who = (await api.me(token).catch(() => null))?.user
     return who?.id === user.id ? who : user
   }
-  private async settleIn(token: string, user: Account): Promise<void> {
+  private async settleIn(token: string, user: Account, staying = false): Promise<void> {
+    if (staying) forget(LEAVING)
     user = await this.whole(token, user)
     await this.leaveFor(token, { user })
     this.guest = null
@@ -236,6 +239,7 @@ class Session {
     this.settling = true
     this.token = token
     this.user = user
+    this.staying = staying
     this.open = false
     this.step = 'email'
     this.email = ''
@@ -257,7 +261,7 @@ class Session {
       this.busy = false
     }
     this.holding = null
-    await this.settleIn(session.token, session.user)
+    await this.settleIn(session.token, session.user, session.deletionCancelled)
     return true
   }
   async arrive(token: string, who: { user?: Account; guest?: Guest }, heard = false) {
@@ -368,6 +372,7 @@ class Session {
     this.guest = null
     this.holding = null
     this.settling = false
+    this.staying = false
     this.spaces = []
     this.deletedSpaces = []
     this.listed = false
