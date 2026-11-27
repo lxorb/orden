@@ -957,72 +957,65 @@ describe('the packaging bump', () => {
     }
   })
 })
-describe('the OpenCode every desktop installer carries', () => {
+describe('the OpenCode Orden downloads on first use', () => {
   const pin = JSON.parse(repo('apps', 'desktop', 'src-tauri', 'opencode.json')) as {
     version: string
     bun: string
     sha512: Record<string, string>
+    bytes: Record<string, number>
   }
   const merged = (triple: string) => {
     const ran = spawnSync(process.execPath, [join(HERE, 'scripts', 'opencode.mjs'), 'config', triple], {
       encoding: 'utf8',
     })
     expect(ran.status, ran.stderr).toBe(0)
-    return JSON.parse(ran.stdout) as { bundle: Record<string, unknown> }
+    return JSON.parse(ran.stdout) as { bundle?: Record<string, unknown> }
   }
-  test('is one pinned version, checked by its sha512 on all six platforms, the x64 build for CPUs without AVX2', () => {
+  const platforms = [
+    'darwin-arm64',
+    'darwin-x64-baseline',
+    'linux-arm64',
+    'linux-x64-baseline',
+    'windows-arm64',
+    'windows-x64-baseline',
+  ]
+  test('is one pinned version, checked by its sha512 and size on all six platforms, the x64 build for CPUs without AVX2', () => {
     expect(pin.version).toMatch(/^\d+\.\d+\.\d+$/)
-    expect(Object.keys(pin.sha512).sort()).toEqual([
-      'darwin-arm64',
-      'darwin-x64-baseline',
-      'linux-arm64',
-      'linux-x64-baseline',
-      'windows-arm64',
-      'windows-x64-baseline',
-    ])
+    expect(Object.keys(pin.sha512).sort()).toEqual(platforms)
+    expect(Object.keys(pin.bytes).sort()).toEqual(platforms)
     for (const [platform, digest] of Object.entries(pin.sha512))
       expect(digest, platform).toMatch(/^[A-Za-z0-9+/]{86}==$/)
+    for (const [platform, size] of Object.entries(pin.bytes)) expect(size, platform).toBeGreaterThan(1_000_000)
   })
-  test('lies beside the program it serves, and never on the PATH', () => {
-    for (const triple of ['aarch64-apple-darwin', 'x86_64-apple-darwin']) {
-      expect(merged(triple).bundle.externalBin, triple).toEqual(['binaries/opencode'])
+  test('is in no installer: only the Windows guard its commands run through is', () => {
+    for (const triple of [
+      'aarch64-apple-darwin',
+      'x86_64-apple-darwin',
+      'x86_64-unknown-linux-gnu',
+      'aarch64-unknown-linux-gnu',
+    ]) {
+      expect(merged(triple), triple).toEqual({})
     }
     for (const triple of ['x86_64-pc-windows-msvc', 'aarch64-pc-windows-msvc']) {
-      expect(merged(triple).bundle.externalBin, triple).toEqual(['binaries/opencode', 'binaries/orden-shell'])
+      expect(merged(triple).bundle?.externalBin, triple).toEqual(['binaries/orden-shell'])
     }
-    for (const triple of ['x86_64-unknown-linux-gnu', 'aarch64-unknown-linux-gnu']) {
-      const { bundle } = merged(triple)
-      expect(bundle.externalBin, triple).toBeUndefined()
-      const linux = bundle.linux as Record<string, { files: Record<string, string> }>
-      for (const kind of ['deb', 'rpm']) {
-        expect(linux[kind]?.files['/usr/share/Orden/opencode'], kind).toBe(`binaries/opencode-${triple}`)
-      }
-      expect(linux.appimage, 'quick-sharun runs and wraps every ELF it finds in the AppDir').toBeUndefined()
-      expect(JSON.stringify(bundle)).not.toContain('/usr/bin/')
-    }
-  })
-  test('is fetched before every release build, which takes it in, and a tag is never cut on an older one', () => {
     const release = repo('.github', 'workflows', 'release.yml')
-    const builds = release.split('bash scripts/linux-cef.sh tauri build').slice(1)
-    expect(builds).toHaveLength(2)
-    for (const build of builds) {
-      expect(build.slice(0, build.indexOf('\n\n'))).toContain(
-        '$(node scripts/opencode.mjs config ${{ matrix.target }})',
-      )
-    }
-    expect(release.match(/node scripts\/opencode\.mjs fetch \$\{\{ matrix\.target \}\}/g)).toHaveLength(2)
-    expect(release).toContain('run: node scripts/opencode.mjs newest')
+    expect(release).not.toMatch(/opencode\.mjs fetch|appimage-carry|opencode-licenses/)
     expect(release).toContain('cargo build -p orden-opencode --bin orden-shell --release --target ${{ matrix.target }}')
+    expect(release).toContain('run: node scripts/opencode.mjs newest')
     expect(
       release.match(/scripts\/opencode-app-drive\.py --identifier so\.orden\.Orden --exe/g),
-      'Orden itself finds it',
+      'Orden itself downloads and starts it',
     ).toHaveLength(3)
-    expect(release).toContain('apps/desktop/src-tauri/binaries/opencode-${{ matrix.target }} shared/bin/opencode')
   })
-  test('ships its licence and the licence of the Bun it runs on, for the pinned versions', () => {
+  test('is pinned for Nix the same, which carries it set up for its loader', () => {
+    expect(read('nix', 'opencode.json')).toBe(repo('apps', 'desktop', 'src-tauri', 'opencode.json'))
+    expect(read('nix', 'flake.nix')).toContain('--set ORDEN_OPENCODE_BIN ${opencodeFor pkgs}/bin/opencode')
+  })
+  test('has its licence and the licence of the Bun it runs on, for the pinned versions', () => {
     const text = repo('apps', 'desktop', 'src-tauri', 'licenses', 'opencode.txt')
-    expect(text).toContain(`OpenCode ${pin.version}`)
-    expect(text).toContain(`Bun ${pin.bun}`)
+    expect(text).toMatch(new RegExp(`^# OpenCode ${pin.version}$`, 'm'))
+    expect(text).toMatch(new RegExp(`^# Bun ${pin.bun}, `, 'm'))
     expect(text).toContain('MIT License')
     expect(text).toMatch(/LGPL/)
   })

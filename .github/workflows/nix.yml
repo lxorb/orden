@@ -233,8 +233,8 @@ jobs:
           for size in 32x32 128x128 256x256; do
             test -s "result/share/icons/hicolor/$size/apps/$pname.png"
           done
-          if [ -e "result/libexec/$pname/opencode" ]; then
-            bash scripts/opencode-check.sh "result/libexec/$pname/opencode"
+          if grep -q ORDEN_OPENCODE_BIN "result/bin/$pname"; then
+            bash scripts/opencode-check.sh "$(grep -o "/nix/store/[^' ]*-orden-opencode-[^/]*/bin/opencode" "result/bin/$pname" | head -1)"
           fi
 
       - name: A graphics driver where NixOS keeps it
