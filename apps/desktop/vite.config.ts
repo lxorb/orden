@@ -69,7 +69,15 @@ function appVersion(): string {
 }
 function stamp(serving: boolean): string {
   if (serving) return `${appVersion()} dev server started ${when()}`
-  return `${appVersion()} ${commit(false) || 'unknown'} ${when()}`
+  return `${appVersion()} ${commit(false) || 'unknown'} ${committed() || when()}`
+}
+function committed(): string {
+  try {
+    const at = execSync('git show -s --format=%cI HEAD', { encoding: 'utf8' }).trim()
+    return `${new Date(at).toISOString().slice(0, 16)}Z`
+  } catch {
+    return ''
+  }
 }
 function commit(serving: boolean): string {
   if (serving) return ''

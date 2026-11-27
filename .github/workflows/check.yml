@@ -576,6 +576,10 @@ jobs:
         continue-on-error: true
         run: bash scripts/web-channels.sh apps/desktop/dist "$RUNNER_TEMP/unstable/apps/desktop/dist"
 
+      - name: Keep the assets of the builds before this one, for the pages still open on them
+        continue-on-error: true
+        run: node scripts/web-keep.mjs apps/desktop/dist https://app.orden.so 7
+
       - name: Migrate the database
         run: pnpm --filter @orden/sync run migrate:remote
         env:
