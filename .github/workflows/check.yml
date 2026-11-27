@@ -7,6 +7,10 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: 'The jobs to run, space separated (test lint walks smoke rust-linux rust-windows rust-macos windows-probe android-check mobile-clippy), or all'
+        required: true
 
 concurrency:
   group: check-${{ github.ref }}
@@ -30,7 +34,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - run: pnpm install --frozen-lockfile
 
@@ -43,8 +48,62 @@ jobs:
       - name: Prettier
         run: pnpm format:check
 
-  test:
+  plan:
     if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      jobs: ${{ steps.plan.outputs.jobs }}
+      rust: ${{ steps.plan.outputs.rust }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - id: plan
+        shell: bash
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          ASKED: ${{ inputs.jobs }}
+          ALL: test lint walks smoke rust-linux rust-windows rust-macos windows-probe android-check mobile-clippy
+          APART: '^(services/|packaging/|legal/|LICENSE$|\.github/CODEOWNERS$|\.github/workflows/)|\.md$'
+          HERE: '^\.github/workflows/(check|pick)\.yml$'
+          NATIVE: '^(apps/desktop/src-tauri/|\.github/workflows/check\.yml$)'
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            jobs=$ASKED
+            if [ "$jobs" = all ]; then jobs=$ALL; fi
+            for job in $jobs; do
+              case " $ALL " in *" $job "*) ;; *) echo "::error::check.yml has no job $job; it has: $ALL"; exit 1 ;; esac
+            done
+          elif [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "nothing to compare against; running every job"
+            jobs=$ALL
+          else
+            changed=$(git diff --name-only "$BASE" "$GITHUB_SHA")
+            echo "$changed"
+            jobs="test lint"
+            if grep -vE "$APART" <<<"$changed" | grep -q . || grep -qE "$HERE" <<<"$changed"; then
+              jobs="$jobs walks smoke rust-linux rust-windows rust-macos windows-probe"
+            fi
+            if grep -qE "$NATIVE" <<<"$changed"; then jobs="$jobs android-check mobile-clippy"; fi
+          fi
+          rust=$(for job in $jobs; do
+            case "$job" in
+              rust-linux) echo ubuntu-24.04 ;;
+              rust-windows) echo windows-latest ;;
+              rust-macos) echo macos-latest ;;
+            esac
+          done | jq -Rsc 'split("\n") | map(select(. != ""))')
+          echo "running: $jobs"
+          echo "jobs= $jobs " >>"$GITHUB_OUTPUT"
+          echo "rust=$rust" >>"$GITHUB_OUTPUT"
+
+  test:
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' test ') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -59,7 +118,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - run: pnpm install --frozen-lockfile
 
@@ -70,7 +130,8 @@ jobs:
         run: pnpm test
 
   lint:
-    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' lint ') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -83,7 +144,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - run: pnpm install --frozen-lockfile
 
@@ -108,7 +170,8 @@ jobs:
         run: pnpm knip
 
   walks:
-    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' walks ') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -121,7 +184,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - run: pnpm install --frozen-lockfile
 
@@ -129,7 +193,8 @@ jobs:
         run: pnpm --filter @orden/desktop sim:long
 
   smoke:
-    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' smoke ') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -142,7 +207,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - run: pnpm install --frozen-lockfile
 
@@ -183,13 +249,14 @@ jobs:
           if-no-files-found: ignore
 
   rust:
-    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    needs: plan
+    if: ${{ needs.plan.outputs.rust != '[]' }}
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest, macos-latest]
+        os: ${{ fromJSON(needs.plan.outputs.rust) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     defaults:
@@ -205,7 +272,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
@@ -273,7 +341,8 @@ jobs:
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
   windows-probe:
-    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' windows-probe ') }}
     runs-on: windows-latest
     timeout-minutes: 75
     permissions:
@@ -312,42 +381,9 @@ jobs:
           path: protect
           if-no-files-found: ignore
 
-  mobile-touched:
-    if: ${{ github.ref != 'refs/heads/unstable' && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    outputs:
-      touched: ${{ steps.look.outputs.touched }}
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          fetch-depth: 0
-
-      - id: look
-        shell: bash
-        env:
-          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-        run: |
-          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            echo "nothing to compare against; building anyway"
-            echo "touched=true" >>"$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          changed=$(git diff --name-only "$BASE" "${{ github.sha }}")
-          echo "$changed"
-
-          if echo "$changed" | grep -qE '^(apps/desktop/src-tauri/|\.github/workflows/check\.yml$)'; then
-            echo "touched=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "touched=false" >>"$GITHUB_OUTPUT"
-          fi
-
   android-check:
-    needs: mobile-touched
-    if: needs.mobile-touched.outputs.touched == 'true'
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' android-check ') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -360,7 +396,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
@@ -432,8 +469,8 @@ jobs:
           fi
 
   mobile-clippy:
-    needs: mobile-touched
-    if: needs.mobile-touched.outputs.touched == 'true'
+    needs: plan
+    if: ${{ contains(needs.plan.outputs.jobs, ' mobile-clippy ') }}
     strategy:
       fail-fast: false
       matrix:
@@ -456,7 +493,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
@@ -507,7 +545,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - run: pnpm install --frozen-lockfile
 

@@ -1,0 +1,47 @@
+name: pick
+
+on:
+  workflow_call:
+    inputs:
+      all:
+        description: The matrix a full run takes, a JSON list of entries that each name a runner, and a label where the runner does not say it
+        type: string
+        required: true
+      only:
+        description: The labels to keep, space separated; empty or all keeps every entry
+        type: string
+        default: ''
+    outputs:
+      matrix:
+        description: The entries of the matrix that were asked for
+        value: ${{ jobs.pick.outputs.matrix }}
+
+permissions: {}
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        env:
+          ALL: ${{ inputs.all }}
+          ONLY: ${{ inputs.only }}
+          FILTER: |
+            def named:
+              .label // ((.runner
+                | if startswith("windows") then "windows" elif startswith("macos") then "macos" else "linux" end)
+                + (.runner | if test("arm") then "-arm" elif test("intel") then "-intel" else "" end));
+            ($only | split(" ") | map(select(. != ""))) as $want
+            | map(named) as $have
+            | if ($want | length) == 0 or ($want | index("all") != null) then .
+              elif ($want - $have | length) > 0 then
+                error("no platform named \($want - $have | join(" ")); this workflow has \($have | join(" "))")
+              else map(select(named as $l | $want | index($l) != null))
+              end
+        run: |
+          matrix=$(jq -c --arg only "$ONLY" "$FILTER" <<<"$ALL")
+          echo "$matrix"
+          echo "matrix=$matrix" >>"$GITHUB_OUTPUT"

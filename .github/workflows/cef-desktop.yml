@@ -3,6 +3,9 @@ name: cef-desktop
 on:
   workflow_dispatch:
     inputs:
+      platforms:
+        description: 'The platforms to run on, space separated (macos windows), or all'
+        required: true
       step:
         description: 'check (cargo check under the CEF manifest), test (clippy and the tests too) or launch (an app started on macOS, or installed from the NSIS setup and started on Windows, its logs kept)'
         default: check
@@ -12,8 +15,6 @@ on:
       started:
         description: 'for launch, how the app is started: exec (the binary, from the job) or open (LaunchServices, as a person does), and debug or release'
         default: exec debug
-  push:
-    branches: ['tmp/ci-cef*']
 
 concurrency:
   group: cef-desktop-${{ github.ref }}
@@ -23,15 +24,21 @@ permissions:
   contents: read
 
 jobs:
+  pick:
+    permissions: {}
+    uses: ./.github/workflows/pick.yml
+    with:
+      only: ${{ inputs.platforms }}
+      all: >-
+        [{"runner":"macos-latest","target":"aarch64-apple-darwin"},
+        {"runner":"windows-latest","target":"x86_64-pc-windows-msvc"}]
+
   manifest:
+    needs: pick
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
+        include: ${{ fromJSON(needs.pick.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     defaults:
@@ -47,7 +54,8 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: pnpm
+          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
+          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:

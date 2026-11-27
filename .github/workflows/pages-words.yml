@@ -1,8 +1,6 @@
 name: pages-words
 
 on:
-  push:
-    branches: ['tmp/ci-hunt-canvas*']
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -16,6 +14,10 @@ on:
       - scripts/heavy_paper.py
       - .github/workflows/pages-words.yml
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'The platforms to run on, space separated (windows macos), or all'
+        required: true
 
 concurrency:
   group: pages-words-${{ github.ref }}
@@ -25,16 +27,22 @@ permissions:
   contents: read
 
 jobs:
+  pick:
+    permissions: {}
+    uses: ./.github/workflows/pick.yml
+    with:
+      only: ${{ inputs.platforms }}
+      all: >-
+        [{"runner":"windows-latest","target":"x86_64-pc-windows-msvc"},
+        {"runner":"macos-latest","target":"aarch64-apple-darwin"}]
+
   words:
+    needs: pick
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - runner: macos-latest
-            target: aarch64-apple-darwin
+        include: ${{ fromJSON(needs.pick.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 75
     permissions:

@@ -11,6 +11,10 @@ on:
       - scripts/agent-parity.py
       - .github/workflows/agent-parity.yml
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'The platforms to run on, space separated (macos windows linux), or all'
+        required: true
 
 concurrency:
   group: agent-parity-${{ github.ref }}
@@ -20,21 +24,23 @@ permissions:
   contents: read
 
 jobs:
+  pick:
+    permissions: {}
+    uses: ./.github/workflows/pick.yml
+    with:
+      only: ${{ inputs.platforms }}
+      all: >-
+        [{"runner":"macos-latest","target":"aarch64-apple-darwin","engine":"chromium"},
+        {"runner":"windows-latest","target":"x86_64-pc-windows-msvc","engine":"chromium"},
+        {"runner":"ubuntu-24.04","target":"x86_64-unknown-linux-gnu","engine":"chromium"}]
+
   parity:
+    needs: pick
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-            engine: chromium
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-            engine: chromium
-          - runner: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-            engine: chromium
+        include: ${{ fromJSON(needs.pick.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     permissions:

@@ -16,9 +16,8 @@ on:
         required: false
         default: '0'
       platforms:
-        description: Only these labels, space separated (windows-arm64 windows-x64 macos-arm64); empty runs all
-        required: false
-        default: ''
+        description: Only these labels, space separated (windows-arm64 windows-x64 macos-arm64), or all
+        required: true
       rounds:
         description: How many times the tab switch drive makes each switch
         required: false
@@ -65,7 +64,7 @@ jobs:
       RUN: ${{ inputs.run }}
       LIMITS: ${{ inputs.limits }}
       BURDEN: ${{ inputs.burden || '0' }}
-      WANTED: ${{ inputs.platforms == '' || contains(inputs.platforms, matrix.label) }}
+      WANTED: ${{ inputs.platforms == 'all' || contains(inputs.platforms, matrix.label) }}
       ROUNDS: ${{ inputs.rounds || '3' }}
       TAB_FIRST_MS: ${{ matrix.tab_first_ms }}
     steps:

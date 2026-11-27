@@ -2,6 +2,10 @@ name: upgrade
 
 on:
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'The platforms to build and upgrade on, space separated (windows windows-arm64 macos), or all'
+        required: true
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
@@ -35,24 +39,23 @@ env:
   NEW: '0.99.0'
 
 jobs:
+  pick:
+    permissions: {}
+    uses: ./.github/workflows/pick.yml
+    with:
+      only: ${{ inputs.platforms }}
+      all: >-
+        [{"platform":"windows-latest","target":"x86_64-pc-windows-msvc","bundles":"nsis,msi","label":"windows"},
+        {"platform":"windows-11-arm","target":"aarch64-pc-windows-msvc","bundles":"nsis","label":"windows-arm64"},
+        {"platform":"macos-latest","target":"aarch64-apple-darwin","bundles":"app","label":"macos"}]
+
   build:
+    needs: pick
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: nsis,msi
-            label: windows
-          - platform: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            bundles: nsis
-            label: windows-arm64
-          - platform: macos-latest
-            target: aarch64-apple-darwin
-            bundles: app
-            label: macos
+        include: ${{ fromJSON(needs.pick.outputs.matrix) }}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -82,7 +85,7 @@ jobs:
             apps/desktop/src-tauri/target/release/bundle/macos/app.tgz
 
   windows:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' windows ')) }}
     needs: build
     strategy:
       fail-fast: false
@@ -132,7 +135,7 @@ jobs:
           ./scripts/windows-upgrade.ps1 -Scenario ${{ matrix.scenario }} -Old old -New flat -Sfta ./SFTA.ps1
 
   windows-arm64:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' windows-arm64 ')) }}
     needs: build
     runs-on: windows-11-arm
     timeout-minutes: 20
@@ -167,7 +170,7 @@ jobs:
         run: ./scripts/windows-arch-move.ps1 -Old old -New new
 
   macos:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' macos ')) }}
     needs: build
     strategy:
       fail-fast: false

@@ -1,8 +1,6 @@
 name: web-under-mac
 
 on:
-  push:
-    branches: ['tmp/ci-1138*']
   workflow_dispatch:
 
 concurrency:

@@ -864,8 +864,11 @@ describe('the Nix edge', () => {
     expect(job).not.toMatch(/--force|-f origin/)
   })
   test('and its own push builds nothing', () => {
-    const ignored = /paths-ignore:\n([\s\S]*?)\n {2}workflow_dispatch:/.exec(release)?.[1] ?? ''
-    expect(ignored).toContain('- packaging/nix/edge.json')
+    const edge = repo('.github', 'workflows', 'edge.yml')
+    const apart = /^ +APART: '(.*)'$/m.exec(edge)?.[1] ?? ''
+    expect(new RegExp(apart).test('packaging/nix/edge.json')).toBe(true)
+    expect(new RegExp(apart).test('packaging/nix/flake.nix')).toBe(false)
+    expect(release).not.toContain('branches: [unstable]')
   })
   test('is started out of the pushed flake the way the release is', () => {
     expect(release).toMatch(

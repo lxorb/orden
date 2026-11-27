@@ -16,6 +16,10 @@ on:
       - 'scripts/appimage-trim.sh'
       - '.github/workflows/wayland.yml'
   workflow_dispatch:
+    inputs:
+      jobs:
+        description: 'The jobs to run, space separated (deb kwin webkitgtk appimage fedora-44 rpm), or all; build runs for those that need it'
+        required: true
 
 concurrency:
   group: wayland-${{ github.ref }}
@@ -26,7 +30,7 @@ permissions:
 
 jobs:
   build:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' deb ') || contains(format(' {0} ', inputs.jobs), ' kwin ') || contains(format(' {0} ', inputs.jobs), ' appimage ') || contains(format(' {0} ', inputs.jobs), ' fedora-44 ') || contains(format(' {0} ', inputs.jobs), ' rpm ')) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -84,6 +88,7 @@ jobs:
             apps/desktop/src-tauri/target/debug/bundle/appimage/*.AppImage
 
   deb:
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' deb ')) }}
     needs: build
     runs-on: ubuntu-24.04
     permissions:
@@ -393,6 +398,7 @@ jobs:
           if-no-files-found: ignore
 
   kwin:
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' kwin ')) }}
     needs: build
     runs-on: ubuntu-latest
     container: fedora:44
@@ -460,7 +466,7 @@ jobs:
           if-no-files-found: ignore
 
   webkitgtk:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    if: ${{ (github.event_name != 'pull_request' || !github.event.pull_request.draft) && (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' webkitgtk ')) }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -498,6 +504,7 @@ jobs:
           if-no-files-found: ignore
 
   appimage:
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' appimage ')) }}
     needs: build
     runs-on: ubuntu-latest
     container: archlinux:latest
@@ -535,6 +542,7 @@ jobs:
           if-no-files-found: ignore
 
   fedora-44:
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' fedora-44 ')) }}
     needs: build
     runs-on: ubuntu-latest
     container: fedora:44
@@ -578,6 +586,7 @@ jobs:
           if-no-files-found: ignore
 
   rpm:
+    if: ${{ (github.event_name != 'workflow_dispatch' || inputs.jobs == 'all' || contains(format(' {0} ', inputs.jobs), ' rpm ')) }}
     needs: build
     runs-on: ubuntu-latest
     container: fedora:latest

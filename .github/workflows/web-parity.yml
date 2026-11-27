@@ -1,10 +1,11 @@
 name: web-parity
 
 on:
-  push:
-    branches: ['tmp/ci-2224*']
   workflow_dispatch:
     inputs:
+      platforms:
+        description: 'The platforms to run on, space separated (windows macos linux), or all'
+        required: true
       drives:
         description: The parity drives to run, by name (look, motion, pointer, keys, menu, flight, reload, turn, explorer, ink, capture, session, scroll, pan).
         default: look motion pointer keys menu flight reload ink capture session scroll pan
@@ -17,17 +18,22 @@ permissions:
   contents: read
 
 jobs:
+  pick:
+    permissions: {}
+    uses: ./.github/workflows/pick.yml
+    with:
+      only: ${{ inputs.platforms }}
+      all: >-
+        [{"runner":"windows-latest","target":"x86_64-pc-windows-msvc"},
+        {"runner":"macos-latest","target":"aarch64-apple-darwin"},
+        {"runner":"ubuntu-24.04","target":"x86_64-unknown-linux-gnu"}]
+
   parity:
+    needs: pick
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-          - runner: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
+        include: ${{ fromJSON(needs.pick.outputs.matrix) }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
     permissions:

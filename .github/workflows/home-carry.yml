@@ -2,17 +2,6 @@ name: home-carry
 
 on:
   workflow_dispatch:
-  push:
-    branches: ['tmp/ci-*']
-    paths:
-      - apps/desktop/src-tauri/crates/carry/src/old_home.rs
-      - apps/desktop/src-tauri/crates/carry/src/former.js
-      - apps/desktop/src/lib/web-backend/src/internal/convert.ts
-      - apps/desktop/src/lib/workspace/former-home.ts
-      - apps/desktop/src/lib/workspace/moved.ts
-      - apps/desktop/src/lib/workspace/item-meta.svelte.ts
-      - scripts/home-carry-drive.py
-      - .github/workflows/home-carry.yml
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
