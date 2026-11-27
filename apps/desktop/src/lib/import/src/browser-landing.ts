@@ -2,7 +2,7 @@ import type { BrowserId } from '@orden/contracts'
 import type { Space } from '../../workspace/src/api'
 import type { Landed } from './run.svelte'
 import { arcSidebar } from './arc'
-import { bringHistory, droppedLine, withMarks } from './browser-extras'
+import { droppedLine, withMarks } from './browser-extras'
 import { BROWSER_NAMES, browserFile, type BrowserProfile } from './browsers'
 import { chromiumSidebar } from './chromium'
 import { firefoxSidebar } from './firefox'
@@ -41,11 +41,7 @@ export async function landBrowser(profile: BrowserProfile, several: boolean, tol
   const { spaces, lost } = sidebarImport(sidebar, new Date(), firefox ? CONTAINERS : null)
   const kept = KEPT[profile.browser]
   const lines = [...lost, ...read.lost, ...droppedLine(sidebar), ...(kept ? [kept(browser)] : [])]
-  const first = await landSpaces(spaces, lines, nothing, told)
-  const history = () => bringHistory(profile.browser, profile.path)
-  if (told) told.later.push(history)
-  else await history()
-  return first
+  return landSpaces(spaces, lines, nothing, told)
 }
 async function readProfile(profile: BrowserProfile, name: string): Promise<Read | null> {
   if (profile.browser === 'safari') return readSafari(name)

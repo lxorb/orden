@@ -8,12 +8,9 @@ use std::path::Path;
 use crate::browser_profiles::{copied, known, profiles_of};
 use orden_base::paths::folded;
 
-const MOST_VISITS: i64 = 2000;
 const MOST_PAGES: usize = 5000;
 const LONGEST_MARK: usize = 46 * 1024;
 const MARK_SIZE: i64 = 32;
-const CHROMIUM_EPOCH: i64 = 11_644_473_600_000_000;
-const SAFARI_EPOCH: f64 = 978_307_200.0;
 #[derive(Clone, Copy)]
 enum Kind {
     Mozilla,
@@ -27,18 +24,6 @@ fn profile_kind(browser: &str) -> Option<Kind> {
         _ if crate::chromium_profiles::BROWSERS.contains(&browser) => Some(Kind::Chromium),
         _ => None,
     }
-}
-#[tauri::command(async)]
-pub fn read_browser_history(browser: String, profile: String) -> Result<String, String> {
-    let kind = profile_kind(&browser).ok_or("not a browser the import reads")?;
-    let file = match kind {
-        Kind::Mozilla => "places.sqlite",
-        Kind::Chromium => "History",
-        Kind::Safari => "History.db",
-    };
-    let db = copied_database(&browser, &profile, file)?;
-    let rows = history_of(&db.connection, kind).map_err(|error| format!("{file}: {error}"))?;
-    Ok(Value::Array(rows).to_string())
 }
 #[tauri::command(async)]
 pub fn read_browser_icons(
@@ -82,45 +67,6 @@ pub(crate) fn opened(path: &Path, file: &str) -> Result<Opened, String> {
     let connection = Connection::open(copy.path().join(file))
         .map_err(|error| format!("{file} could not be opened: {error}"))?;
     Ok(Opened { connection, _copy: copy })
-}
-fn history_of(db: &Connection, kind: Kind) -> rusqlite::Result<Vec<Value>> {
-    let query = match kind {
-        Kind::Mozilla => {
-            "SELECT url, IFNULL(title, ''), visit_count, typed, last_visit_date FROM moz_places \
-             WHERE hidden = 0 AND visit_count > 0 AND last_visit_date IS NOT NULL \
-             ORDER BY last_visit_date DESC LIMIT ?1"
-        }
-        Kind::Chromium => {
-            "SELECT url, IFNULL(title, ''), visit_count, typed_count, last_visit_time FROM urls \
-             WHERE hidden = 0 AND visit_count > 0 AND last_visit_time > 0 \
-             ORDER BY last_visit_time DESC LIMIT ?1"
-        }
-        Kind::Safari => {
-            "SELECT i.url, IFNULL(v.title, ''), i.visit_count, 0, MAX(v.visit_time) \
-             FROM history_items i JOIN history_visits v ON v.history_item = i.id \
-             GROUP BY i.id ORDER BY MAX(v.visit_time) DESC LIMIT ?1"
-        }
-    };
-    let mut statement = db.prepare(query)?;
-    let rows = statement.query_map(params![MOST_VISITS], |row| {
-        let last = match kind {
-            Kind::Mozilla => row.get::<_, i64>(4)? / 1000,
-            Kind::Chromium => (row.get::<_, i64>(4)? - CHROMIUM_EPOCH) / 1000,
-            Kind::Safari => safari_time(row.get::<_, f64>(4)?),
-        };
-        Ok(json!({
-            "url": row.get::<_, String>(0)?,
-            "title": row.get::<_, String>(1)?,
-            "visits": row.get::<_, i64>(2)?,
-            "typed": row.get::<_, i64>(3)?,
-            "last": last,
-        }))
-    })?;
-    rows.collect()
-}
-#[allow(clippy::cast_possible_truncation)]
-fn safari_time(seconds: f64) -> i64 {
-    ((seconds + SAFARI_EPOCH) * 1000.0) as i64
 }
 struct Candidate {
     page: String,
@@ -252,46 +198,6 @@ mod tests {
         db
     }
     #[test]
-    fn the_history_comes_newest_first_without_hidden_or_unvisited_pages() {
-        let rows = history_of(&mozilla(), Kind::Mozilla).expect("the history");
-        assert_eq!(
-            rows,
-            vec![
-                json!({ "url": "https://new.example.com/", "title": "", "visits": 7, "typed": 1, "last": 1_700_000_000_000_i64 }),
-                json!({ "url": "https://old.example.com/", "title": "Old", "visits": 3, "typed": 0, "last": 1_600_000_000_000_i64 }),
-            ]
-        );
-    }
-    #[test]
-    fn a_chromium_history_counts_from_1601() {
-        let db = Connection::open_in_memory().expect("a database");
-        db.execute_batch(
-            "CREATE TABLE urls (id INTEGER PRIMARY KEY, url TEXT, title TEXT, visit_count INTEGER,
-               typed_count INTEGER, last_visit_time INTEGER, hidden INTEGER);
-             INSERT INTO urls VALUES (1, 'https://a.example.com/', 'A', 2, 1, 13344473600000000, 0);",
-        )
-        .expect("the table");
-        let rows = history_of(&db, Kind::Chromium).expect("the history");
-        assert_eq!(rows[0]["last"], 1_700_000_000_000_i64);
-        assert_eq!(rows[0]["typed"], 1);
-    }
-    #[test]
-    fn a_safari_history_takes_the_last_visits_title_and_counts_from_2001() {
-        let db = Connection::open_in_memory().expect("a database");
-        db.execute_batch(
-            "CREATE TABLE history_items (id INTEGER PRIMARY KEY, url TEXT, visit_count INTEGER);
-             CREATE TABLE history_visits (id INTEGER PRIMARY KEY, history_item INTEGER,
-               visit_time REAL, title TEXT);
-             INSERT INTO history_items VALUES (1, 'https://a.example.com/', 2);
-             INSERT INTO history_visits VALUES (1, 1, 700000000.0, 'Before'),
-               (2, 1, 721692800.0, 'After');",
-        )
-        .expect("the tables");
-        let rows = history_of(&db, Kind::Safari).expect("the history");
-        assert_eq!(rows[0]["title"], "After");
-        assert_eq!(rows[0]["last"], 1_700_000_000_000_i64);
-    }
-    #[test]
     fn each_page_gets_its_own_mark_else_its_sites_at_the_size_it_is_drawn() {
         let marks = marks_of(
             &mozilla(),
@@ -328,7 +234,7 @@ mod tests {
     }
     #[test]
     fn only_a_browser_the_import_reads_is_asked() {
-        assert!(read_browser_history("netscape".into(), "/x".into()).is_err());
+        assert!(read_browser_icons("netscape".into(), "/x".into(), Vec::new()).is_err());
         assert!(read_browser_icons("firefox".into(), "/not/listed".into(), Vec::new()).is_err());
     }
 }

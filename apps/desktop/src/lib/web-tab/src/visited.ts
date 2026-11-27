@@ -1,7 +1,7 @@
 import { forget as forgetStored, Shared } from '../../platform/src/api'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
-import { broughtIn, named, typedTo, unvisited, unvisitedSince, visited as arrived, visitsFrom } from './visits'
+import { named, typedTo, unvisited, unvisitedSince, visited as arrived, visitsFrom } from './visits'
 import { type Visit, visitKey } from '@orden/scan/visits'
 
 type Book = string
@@ -46,9 +46,6 @@ class Visited {
   }
   typed(book: Book, url: string) {
     this.write(book, typedTo(this.rows(book), url, Date.now()))
-  }
-  brought(book: Book, rows: unknown) {
-    this.write(book, broughtIn(this.rows(book), visitsFrom(rows)))
   }
   fold(from: Book, into: Book, rows: readonly Visit[]) {
     this.write(into, rows)

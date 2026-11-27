@@ -384,10 +384,9 @@ describe('an import into a space that is already there', () => {
   })
 })
 describe('a browser brought in', () => {
-  test('lists the pages it landed, brings history in only once completed, and cancelled takes it all back', async () => {
+  test('lists the pages it landed, and cancelled takes it all back', async () => {
     const HELD = { id: 'held', name: 'Held', root: '/spaces/Held' }
     ws.spaces.push(HELD)
-    let historied = 0
     const run = new ImportRun({
       label: 'Safari',
       words: { notes: 'pages', files: 'other files' },
@@ -396,10 +395,6 @@ describe('a browser brought in', () => {
         told.made.push(space as never)
         told.paths.push(`${ROOT}/Favourites/Home.url`, `${HELD.root}/Read later.url`)
         told.lost.push('Saved tab groups stay in Safari')
-        told.later.push(() => {
-          historied += 1
-          return Promise.resolve()
-        })
         return space as never
       },
     })
@@ -407,11 +402,9 @@ describe('a browser brought in', () => {
     await run.start()
     expect(run.phase).toBe('review')
     expect(run.tally).toEqual({ notes: 2, files: 0, skipped: 1, failed: 0 })
-    expect(historied).toBe(0)
     await run.cancel()
     expect(ws.binned).toEqual([`${HELD.root}/Read later.url`])
     expect(ws.deleted).toEqual(['new'])
-    expect(historied).toBe(0)
   })
 })
 test('completed, opens a welcome note at the top of the space rather than one deep in a folder', async () => {
