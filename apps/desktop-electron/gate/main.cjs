@@ -16,6 +16,10 @@ const PARTITION = 'persist:gate'
 fs.mkdirSync(out, { recursive: true })
 if (process.env.GATE_USERDATA) app.setPath('userData', process.env.GATE_USERDATA)
 app.commandLine.appendSwitch('force-device-scale-factor', '1')
+for (const flag of (process.env.GATE_FLAGS || '').split(' ').filter(Boolean)) {
+  const [name, value] = flag.replace(/^--/, '').split('=')
+  app.commandLine.appendSwitch(name, value)
+}
 if (process.env.GATE_A11Y) app.commandLine.appendSwitch('force-renderer-accessibility')
 if (process.platform === 'linux') app.commandLine.appendSwitch('no-sandbox')
 
@@ -23,6 +27,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const notes = []
 const note = (s) => notes.push(s)
 const osio = (...a) => execFileSync(py, [path.join(__dirname, 'osio.py'), ...a.map(String)], { encoding: 'utf8' })
+const osioLater = (...a) => new Promise((done) => require('child_process').execFile(py, [path.join(__dirname, 'osio.py'), ...a.map(String)], { encoding: 'utf8' }, () => done()))
 const TYPES = { '.html': 'text/html', '.mp4': 'video/mp4', '.webm': 'video/webm', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.wasm': 'application/wasm' }
 
 function serve(root, fallback) {
@@ -294,6 +299,7 @@ const checks = {
     await sleep(300)
     const back = await host('state')
     data.hostTyped = back.hostin
+    data.hostClicks = back.clicks
     data.hostActive = back.active
     data.pageFocusAfterHostClick = (await page('state()')).focus
     for (let i = 0; i < 3 && (await page('state()')).focus === false; i++) {
@@ -333,12 +339,16 @@ const checks = {
   async dnd() {
     await open('page.html')
     const data = {}
-    osio('drag', ...at(60, 120), ...inPane(100, 210))
+    await osioLater('drag', ...at(60, 120), ...at(60, 240))
+    await sleep(500)
+    data.hostToHost = (await host('state')).drops
+    data.seenHostOnly = await win.webContents.executeJavaScript('JSON.stringify(window.dragLog)')
+    await osioLater('drag', ...at(60, 120), ...inPane(100, 210))
     await sleep(600)
     const landed = await page('state()')
     data.hostToPage = landed.drops
     data.pageFields = [landed.in, landed.in2]
-    osio('drag', ...inPane(100, 140), ...at(60, 240))
+    await osioLater('drag', ...inPane(100, 140), ...at(60, 240))
     await sleep(600)
     data.pageToHost = (await host('state')).drops
     data.seen = { host: await win.webContents.executeJavaScript('window.dragLog'), page: await page('window.dragLog') }
@@ -355,7 +365,7 @@ const checks = {
     } catch (error) {
       data.fileError = String(error)
     }
-    const ok = { hostToPage: data.hostToPage.some((d) => d.text === 'HOSTDRAG'), pageToHost: data.pageToHost.includes('PAGEDRAG'), fileIntoPage: (data.fileIntoPage || []).length > 0 }
+    const ok = { hostToHost: data.hostToHost.includes('HOSTDRAG'), hostToPage: data.hostToPage.some((d) => d.text === 'HOSTDRAG'), pageToHost: data.pageToHost.includes('PAGEDRAG'), fileIntoPage: (data.fileIntoPage || []).length > 0 }
     return { pass: Object.values(ok).every(Boolean), data: { ok, ...data, level: 'text drags by real pointer input, the file drop through CDP' } }
   },
   async video() {
@@ -558,6 +568,11 @@ const checks = {
     }
     let rect = await rectOf()
     data.rect = rect
+    for (let i = 0; i < 40; i++) {
+      const now = await still()
+      if (green(px(now, rect.left + 300, rect.top + 300))) break
+      await sleep(250)
+    }
     data.memoryWithOnePage = memory()
     const r = await still()
     data.rest = { page: px(r, rect.left + 300, rect.top + 300), edge: px(r, rect.right - 3, rect.top + 300), red: reds(r), corners: [px(r, rect.left, rect.top), px(r, rect.right - 1, rect.top), px(r, rect.left, rect.bottom - 1), px(r, rect.right - 1, rect.bottom - 1)] }
