@@ -101,6 +101,9 @@ struct Drive {
 }
 impl Drive {
     fn start(preset: Preset) -> Option<Drive> {
+        Drive::start_with(preset, &[])
+    }
+    fn start_with(preset: Preset, outside: &[(&str, &Path)]) -> Option<Drive> {
         let binary = binary()?;
         let (model, mcp) = (mock::model(), mock::mcp());
         let dir = tempfile::tempdir().expect("a folder");
@@ -113,7 +116,7 @@ impl Drive {
             orden: None,
             wrapper: wrapper(),
         };
-        let running = Running::start(launch).expect("ready");
+        let running = Running::start_with(launch, outside).expect("ready");
         let stop = Arc::new(AtomicBool::new(false));
         let (told, events) = mpsc::channel();
         let follower = {
@@ -542,6 +545,62 @@ fn under_approve_the_engine_asks_runs_refuses_and_reports_as_orden_relies_on() {
     compared("events.json", &now, text, shapes_missing);
     drop(drive);
     assert_eq!(users_opencode(), before, "the engine wrote into the reader's own OpenCode folders");
+}
+#[test]
+fn the_engine_reads_and_writes_nothing_in_the_reader_s_own_home() {
+    const MARK: &str = "mark-of-the-readers-home";
+    let fake = tempfile::tempdir().expect("a folder");
+    let home = real(fake.path());
+    let skill = format!("---\nname: {MARK}-skill\ndescription: {MARK}\n---\n{MARK}\n");
+    for (path, text) in [
+        (".opencode/opencode.json", format!("{{\"username\":\"{MARK}\"}}")),
+        (".opencode/AGENTS.md", MARK.to_owned()),
+        (".claude/CLAUDE.md", MARK.to_owned()),
+        (".claude/skills/mark/SKILL.md", skill.clone()),
+        (".agents/skills/mark/SKILL.md", skill),
+    ] {
+        let file = home.join(path);
+        std::fs::create_dir_all(file.parent().expect("a folder")).expect("folders");
+        std::fs::write(file, text).expect("written");
+    }
+    for folder in ["AppData/Roaming", "AppData/Local", "Library/Application Support"] {
+        std::fs::create_dir_all(home.join(folder)).expect("a reader's own folders");
+    }
+    let mut before = BTreeMap::new();
+    walked(&home, &mut before);
+    let Some(mut drive) =
+        Drive::start_with(Preset::Full, &[("HOME", &home), ("USERPROFILE", &home)])
+    else {
+        return;
+    };
+    let config = drive.call("GET", "/config", None).body;
+    assert_ne!(config["username"], MARK, "the engine read the reader's own ~/.opencode");
+    let session = drive.session();
+    let from = drive.mark();
+    drive.prompt(&session, None, "Say hello.");
+    drive.idle(from, &session);
+    std::thread::sleep(Duration::from_secs(3));
+    let asked =
+        drive.model.asked.lock().expect("asked").iter().map(Value::to_string).collect::<String>();
+    assert!(!asked.is_empty());
+    assert!(!asked.contains(MARK), "the model was told what the reader's own home holds");
+    drop(drive);
+    let mut after = BTreeMap::new();
+    walked(&home, &mut after);
+    let system = [home.join("AppData"), home.join("Library")];
+    let ours = |path: &&PathBuf| *path == &home || !system.iter().any(|one| path.starts_with(one));
+    before.retain(|path, _| ours(&path));
+    after.retain(|path, _| ours(&path));
+    let changed: Vec<&PathBuf> = after
+        .iter()
+        .filter(|(path, when)| before.get(*path) != Some(when))
+        .map(|(path, _)| path)
+        .collect();
+    let gone: Vec<&PathBuf> = before.keys().filter(|path| !after.contains_key(*path)).collect();
+    assert!(
+        changed.is_empty() && gone.is_empty(),
+        "the engine wrote into the reader's own home: {changed:?}, removed {gone:?}"
+    );
 }
 #[test]
 fn auto_asks_only_the_risky_tools_full_none_and_plan_stays_read_only_under_both() {
