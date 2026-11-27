@@ -234,6 +234,7 @@
               type="password"
               value=""
               placeholder={provider.kind === 'compatible' ? 'Optional' : provider.kind === 'gemini' ? 'AIza' : 'sk-'}
+              aria-label="API key"
               spellcheck="false"
               autocomplete="off"
               onchange={(event) => {

@@ -114,6 +114,7 @@
           class="search orden-field"
           type="search"
           placeholder={search}
+          aria-label={search}
           {onkeydown}
         />
       {/if}

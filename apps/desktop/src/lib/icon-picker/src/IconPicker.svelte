@@ -285,6 +285,7 @@
       bind:value={query}
       onkeydown={onKey}
       placeholder="Search icons - work, journal, money…"
+      aria-label="Search icons"
       spellcheck="false"
       autocapitalize="off"
       autocorrect="off"

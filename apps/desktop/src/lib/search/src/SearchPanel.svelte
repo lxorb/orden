@@ -287,6 +287,7 @@
           if (event.key === 'Enter') void search.replace()
         }}
         placeholder="Replace with"
+        aria-label="Replace with"
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
