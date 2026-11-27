@@ -13,6 +13,7 @@ export default defineConfig({
     __DRIVEABLE__: 'true',
     __APP_VERSION__: JSON.stringify('under test'),
     __ORDEN_RELEASE__: JSON.stringify(null),
+    __RELEASE_NEWS__: '[]',
     __APP_COMMIT__: JSON.stringify('c0ffee1'),
     __CLAUDE_CODE__: 'true',
     __AI__: 'true',

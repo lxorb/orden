@@ -4,6 +4,7 @@ import { providePort } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 import { asChannel, ready, restartToUpdate } from '../src/api'
 import { stageUpdate } from '../src/updater'
+import { newsOf } from '../src/news'
 
 const world = vi.hoisted(() => ({ installs: 0, installFails: false, relaunched: 0 }))
 vi.mock('@tauri-apps/plugin-process', () => ({
@@ -76,5 +77,20 @@ describe('after an install that failed', () => {
     await restartToUpdate()
     unbind()
     expect([world.installs, world.relaunched, ready()]).toEqual([2, 1, false])
+  })
+})
+describe('after an update', () => {
+  test('the reader is told what came since the version last run, from what shipped with the build', () => {
+    const shipped = [
+      { version: '2.0.0', bugs: 3, added: ['Tabs'] },
+      { version: '2.1.0', bugs: 4, added: ['Search'] },
+    ]
+    expect(newsOf(shipped, '1.9.0', '2.1.0')).toEqual({
+      version: '2.1.0',
+      since: '1.9.0',
+      bugs: 7,
+      added: ['Search', 'Tabs'],
+      updates: 2,
+    })
   })
 })

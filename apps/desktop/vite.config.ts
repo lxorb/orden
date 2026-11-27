@@ -9,6 +9,7 @@ import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 import { carriesAi } from './ai-build'
 import { distOf, entryOf, leftOut, ordenApp } from './app-build'
+import { releaseHistory } from '../../scripts/release-notes.mjs'
 
 const host = process.env.TAURI_DEV_HOST
 const AI_MODULES =
@@ -105,6 +106,7 @@ export default defineConfig(({ command, mode }) => {
       __ORDEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
       __APP_VERSION__: JSON.stringify(appVersion()),
       __ORDEN_RELEASE__: JSON.stringify(releaseChannel(process.env.ORDEN_RELEASE)),
+      __RELEASE_NEWS__: JSON.stringify(command === 'serve' ? [] : releaseHistory(import.meta.dirname)),
       __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
       __AI__: JSON.stringify(ai),
       __ORDEN_APP__: JSON.stringify(app),

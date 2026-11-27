@@ -1,29 +1,58 @@
-import { fetchInTime, keep, storedText } from '../../platform/src/api'
+import type { Mood } from '../../mascot/src/api'
+import { keep, storedText } from '../../platform/src/api'
 
 const SEEN_KEY = 'orden:version-seen'
 const RELEASE = /^\d+\.\d+\.\d+$/
-const RELEASE_API = 'https://api.github.com/repos/lxorb/orden/releases/tags/v'
+export interface Shipped {
+  version: string
+  bugs: number
+  added: string[]
+}
 export interface News {
   version: string
-  notes: string
+  since: string
+  bugs: number
+  added: string[]
+  updates: number
 }
-async function notesOf(version: string): Promise<string> {
-  const answer = await fetchInTime(`${RELEASE_API}${version}`, {
-    headers: { accept: 'application/vnd.github+json' },
-  })
-  if (!answer.ok) return ''
-  const { body } = (await answer.json()) as { body?: unknown }
-  return typeof body === 'string' ? body.trim() : ''
+const FACES: readonly Mood[] = [
+  'excited',
+  'proud',
+  'cool',
+  'flexing',
+  'love',
+  'waving',
+  'hug',
+  'relieved',
+  'happy',
+  'innocent',
+]
+export function faceAfter(last: string | null, random: () => number = Math.random): Mood {
+  const choices = FACES.filter((one) => one !== last)
+  return choices[Math.floor(random() * choices.length)] ?? 'happy'
 }
-export async function newsSince(now: string = __APP_VERSION__): Promise<News | null> {
+const parts = (version: string) => version.split('.').map(Number)
+function newer(one: string, than: string): boolean {
+  const [a, b] = [parts(one), parts(than)]
+  for (let at = 0; at < 3; at++) if (a[at] !== b[at]) return (a[at] ?? 0) > (b[at] ?? 0)
+  return false
+}
+export function newsOf(shipped: readonly Shipped[], seen: string, now: string): News | null {
+  const since = /^\d+\.\d+\.\d+/.exec(seen)?.[0]
+  if (!since) return null
+  const away = shipped
+    .filter((one) => RELEASE.test(one.version) && !newer(one.version, now))
+    .filter((one) => newer(one.version, since) || (one.version === since && seen !== since))
+    .sort((a, b) => (newer(a.version, b.version) ? -1 : 1))
+  const bugs = away.reduce((sum, one) => sum + one.bugs, 0)
+  const added = away.flatMap((one) => one.added)
+  if (bugs === 0 && added.length === 0) return null
+  return { version: now, since, bugs, added, updates: away.length }
+}
+export function newsSince(now: string = __APP_VERSION__, shipped: readonly Shipped[] = __RELEASE_NEWS__): News | null {
   const seen = storedText(SEEN_KEY)
   if (seen === now) return null
-  if (seen === null || !RELEASE.test(now)) {
-    keep(SEEN_KEY, now)
-    return null
-  }
-  const notes = await notesOf(now).catch(() => null)
-  if (notes === null) return null
   keep(SEEN_KEY, now)
-  return notes ? { version: now, notes } : null
+  if (seen === null || !RELEASE.test(now)) return null
+  return newsOf(shipped, seen, now)
 }

@@ -56,3 +56,25 @@ test('write nothing for a tag that is not a release', () => {
   history(['feat: a start', { tag: 'v0.1.0' }, 'fix: one slip (#3)', { tag: 'v0.2.0-rc' }])
   expect(notes('v0.2.0-rc')).toBe('')
 })
+test('list the releases with their bugs and what is new, oldest first, for the build to carry', () => {
+  history([
+    'feat: the first thing (#1)',
+    { tag: 'v1.0.0' },
+    'fix: a tab closes (#10)',
+    'feat: a QR code (#12)',
+    { tag: 'v1.0.1-beta' },
+    'fix: a note keeps its name (#11)',
+    { tag: 'v1.1.0' },
+    'fix: a slip',
+    { tag: 'v1.1.1' },
+  ])
+  expect(JSON.parse(notes('--json'))).toEqual([
+    { version: '1.0.0', bugs: 0, added: ['The first thing'] },
+    { version: '1.1.0', bugs: 2, added: ['A QR code'] },
+    { version: '1.1.1', bugs: 1, added: [] },
+  ])
+})
+test('list nothing where git knows no history', () => {
+  at = mkdtempSync(join(tmpdir(), 'orden-notes-'))
+  expect(JSON.parse(notes('--json'))).toEqual([])
+})
