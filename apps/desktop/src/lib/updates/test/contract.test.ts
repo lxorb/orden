@@ -4,7 +4,7 @@ import { providePort } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 import { asChannel, ready, restartToUpdate } from '../src/api'
 import { stageUpdate } from '../src/updater'
-import { newsOf } from '../src/news'
+import { newsByHand, newsOf } from '../src/news'
 
 const world = vi.hoisted(() => ({ installs: 0, installFails: false, relaunched: 0 }))
 vi.mock('@tauri-apps/plugin-process', () => ({
@@ -92,5 +92,14 @@ describe('after an update', () => {
       added: ['Search', 'Tabs'],
       updates: 2,
     })
+  })
+})
+describe('the news opened by hand', () => {
+  test('shows the latest releases the build carries, even with nothing new since the last start', () => {
+    const shipped = [
+      { version: '2.0.0', bugs: 3, added: ['Tabs'] },
+      { version: '2.1.0', bugs: 4, added: ['Search'] },
+    ]
+    expect(newsByHand('2.1.0', shipped)).toMatchObject({ version: '2.1.0', bugs: 4, added: ['Search'], byHand: true })
   })
 })

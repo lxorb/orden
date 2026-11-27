@@ -5,7 +5,7 @@
   import { RELEASES_URL } from './links'
   import { faceAfter, type News } from './news'
 
-  const { version, since, bugs, added, updates, onclose }: News & { onclose: () => void } = $props()
+  const { version, since, bugs, added, updates, byHand = false, onclose }: News & { onclose: () => void } = $props()
   const FACE_KEY = 'orden:news-face'
   const mood = faceAfter(storedText(FACE_KEY))
   keep(FACE_KEY, mood)
@@ -17,7 +17,9 @@
 <Sheet open title="What's new in Orden {version}" width="42rem" {onclose}>
   <div class="hero">
     <div class="face"><Mascot {mood} size={36} endless /></div>
-    <p class="lead">Since you've been gone, here's what we did for you</p>
+    <p class="lead">
+      {byHand ? "Here's what we did for you lately" : "Since you've been gone, here's what we did for you"}
+    </p>
   </div>
 
   <div class="sums">

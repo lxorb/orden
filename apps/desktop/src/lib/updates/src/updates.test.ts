@@ -15,7 +15,9 @@ const world = vi.hoisted(() => ({
   land: null as (() => void) | null,
   managed: null as string | null,
   announced: null as string | null,
+  byHand: null as { version: string } | null,
 }))
+vi.mock('./news', () => ({ newsSince: () => null, newsByHand: () => world.byHand }))
 vi.mock('./updater', () => ({
   asChannel: (value: unknown) => (value === 'unstable' ? 'unstable' : 'stable'),
   hearHandedOn: () => () => undefined,
@@ -394,5 +396,13 @@ describe('where a package manager keeps the install', () => {
     expect(updates.ready).toBe('1.4.0')
     expect(updates.managed).toBe(false)
     expect(storage.getItem('orden:update-told')).toBe(null)
+  })
+})
+describe('the news opened by hand', () => {
+  test('comes up with what the build carries', async () => {
+    world.byHand = { version: '1.4.0' }
+    await updates.showNews()
+    expect(updates.news).toEqual({ version: '1.4.0' })
+    world.byHand = null
   })
 })

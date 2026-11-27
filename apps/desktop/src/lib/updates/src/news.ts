@@ -2,6 +2,7 @@ import type { Mood } from '../../mascot/src/api'
 import { keep, storedText } from '../../platform/src/api'
 
 const SEEN_KEY = 'orden:version-seen'
+const BEFORE_KEY = 'orden:version-before'
 const RELEASE = /^\d+\.\d+\.\d+$/
 export interface Shipped {
   version: string
@@ -14,6 +15,7 @@ export interface News {
   bugs: number
   added: string[]
   updates: number
+  byHand?: boolean
 }
 const FACES: readonly Mood[] = [
   'excited',
@@ -54,5 +56,19 @@ export function newsSince(now: string = __APP_VERSION__, shipped: readonly Shipp
   if (seen === now) return null
   keep(SEEN_KEY, now)
   if (seen === null || !RELEASE.test(now)) return null
+  keep(BEFORE_KEY, seen)
   return newsOf(shipped, seen, now)
+}
+export function newsByHand(now: string = __APP_VERSION__, shipped: readonly Shipped[] = __RELEASE_NEWS__): News | null {
+  const running = /^\d+\.\d+\.\d+/.exec(now)?.[0]
+  const known = shipped
+    .filter((one) => RELEASE.test(one.version) && (!running || !newer(one.version, running)))
+    .sort((a, b) => (newer(a.version, b.version) ? 1 : -1))
+  const latest = known.at(-1)
+  if (!latest) return null
+  const before = storedText(BEFORE_KEY)
+  const found =
+    (before === null ? null : newsOf(known, before, latest.version)) ??
+    newsOf(known, known.at(-2)?.version ?? '0.0.0', latest.version)
+  return found && { ...found, byHand: true }
 }
