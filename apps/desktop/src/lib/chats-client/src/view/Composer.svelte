@@ -6,7 +6,7 @@
   import { chooseFiles } from '../../../ui-controls/src/api'
   import { localDate, localNumber, dur, fade, scale, insideSpace, afterQuiet } from '../../../platform/src/api'
   import { DIVIDER, longPress, menu } from '../../../ui-kit/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../faces/src/api'
   import { Attachments } from './attachments.svelte'
   import type { Scheduled } from '../shapes'
   import { firstLine } from './body'

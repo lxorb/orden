@@ -1,6 +1,6 @@
 import './shell-parts'
 export { default as Addresses } from './Addresses.svelte'
-export { default as Avatar } from './Avatar.svelte'
+export { Avatar } from '../../faces/src/api'
 export { card, showProfile } from './card.svelte'
 export { default as DeleteAccount } from './DeleteAccount.svelte'
 export { default as Faces } from './Faces.svelte'

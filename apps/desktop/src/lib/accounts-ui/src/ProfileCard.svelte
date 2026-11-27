@@ -6,7 +6,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { settingsWindow } from '@orden/contracts'
   import { openExternal } from '../../platform/src/api'
-  import Avatar from './Avatar.svelte'
+  import { Avatar } from '../../faces/src/api'
   import { card } from './card.svelte'
   import { people } from '../../accounts/src/api'
   import { stands } from '../../accounts/src/api'

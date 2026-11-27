@@ -47,7 +47,7 @@
         }
       : undefined
   }
-  const avatars = import('./Avatar.svelte')
+  const avatars = import('../../faces/src/api').then((one) => ({ default: one.Avatar }))
   const roleOf = (person: Member) => (person.admin ? 'admin' : person.role)
   function menuFor(person: Member) {
     return [

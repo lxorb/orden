@@ -4,6 +4,7 @@
   "dependsOn": [
     "contracts",
     "accounts",
+    "faces",
     "theme",
     "platform",
     "ui-controls",

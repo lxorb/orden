@@ -14,7 +14,7 @@
   import { chatRowMenu, renamed } from './row-menu'
   import { CountBadge, longPress, menu, selectAll } from '../../../ui-kit/src/api'
   import type { Who } from '@orden/chats'
-  import { Avatar } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../faces/src/api'
   import { firstLine } from './body'
   import { faceOf, nameOf } from './people'
   import { saved } from './saved.svelte'

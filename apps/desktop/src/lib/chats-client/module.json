@@ -4,6 +4,7 @@
   "dependsOn": [
     "contracts",
     "accounts",
+    "faces",
     "accounts-ui",
     "ai-chat",
     "ai-providers",

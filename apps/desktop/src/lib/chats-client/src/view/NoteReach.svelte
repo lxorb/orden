@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Member } from '@orden/chats'
   import { dur, fade } from '../../../platform/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../faces/src/api'
   import type { ChatMember } from '../shapes'
   import { faceOf, nameOf } from './people'
   import { store } from './source.svelte'

@@ -3,7 +3,7 @@
   import { may, type Message, type Notify } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
   import { localNumber } from '../../../platform/src/api'
-  import { Avatar } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../faces/src/api'
   import Bell from '../Bell.svelte'
   import { people } from '../../../accounts/src/api'
   import type { ChatPage } from './chat.svelte'
