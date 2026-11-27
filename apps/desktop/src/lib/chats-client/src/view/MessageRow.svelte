@@ -5,9 +5,8 @@
   import { cubicOut } from 'svelte/easing'
   import { downloadStarted } from '../../../downloads/src/api'
   import { dur, fly, localNumber } from '../../../platform/src/api'
-  import { followHref, workspace } from '../../../workspace/src/api'
+  import { host } from './host'
   import { Avatar, showProfile } from '../../../accounts-ui/src/api'
-  import { links } from '../../../link-index/src/api'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import { drawing, Glyph } from '../../../chat-kit/src/api'
   import type { ChatPage } from './chat.svelte'
@@ -105,7 +104,7 @@
     const picture = (event.target as Element | null)?.closest('img')
     if (picture && !picture.closest('a') && picture.currentSrc) {
       event.preventDefault()
-      followHref(picture.currentSrc, event)
+      host().followHref(picture.currentSrc, event)
       return
     }
     const anchor = (event.target as Element | null)?.closest('a')
@@ -117,8 +116,8 @@
       void page.jump(link.message)
       return
     }
-    if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) followHref(href, event)
-    else workspace.openRelative(decodeURIComponent(href.split('#')[0] ?? href), {}, home)
+    if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) host().followHref(href, event)
+    else host().openRelative(decodeURIComponent(href.split('#')[0] ?? href), home)
   }
   function profile(event: MouseEvent) {
     const id = accountOf(message.author)
@@ -211,7 +210,7 @@
             body: message.body,
             edited: message.editedAt !== undefined,
             from: home,
-            version: links.version,
+            version: host().linksVersion(),
             drawn: drawing.version,
           }}
           onclick={follow}
@@ -248,7 +247,7 @@
           href={message.preview.url}
           onclick={(event) => {
             event.preventDefault()
-            if (message.preview) followHref(message.preview.url, event)
+            if (message.preview) host().followHref(message.preview.url, event)
           }}
         >
           <span class="preview-words">

@@ -1,11 +1,11 @@
-import { links } from '../../../link-index/src/api'
 import { drawing, viewHtml } from '../../../chat-kit/src/api'
+import { host } from './host'
 
 const MOST_KEPT = 2000
 const kept = new Map<string, string>()
 let keptAt = ''
 export function bodyHtml(body: string, from: string | null = null): string {
-  const at = `${links.version} ${drawing.version}`
+  const at = `${String(host().linksVersion())} ${drawing.version}`
   if (keptAt !== at) {
     kept.clear()
     keptAt = at
@@ -18,7 +18,7 @@ export function bodyHtml(body: string, from: string | null = null): string {
     breaks: true,
     resolveLink: (link) => {
       if (!link.target) return null
-      const found = links.targetOf(from, { kind: 'wikilink', target: link.target })
+      const found = host().linkTarget(from, link.target)
       return found === null ? null : { href: found }
     },
   })

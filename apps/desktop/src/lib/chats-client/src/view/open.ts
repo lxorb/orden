@@ -3,10 +3,8 @@ import { chatLinkOf } from '@orden/chats/links'
 import { account } from '../../../accounts/src/api'
 import { busy } from '../../../ui-kit/src/api'
 import { chatsOn } from '../../../gates/src/api'
-import { canWriteAt } from '../../../sharing/src/api'
-import { samePath } from '../../../platform/src/api'
-import { workspace } from '../../../workspace/src/api'
 import { chatsView } from './chats-view.svelte'
+import { host } from './host'
 import { store } from './source.svelte'
 import { chatName } from '../pointers'
 
@@ -25,13 +23,7 @@ export { chatName }
 export function openChat(path: string, how: OpenHow = {}, message?: string): void {
   if (!chatsAreOn()) return
   if (message) jumps.set(path, message)
-  const open = workspace.tabHere((one) => one.kind === 'channel' && samePath(one.path, path))
-  if (open) {
-    if (how.activate !== false) workspace.activeTabId = open.id
-    if (message) for (const hear of hearers) hear(path)
-    return
-  }
-  workspace.openView('', chatName(path), path, how, 'channel')
+  if (host().showChat(path, chatName(path), how) && message) for (const hear of hearers) hear(path)
 }
 export async function openChatLink(href: string, how: OpenHow = {}): Promise<void> {
   const link = chatLinkOf(href)
@@ -40,8 +32,8 @@ export async function openChatLink(href: string, how: OpenHow = {}): Promise<voi
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
-  const path = chats.entry(link.chat)?.path
-  if (path) openChat(path, how, link.message)
+  const entry = chats.entry(link.chat)
+  if (entry && host().opens(entry)) host().openEntry(entry, link.message, how)
   else busy.failed('that link could not be followed')
 }
 const hearers = new Set<(path: string) => void>()
@@ -61,15 +53,15 @@ export async function makeChat(folder?: string, named?: string): Promise<void> {
     account.ask()
     return
   }
-  const dir = folder ?? workspace.activeSpace?.root
-  if (!dir || !canWriteAt(dir)) return
+  const dir = folder ?? host().activeRoot()
+  if (!dir || !host().canWrite(dir)) return
   if (named === undefined) {
     chatsView.renaming = null
     chatsView.naming = dir
-    workspace.showPanel('chats')
+    host().showChats()
     return
   }
-  const name = chatName(named.trim() || workspace.freeName(dir, `Chat.chat`))
+  const name = chatName(named.trim() || host().freeName(dir, `Chat.chat`))
   const path = await store()
     .make(dir, name)
     .catch(() => null)
@@ -78,5 +70,5 @@ export async function makeChat(folder?: string, named?: string): Promise<void> {
     return
   }
   openChat(path)
-  void workspace.loadTree()
+  host().loadTree()
 }

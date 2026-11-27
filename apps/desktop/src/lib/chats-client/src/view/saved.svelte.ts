@@ -1,7 +1,7 @@
 import type { Message } from '@orden/chats'
 import { account } from '../../../accounts/src/api'
 import { forget, isNumber, isRecord, isString, keepJson, stored } from '../../../platform/src/api'
-import { isRetiredChat } from '../../../documents/src/api'
+import { host } from './host'
 
 const KEY = 'orden:chats-saved'
 interface SavedMessage {
@@ -17,7 +17,7 @@ function read(): SavedMessage[] {
   return said.flatMap((one: unknown) =>
     isRecord(one) &&
     isString(one.chat) &&
-    !isRetiredChat(one.chat) &&
+    !host().retired(one.chat) &&
     isString(one.message) &&
     isString(one.author) &&
     isString(one.line) &&

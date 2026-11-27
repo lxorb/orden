@@ -1,4 +1,5 @@
 import { mount, unmount } from 'svelte'
+import './host-here'
 import { afterEach, expect, test, vi } from 'vitest'
 import { settle } from '../../../../../test/effects/settle'
 

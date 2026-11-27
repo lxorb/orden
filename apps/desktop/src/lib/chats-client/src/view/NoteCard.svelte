@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { protection } from '../../../protect/src/api'
   import { FileMark, fileMark } from '../../../marks/src/api'
-  import { links } from '../../../link-index/src/api'
   import { folderOf, insideSpace, nameOf, shownName } from '../../../platform/src/api'
-  import { workspace } from '../../../workspace/src/api'
+  import { host } from './host'
   import { cardLines } from './note-card'
 
   const { target, from = null }: { target: string; from?: string | null } = $props()
-  const relative = $derived(links.targetOf(from, { kind: 'wikilink', target }))
-  const root = $derived(workspace.rootHolding(from))
+  const relative = $derived(host().linkTarget(from, target))
+  const root = $derived(host().rootHolding(from))
   const path = $derived(relative && root ? insideSpace(root, relative) : null)
   const name = $derived(path ? shownName(nameOf(path)) : '')
   const folder = $derived(relative ? folderOf(relative) : '')
   let lines = $state.raw<string[]>([])
   const follows = (_value: unknown) => undefined
   $effect(() => {
-    follows(links.version)
-    follows(links.locksSeen())
+    follows(host().linksVersion())
+    follows(host().locksSeen())
     const note = path
     lines = []
-    if (!note || protection.locked(note)) return
+    if (!note || host().noteLocked(note)) return
     let current = true
-    void workspace.noteText(note).then((text) => {
-      if (current && text !== null) lines = cardLines(text, name)
-    })
+    void host()
+      .noteText(note)
+      .then((text) => {
+        if (current && text !== null) lines = cardLines(text, name)
+      })
     return () => {
       current = false
     }
@@ -31,7 +31,7 @@
 </script>
 
 {#if path}
-  <button type="button" class="card" onclick={() => path && void workspace.openAside(path)}>
+  <button type="button" class="card" onclick={() => path && host().openNote(path)}>
     <FileMark mark={fileMark(nameOf(path))} {path} />
     <span class="words">
       <span class="head">

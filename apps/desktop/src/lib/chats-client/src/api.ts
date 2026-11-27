@@ -1,20 +1,27 @@
 import type { TabKindParts } from '@orden/contracts'
 import './shell-parts'
+import { places } from './where'
 export { hush } from './hush.svelte'
 export { sendRows } from './send-rows'
 export type { ChatEntry, Chats } from './shapes'
+const hosted =
+  <T>(load: () => Promise<T>) =>
+  async (): Promise<T> => {
+    await places()
+    return load()
+  }
 export const chatStore = () => import('./store.svelte')
 export const chatPlaces = () => import('./places-here.svelte').then((one) => one.placesHere)
-export const chatOpening = () => import('./view/open')
-export const chatsDemo = () => import('./demo')
+export const chatOpening = hosted(() => import('./view/open'))
+export const chatsDemo = hosted(() => import('./demo'))
 export const chatDeleting = () => import('./deleting')
 export const chatContext = () => import('./context')
 export const wakeChats = () => import('./start.svelte')
 export const chatsCarried = async (path: string, folder: string) =>
   (await import('./leaving')).chatsCarried(path, folder)
-export const loadChatTab = () => import('./view/ChatTab.svelte')
-export const loadChatsPanel = () => import('./view/ChatsPanel.svelte')
-export const loadChatLinks = () => import('./view/ChatLinks.svelte')
+export const loadChatTab = hosted(() => import('./view/ChatTab.svelte'))
+export const loadChatsPanel = hosted(() => import('./view/ChatsPanel.svelte'))
+export const loadChatLinks = hosted(() => import('./view/ChatLinks.svelte'))
 export const chatTabKind: TabKindParts = {
   open: async (path, how) => {
     ;(await chatOpening()).openChat(path, how)
@@ -23,4 +30,4 @@ export const chatTabKind: TabKindParts = {
     await (await chatOpening()).makeChat(folder, name)
   },
 }
-export const chatVerbs = () => import('./agent-verbs').then((one) => one.chatVerbs)
+export const chatVerbs = hosted(() => import('./agent-verbs').then((one) => one.chatVerbs))

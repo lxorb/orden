@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest'
+import './host-here'
 
 const kept = new Map<string, string>()
 vi.stubGlobal('localStorage', {

@@ -1,4 +1,5 @@
 import { expect, test } from 'vitest'
+import './view/host-here'
 import { chatsOn, KINDS_KEY } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { demoChats } from './demo'

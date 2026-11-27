@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import './host-here'
 
 const wrote = vi.hoisted(() => [] as string[])
 const readOnly = vi.hoisted(() => new Set<string>())
