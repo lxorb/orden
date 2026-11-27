@@ -13,6 +13,7 @@ const server = vi.hoisted(() => ({
   codes: 0,
   asksForSecond: false,
   asked: [] as string[],
+  cancelled: false,
   spacesHeld: null as Promise<void> | null,
 }))
 vi.mock('./client', async (importOriginal) => {
@@ -34,6 +35,7 @@ vi.mock('./client', async (importOriginal) => {
         return Promise.resolve({
           token: 'session',
           user: { id: 'u1', email: 'me@example.com', name: null },
+          ...(server.cancelled ? { deletionCancelled: true } : {}),
         })
       },
       verifySecond: (holding: string, _code: string) => {
@@ -43,6 +45,7 @@ vi.mock('./client', async (importOriginal) => {
           : Promise.resolve({
               token: 'session',
               user: { id: 'u1', email: 'me@example.com', name: null },
+              ...(server.cancelled ? { deletionCancelled: true } : {}),
             })
       },
       me: () => {
@@ -113,6 +116,7 @@ beforeEach(async () => {
   server.codes = 0
   server.asksForSecond = false
   server.asked.length = 0
+  server.cancelled = false
   server.spacesHeld = null
   vi.resetModules()
   ;({ account } = await import('./account.svelte'))
@@ -182,6 +186,29 @@ describe('a code that is accepted', () => {
     expect(localStorage.getItem('orden:session')).toBe('session')
     account.settled()
     expect(account.syncable).toBe(true)
+  })
+  test('says nothing about a deletion when none was pending', async () => {
+    localStorage.setItem('orden:leaving', '{"email":"other@example.com","on":9999999999999}')
+    expect(await account.verify('123456')).toBe(true)
+    expect(account.staying).toBe(false)
+    expect(localStorage.getItem('orden:leaving')).not.toBeNull()
+  })
+  test('that cancelled a pending deletion says so, forgets the day kept here, and stops saying it on sign-out', async () => {
+    server.cancelled = true
+    localStorage.setItem('orden:leaving', '{"email":"me@example.com","on":9999999999999}')
+    expect(await account.verify('123456')).toBe(true)
+    expect(account.staying).toBe(true)
+    expect(localStorage.getItem('orden:leaving')).toBeNull()
+    await account.signOut()
+    expect(account.staying).toBe(false)
+  })
+  test('and so does the second half of a sign-in that cancelled one', async () => {
+    server.cancelled = true
+    server.asksForSecond = true
+    expect(await account.verify('123456')).toBe(false)
+    expect(account.staying).toBe(false)
+    expect(await account.second('654321')).toBe(true)
+    expect(account.staying).toBe(true)
   })
   test('signing out forgets the session and everything about it', async () => {
     await account.verify('123456')

@@ -127,9 +127,15 @@ export async function signingIn(
 }
 export async function sessionFor(env: Env, user: User, device = ''): Promise<Session> {
   const [token, profile] = await Promise.all([openSession(env, user.id, device), ownProfile(env, user.id)])
+  const kept = await env.DB.prepare(
+    'update users set delete_after = null, delete_warned_at = null where id = ? and delete_after is not null',
+  )
+    .bind(user.id)
+    .run()
   return {
     token,
     user: { ...presentUser(user), ...(profile ? presentOwnProfile(profile, Date.now()) : {}) },
+    ...(kept.meta.changes > 0 ? { deletionCancelled: true as const } : {}),
   }
 }
 export async function sendCode(
@@ -307,6 +313,12 @@ async function sessionsEnded(env: Env, userId: string, ended: readonly Ended[]):
     )
   }
   await forgetEndedTargets(env, userId)
+}
+export async function endEverySession(env: Env, userId: string): Promise<void> {
+  const { results: ending } = await env.DB.prepare('delete from sessions where user_id = ? returning id, token_hash')
+    .bind(userId)
+    .all<Ended>()
+  await sessionsEnded(env, userId, ending)
 }
 sessions.delete('/:id', async (context) => {
   const user = context.get('user')

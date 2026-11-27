@@ -23,7 +23,7 @@
   import { Outward } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
   import { localDate } from '../../platform/src/api'
-  import { Addresses, NameRow, Security } from '../../accounts-ui/src/api'
+  import { Addresses, Leaving, NameRow, Security } from '../../accounts-ui/src/api'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
   import { holdScroll } from '../../panes/src/api'
@@ -754,6 +754,7 @@
       <button class="orden-button" onclick={() => (account.open = true)}> Sign in </button>
     {:else}
       <p class="lead">Not signed in</p>
+      <Leaving />
       <button class="orden-button" onclick={() => (account.open = true)}> Sign in </button>
     {/if}
   {:else if settings.section === 'shortcuts'}

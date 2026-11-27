@@ -141,6 +141,30 @@ export function goneMessage() {
 </div>`,
   }
 }
+function leavingMail(subject: string, said: string) {
+  const kept = 'Sign in before then to keep it: signing in cancels the deletion. Nothing is deleted until that day.'
+  const unasked = 'If you did not ask for this, sign in to cancel it and then secure your mailbox.'
+  return {
+    subject,
+    text: `${said} ${kept}\n\n${unasked}`,
+    html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;color:#1a1d23">
+  <p>${escape(said)} ${kept}</p>
+  <p style="color:#8a93a2">${unasked}</p>
+</div>`,
+  }
+}
+export function leavingSetMessage(day: string) {
+  return leavingMail(
+    `Your Orden account will be deleted on ${day}`,
+    `Your Orden account and everything it synced will be deleted on ${day}. Every device has been signed out.`,
+  )
+}
+export function leavingSoonMessage(day: string) {
+  return leavingMail(
+    `Your Orden account will be deleted on ${day}`,
+    `Your Orden account and everything it synced will be deleted on ${day}, as you asked.`,
+  )
+}
 export function oneLine(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { closeOnBack } from '../../ui-kit/src/api'
+  import { closeOnBack, toastDoor } from '../../ui-kit/src/api'
   import { overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
   import { account } from '../../accounts/src/api'
@@ -7,6 +7,7 @@
   import { settling } from '../../sync-mirror/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
+  import Leaving from './Leaving.svelte'
 
   const LENGTH = 6
   const blank = () => Array.from({ length: LENGTH }, () => '')
@@ -72,7 +73,22 @@
   }
   $effect(() => (account.open ? overlays.show(() => (account.open = false)) : undefined))
   $effect(() => closeOnBack(account.open, () => (account.open = false)))
+  const Toast = $derived(toastDoor.one)
+  $effect(() => {
+    if (account.staying) void toastDoor.ask()
+  })
 </script>
+
+{#if account.staying && Toast}
+  <div class="staying" data-notices>
+    <Toast
+      words="You signed in, so your account will not be deleted."
+      stacked
+      actions={[{ label: 'Dismiss', look: 'quiet', run: () => (account.staying = false) }]}
+      ongone={() => (account.staying = false)}
+    />
+  </div>
+{/if}
 
 {#if account.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -115,6 +131,7 @@
           {account.busy ? 'Sending' : 'Continue'}
         </button>
       </form>
+      <Leaving />
     {:else if account.step === 'second'}
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">Now the code from your authenticator app</p>
@@ -196,6 +213,19 @@
 {/if}
 
 <style>
+  .staying {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: var(--z-notice);
+    display: grid;
+    padding: var(--space-2) max(var(--space-4), var(--inset-right)) calc(var(--space-3) + var(--inset-bottom))
+      max(var(--space-4), var(--inset-left));
+    pointer-events: none;
+  }
+  .staying > :global(*) {
+    pointer-events: auto;
+  }
   .scrim {
     --scrim-z: var(--z-screen);
   }

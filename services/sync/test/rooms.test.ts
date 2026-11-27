@@ -2102,6 +2102,8 @@ describe('an account deleted while files are open', () => {
       token,
       body: { ticket: verified.json.ticket },
     })
+    const { sweepLeaving } = await import('../src/sync-server-accounts/src/account')
+    await sweepLeaving(env, Date.now() + 31 * 24 * 60 * 60 * 1000)
     return gone.status
   }
   test('its own rooms close on everybody and forget the file', async () => {

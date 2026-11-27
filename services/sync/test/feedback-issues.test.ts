@@ -328,6 +328,8 @@ async function leave(token: string): Promise<void> {
     body: { ticket: verified.json.ticket },
   })
   expect(gone.status).toBe(200)
+  const { sweepLeaving } = await import('../src/sync-server-accounts/src/account')
+  await sweepLeaving(env, Date.now() + 31 * 24 * 60 * 60 * 1000)
 }
 describe('a report whose account is deleted', () => {
   test('leaves nothing of it in the issue it became', async () => {

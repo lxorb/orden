@@ -18,7 +18,7 @@
   $effect(() => {
     if (menu.open) void contextMenu.ask()
     if (prompt.open) void promptSheet.ask()
-    if (account.open) void signInSheet.ask()
+    if (account.open || account.staying) void signInSheet.ask()
   })
   $effect(() => {
     if (!waiting && !account.user) account.open = true

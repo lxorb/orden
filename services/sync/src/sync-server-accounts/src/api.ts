@@ -1,5 +1,5 @@
 export { addressUndo } from './addresses'
-export { account, left } from './account'
+export { account, left, sweepLeaving } from './account'
 export { accountById, auth, presentUser, requireWhoever, sendCode, sessions, verifyCode } from './auth'
 export {
   accepted,

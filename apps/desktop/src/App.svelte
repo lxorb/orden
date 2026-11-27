@@ -175,7 +175,7 @@
     if (share.open) void shareSheet.ask()
     if (iconChoice.target) void iconPicker.ask()
     if (menu.open) void contextMenu.ask()
-    if (account.open) void signInSheet.ask()
+    if (account.open || account.staying) void signInSheet.ask()
     if (joining.step) void joinSheet.ask()
     if (joining.aside) void joinPending.ask()
     if (viewport.touch && viewport.typing) void formatBarDoor.ask()

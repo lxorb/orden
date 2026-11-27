@@ -4,6 +4,8 @@ import DeleteAccount from '../../src/lib/accounts-ui/src/DeleteAccount.svelte'
 import { account } from '../../src/lib/accounts/src/account.svelte'
 import { warmCalls } from '../../src/lib/accounts/src/client'
 import type { RemoteSpace } from '../../src/lib/accounts/src/routes'
+import Leaving from '../../src/lib/accounts-ui/src/Leaving.svelte'
+import { leavingDay, leavingNow, markLeaving } from '../../src/lib/accounts-ui/src/leaving'
 import { idle, settle } from './settle'
 
 await warmCalls()
@@ -18,6 +20,7 @@ Element.prototype.animate = () =>
     playState: 'finished',
     effect: { getComputedTiming: () => ({ delay: 0, duration: 0 }) },
   }) as unknown as Animation
+const DAY = Date.now() + 30 * 24 * 60 * 60 * 1000
 interface Asked {
   route: string
   body: Record<string, unknown> | null
@@ -74,6 +77,8 @@ afterEach(() => {
   host.remove()
   account.token = null
   account.user = null
+  account.staying = false
+  localStorage.removeItem('orden:leaving')
   account.open = false
   account.error = null
   vi.unstubAllGlobals()
@@ -94,17 +99,18 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
   await settle()
   expect(host.textContent).toContain('that code is not right')
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
-  expect(host.textContent).not.toContain('Delete now')
+  expect(host.textContent).not.toContain('Delete in 30 days')
   expect(account.user?.id).toBe('me')
 })
 test('the codes, the second one, the last question, and then signed out and quiet', async () => {
   serve({
-    'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: true }],
+    'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: true, keptDays: 30 }],
     'POST /v1/account/delete/verify': (body) =>
       body?.code === '123456' && body.second === '654321'
         ? [200, { ticket: 'earned' }]
         : [400, { error: 'that code is not right' }],
-    'DELETE /v1/account': (body) => (body?.ticket === 'earned' ? [200, { ok: true }] : [400, { error: 'start again' }]),
+    'DELETE /v1/account': (body) =>
+      body?.ticket === 'earned' ? [200, { ok: true, deleteAfter: DAY }] : [400, { error: 'start again' }],
     ...SIGNED_OUT,
   })
   open()
@@ -119,7 +125,10 @@ test('the codes, the second one, the last question, and then signed out and quie
     token: 'Bearer session',
   })
   expect(asked.map((one) => one.route)).not.toContain('DELETE /v1/account')
-  press('Delete now')
+  expect(host.textContent).toContain('Your account is deleted in 30 days')
+  expect(host.textContent).toContain('Signing in before then cancels the deletion')
+  expect(leavingNow()).toBeNull()
+  press('Delete in 30 days')
   await settle()
   expect(asked.map((one) => one.route)).toEqual([
     'POST /v1/account/delete/code',
@@ -132,6 +141,7 @@ test('the codes, the second one, the last question, and then signed out and quie
   expect(account.token).toBeNull()
   expect(account.syncable).toBe(false)
   expect(ended).toBe(1)
+  expect(leavingNow()).toEqual({ email: 'me@example.com', on: DAY })
   const before = asked.length
   await idle(50)
   expect(asked.length).toBe(before)
@@ -141,16 +151,16 @@ test('the last question names the spaces other people lose, and only those', asy
     ({ id: name, name, role, shared }) as unknown as RemoteSpace
   account.spaces = [space('Plans', 'owner', true), space('Diary', 'owner', false), space('Theirs', 'write', true)]
   serve({
-    'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
+    'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false, keptDays: 30 }],
     'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
   })
   open()
   await settle()
-  expect(host.textContent).not.toContain('Also gone')
+  expect(host.textContent).not.toContain('lso gone')
   type('Code', '123456')
   submit()
   await settle()
-  expect(host.textContent).toContain('Also gone for everyone in')
+  expect(host.textContent).toContain('Then also gone for everyone in')
   expect(host.textContent).toContain('Plans')
   expect(host.textContent).not.toContain('Diary')
   expect(host.textContent).not.toContain('Theirs')
@@ -162,12 +172,12 @@ async function deleteNow() {
   type('Code', '123456')
   submit()
   await settle()
-  press('Delete now')
+  press('Delete in 30 days')
   await settle()
   await settle()
 }
 const SESSION_GONE: Record<string, Answer> = {
-  'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
+  'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false, keptDays: 30 }],
   'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
   'DELETE /v1/account': () => [401, { error: 'sign in first' }],
   'GET /v1/me': () => [401, { error: 'sign in first' }],
@@ -176,9 +186,10 @@ const SESSION_GONE: Record<string, Answer> = {
 test('an answer lost on the way back from a delete that happened still signs out', async () => {
   serve({
     ...SESSION_GONE,
-    'POST /v1/account/left': (body) => [200, { gone: body?.ticket === 'earned' }],
+    'POST /v1/account/left': (body) => [200, { gone: body?.ticket === 'earned', deleteAfter: DAY }],
   })
   await deleteNow()
+  expect(leavingNow()).toEqual({ email: 'me@example.com', on: DAY })
   expect(asked.find((one) => one.route === 'POST /v1/account/left')).toEqual({
     route: 'POST /v1/account/left',
     body: { ticket: 'earned' },
@@ -195,6 +206,7 @@ test('a session ended elsewhere is not taken for a deleted account', async () =>
   expect(account.user).toBeNull()
   expect(account.open).toBe(true)
   expect(account.error).toBe('Signed out elsewhere; the account was not deleted. Sign in again to delete it.')
+  expect(leavingNow()).toBeNull()
   expect(ended).toBe(1)
 })
 test('a server that cannot say whether it went is not taken for a deleted account either', async () => {
@@ -214,4 +226,62 @@ test('Cancel ends it with nothing deleted', async () => {
   expect(ended).toBe(1)
   expect(asked.map((one) => one.route)).toEqual(['POST /v1/account/delete/code'])
   expect(account.user?.id).toBe('me')
+})
+function note(): string {
+  shown = mount(Leaving, { target: host })
+  flushSync()
+  return host.textContent.replace(/\s+/g, ' ').trim()
+}
+test('signed out, the account page names the account and the day it goes', () => {
+  account.token = null
+  account.user = null
+  markLeaving('me@example.com', DAY)
+  const words = note()
+  expect(words).toContain('me@example.com')
+  expect(words).toContain(`will be deleted on ${leavingDay(DAY)}`)
+  expect(words).toContain('Signing in before then, on any device, cancels the deletion.')
+})
+test('and says nothing while signed in, once the sign-in cancelled it, or with nothing asked', () => {
+  expect(note()).toBe('')
+  markLeaving('me@example.com', DAY)
+  flushSync()
+  expect(host.textContent.trim()).toBe('')
+  account.token = null
+  account.user = null
+  account.staying = true
+  flushSync()
+  expect(host.textContent.trim()).toBe('')
+})
+test('a day that has passed is forgotten, and a server that names no day leaves nothing', () => {
+  account.token = null
+  account.user = null
+  markLeaving('me@example.com', undefined)
+  expect(leavingNow()).toBeNull()
+  markLeaving('me@example.com', DAY)
+  expect(leavingNow(DAY + 1)).toBeNull()
+  expect(localStorage.getItem('orden:leaving')).toBeNull()
+  expect(note()).toBe('')
+})
+test('a server that still deletes at once is not said to wait thirty days', async () => {
+  const space = (name: string) => ({ id: name, name, role: 'owner', shared: true }) as unknown as RemoteSpace
+  account.spaces = [space('Plans')]
+  serve({
+    'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
+    'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
+    'DELETE /v1/account': () => [200, { ok: true }],
+    ...SIGNED_OUT,
+  })
+  open()
+  await settle()
+  type('Code', '123456')
+  submit()
+  await settle()
+  expect(host.textContent).not.toContain('30 days')
+  expect(host.textContent).not.toContain('cancels the deletion')
+  expect(host.textContent).toContain('Also gone for everyone in')
+  press('Delete now')
+  await settle()
+  expect(account.user).toBeNull()
+  expect(leavingNow()).toBeNull()
+  account.spaces = []
 })

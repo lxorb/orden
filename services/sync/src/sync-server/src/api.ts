@@ -26,6 +26,8 @@ export {
   goneMessage,
   inviteMessage,
   leavingMessage,
+  leavingSetMessage,
+  leavingSoonMessage,
   mailer,
   mayMail,
   oneLine,

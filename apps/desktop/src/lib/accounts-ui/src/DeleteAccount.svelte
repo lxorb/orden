@@ -5,6 +5,7 @@
   import { region } from '../../platform/src/api'
   import { message } from '../../ui-kit/src/api'
   import { dur, fade } from '../../platform/src/api'
+  import { markLeaving } from './leaving'
 
   const { onend }: { onend: () => void } = $props()
   const shared = $derived(
@@ -14,6 +15,7 @@
   )
   let stage = $state<'codes' | 'sure'>('codes')
   let second = $state(false)
+  let keptDays = $state(0)
   let code = $state('')
   let fromApp = $state('')
   let busy = $state(false)
@@ -27,11 +29,12 @@
     busy = true
     wrong = null
     try {
-      const sent = await request<{ resendIn: number; second: boolean }>('/v1/account/delete/code', {
+      const sent = await request<{ resendIn: number; second: boolean; keptDays?: unknown }>('/v1/account/delete/code', {
         token,
         body: {},
       })
       second = sent.second
+      keptDays = typeof sent.keptDays === 'number' && sent.keptDays > 0 ? sent.keptDays : 0
       countDown(sent.resendIn)
       field?.focus()
     } catch (error) {
@@ -60,19 +63,27 @@
   }
   async function leave() {
     const token = account.accountToken
-    if (!token || !ticket || busy) return
+    const email = account.user?.email
+    if (!token || !email || !ticket || busy) return
     busy = true
     wrong = null
     try {
-      await request<{ ok: true }>('/v1/account', { method: 'DELETE', token, body: { ticket } })
+      const set = await request<{ ok: true; deleteAfter?: unknown }>('/v1/account', {
+        method: 'DELETE',
+        token,
+        body: { ticket },
+      })
+      markLeaving(email, set.deleteAfter)
     } catch (error) {
       if (!(fromServer(error) && error.status === 401)) {
         wrong = message(error, 'that did not work')
         busy = false
         return
       }
-      const gone = await wentWith(ticket)
-      if (gone !== true) {
+      const went = await wentWith(ticket)
+      const gone = went?.gone ?? null
+      if (gone === true) markLeaving(email, went?.on)
+      else {
         await account.recheck()
         account.error =
           gone === false
@@ -86,12 +97,12 @@
     void account.signOut('kept')
     onend()
   }
-  async function wentWith(held: string): Promise<boolean | null> {
+  async function wentWith(held: string): Promise<{ gone: boolean; on: unknown } | null> {
     try {
-      const asked = await request<{ gone?: unknown }>('/v1/account/left', {
+      const asked = await request<{ gone?: unknown; deleteAfter?: unknown }>('/v1/account/left', {
         body: { ticket: held },
       })
-      return typeof asked.gone === 'boolean' ? asked.gone : null
+      return typeof asked.gone === 'boolean' ? { gone: asked.gone, on: asked.deleteAfter } : null
     } catch {
       return null
     }
@@ -155,12 +166,20 @@
       </div>
     </form>
   {:else}
-    {#if shared}
-      <p class="hint" transition:fade={{ duration: dur(130) }}>
-        Also gone for everyone in {shared}.
+    {#if keptDays}
+      <p class="hint">
+        Your account is deleted in {keptDays} days. Signing in before then cancels the deletion. Every device is signed out
+        now.
       </p>
     {/if}
-    <button class="orden-action is-danger" disabled={busy} onclick={() => void leave()}> Delete now </button>
+    {#if shared}
+      <p class="hint" transition:fade={{ duration: dur(130) }}>
+        {keptDays ? 'Then also' : 'Also'} gone for everyone in {shared}.
+      </p>
+    {/if}
+    <button class="orden-action is-danger" disabled={busy} onclick={() => void leave()}>
+      {keptDays ? `Delete in ${keptDays} days` : 'Delete now'}
+    </button>
     <button class="orden-action" disabled={busy} onclick={onend}>Cancel</button>
   {/if}
 
