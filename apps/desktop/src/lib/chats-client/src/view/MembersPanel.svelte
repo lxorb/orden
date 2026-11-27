@@ -4,7 +4,8 @@
   import { closeOnBack, menu, type MenuEntry, overlays, viewport } from '../../../ui-kit/src/api'
   import { copyText } from '../../../ui-controls/src/api'
   import { dur, fly, localNumber } from '../../../platform/src/api'
-  import { Avatar, showProfile } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../accounts-ui/src/api'
+  import { host } from './host'
   import { people } from '../../../accounts/src/api'
   import type { ChatPage } from './chat.svelte'
   import { mentionText } from './compose'
@@ -52,7 +53,7 @@
   $effect(() => closeOnBack(sheet, onclose))
   function press(event: MouseEvent, member: Listed) {
     const id = accountOf(member.who)
-    if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
+    if (id && event.currentTarget instanceof Element) host().showProfile?.(id, event.currentTarget, space)
   }
   function showMenu(event: MouseEvent, member: Listed) {
     event.preventDefault()
@@ -63,7 +64,8 @@
     const id = accountOf(member.who)
     if (id && event.currentTarget instanceof Element) {
       const from = event.currentTarget
-      entries.push({ label: 'Profile', run: () => showProfile(id, from, space) })
+      const profile = host().showProfile
+      if (profile) entries.push({ label: 'Profile', run: () => profile(id, from, space) })
     }
     entries.push({ label: 'Copy name', run: () => void copyText(member.name) })
     menu.show(event, entries)

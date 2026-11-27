@@ -34,4 +34,4 @@ hub.opened(() => void chats.reconnected())
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => void chats.reconnected())
 }
-if (!isMobile) void import('./notices')
+if (!isMobile && __ORDEN_APP__ === 'orden') void import('./notices')

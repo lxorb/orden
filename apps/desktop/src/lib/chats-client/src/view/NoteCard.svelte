@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { FileMark, fileMark } from '../../../marks/src/api'
   import { folderOf, insideSpace, nameOf, shownName } from '../../../platform/src/api'
   import { host } from './host'
   import { cardLines } from './note-card'
@@ -7,6 +6,7 @@
   const { target, from = null }: { target: string; from?: string | null } = $props()
   const relative = $derived(host().linkTarget(from, target))
   const root = $derived(host().rootHolding(from))
+  const Mark = $derived(host().noteMark)
   const path = $derived(relative && root ? insideSpace(root, relative) : null)
   const name = $derived(path ? shownName(nameOf(path)) : '')
   const folder = $derived(relative ? folderOf(relative) : '')
@@ -32,7 +32,7 @@
 
 {#if path}
   <button type="button" class="card" onclick={() => path && host().openNote(path)}>
-    <FileMark mark={fileMark(nameOf(path))} {path} />
+    {#if Mark}<Mark {path} />{/if}
     <span class="words">
       <span class="head">
         <strong>{name}</strong>

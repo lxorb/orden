@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { host } from './host'
   import { may, type Message, type Notify } from '@orden/chats'
   import { LONGEST_TOPIC } from '@orden/chats/limits'
   import { localNumber } from '../../../platform/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
   import Bell from '../Bell.svelte'
   import { people } from '../../../accounts/src/api'
-  import { shortcuts } from '../../../shortcuts/src/api'
   import type { ChatPage } from './chat.svelte'
   import { Float, Glyph, type Box } from '../../../chat-kit/src/api'
   import ChatMark from './ChatMark.svelte'
@@ -105,7 +105,7 @@
     class:on={membersOn}
     aria-label="Members"
     aria-pressed={membersOn}
-    {@attach shortcuts.tip('Members', 'chat.members')}
+    {@attach host().keyTip('Members', 'chat.members')}
     onclick={onmembers}
   >
     <span class="faces" aria-hidden="true">
@@ -132,7 +132,7 @@
     type="button"
     class="orden-glyph"
     aria-label="Search this chat"
-    {@attach shortcuts.tip('Search this chat', 'chat.search')}
+    {@attach host().keyTip('Search this chat', 'chat.search')}
     onclick={() => page.search()}><Glyph name="search" /></button
   >
 </header>

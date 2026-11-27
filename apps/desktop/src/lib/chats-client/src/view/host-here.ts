@@ -1,18 +1,22 @@
 import { webPages } from '@orden/contracts'
+import { showProfile } from '../../../accounts-ui/src/api'
 import { chatReplies } from '../../../ai-chat/src/api'
 import { isRetiredChat } from '../../../documents/src/api'
 import { hiddenKinds } from '../../../gates/src/api'
 import { links } from '../../../link-index/src/api'
 import { pickedLink } from '../../../link-format/src/api'
+import { chosenIcon, chosenTint } from '../../../marks/src/api'
 import { modes } from '../../../modes/src/api'
 import { samePath } from '../../../platform/src/api'
 import { protection } from '../../../protect/src/api'
 import { canWriteAt } from '../../../sharing/src/api'
+import { shortcuts } from '../../../shortcuts/src/api'
 import { SidebarWidth } from '../../../sidebar/src/api'
 import { draggedTab } from '../../../ui-kit/src/api'
 import { followHref, followNoteFrom, workspace } from '../../../workspace/src/api'
 import { chatsHere } from './here'
 import { hostChats } from './host'
+import NoteMark from './NoteMark.svelte'
 import { openChat } from './open'
 
 const width = new SidebarWidth(() => 'right', 'orden:chat-members-width')
@@ -65,6 +69,13 @@ hostChats({
   openNote: (path) => void workspace.openAside(path),
   retired: (chat) => isRetiredChat(chat),
   membersWidth: () => width,
+  pressed: (id, event) => shortcuts.pressed(id, event),
+  editorKeys: () => shortcuts.forEditor,
+  keyTip: (label, id) => shortcuts.tip(label, id),
+  chosenIcon: (path) => chosenIcon(path),
+  chosenTint: (path) => chosenTint(path),
+  noteMark: NoteMark,
+  showProfile: (id, from, space) => showProfile(id, from, space),
   keeps: (entry) => !entry?.path || canWriteAt(entry.path),
   saveAsNote: async (page, message, space) => (await import('./keep')).saveAsNote(page, message, space),
   addAsTask: (page, message, space) => void import('./keep').then((keep) => keep.addAsTask(page, message, space)),
