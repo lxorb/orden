@@ -1,0 +1,5 @@
+{
+  "name": "hub",
+  "layer": "foundation",
+  "dependsOn": ["contracts", "sync-core", "platform"]
+}

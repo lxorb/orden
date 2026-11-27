@@ -21,9 +21,12 @@ const road = vi.hoisted(() => ({
   asked: [] as { command: string; args: Record<string, unknown> }[],
   answer: (_args: Record<string, unknown>): Promise<unknown> => Promise.resolve(null),
 }))
-class FakeChannel {
-  onmessage: (value: unknown) => void = () => undefined
-}
+const FakeChannel = vi.hoisted(
+  () =>
+    class {
+      onmessage: (value: unknown) => void = () => undefined
+    },
+)
 vi.mock('../../crate/src/native', async (original) => ({
   ...(await original<object>()),
   Channel: FakeChannel,
@@ -132,7 +135,7 @@ describe('a request to a provider', () => {
   function answering(status: number, chunks: unknown[], after = true) {
     road.asked.length = 0
     road.answer = (args) => {
-      const output = args.output as FakeChannel
+      const output = args.output as InstanceType<typeof FakeChannel>
       if (!after) for (const one of chunks) output.onmessage(one)
       if (after) setTimeout(() => chunks.forEach((one) => output.onmessage(one)), 0)
       return Promise.resolve({ status, headers: [['content-type', 'text/event-stream']] })

@@ -349,7 +349,7 @@ class ChatsStore implements Chats {
       entry: (chat) => this.entry(chat),
       token: () => account.token,
       device: async () => {
-        const { hub, deviceId } = await import('../../sync-client/src/api')
+        const { hub, deviceId } = await import('../../hub/src/api')
         return hub.device ?? (await deviceId().catch(() => null))
       },
       members: (chat) => this.members(chat),
