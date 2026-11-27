@@ -1,11 +1,10 @@
 import type { Draft, Engine, EngineEvent, ModelInfo, Part, Stop, Thread, Turn } from '../../../ai-providers/src/api'
 import type { Asking, Event, Message, PermissionRequest, Preset, Providers } from '../../../opencode-client/src/api'
 import { Feed } from '../../../opencode-client/src/api'
-import { keepJson, stored } from '../../../platform/src/api'
 import type { Setup } from '../chat/engine'
 import { errorText, modelTurn, youTurn } from '../chat/transcript'
+import { openCodeSessions } from './sessions.svelte'
 
-const SESSIONS = 'orden:opencode-sessions'
 export interface Wiring {
   session(title?: string): Promise<{ id: string }>
   messages(id: string): Promise<Message[]>
@@ -24,10 +23,6 @@ export function modelOf(model: string): { providerID?: string; modelID?: string 
   const at = model.indexOf('/')
   return at > 0 ? { providerID: model.slice(0, at), modelID: model.slice(at + 1) } : {}
 }
-function sessionsKept(): Record<string, string> {
-  const kept = stored(SESSIONS)
-  return typeof kept === 'object' && kept !== null ? (kept as Record<string, string>) : {}
-}
 const idleIn = (event: Event): boolean =>
   event.type === 'session.idle' || (event.type === 'session.status' && event.properties.status.type === 'idle')
 export function createOpenCodeEngine(
@@ -38,7 +33,6 @@ export function createOpenCodeEngine(
   const feed = new Feed()
   const loaded = new Set<string>()
   const heard = new Map<string, Set<(event: Event) => void>>()
-  const kept = sessionsKept()
   let following: Promise<unknown> | null = null
   function follow(): Promise<unknown> {
     following ??= wiring
@@ -53,11 +47,10 @@ export function createOpenCodeEngine(
     return following
   }
   async function sessionFor(thread: Thread): Promise<string> {
-    const held = kept[thread.id]
+    const held = openCodeSessions.of(thread.id)
     if (held) return held
     const made = await wiring.session(thread.title || undefined)
-    kept[thread.id] = made.id
-    keepJson(SESSIONS, kept)
+    openCodeSessions.set(thread.id, made.id)
     return made.id
   }
   async function loadOnce(session: string): Promise<void> {
@@ -183,7 +176,7 @@ export function createOpenCodeEngine(
       return Promise.resolve(false)
     },
     async compact(thread) {
-      const session = kept[thread.id]
+      const session = openCodeSessions.of(thread.id)
       const { providerID, modelID } = modelOf(thread.model)
       if (session && providerID && modelID) await wiring.summarize(session, providerID, modelID)
     },

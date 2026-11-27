@@ -29,5 +29,6 @@ export {
   taskUses,
 } from './store/prefs'
 export { agentName, FIRST_AGENT, openCodeAgents } from './opencode/agents.svelte'
+export { openCodeSessions } from './opencode/sessions.svelte'
 export { chatToTab } from './store/reveal'
 export { instructionsSent } from './store/setup'
