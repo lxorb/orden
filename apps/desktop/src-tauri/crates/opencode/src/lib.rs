@@ -8,7 +8,7 @@ pub mod host;
 mod http;
 pub mod preset;
 pub mod proxy;
-mod shell;
+pub mod shell;
 
 pub use env::{Dirs, Launch};
 pub use host::{stop_all, Status};
