@@ -3,6 +3,7 @@ declare const __ORDEN_BUILD__: string
 declare const __DRIVEABLE__: boolean
 declare const __APP_VERSION__: string
 declare const __ORDEN_RELEASE__: 'stable' | 'unstable' | null
+declare const __RELEASE_NEWS__: { version: string; bugs: number; added: string[] }[]
 declare const __APP_COMMIT__: string
 declare const __CLAUDE_CODE__: boolean
 declare const __AI__: boolean
