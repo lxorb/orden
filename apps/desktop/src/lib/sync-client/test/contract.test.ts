@@ -837,6 +837,20 @@ describe('a web note another member of a shared space made (#2475)', () => {
     expect(here.space().entries.get('theirs')?.deleted).toBe(false)
   })
 })
+describe('words whose push the account answers as moved while the text stays the same (#2521)', () => {
+  test('reach the account once the race is over', async () => {
+    const report = await simulate({
+      seed: 7,
+      devices: 2,
+      faults: CALM,
+      plant: 'raced-pushes',
+      script: [act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk811z' })],
+      device: (id, clock, random, seeded) => new EngineDevice(id, clock, random, seeded),
+    })
+    expect(report.failures).toEqual([])
+    expect(markersIn(textOf(report, 'Plan.md'))).toContain('mk811z')
+  })
+})
 describe('ports', () => {
   test('a port bound by the shell is what the module reads', () => {
     const unbind = providePort('sync.clock', { now: () => 42, waited: () => Promise.resolve() })

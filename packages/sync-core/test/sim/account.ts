@@ -18,7 +18,8 @@ import {
 import type { AccountAdapter, AccountView, Route } from './adapters'
 import type { Clock } from './network'
 
-export type Plant = 'delete-without-seen'
+export type Plant = 'delete-without-seen' | 'raced-pushes'
+const RACES = 3
 export interface Seeded {
   id: string
   name: string
@@ -40,6 +41,7 @@ export class ReferenceAccount implements AccountAdapter {
   private readonly changedBy = new Map<string, string>()
   private readonly versions: string[] = []
   private readonly answered = new Map<string, PushAnswer>()
+  private readonly raced = new Map<string, number>()
   constructor(
     private readonly clock: Clock,
     seeded: readonly Seeded[],
@@ -156,6 +158,7 @@ export class ReferenceAccount implements AccountAdapter {
       if (!held) return { id: pushed.id, refused: 'gone' }
       const before = this.answered.get(pushed.push)
       if (before) return before
+      if (this.plant === 'raced-pushes') this.race(pushed.id, held)
       if (pushed.seq !== held.seq) {
         return {
           id: pushed.id,
@@ -179,6 +182,22 @@ export class ReferenceAccount implements AccountAdapter {
       return answer
     })
     return { docs }
+  }
+  private race(id: string, held: Document) {
+    const times = this.raced.get(id) ?? 0
+    if (times >= RACES) return
+    this.raced.set(id, times + 1)
+    const other = new Y.Doc()
+    Y.applyUpdateV2(other, Y.encodeStateAsUpdateV2(held.doc))
+    other.clientID = 7 + times
+    const before = Y.encodeStateVector(other)
+    other.getText(TEXT).insert(0, '_')
+    other.getText(TEXT).delete(0, 1)
+    Y.applyUpdateV2(held.doc, Y.encodeStateAsUpdateV2(other, before))
+    other.destroy()
+    held.seq += 1
+    held.at = this.clock.now
+    contentChanged(this.tree, id, 'racer')
   }
   async view(): Promise<AccountView> {
     const entries = [...this.tree.entries.values()]

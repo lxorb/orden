@@ -9,12 +9,14 @@ import type {
   EntryView,
   Link,
   Pick,
+  Route,
   View,
 } from './adapters'
 import { judge, type Ledger, ledger, markersIn } from './checks'
 import { ReferenceDevice } from './device'
 import { CALM, Clock, type Faults, Network } from './network'
 import { Random } from './random'
+import { opsRequestOf, pushRequestOf, unframe } from '../../src/wire'
 
 export type Step =
   | { t: 'act'; device: number; action: Action }
@@ -89,6 +91,7 @@ class Run {
   private readonly passes = new Set<Promise<void>>()
   private readonly beforeCrash = new Map<number, Set<string>>()
   private counter = 0
+  private sent = 0
   constructor(private readonly options: Options) {
     this.random = new Random(options.seed)
     this.network = new Network(this.random, this.clock, options.faults ?? ROUGH)
@@ -107,7 +110,10 @@ class Run {
     for (const note of seeded) for (const marker of markersIn(note.text)) this.book.typed.add(marker)
   }
   private link(device: DeviceAdapter): Link {
-    return (route, body) => this.network.request(device.id, () => this.account.handle(device.id, route, body))
+    return (route, body) => {
+      if (carries(route, body)) this.sent += 1
+      return this.network.request(device.id, () => this.account.handle(device.id, route, body))
+    }
   }
   private words(): string {
     this.counter += 1
@@ -359,6 +365,7 @@ class Run {
           await this.step({ t: 'answer', device: index, choice })
         }
       }
+      const sent = this.sent
       for (const device of this.devices) this.startPass(device)
       for (let guard = 0; guard < 10_000 && (this.passes.size || !this.network.quiet()); guard++) {
         await this.tick()
@@ -366,7 +373,7 @@ class Run {
       for (const one of this.devices) this.classifications.push(...one.classified())
       const views = await Promise.all(this.devices.map((device) => device.view()))
       const now = JSON.stringify([await this.account.view(), views, this.devices.map((device) => device.held().length)])
-      still = now === last ? still + 1 : 0
+      still = now === last && this.sent === sent ? still + 1 : 0
       last = now
       if (still >= 2) return true
     }
@@ -391,6 +398,12 @@ class Run {
       held: this.classifications.filter((one) => one.held).length,
     }
   }
+}
+function carries(route: Route, body: Uint8Array): boolean {
+  if (route === 'keep') return true
+  if (route === 'ops') return (opsRequestOf(unframe(body))?.ops.length ?? 0) > 0
+  if (route === 'push') return (pushRequestOf(unframe(body))?.docs.length ?? 0) > 0
+  return false
 }
 export function simulate(options: Options): Promise<Report> {
   return new Run(options).run()

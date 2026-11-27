@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { frame, type Op } from '../../src/wire'
-import { ReferenceAccount } from './account'
-import { judge, ledger } from './checks'
+import { type Plant, ReferenceAccount } from './account'
+import { judge, ledger, markersIn } from './checks'
 import { CALM, Clock } from './network'
-import { act, pass, PLAN, roads, settle } from './roads'
+import { act, pass, PLAN, roads, settle, textOf } from './roads'
 import { type Report, type Step, simulate } from './run'
 
-function run(script: readonly Step[], plant?: 'delete-without-seen'): Promise<Report> {
+function run(script: readonly Step[], plant?: Plant): Promise<Report> {
   return simulate({ seed: 7, devices: 2, faults: CALM, script, ...(plant ? { plant } : {}) })
 }
 describe('scripted roads', () => roads(run))
@@ -68,5 +68,15 @@ describe('a folder made apart and folded into one of its name (#2386)', () => {
     expect(judge(book, view, [], [])).toEqual([])
     book.deleted.set('here', 0)
     expect(judge(book, view, [], [])).toContain('here was restored and is not there')
+  })
+})
+describe('a device still holding words when every text looks settled (#2521)', () => {
+  test('its push, answered as moved while the text stays the same, still reaches the account', async () => {
+    const report = await run([act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk811z' })], 'raced-pushes')
+    expect(report.failures).toEqual([])
+    expect(markersIn(textOf(report, 'Plan.md'))).toContain('mk811z')
+  })
+  test('seed 1039008455 loses no words a push lost and a race held back', async () => {
+    expect((await simulate({ seed: 1039008455 })).failures).toEqual([])
   })
 })
