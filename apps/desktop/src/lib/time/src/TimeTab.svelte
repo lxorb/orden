@@ -1,18 +1,17 @@
 <script lang="ts">
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fly, isDesktop, localDate, midnightOf } from '../../platform/src/api'
+  import { dayOf, dur, fly, isDesktop, localDate, midnightOf } from '../../platform/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { DateField } from '../../ui-controls/src/api'
   import { Cross, DIVIDER, hang, menu, overlays, segmented } from '../../ui-kit/src/api'
-  import type { Tab } from '../../documents/src/api'
+  import type { TimeTabHeld } from '@orden/contracts'
   import Activities from './Activities.svelte'
   import Blocks from './Blocks.svelte'
   import { daysAfter, endOf, startOf, stepped } from './days'
   import { undone } from './edit'
   import { length } from './look'
   import { managing } from './manage.svelte'
-  import { dayOf } from '../../tasks-model/src/api'
   import HeartPicker from './HeartPicker.svelte'
   import NowCard from './NowCard.svelte'
   import { rangeTotals } from './schedule'
@@ -23,7 +22,7 @@
   import TimelineView from './TimelineView.svelte'
   import { ticking, watchedMinutes } from './watched.svelte'
 
-  const { tab }: { tab: Tab } = $props()
+  const { tab }: { tab: TimeTabHeld } = $props()
   const me = crypto.randomUUID()
   const first = untrack(() => readSpec(tab.doc))
   let kind = $state<Kind>(first.range)

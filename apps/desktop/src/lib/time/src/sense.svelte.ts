@@ -1,7 +1,6 @@
+import { timePlaces } from '@orden/contracts'
 import { untrack } from 'svelte'
-import { sync } from '../../sync-store/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
-import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../gates/src/api'
 import { NO_DEVICE, SAMPLE_EVERY } from './minutes'
 import { appIcons } from './app-icons.svelte'
@@ -32,12 +31,11 @@ if (locks) {
   leading = true
 }
 function spaceInFront(): Place | null {
-  const space = workspace.activeSpace
-  if (!space) return null
-  return { key: sync.remoteIdFor(space.root) ?? `name:${space.name}`, name: space.name }
+  const space = timePlaces().space
+  return space && { key: space.key, name: space.name }
 }
 function siteInFront(): Place | null {
-  const tab = workspace.active
+  const tab = timePlaces().tab
   if (tab?.kind !== 'web' || tab.inPrivate) return null
   const site = siteOf(tab.address)
   return site ? { key: site, name: site } : null
@@ -69,7 +67,7 @@ const sampler = new Sampler({
         ? {
             app: leading && sensed.app ? { key: sensed.app, name: sensed.app } : null,
             space: front ? spaceInFront() : null,
-            tab: front ? tabPlace(workspace.active) : null,
+            tab: front ? tabPlace(timePlaces().tab) : null,
             site: front ? siteInFront() : null,
           }
         : {},
@@ -89,7 +87,8 @@ async function look(): Promise<void> {
 }
 $effect.root(() => {
   $effect(() => {
-    const looked = [workspace.activeSpace?.id, workspace.active?.id, workspace.active?.address]
+    const { space, tab } = timePlaces()
+    const looked = [space?.id, tab?.id, tab?.address]
     if (looked.length) untrack(() => void look())
   })
 })

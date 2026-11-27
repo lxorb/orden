@@ -13,6 +13,7 @@
   const {
     span,
     now,
+    bare = false,
     hasBefore,
     hasAfter,
     onsplit,
@@ -22,6 +23,7 @@
   }: {
     span: Span
     now: number
+    bare?: boolean
     hasBefore: boolean
     hasAfter: boolean
     onsplit: () => void
@@ -43,7 +45,7 @@
   }
 </script>
 
-<div class="wrap" transition:slide={{ duration: dur(200), easing: cubicOut }}>
+<div class="wrap" class:bare transition:slide={{ duration: dur(bare ? 0 : 200), easing: cubicOut }}>
   <div class="editor" data-time-editor transition:fade={{ duration: dur(200), easing: cubicOut }}>
     <div class="clocks">
       <TimeField label="Start" value={clockOf(span.start)} onchange={(next: string) => moved('start', next)} />
@@ -71,6 +73,16 @@
 <style>
   .wrap {
     padding-bottom: var(--space-2);
+  }
+  .bare .editor {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+  .bare :global(button) {
+    min-height: var(--touch-target);
   }
   .editor {
     position: relative;

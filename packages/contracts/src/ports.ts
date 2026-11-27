@@ -11,6 +11,7 @@ import type { ReaderPorts } from './reader'
 import type { SettingsPorts, SettingsWindowPort } from './settings'
 import type { SharingPorts } from './sharing'
 import type {
+  IconChoicePort,
   NoticePort,
   QuickAddPort,
   QuickAddPrefill,
@@ -23,6 +24,7 @@ import type {
 import type { SyncStorePort, SyncPorts } from './sync-client'
 import type { TerminalPorts } from './terminal'
 import type { ThemePorts } from './theme'
+import { NO_TIME_PLACES, type TimeOpenPort, type TimePlacesPort, type TimePorts } from './time'
 import type { VoicePorts } from './voice'
 import { NO_WEB_PAGES, type WebPagesPort, type WebPorts } from './web'
 import {
@@ -48,6 +50,7 @@ export type PortMap = AccountPorts &
   SyncPorts &
   TerminalPorts &
   ThemePorts &
+  TimePorts &
   VoicePorts &
   WebPorts &
   WorkspacePorts
@@ -122,6 +125,15 @@ export function askSheet(id: SheetId): Promise<void> {
 }
 export function showQuickAdd(prefill?: QuickAddPrefill): void {
   ;(provided.get('quick-add.show') as QuickAddPort | undefined)?.show(prefill)
+}
+export const iconChoosing = (): IconChoicePort | null =>
+  (provided.get('icons.choice') as IconChoicePort | undefined) ?? null
+export const timePlaces = (): TimePlacesPort =>
+  (provided.get('time.places') as TimePlacesPort | undefined) ?? NO_TIME_PLACES
+export function showTime(spec: string): boolean {
+  const port = provided.get('time.open') as TimeOpenPort | undefined
+  port?.show(spec)
+  return port !== undefined
 }
 export function sayNotice(words: string): void {
   ;(provided.get('shell.notice') as NoticePort | undefined)?.say(words)

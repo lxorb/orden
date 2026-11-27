@@ -28,7 +28,7 @@ describe('a helper written once', () => {
       'a day written as YYYY-MM-DD',
       EVERYWHERE,
       /\b(?:two|pad|String)\(\w+\.getMonth\(\) \+ 1\)/,
-      ['apps/desktop/src/lib/tasks-model/src/query.ts', 'packages/editor/src/task-days.ts'],
+      ['apps/desktop/src/lib/platform/src/region.ts', 'packages/editor/src/task-days.ts'],
     ],
     ['the midnight of a day', APP, /setHours\(0, 0, 0, 0\)/, ['apps/desktop/src/lib/platform/src/region.ts']],
     ['a length on a clock', APP, /\bwhole % 60\)\.padStart\(2/, ['apps/desktop/src/lib/platform/src/region.ts']],

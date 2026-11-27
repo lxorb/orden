@@ -23,7 +23,7 @@ $effect.root(() => {
   })
 })
 if (typeof window !== 'undefined') {
-  void import('./sense.svelte')
+  if (__ORDEN_APP__ === 'orden') void import('./sense.svelte')
   void import('./reminding')
   const again = () => {
     if (timeOn() && document.visibilityState === 'visible') void time.exchange()

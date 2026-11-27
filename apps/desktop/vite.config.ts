@@ -51,6 +51,16 @@ function without(named: RegExp, inside: RegExp, strict: boolean): Plugin {
     },
   }
 }
+function asIndex(entry: string): Plugin {
+  return {
+    name: 'orden-entry-as-index',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const page = bundle[entry]
+      if (page) page.fileName = 'index.html'
+    },
+  }
+}
 function releaseChannel(given: string | undefined): 'stable' | 'unstable' | null {
   if (given === 'stable' || given === 'true') return 'stable'
   return given === 'unstable' ? 'unstable' : null
@@ -108,6 +118,7 @@ export default defineConfig(({ command, mode }) => {
       dirOnWords(),
       emojiOutlines(),
       ...(ai ? [] : [without(NAMES_AI, AI_MODULES, false)]),
+      ...(entryOf(app) === 'index.html' ? [] : [asIndex(entryOf(app))]),
       ...(left.length ? [without(new RegExp(names), new RegExp(`/src/lib/(${names})/src/`), true)] : []),
     ],
     define: {

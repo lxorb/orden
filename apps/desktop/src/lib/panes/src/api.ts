@@ -18,6 +18,6 @@ export {
 } from './pane-tree'
 export { type Landing, Panes } from './panes.svelte'
 export { successor, Walk } from './recency'
-export { giveTabShown, whileShown } from './shown.svelte'
+export { giveTabShown, whileShown } from '../../platform/src/api'
 export { type ShownTab, views, viewShowing, WhenShown } from './views.svelte'
 export { alongOf, EDGE, inside, madeFirst, type Side, type Zone, zoneAt } from './zones'

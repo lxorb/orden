@@ -7,6 +7,7 @@ import {
   dialogAnswer,
   assetType,
   copyName,
+  dayOf,
   endingOf,
   fetchInTime,
   filledIn,
@@ -167,6 +168,12 @@ describe('note names', () => {
     expect(nameFault({ ...naming, typed: 'free' })).toBeNull()
     expect(nameToWrite('a.MD', '.md')).toBe('a.md')
     expect(nameToWrite('a', '')).toBe('a')
+  })
+})
+describe('a day', () => {
+  test('is written as YYYY-MM-DD in local time, with its month and date padded', () => {
+    expect(dayOf(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05')
+    expect(dayOf(new Date(2026, 10, 27).getTime())).toBe('2026-11-27')
   })
 })
 describe('bytes', () => {

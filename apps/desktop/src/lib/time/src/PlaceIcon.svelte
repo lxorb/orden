@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { portOf, type SiteIconsHeld, webPages } from '@orden/contracts'
+  import type { ComponentProps } from 'svelte'
+  import { portOf, type SiteIconsHeld, timePlaces, webPages } from '@orden/contracts'
   import { Icon, iconLibrary } from '../../glyphs/src/api'
   import { FileMark, fileMark, SpaceMark, TabMark } from '../../marks/src/api'
   import { TAB_KINDS } from '../../tab-kinds/src/api'
   import { initial, readIcon } from '../../ui-kit/src/api'
-  import { sync } from '../../sync-store/src/api'
-  import { workspace } from '../../workspace/src/api'
   import { appIcons } from './app-icons.svelte'
   import { placeTint } from './look'
   import { appIcon, lightness, OWN_ICON, ownApp, plateFor, siteIcon, tabKindOf, UNSEEN } from './places'
@@ -14,6 +13,7 @@
   import { lightOf, measured } from './lights.svelte'
   import type { Lane } from './records'
 
+  type Marked = ComponentProps<typeof TabMark>['tab']
   const { lane, place, name }: { lane: Lane; place: string; name: string } = $props()
   const brand = $derived(
     readIcon(lane === 'app' ? (appIcon(place) ?? appIcon(name)) : lane === 'site' ? siteIcon(place) : null),
@@ -32,8 +32,8 @@
     if (lane === 'site') {
       const cached = webPages().faviconOf(`https://${place}`)
       const kept = sites?.picture(place) ?? null
-      const live = workspace.tabs
-        .filter((tab) => tab.kind === 'web' && !tab.inPrivate && siteOf(tab.address) === place)
+      const live = timePlaces()
+        .tabs.filter((tab) => tab.kind === 'web' && !tab.inPrivate && siteOf(tab.address) === place)
         .map((tab) => webPages().of(tab.id).icon)
         .find((icon) => icon !== null)
       return [cached, kept, live ?? null, `https://${place}/favicon.ico`].filter((one): one is string => !!one)
@@ -71,15 +71,17 @@
   })
   const space = $derived(
     lane === 'space'
-      ? (workspace.spaces.find((one) => sync.remoteIdFor(one.root) === place || `name:${one.name}` === place) ?? null)
+      ? (timePlaces().spaces.find((one) => one.key === place || `name:${one.name}` === place) ?? null)
       : null,
   )
-  const spaceIcon = $derived(space ? readIcon(workspace.iconFor(space.id)) : null)
+  const spaceIcon = $derived(space ? readIcon(space.icon) : null)
   $effect(() => {
     const set = iconLibrary.setFor(spaceIcon)
     if (set !== null) iconLibrary.load(set)
   })
-  const liveTab = $derived(lane === 'tab' ? (workspace.tabs.find((tab) => tabPlace(tab)?.key === place) ?? null) : null)
+  const liveTab = $derived(
+    lane === 'tab' ? (timePlaces().tabs.find((tab) => tabPlace(tab)?.key === place) ?? null) : null,
+  )
   const kind = $derived(lane === 'tab' ? tabKindOf(place) : null)
   const kindMark = $derived(kind ? (TAB_KINDS[kind].mark ?? null) : null)
   const path = $derived(lane === 'tab' && /^([/\\]|[A-Za-z]:)/.test(place) ? place : null)
@@ -111,7 +113,7 @@
   {:else if space}
     <span class="space" data-time-space-mark><SpaceMark id={space.id} name={space.name} /></span>
   {:else if liveTab}
-    <span class="file" data-time-tab-mark><TabMark tab={liveTab} /></span>
+    <span class="file" data-time-tab-mark><TabMark tab={liveTab as Marked} /></span>
   {:else if lane === 'tab'}
     <span class="file" data-time-kind-mark={kind ?? ''}
       ><FileMark mark={kindMark ?? fileMark(path ?? name)} path={path ?? undefined} /></span

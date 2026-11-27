@@ -32,11 +32,15 @@ test('an app nobody made a brand for shows its first letter', () => {
   expect(app.textContent.trim()).toBe('X')
 })
 test('every row of the four lists draws the icon its source gives it', async () => {
-  const { workspace } = await import('../../workspace/src/api')
+  const { providePort } = await import('@orden/contracts')
   const { APP_ICONS } = await import('./app-icons.svelte')
   const { OWN_ICON } = await import('./places')
-  const was = workspace.spaces
-  workspace.spaces = [{ id: 'orga', name: 'Orga', root: '/spaces/orga' }]
+  const unbind = providePort('time.places', {
+    space: null,
+    tab: null,
+    tabs: [],
+    spaces: [{ id: 'orga', key: 'remote-orga', name: 'Orga', icon: null }],
+  })
   try {
     const space = shown({ lane: 'space', place: 'name:Orga', name: 'Orga' })
     expect(space.querySelector('[data-time-space-mark]')).not.toBeNull()
@@ -62,7 +66,7 @@ test('every row of the four lists draws the icon its source gives it', async () 
     const unsaved = shown({ lane: 'tab', place: 'terminal:Terminal', name: 'Terminal' })
     expect(unsaved.querySelector('[data-time-kind-mark]')?.getAttribute('data-time-kind-mark')).toBe('terminal')
   } finally {
-    workspace.spaces = was
+    unbind()
     localStorage.removeItem(APP_ICONS)
   }
 })

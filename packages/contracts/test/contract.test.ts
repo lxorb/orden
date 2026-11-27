@@ -57,6 +57,10 @@ import {
   chatsEnding,
   settingsWindow,
   sayNotice,
+  showTime,
+  iconChoosing,
+  timePlaces,
+  NO_TIME_PLACES,
   runCommand,
   startHearings,
   spaceId,
@@ -300,6 +304,18 @@ describe('ports', () => {
     ).toBe(7)
     unbind()
     expect(portProvided('sync.clock')).toBe(false)
+  })
+  it('opens the time tracker where an app says how, and sees no place in an app with no workspace', () => {
+    expect(showTime('{}')).toBe(false)
+    expect(iconChoosing()).toBe(null)
+    expect(timePlaces()).toBe(NO_TIME_PLACES)
+    expect(timePlaces()).toEqual({ space: null, tab: null, spaces: [], tabs: [] })
+    const shown: string[] = []
+    const unbind = providePort('time.open', { show: (spec) => void shown.push(spec) })
+    expect(showTime('{"range":"day"}')).toBe(true)
+    unbind()
+    expect(shown).toEqual(['{"range":"day"}'])
+    expect(showTime('{}')).toBe(false)
   })
   it('says a notice where the shell shows one, and nowhere before it is bound', () => {
     expect(() => sayNotice('lost')).not.toThrow()

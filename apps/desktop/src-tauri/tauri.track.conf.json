@@ -1,0 +1,12 @@
+{
+  "productName": "Orden Track",
+  "build": {
+    "beforeBuildCommand": "pnpm build:track",
+    "frontendDist": "../dist-track"
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [{ "scheme": ["orden-track"], "appLink": false }]
+    }
+  }
+}

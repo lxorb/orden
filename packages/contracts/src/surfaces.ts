@@ -100,6 +100,9 @@ export interface QuickAddPrefill {
 export interface QuickAddPort {
   show(prefill?: QuickAddPrefill): void
 }
+export interface IconChoicePort {
+  pass(worn: string | null, take: (icon: string | null) => void): void
+}
 export interface NoticePort {
   say(words: string): void
 }
@@ -116,6 +119,7 @@ export interface SurfacePorts {
   readonly 'shell.notice': NoticePort
   readonly 'shell.sheets': SheetsPort
   readonly 'quick-add.show': QuickAddPort
+  readonly 'icons.choice': IconChoicePort
 }
 const loads = new Map<SurfaceId, () => Promise<unknown>>()
 let missing = (id: SurfaceId): Promise<unknown> =>
