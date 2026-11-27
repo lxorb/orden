@@ -46,7 +46,6 @@ export interface Landed {
   made: Space[]
   paths: string[]
   lost: string[]
-  later: (() => Promise<void>)[]
 }
 export interface Landing extends Told {
   land: (landed: Landed) => Promise<Space>
@@ -72,7 +71,6 @@ export class ImportRun {
   private tab: Tab | null = null
   private made: Space[] = []
   private paths: string[] = []
-  private later: (() => Promise<void>)[] = []
   private under = ''
   private readonly from = workspace.activeSpaceId
   private settled: Promise<void> = Promise.resolve()
@@ -148,11 +146,10 @@ export class ImportRun {
     this.enter('review')
   }
   private async landing(bring: Landing) {
-    const landed: Landed = { made: [], paths: [], lost: [], later: [] }
+    const landed: Landed = { made: [], paths: [], lost: [] }
     const first = await busy.run('Importing', () => bring.land(landed))
     this.made = landed.made
     this.paths = landed.paths
-    this.later = landed.later
     if (workspace.activeSpaceId !== first.id) await workspace.showSpace(first.id)
     this.space = first
     this.under = first.root
@@ -260,7 +257,6 @@ export class ImportRun {
     }
   }
   async complete() {
-    for (const later of this.later) await later()
     const tab = this.tab
     runs.delete(this.id)
     if (tab) workspace.close(tab.id, false)

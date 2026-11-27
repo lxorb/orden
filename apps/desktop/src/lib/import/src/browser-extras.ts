@@ -1,4 +1,3 @@
-import { webPages } from '@orden/contracts'
 import { invoke } from '../../platform/src/api'
 import type { Sidebar } from './sidebar'
 import { isObject, text } from './sidebar-made'
@@ -21,13 +20,6 @@ export async function withMarks(sidebar: Sidebar, browser: Browser, profile: str
       return mark && !marked(tab.icon) ? { ...tab, icon: mark } : tab
     }),
   }
-}
-export async function bringHistory(browser: Browser, profile: string): Promise<void> {
-  const rows = await invoke<string>('read_browser_history', { browser, profile })
-    .then((said) => JSON.parse(said) as unknown)
-    .catch(() => null)
-  if (!Array.isArray(rows) || !rows.length) return
-  await webPages().bringHistory(rows)
 }
 export function droppedLine(sidebar: Sidebar): string[] {
   const count = sidebar.dropped ?? 0

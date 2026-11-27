@@ -56,7 +56,6 @@ export interface WebPagesPort {
   letGo(): Promise<void>
   carryIn(paths: readonly string[]): void
   carriedIn(): void
-  bringHistory(rows: readonly unknown[]): Promise<void>
   searchHome(): Promise<string | null>
   replayKey(key: PressedKey): void
   articleOf(page: WebClip): Promise<string>
@@ -145,7 +144,6 @@ export const NO_WEB_PAGES: WebPagesPort = {
   letGo: () => Promise.resolve(),
   carryIn: () => undefined,
   carriedIn: () => undefined,
-  bringHistory: () => Promise.resolve(),
   searchHome: () => Promise.resolve(null),
   replayKey: () => undefined,
   articleOf: () => Promise.resolve(''),

@@ -999,10 +999,6 @@ providePort('web.pages', {
   letGo: () => pages.letGo(),
   carryIn: (paths) => carried((carry) => carry.carryToPages(paths)),
   carriedIn: () => carried((carry) => carry.carriedToPages()),
-  bringHistory: async (rows) => {
-    const [visited, webData] = await Promise.all([history(), stores()])
-    visited.brought(webData.history(), rows)
-  },
   searchHome: async () => (await import('./search-engine.svelte')).searchEngine.home,
   replayKey: (key) => {
     replay(key)

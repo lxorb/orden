@@ -49,26 +49,6 @@ export function named(list: readonly Visit[], url: string, title: string): reado
 export function typedTo(list: readonly Visit[], url: string, now: number): readonly Visit[] {
   return touched(list, url, (was) => ({ ...was, typed: was.typed + 1, last: now }))
 }
-export function broughtIn(list: readonly Visit[], rows: readonly Visit[]): readonly Visit[] {
-  if (!rows.length) return list
-  const kept = new Map(list.map((one) => [one.url, one]))
-  for (const row of rows) {
-    const was = kept.get(row.url)
-    kept.set(
-      row.url,
-      was
-        ? {
-            ...was,
-            title: was.title || titled(row.title, ''),
-            visits: Math.max(was.visits, row.visits),
-            typed: Math.max(was.typed, row.typed),
-            last: Math.max(was.last, row.last),
-          }
-        : { ...row, title: titled(row.title, '') },
-    )
-  }
-  return bounded([...kept.values()])
-}
 export function unvisited(list: readonly Visit[], url: string): readonly Visit[] {
   const key = visitKey(url)
   return list.filter((one) => one.url !== key)

@@ -15,9 +15,7 @@ let places: unknown = BOOKMARKS
 let safari: unknown = null
 let arc: unknown = null
 let marksOf: Record<string, string> = {}
-let history: unknown[] = []
 const asked: string[] = []
-const brought: { rows: unknown }[] = []
 const written: { root: string; files: Planned[] }[] = []
 const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []
@@ -42,7 +40,6 @@ vi.mock('../../platform/src/tauri', () => ({
         JSON.stringify(Object.fromEntries(pages.flatMap((page) => (marksOf[page] ? [[page, marksOf[page]]] : [])))),
       )
     }
-    if (command === 'read_browser_history') return Promise.resolve(JSON.stringify(history))
     if (command === 'read_arc_sidebar') {
       return arc === null ? Promise.reject(new Error('no sidebar')) : Promise.resolve(JSON.stringify(arc))
     }
@@ -67,7 +64,6 @@ vi.mock('../../ui-kit/src/busy.svelte', () => ({
 }))
 providePort('web.pages', {
   ...webPages(),
-  bringHistory: (rows) => Promise.resolve(void brought.push({ rows })),
 })
 vi.mock('../../sharing/src/api', () => ({ canWriteAt: () => true }))
 vi.mock('../../workspace/src/api', () => {
@@ -123,8 +119,6 @@ beforeEach(() => {
   safari = null
   arc = null
   marksOf = {}
-  history = []
-  brought.length = 0
   asked.length = 0
   written.length = 0
   spaces.length = 0
@@ -145,15 +139,13 @@ describe('a Firefox profile brought into Orden', () => {
     expect(said).toEqual(['Containers stay in Firefox 2 pages not on the web stay behind'])
     expect(asked[0]).toBe('read_browser_file sessionstore-backups/recovery.jsonlz4')
   })
-  test("wears its sites' marks and folds its history in", async () => {
+  test("wears its sites' marks and brings only its tabs and bookmarks, never its history", async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))
-    files.set('search.json.mozlz4', packed(ENGINES))
     marksOf = { 'https://mail.example.com/': 'data:image/png;base64,iVBORw0KGgo=' }
-    history = [{ url: 'https://mail.example.com/', title: 'Mail', visits: 3, typed: 1, last: 9 }]
-    await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'favicons.sqlite', 'search.json.mozlz4'] }, false)
+    await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'favicons.sqlite'] }, false)
     const mail = written[0]?.files.find((one) => one.path === 'Mail.url')
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
-    expect(brought).toEqual([{ rows: history }])
+    expect(asked.some((one) => one.includes('history'))).toBe(false)
   })
   test('leaves the search engine here alone and says nothing of the one the browser had', async () => {
     files.set('sessionstore.jsonlz4', packed(SESSION))

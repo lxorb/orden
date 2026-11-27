@@ -235,7 +235,6 @@ macro_rules! desktop_commands {
             orden_browsers::browser_profiles::read_browser_file,
             orden_browsers::firefox_profiles::read_firefox_places,
             orden_browsers::chromium_profiles::read_arc_sidebar,
-            orden_browsers::browser_data::read_browser_history,
             orden_browsers::browser_data::read_browser_icons,
             orden_browsers::safari::read_safari,
             orden_web::page_style::wear_page_styles,
