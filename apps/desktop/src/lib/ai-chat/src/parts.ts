@@ -28,5 +28,6 @@ export {
   taskMode,
   taskUses,
 } from './store/prefs'
+export { agentName, FIRST_AGENT, openCodeAgents } from './opencode/agents.svelte'
 export { chatToTab } from './store/reveal'
 export { instructionsSent } from './store/setup'

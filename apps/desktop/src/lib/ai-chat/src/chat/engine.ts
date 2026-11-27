@@ -478,11 +478,12 @@ const openCodeBuilt = new WeakMap<Setup, Engine>()
 async function openCodeEngine(setup: Setup): Promise<Engine> {
   const held = openCodeBuilt.get(setup)
   if (held) return held
-  const [{ createOpenCodeEngine }, { openCodeWiring }] = await Promise.all([
+  const [{ createOpenCodeEngine }, { openCodeWiring }, { openCodeAgents }] = await Promise.all([
     import('../opencode/engine'),
     import('../opencode/wiring'),
+    import('../opencode/agents.svelte'),
   ])
-  const engine = watching(createOpenCodeEngine(setup, await openCodeWiring()))
+  const engine = watching(createOpenCodeEngine(setup, await openCodeWiring(), (thread) => openCodeAgents.of(thread.id)))
   openCodeBuilt.set(setup, engine)
   return engine
 }

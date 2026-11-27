@@ -25,6 +25,8 @@
     "surfaces",
     "panes",
     "glyphs",
-    "mascot"
+    "mascot",
+    "gates",
+    "opencode-client"
   ]
 }
