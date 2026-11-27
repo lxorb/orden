@@ -168,17 +168,9 @@
       </div>
     </div>
   {/each}
-  {#if whole}
-    <p class="told">Owners and admins see when each member last opened this space and roughly where from.</p>
-  {/if}
 {/if}
 
 <style>
-  .told {
-    margin: var(--space-2) 0 0;
-    font-size: var(--text-xs);
-    color: var(--muted);
-  }
   .more {
     all: unset;
     box-sizing: border-box;
