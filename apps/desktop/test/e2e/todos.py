@@ -284,6 +284,22 @@ def main() -> int:
         sub.fill("Chapter one")
         sub.press("Enter")
         desk.wait_for_selector("[data-todos-panel] [data-todo-editor] li")
+        SUB = "() => { const li = document.querySelector('[data-todos-panel] [data-todo-editor] li.subtask'); return [li.querySelector('input').checked, li.classList.contains('done'), getComputedStyle(li.querySelector('.words')).textDecorationLine.includes('line-through')] }"
+        for done in [True, False]:
+            desk.locator("[data-todos-panel] [data-todo-editor] li.subtask input").click()
+            desk.wait_for_timeout(300)
+            drawn = desk.evaluate(SUB)
+            kept = desk.evaluate("() => window.ordenApp.tasks().then(({ todos }) => todos.todos.find((one) => one.title === 'Read a book').subtasks[0].done)")
+            if drawn != [done, done, done] or kept != done:
+                wrong(f"a subtask ticked to {done} draws box, class and strike {drawn} and keeps {kept}")
+        for done in [True, False]:
+            desk.locator("[data-todos-panel] [data-todo]", has=desk.locator(".title", has_text="Call the bank")).locator("input.tick").click()
+            desk.wait_for_timeout(300)
+            row = desk.evaluate("() => { const one = [...document.querySelectorAll('[data-todos-panel] [data-todo]')].find((r) => r.textContent.includes('Call the bank')); return one ? [one.querySelector('input.tick').checked, (one.matches('.done') || !!one.querySelector('.done'))] : null }")
+            kept = desk.evaluate("() => window.ordenApp.tasks().then(({ todos }) => todos.todos.find((one) => one.title === 'Call the bank').done)")
+            if kept != done or (row is not None and row != [done, done]):
+                wrong(f"a todo ticked to {done} draws box and strike {row} and keeps {kept}")
+        say("a subtask and a todo ticked twice draw their box and strike as kept each time")
         sheet_controls(desk)
         desk.locator("[data-todos-panel] [data-todo-editor] .close").click()
         shot(desk, "01-panel")
