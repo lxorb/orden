@@ -7,6 +7,7 @@
   import { usable, ProviderMark, ai, type Effort } from '../../ai-providers/src/api'
   import { hostHere } from './host'
   import { effortWord } from './words'
+  import { opencodeOn } from '../../gates/src/api'
 
   const here = hostHere()
   const open = $derived(chat.popover === 'model' && chat.host === here)
@@ -14,7 +15,20 @@
   const provider = $derived(chat.provider)
   const model = $derived(chat.model)
   const providers = $derived(ai.providers.filter((one) => usable(one)))
-  const list = $derived(provider ? (chat.models[provider.id] ?? []) : [])
+  const listed = $derived(provider ? (chat.models[provider.id] ?? []) : [])
+  const openCode = $derived(opencodeOn())
+  const prefixOf = (id: string) => id.slice(0, Math.max(0, id.indexOf('/')))
+  const groups = $derived(openCode ? [...new Set(listed.map((one) => prefixOf(one.id)).filter(Boolean))] : [])
+  let named = $state<Record<string, string>>({})
+  let chosen = $state<string | null>(null)
+  const own = $derived(head ? prefixOf(head.model) : '')
+  const group = $derived(chosen ?? (own !== '' ? own : (groups[0] ?? '')))
+  const list = $derived(openCode && group ? listed.filter((one) => prefixOf(one.id) === group) : listed)
+  async function nameGroups() {
+    const { opencode } = await import('../../opencode-client/src/api')
+    const given = await opencode.providers().catch(() => null)
+    if (given) named = Object.fromEntries(given.all.map((one) => [one.id, one.name]))
+  }
   const levels = $derived<Effort[]>(model ? ordered(model.efforts) : ['auto'])
   const columns = $derived(levels.length <= 5 ? levels.length : Math.ceil(levels.length / 2))
   let query = $state('')
@@ -41,6 +55,8 @@
         shown.findIndex((one) => one.id === head?.model),
       )
       if (provider) void chat.loadModels(provider)
+      chosen = null
+      if (openCode) void nameGroups()
     })
     requestAnimationFrame(() => field?.focus())
   })
@@ -92,7 +108,15 @@
       onkeydown={onKey}
       transition:fly={{ y: 6, duration: dur(150), easing: cubicOut }}
     >
-      {#if providers.length > 1}
+      {#if openCode && groups.length > 1}
+        <div class="providers">
+          {#each groups as one (one)}
+            <button class="orden-chip provider" class:is-on={one === group} onclick={() => (chosen = one)}
+              >{named[one] ?? one}</button
+            >
+          {/each}
+        </div>
+      {:else if !openCode && providers.length > 1}
         <div class="providers">
           {#each providers as one (one.id)}
             <button

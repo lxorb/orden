@@ -14,10 +14,12 @@
   import { chat, dictation, estimateText, mentionAt, mentionOf, minutes } from './chat-parts'
   import { noteInFront, ranked, sameMention, SELECTION_CHIP, selectionHere } from './chat-parts'
   import { tokens, type Front, type Mention, type PanelCommand, type Row } from './chat-parts'
+  import { agentName, FIRST_AGENT, openCodeAgents } from './chat-parts'
   import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
   import ModeMark from './ModeMark.svelte'
-  import { MODE_ICONS } from './mode-icons'
+  import { agentIcon, MODE_ICONS } from './mode-icons'
+  import { opencodeOn } from '../../gates/src/api'
   import ModelPicker from './ModelPicker.svelte'
   import { chatPicture, MOST_CHAT_PICTURES, MOST_CHAT_TEXT, textHeld } from './picture'
   import Queue from './Queue.svelte'
@@ -245,7 +247,7 @@
       event.stopPropagation()
       action()
     }
-    if (shortcuts.pressed('ai.mode', event)) return run(() => chat.nextMode())
+    if (shortcuts.pressed('ai.mode', event)) return run(nextMode)
     if (shortcuts.pressed('ai.model', event))
       return run(() => (chat.popover = chat.popover === 'model' ? null : 'model'))
     if (shortcuts.pressed('ai.effort', event)) return run(() => chat.setEffort('next'))
@@ -331,18 +333,39 @@
     event.preventDefault()
     files.forEach(take)
   }
+  const openCode = $derived(opencodeOn())
   function modeMenu(event: MouseEvent) {
-    const row = (mode: Mode) => ({
-      label: modeWord(mode),
-      icon: MODE_ICONS[mode],
-      checked: head?.mode === mode,
-      run: () => chat.setMode(mode),
+    const row = (one: Mode) => ({
+      label: modeWord(one),
+      icon: MODE_ICONS[one],
+      checked: mode === one,
+      run: () => chat.setMode(one),
     })
-    menu.show(event, [...MODES.filter((one) => one !== 'plan').map(row), DIVIDER, row('plan')], {
-      title: 'Permissions',
-    })
+    const presets = MODES.filter((one) => one !== 'plan').map(row)
+    menu.show(event, openCode ? presets : [...presets, DIVIDER, row('plan')], { title: 'Permissions' })
   }
-  const mode = $derived(head?.mode ?? FIRST_MODE)
+  const told = $derived(head?.mode ?? FIRST_MODE)
+  const mode = $derived(openCode && told === 'plan' ? 'approve' : told)
+  const agent = $derived(head ? openCodeAgents.of(head.id) : FIRST_AGENT)
+  const agentAbout = $derived(openCodeAgents.rows.find((one) => one.name === agent)?.description ?? '')
+  async function agentMenu(event: MouseEvent) {
+    const id = head?.id
+    if (!id) return
+    await openCodeAgents.load()
+    const row = (one: { name: string }) => ({
+      label: agentName(one.name),
+      icon: agentIcon(one.name),
+      checked: agent === one.name,
+      run: () => openCodeAgents.choose(id, one.name),
+    })
+    const builtIn = openCodeAgents.rows.filter((one) => one.name === 'build' || one.name === 'plan').map(row)
+    const own = openCodeAgents.rows.filter((one) => one.name !== 'build' && one.name !== 'plan').map(row)
+    menu.show(event, own.length ? [...builtIn, DIVIDER, ...own] : builtIn, { title: 'Agent' })
+  }
+  function nextMode() {
+    if (openCode) chat.setMode(mode === 'approve' ? 'auto' : 'approve')
+    else chat.nextMode()
+  }
   const searching = $derived(chat.chips.some((one) => one.kind === 'web'))
   function toggleWeb() {
     if (searching) chat.chips = chat.chips.filter((one) => one.kind !== 'web')
@@ -530,6 +553,23 @@
           <span>{modeWord(mode)}</span>
           <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
         </button>
+        {#if openCode}
+          <button
+            class="mode agent"
+            {@attach shortcuts.tip(agentAbout || 'Agent')}
+            aria-haspopup="menu"
+            onclick={(event) => void agentMenu(event)}
+            disabled={!head}
+          >
+            <svg class="agent-mark" viewBox="0 0 24 24" aria-hidden="true">
+              {#each agentIcon(agent) as [tag, attrs], index (index)}
+                <svelte:element this={tag} {...attrs} />
+              {/each}
+            </svg>
+            <span>{agentName(agent)}</span>
+            <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+          </button>
+        {/if}
         <span class="gap"></span>
         <Ring {next} />
         <ModelPicker />
@@ -758,6 +798,16 @@
   }
   .plus svg {
     stroke-width: 1.4;
+  }
+  .agent-mark {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .mode {
     flex: none;

@@ -12,3 +12,4 @@ export const { pathMenu, ranked, rememberRail, rememberTaskAsk, rememberTaskMode
 export const { review, sameMention, sayAlways, seconds, SELECTION_CHIP, selectionHere } = parts
 export const { sourcesFor, spaceNamed, switchBranch, TASK_TOOLS, taskAsk, taskMode } = parts
 export const { taskUses, toggleFollow, tokens, verbOf } = parts
+export const { agentName, FIRST_AGENT, openCodeAgents } = parts
