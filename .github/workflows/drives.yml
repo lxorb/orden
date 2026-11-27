@@ -43,16 +43,11 @@ jobs:
           REPO: ${{ github.repository }}
           RUN: ${{ github.run_id }}
           ONLY: ${{ inputs.only }}
-          ACTOR: ${{ github.triggering_actor }}
         run: |
           if [ "$EVENT" != schedule ]; then
             echo "Dispatched: driving $GITHUB_REF_NAME at $GITHUB_SHA."
             nightly=false
             if [ "$GITHUB_REF_NAME" = unstable ] && [ -z "$ONLY" ]; then nightly=true; fi
-            if [ "$nightly" = true ] && [ "$ACTOR" = 'github-actions[bot]' ]; then
-              gh api -X POST "repos/$REPO/actions/workflows/edge.yml/dispatches" -f ref=unstable ||
-                echo "::warning::edge.yml could not be started; no edge build tonight."
-            fi
             { echo "ref=$GITHUB_SHA"; echo go=true; echo "nightly=$nightly"; } >>"$GITHUB_OUTPUT"
             exit 0
           fi
@@ -92,8 +87,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
-          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
+          cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 

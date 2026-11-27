@@ -80,8 +80,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
-          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
+          cache: pnpm
 
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
@@ -222,8 +221,7 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24
-          cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') && 'pnpm' || '' }}
-          package-manager-cache: ${{ !startsWith(github.ref, 'refs/heads/tmp/') }}
+          cache: pnpm
 
       - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
         with:
