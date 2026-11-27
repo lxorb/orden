@@ -6,8 +6,8 @@ import { dndUntil, hush } from './hush.svelte'
 import { ChatNotices, type NoticeWorld } from './notify'
 import { inFront } from './on-screen'
 import { chats } from './store.svelte'
-import { openChat } from './view/open'
 
+const opening = () => import('./view/host-here').then(() => import('./view/open'))
 const world: NoticeWorld = {
   me: () => chats.me,
   chat(chat) {
@@ -43,7 +43,7 @@ const world: NoticeWorld = {
   unshow,
   open(chat, message) {
     const path = chats.entry(chat)?.path
-    if (path) openChat(path, {}, message)
+    if (path) void opening().then(({ openChat }) => openChat(path, {}, message))
   },
   async reply(chat, body, parent) {
     await chats.post(chat, { body, ...(parent ? { parent } : {}) })

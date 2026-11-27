@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { chosenIcon, chosenTint } from '../../../marks/src/api'
+  import { host } from './host'
   import { Icon } from '../../../glyphs/src/api'
   import { readIcon } from '../../../ui-kit/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
 
   const { path }: { path: string | null | undefined } = $props()
-  const chosen = $derived(path ? readIcon(chosenIcon(path)) : null)
-  const tint = $derived(path ? chosenTint(path) : null)
+  const chosen = $derived(path ? readIcon(host().chosenIcon(path)) : null)
+  const tint = $derived(path ? host().chosenTint(path) : null)
 </script>
 
 {#if chosen}

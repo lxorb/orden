@@ -166,6 +166,7 @@ export async function draftMessage(call: Call): Promise<AgentAnswer> {
   const { store, chat, words } = await writing(call)
   const parent = maybe(call, 'reply_to') ?? undefined
   if (chat.entry.path) {
+    await import('./view/host-here')
     const { openChat } = await import('./view/open')
     openChat(chat.entry.path, { activate: false })
   }

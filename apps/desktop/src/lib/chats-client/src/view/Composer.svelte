@@ -6,7 +6,6 @@
   import { chooseFiles } from '../../../ui-controls/src/api'
   import { localDate, localNumber, dur, fade, scale, insideSpace, afterQuiet } from '../../../platform/src/api'
   import { DIVIDER, longPress, menu } from '../../../ui-kit/src/api'
-  import { shortcuts } from '../../../shortcuts/src/api'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { Attachments } from './attachments.svelte'
   import type { Scheduled } from '../shapes'
@@ -72,6 +71,7 @@
     const notes = chatsHost().noteIndex(path)
     const openNote = chatsHost().noteOpener(path)
     const writeLink = chatsHost().writeLink()
+    const keys = chatsHost().editorKeys()
     const made = createEditor({
       parent: host,
       doc: store().draft(untrack(() => draftKey)),
@@ -90,7 +90,7 @@
       ...(openNote ? { openNote } : {}),
       ...(writeLink ? { writeLink } : {}),
       openLink: (href, press) => chatsHost().followHref(href, press),
-      shortcuts: shortcuts.forEditor,
+      ...(keys ? { shortcuts: keys } : {}),
       trustedMarkup: false,
     })
     const typing = chatsHost().editorModes()
@@ -266,7 +266,7 @@
       onrows()
       return
     }
-    if (shortcuts.pressed('chat.record', event)) {
+    if (chatsHost().pressed('chat.record', event)) {
       spend()
       recording = true
     }
@@ -414,7 +414,7 @@
           type="button"
           class="tool"
           aria-label="Voice message"
-          {@attach shortcuts.tip('Voice message', 'chat.record')}
+          {@attach chatsHost().keyTip('Voice message', 'chat.record')}
           onclick={() => (recording = true)}
           in:scale={{ start: 0.7, duration: dur(130) }}><Glyph name="mic" /></button
         >

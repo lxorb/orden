@@ -3,7 +3,6 @@
   import { onDestroy, untrack } from 'svelte'
   import { carriedFiles, carriesFiles, dropOver, isTreeDrag, viewport } from '../../../ui-kit/src/api'
   import { EmojiPicker } from '../../../emoji/src/api'
-  import { shortcuts } from '../../../shortcuts/src/api'
   import { samePath } from '../../../platform/src/api'
   import type { Tab } from '../../../documents/src/api'
   import { host } from './host'
@@ -24,7 +23,12 @@
   import Tip from './Tip.svelte'
   import { boxOf } from './tips.svelte'
 
-  const { tab }: { tab: Tab } = $props()
+  const {
+    tab = null,
+    chat = null,
+    message = null,
+  }: { tab?: Tab | null; chat?: string | null; message?: string | null } = $props()
+  const path = $derived(tab?.path ?? null)
   const NARROWEST_BESIDE = 640
   let page = $state<ChatPage | null>(null)
   let missing = $state(false)
@@ -46,7 +50,7 @@
   let dropping = $state(false)
   let sheetFor = $state<string | null>(null)
   const space = $derived(page?.entry?.space ?? null)
-  const lentName = $derived(tab.note.shared ? chatName(tab.note.name) : null)
+  const lentName = $derived(tab?.note.shared ? chatName(tab.note.name) : null)
   const phone = $derived(viewport.device === 'phone')
   const narrow = $derived(phone || (width > 0 && width < NARROWEST_BESIDE))
   const membersShown = $derived(
@@ -58,11 +62,11 @@
     else membersOpen.toggle(page.id)
   }
   $effect(() => {
-    const path = tab.path
-    const lent = tab.note.shared ? (chatOf(tab.note.text)?.chat ?? null) : null
-    if ((!path && !lent) || !store().ready) return
+    const at = path
+    const lent = tab?.note.shared ? (chatOf(tab.note.text)?.chat ?? null) : chat
+    if ((!at && !lent) || !store().ready) return
     untrack(() => {
-      void (path ? store().chatAt(path) : Promise.resolve(lent)).then((id) => {
+      void (at ? store().chatAt(at) : Promise.resolve(lent)).then((id) => {
         missing = !id
         if (!id || page?.id === id) return
         page?.close()
@@ -71,18 +75,22 @@
     })
   })
   function jumpWaiting() {
-    if (!page?.ready || !tab.path) return
-    const message = takeJump(tab.path)
-    if (message) void page.jump(message)
+    if (!page?.ready) return
+    const waiting = path ? takeJump(path) : null
+    if (waiting) void page.jump(waiting)
   }
   $effect(() => {
     if (page?.ready) untrack(jumpWaiting)
   })
   $effect(() =>
-    hearJumps((path) => {
-      if (tab.path && samePath(path, tab.path)) jumpWaiting()
+    hearJumps((asked) => {
+      if (path && samePath(asked, path)) jumpWaiting()
     }),
   )
+  $effect(() => {
+    const to = message
+    if (page?.ready && to) untrack(() => void page?.jump(to))
+  })
   $effect(() => {
     const id = page?.id
     if (id) return onScreen(id)
@@ -111,15 +119,15 @@
   }
   function onKey(event: KeyboardEvent) {
     if (!page) return
-    if (shortcuts.pressed('chat.jump-new', event)) {
+    if (host().pressed('chat.jump-new', event)) {
       event.preventDefault()
       event.stopPropagation()
       timeline?.toNew()
-    } else if (shortcuts.pressed('chat.search', event)) {
+    } else if (host().pressed('chat.search', event)) {
       event.preventDefault()
       event.stopPropagation()
       page.search()
-    } else if (shortcuts.pressed('chat.members', event)) {
+    } else if (host().pressed('chat.members', event)) {
       event.preventDefault()
       event.stopPropagation()
       toggleMembers()
@@ -159,7 +167,7 @@
   class="chat-tab"
   class:narrow
   class:dropping
-  data-chat-drop={tab.id}
+  data-chat-drop={tab?.id ?? chat}
   bind:clientWidth={width}
   onkeydowncapture={onKey}
   use:dropOver={dragging}
@@ -202,7 +210,7 @@
           bind:this={composer}
           page={open}
           {space}
-          path={tab.path}
+          {path}
           onrows={() => timeline?.focusRows()}
           onescape={() => void timeline?.toBottom()}
           onpicker={composePicker}
@@ -216,7 +224,7 @@
           page={open}
           parent={open.replying}
           {space}
-          path={tab.path}
+          {path}
           width={narrow ? width : Math.min(420, Math.max(320, width * 0.36))}
           onclose={() => {
             open.replying = null

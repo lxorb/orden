@@ -6,7 +6,7 @@
   import { downloadStarted } from '../../../downloads/src/api'
   import { dur, fly, localNumber } from '../../../platform/src/api'
   import { host } from './host'
-  import { Avatar, showProfile } from '../../../accounts-ui/src/api'
+  import { Avatar } from '../../../accounts-ui/src/api'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import { drawing, Glyph } from '../../../chat-kit/src/api'
   import type { ChatPage } from './chat.svelte'
@@ -121,7 +121,7 @@
   }
   function profile(event: MouseEvent) {
     const id = accountOf(message.author)
-    if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
+    if (id && event.currentTarget instanceof Element) host().showProfile?.(id, event.currentTarget, space)
   }
   const history = $derived(message.history.map((one) => `${timeOf(one.at)}  ${one.body}`).join('\n'))
 </script>

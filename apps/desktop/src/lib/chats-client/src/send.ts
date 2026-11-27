@@ -7,7 +7,6 @@ import { workspace } from '../../workspace/src/api'
 import { headingAbove, sentWords } from './sent-words'
 import { openChat } from './view/open'
 import { store } from './view/source.svelte'
-import { places } from './where'
 
 const NEW = '\0new'
 export async function sendToChat(note: string, quote?: { text: string; heading?: string | null }): Promise<void> {
@@ -15,7 +14,7 @@ export async function sendToChat(note: string, quote?: { text: string; heading?:
     account.ask()
     return
   }
-  await places()
+  await import('./view/host-here')
   const chats = store()
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))

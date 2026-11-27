@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { host } from './host'
   import { elapsed } from '../../../platform/src/api'
   import type { FileRef } from '@orden/chats'
   import { MOST_VOICE_SECONDS } from '@orden/chats/limits'
@@ -6,7 +7,6 @@
   import { message as errorWords } from '../../../ui-kit/src/api'
   import type { VoiceRecording } from '@orden/contracts'
   import { recordVoice } from '../voice'
-  import { shortcuts } from '../../../shortcuts/src/api'
   import { Glyph } from '../../../chat-kit/src/api'
   import { sound } from './prepare'
   import { put } from './attachments.svelte'
@@ -31,7 +31,7 @@
       .catch((error: unknown) => (refused = errorWords(error, 'Record')))
     const keys = (event: KeyboardEvent) => {
       if (event.key === 'Escape') cancel()
-      else if (event.key === 'Enter' || shortcuts.pressed('chat.record', event)) void send()
+      else if (event.key === 'Enter' || host().pressed('chat.record', event)) void send()
       else return
       event.preventDefault()
       event.stopPropagation()

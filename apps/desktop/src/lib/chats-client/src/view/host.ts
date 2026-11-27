@@ -1,6 +1,7 @@
 import type { Message } from '@orden/chats'
 import type { OpenHow } from '@orden/contracts'
-import type { LinkPress, LinkWrite, ModeSettings, NoteIndex, NoteOpener } from '@orden/editor'
+import type { KeyOverrides, LinkPress, LinkWrite, ModeSettings, NoteIndex, NoteOpener } from '@orden/editor'
+import type { Component } from 'svelte'
 import type { ChatEntry } from '../shapes'
 import type { ChatPage } from './chat.svelte'
 
@@ -43,6 +44,13 @@ export interface ChatsView {
   openNote(path: string): void
   retired(chat: string): boolean
   membersWidth(): MembersWidth
+  pressed(id: string, event: KeyboardEvent): boolean
+  editorKeys(): KeyOverrides | undefined
+  keyTip(label: string, id: string): (node: HTMLElement) => (() => void) | undefined
+  chosenIcon(path: string): string | null
+  chosenTint(path: string): string | null
+  noteMark: Component<{ path: string }> | null
+  showProfile: ((id: string, from: Element, space: string | null) => void) | null
   keeps(entry: ChatEntry | null): boolean
   saveAsNote: ((page: ChatPage, message: Message, space: string | null) => Promise<void>) | null
   addAsTask: ((page: ChatPage, message: Message, space: string | null) => void) | null
@@ -87,6 +95,13 @@ const NOWHERE: ChatsView = {
   openNote: () => undefined,
   retired: () => false,
   membersWidth: () => FIXED,
+  pressed: () => false,
+  editorKeys: () => undefined,
+  keyTip: () => () => undefined,
+  chosenIcon: () => null,
+  chosenTint: () => null,
+  noteMark: null,
+  showProfile: null,
   keeps: () => false,
   saveAsNote: null,
   addAsTask: null,
