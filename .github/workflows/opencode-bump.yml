@@ -27,7 +27,7 @@ jobs:
           else
             {
               echo '```diff'
-              git diff -- apps/desktop/src-tauri/opencode.json
+              git diff -- apps/desktop/src-tauri/opencode.json packaging/nix/opencode.json
               echo '```'
             } >>"$GITHUB_STEP_SUMMARY"
           fi
@@ -39,6 +39,7 @@ jobs:
           path: |
             apps/desktop/src-tauri/opencode.json
             apps/desktop/src-tauri/licenses/opencode.txt
+            packaging/nix/opencode.json
           if-no-files-found: error
 
   contract:
@@ -71,7 +72,7 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: opencode
-          path: apps/desktop/src-tauri
+          path: .
 
       - uses: ./.github/actions/desktop-setup
         with:
@@ -103,14 +104,14 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: opencode
-          path: apps/desktop/src-tauri
+          path: .
 
       - name: Commit the bump
         run: |
           version=$(node -p "require('./apps/desktop/src-tauri/opencode.json').version")
           git config user.name lxorbs-minion
           git config user.email 43935334+lxorbs-minion@users.noreply.github.com
-          git add apps/desktop/src-tauri/opencode.json apps/desktop/src-tauri/licenses/opencode.txt
+          git add apps/desktop/src-tauri/opencode.json apps/desktop/src-tauri/licenses/opencode.txt packaging/nix/opencode.json
           git commit -m "chore: OpenCode $version" -m "Co-authored-by: lxorb <101118850+lxorb@users.noreply.github.com>"
           pushed=
           for _ in 1 2 3; do

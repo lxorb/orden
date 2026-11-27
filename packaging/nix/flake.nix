@@ -33,6 +33,44 @@
         else
           null;
 
+      opencodePin = builtins.fromJSON (builtins.readFile ./opencode.json);
+      opencodeFor =
+        pkgs:
+        let
+          platform =
+            {
+              x86_64-linux = "linux-x64-baseline";
+              aarch64-linux = "linux-arm64";
+            }
+            .${pkgs.stdenv.hostPlatform.system};
+        in
+        pkgs.stdenv.mkDerivation {
+          pname = "orden-opencode";
+          inherit (opencodePin) version;
+          src = pkgs.fetchurl {
+            url = "https://registry.npmjs.org/opencode-${platform}/-/opencode-${platform}-${opencodePin.version}.tgz";
+            hash = "sha512-${opencodePin.sha512.${platform}}";
+          };
+          dontConfigure = true;
+          dontBuild = true;
+          dontStrip = true;
+          dontPatchELF = true;
+          installPhase = ''
+            install -Dm755 bin/opencode $out/bin/opencode
+          '';
+          postFixup = ''
+            patchelf --set-interpreter ${pkgs.stdenv.cc.bintools.dynamicLinker} \
+              ${pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isAarch64 "--page-size 65536"} \
+              $out/bin/opencode
+          '';
+          meta = {
+            description = "The OpenCode engine Orden pins, set up for Nix's loader";
+            homepage = "https://opencode.ai";
+            license = pkgs.lib.licenses.mit;
+            sourceProvenance = [ pkgs.lib.sourceTypes.binaryNativeCode ];
+          };
+        };
+
       fromSource = {
         pname = "orden-source";
         version = "0.0.0-unstable";
@@ -207,9 +245,6 @@
                 install -d $out/libexec
                 cp -r usr/share/Orden $out/libexec/${pname}
                 rm -f $out/libexec/${pname}/chrome-sandbox
-                if [ -e $out/libexec/${pname}/opencode ]; then
-                  mv $out/libexec/${pname}/opencode $NIX_BUILD_TOP/opencode
-                fi
               ''
             else
               ''
@@ -241,12 +276,6 @@
                 [ -f "$one" ] && [ ! -L "$one" ] || continue
                 patchelf --add-rpath ${pkgs.lib.makeLibraryPath (openedFor pkgs)} "$one"
               done
-              if [ -e $NIX_BUILD_TOP/opencode ]; then
-                install -m755 $NIX_BUILD_TOP/opencode $out/libexec/${pname}/opencode
-                patchelf --set-interpreter ${pkgs.stdenv.cc.bintools.dynamicLinker} \
-                  ${pkgs.lib.optionalString pkgs.stdenv.hostPlatform.isAarch64 "--page-size 65536"} \
-                  $out/libexec/${pname}/opencode
-              fi
             ''
             + ''
             makeShellWrapper $out/libexec/${pname}/orden $out/bin/${pname} \
@@ -255,6 +284,7 @@
               --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
           ''
           + pkgs.lib.optionalString onCef ''
+            --set ORDEN_OPENCODE_BIN ${opencodeFor pkgs}/bin/opencode \
             --run '. ${./userns.sh}'
           ''
           + pkgs.lib.optionalString (!onCef) ''
@@ -399,7 +429,8 @@
               makeWrapper $out/libexec/${pname}/orden $out/bin/${pname} \
                 --inherit-argv0 \
                 ''${gappsWrapperArgs[@]} \
-                --prefix PATH : ${lib.makeBinPath [ pkgs.xdg-utils ]}
+                --prefix PATH : ${lib.makeBinPath [ pkgs.xdg-utils ]} \
+                --set ORDEN_OPENCODE_BIN ${opencodeFor pkgs}/bin/opencode
             '';
 
             meta = {

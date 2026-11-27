@@ -1,0 +1,20 @@
+{
+  "version": "1.19.6",
+  "bun": "1.4.4",
+  "sha512": {
+    "linux-x64-baseline": "514i1cj8ZGcgQKXg3EqAe2YVV5ID7EK3u6LuIqsSPhpVnWDwWjiJejYzhOWHbRMYpfbVbt6DHabs9BUbwHn7zg==",
+    "linux-arm64": "WnlZe6BgxKMeauniWrfiKNSq2tkz4FGwAdsBMeN5WPwsxURVu6Qm2eQuv1SvmJYGEmNKxyVfX3m1worvcP+c9Q==",
+    "darwin-arm64": "GZjEsOTlr/e8fUF+lsFtTJGNIyHfUZcN9+iN6uXAbsH6t1PJABZrWE+5Lu2raX7g/EUXXCCB9NJ9L0AyMcWkKA==",
+    "darwin-x64-baseline": "UkAI+p9HgDEnAlCOBLTAIqN4gW2+7yBEJxlNeioI1393n9RuMpJlHcOscvJG6yZn+wRRaFlSN2ct4sSLHGMhBQ==",
+    "windows-x64-baseline": "oUE9xI2iSucbdg4agPyQZeEpR3Ma06I2cchvWi6tUujSFAiLj4WjkYfMSxNRjIwOkVhDQ3Sh840bweMzRTExNg==",
+    "windows-arm64": "vs0YKh09rQyDcr5bro3WL3MewGVT5EuPr990RtJFMk7o1fmUeGHAMlpMn42m50GsQpBEjRhG6JWbP5QEp7Mpvw=="
+  },
+  "bytes": {
+    "linux-x64-baseline": 79341311,
+    "linux-arm64": 78132480,
+    "darwin-arm64": 64025014,
+    "darwin-x64-baseline": 68832727,
+    "windows-x64-baseline": 79835464,
+    "windows-arm64": 73529582
+  }
+}

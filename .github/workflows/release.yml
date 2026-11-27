@@ -121,16 +121,13 @@ jobs:
           target: ${{ matrix.target }}
           node-cache: ${{ matrix.platform != 'ubuntu-24.04-arm' }}
 
-      - name: OpenCode
-        shell: bash
-        run: node scripts/opencode.mjs fetch ${{ matrix.target }}
-
       - name: The shell OpenCode runs commands through on Windows
         if: runner.os == 'Windows'
         shell: bash
         working-directory: apps/desktop/src-tauri
         run: |
           cargo build -p orden-opencode --bin orden-shell --release --target ${{ matrix.target }}
+          mkdir -p binaries
           cp target/${{ matrix.target }}/release/orden-shell.exe binaries/orden-shell-${{ matrix.target }}.exe
 
       - name: Build the app
@@ -149,28 +146,6 @@ jobs:
             --ignore-version-mismatches \
             --config '{"version":"${{ needs.version.outputs.version }}"}' \
             --config "$(node scripts/opencode.mjs config ${{ matrix.target }})"
-          if [ "$RUNNER_OS" = Linux ]; then
-            bash scripts/appimage-carry.sh "$(ls apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage | head -1)" \
-              apps/desktop/src-tauri/binaries/opencode-${{ matrix.target }} shared/bin/opencode \
-              apps/desktop/src-tauri/licenses/opencode.txt shared/bin/opencode-licenses.txt
-          fi
-
-      - name: The OpenCode it carries serves
-        shell: bash
-        run: |
-          bundle=apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle
-          if [ "$RUNNER_OS" = Windows ]; then
-            bash scripts/opencode-check.sh apps/desktop/src-tauri/target/${{ matrix.target }}/release/opencode.exe
-            exit 0
-          fi
-          out=$(mktemp -d)
-          dpkg-deb -x "$(ls "$bundle"/deb/*.deb | head -1)" "$out/deb"
-          bash scripts/opencode-check.sh "$out/deb/usr/share/Orden/opencode"
-          test -s "$out/deb/usr/share/Orden/opencode-licenses.txt"
-          image=$(realpath "$(ls "$bundle"/appimage/*.AppImage | head -1)")
-          (cd "$out" && "$image" --appimage-extract >/dev/null)
-          bash scripts/opencode-check.sh "$out/squashfs-root/shared/bin/opencode"
-          test -s "$out/squashfs-root/shared/bin/opencode-licenses.txt"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -290,10 +265,6 @@ jobs:
         with:
           target: ${{ matrix.target }}
 
-      - name: OpenCode
-        shell: bash
-        run: node scripts/opencode.mjs fetch ${{ matrix.target }}
-
       - name: Apple signing
         shell: bash
         env:
@@ -323,20 +294,10 @@ jobs:
           source scripts/edge-profile.sh
           bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} \
             --ignore-version-mismatches \
-            --config '{"version":"${{ needs.version.outputs.version }}"}' \
-            --config "$(node scripts/opencode.mjs config ${{ matrix.target }})"
+            --config '{"version":"${{ needs.version.outputs.version }}"}'
           app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
           ls "$app/Contents/Frameworks"
           du -sh "$app" apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-
-      - name: The OpenCode it carries serves, signed
-        shell: bash
-        run: |
-          app=$(ls -d apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app | head -1)
-          codesign --verify --strict --verbose=2 "$app/Contents/MacOS/opencode"
-          codesign -d --entitlements - "$app/Contents/MacOS/opencode" 2>&1 | grep -E 'allow-jit|Authority|TeamIdentifier' || true
-          test -s "$app/Contents/Resources/opencode-licenses.txt"
-          bash scripts/opencode-check.sh "$app/Contents/MacOS/opencode"
 
       - name: Orden finds and starts the OpenCode it carries
         shell: bash

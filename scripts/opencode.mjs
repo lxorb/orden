@@ -7,6 +7,7 @@ import { gunzipSync } from 'node:zlib'
 
 const APP = fileURLToPath(new URL('../apps/desktop/src-tauri/', import.meta.url))
 const PIN = join(APP, 'opencode.json')
+const NIX_PIN = fileURLToPath(new URL('../packaging/nix/opencode.json', import.meta.url))
 const LICENSES = 'licenses/opencode.txt'
 const REGISTRY = 'https://registry.npmjs.org'
 const PLATFORMS = {
@@ -69,24 +70,14 @@ async function fetchOne(triple, { version, sha512 }) {
   return out
 }
 function config(triple) {
-  const binary = binaryOf(triple)
-  if (!triple.includes('linux')) {
-    return {
-      bundle: {
-        externalBin: windows(triple) ? ['binaries/opencode', 'binaries/orden-shell'] : ['binaries/opencode'],
-        resources: { [LICENSES]: 'opencode-licenses.txt' },
-      },
-    }
-  }
-  const beside = { '/usr/share/Orden/opencode': binary, '/usr/share/Orden/opencode-licenses.txt': LICENSES }
-  return {
-    bundle: {
-      linux: {
-        deb: { files: beside },
-        rpm: { files: beside },
-      },
-    },
-  }
+  return windows(triple) ? { bundle: { externalBin: ['binaries/orden-shell'] } } : {}
+}
+async function sizeOf(url) {
+  const response = await fetch(url, { headers: { range: 'bytes=0-0' } })
+  await response.arrayBuffer()
+  const size = Number(/\/(\d+)$/.exec(response.headers.get('content-range') ?? '')?.[1])
+  if (response.status !== 206 || !Number.isSafeInteger(size) || size <= 0) throw new Error(`${url} says no size`)
+  return size
 }
 async function latest() {
   return (await (await get(`${REGISTRY}/opencode-ai/latest`)).json()).version
@@ -98,11 +89,11 @@ async function licenses({ version, bun }) {
   const text = [
     `Orden ships OpenCode ${version} (https://opencode.ai), which runs on Bun ${bun} (https://bun.sh).`,
     '',
-    `OpenCode ${version}`,
+    `# OpenCode ${version}`,
     '',
     opencode.trim(),
     '',
-    `Bun ${bun}, with the projects it is built from`,
+    `# Bun ${bun}, with the projects it is built from`,
     '',
     runtime.trim(),
     '',
@@ -118,20 +109,22 @@ async function bump() {
     return false
   }
   const sha512 = {}
+  const bytes = {}
   for (const platform of Object.values(PLATFORMS)) {
     const meta = await (await get(`${REGISTRY}/opencode-${platform}/${version}`)).json()
     const [kind, digest] = String(meta.dist?.integrity ?? '').split('-')
     if (kind !== 'sha512' || !digest) throw new Error(`opencode-${platform} ${version} names no sha512`)
     sha512[platform] = digest
+    bytes[platform] = await sizeOf(tarball(platform, version))
   }
-  const next = { version, bun: now.bun, sha512 }
+  const next = { version, bun: now.bun, sha512, bytes }
   const binary = await fetchOne('x86_64-unknown-linux-gnu', next)
   const said = readFileSync(binary)
     .toString('latin1')
     .match(/bun-v(\d+\.\d+\.\d+)/)
   if (!said) throw new Error(`OpenCode ${version} does not say which Bun it runs on`)
   next.bun = said[1]
-  writeFileSync(PIN, `${JSON.stringify(next, null, 2)}\n`)
+  for (const file of [PIN, NIX_PIN]) writeFileSync(file, `${JSON.stringify(next, null, 2)}\n`)
   await licenses(next)
   console.log(`OpenCode ${now.version} -> ${version}, Bun ${now.bun} -> ${next.bun}`)
   return true
