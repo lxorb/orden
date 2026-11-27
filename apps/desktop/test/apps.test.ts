@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { distOf, leftOut, ORDEN_APPS, ordenApp } from '../app-build'
+import { distOf, entryOf, leftOut, ORDEN_APPS, ordenApp } from '../app-build'
+import left from '../left-out.json'
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const TAURI = join(APP, 'src-tauri')
@@ -72,6 +73,37 @@ describe('the apps one project builds (#2286)', () => {
     }
     expect(existsSync(join(TAURI, 'tauri.notes.conf.json'))).toBe(true)
   })
+  test('each build their own page, and only Orden Notes shares the whole Orden’s', () => {
+    expect(ORDEN_APPS.map(entryOf)).toEqual(['index.html', 'index.html', 'todo.html', 'chat.html', 'track.html'])
+    const config = read(APP, 'vite.config.ts')
+    expect(config).toContain('{ main: resolve(import.meta.dirname, entryOf(app)) }')
+    expect(config).not.toMatch(/'notes'|"notes"/)
+  })
+  test('with a page have all of an overlay, a list of what they leave out and a build script, or none of them', () => {
+    const scripts = (JSON.parse(read(APP, 'package.json')) as { scripts: Record<string, string> }).scripts
+    const built: string[] = []
+    for (const app of ORDEN_APPS.filter((one) => one !== 'orden')) {
+      const parts = {
+        page: existsSync(join(APP, entryOf(app))),
+        overlay: existsSync(join(TAURI, `tauri.${app}.conf.json`)),
+        list: leftOut(app).length > 0,
+        script: `build:${app}` in scripts,
+      }
+      const held = Object.values(parts).filter(Boolean).length
+      expect([0, 4], `${app} ${JSON.stringify(parts)}`).toContain(held)
+      if (held === 4) built.push(app)
+    }
+    expect(built).toContain('notes')
+    expect(Object.keys(left).sort()).toEqual([...built].sort())
+  })
+  test('run their own tests under their own build constant, with no app named in the config', () => {
+    const config = read(APP, 'vitest.config.ts')
+    expect(config).toContain("const APPS = ORDEN_APPS.filter((app) => app !== 'orden')")
+    expect(config).toContain("define: { __ORDEN_APP__: JSON.stringify(app), __AI__: 'false' }")
+    expect(config).toContain('include: [`src/**/*.${app}.test.ts`, `test/**/*.${app}.test.ts`]')
+    expect(config).toContain('...APPS.map((app) => `**/*.${app}.test.ts`)')
+    for (const app of ORDEN_APPS.filter((one) => one !== 'orden')) expect(config, app).not.toContain(`'${app}'`)
+  })
   test('Orden Notes is checked for the modules it leaves out, on every push', () => {
     const guard = read(APP, '..', '..', 'scripts', 'app-modules.mjs')
     const kept = guard.slice(guard.indexOf('const AI = ['), guard.indexOf('export async function check'))
@@ -97,6 +129,8 @@ describe('the apps one project builds (#2286)', () => {
       expect(leftOut('notes'), name).toContain(name)
     expect(leftOut('orden')).toEqual([])
     const workflow = read(APP, '..', '..', '.github', 'workflows', 'check.yml')
-    expect(workflow).toContain('node scripts/app-modules.mjs --check notes')
+    expect(workflow).toMatch(/run: node scripts\/app-modules\.mjs --check\n/)
+    expect(guard).toContain('for (const one of app ? [app] : Object.keys(KEPT_OUT))')
+    expect(guard).not.toContain("'notes'")
   })
 })

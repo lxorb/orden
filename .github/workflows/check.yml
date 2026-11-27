@@ -95,8 +95,8 @@ jobs:
       - name: Module boundaries
         run: node scripts/modules.mjs --check
 
-      - name: What Orden Notes leaves out
-        run: node scripts/app-modules.mjs --check notes
+      - name: What each phone app leaves out
+        run: node scripts/app-modules.mjs --check
 
       - name: Contract tests, each module alone
         run: node scripts/modules.mjs --contracts ts

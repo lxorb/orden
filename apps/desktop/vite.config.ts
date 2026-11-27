@@ -8,7 +8,7 @@ import { dirOnWords } from './svelte-dir'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 import { carriesAi } from './ai-build'
-import { distOf, leftOut, ordenApp } from './app-build'
+import { distOf, entryOf, leftOut, ordenApp } from './app-build'
 
 const host = process.env.TAURI_DEV_HOST
 const AI_MODULES =
@@ -136,7 +136,7 @@ export default defineConfig(({ command, mode }) => {
                 passLink: resolve(import.meta.dirname, 'pass-link.html'),
                 pass: resolve(import.meta.dirname, 'pass.html'),
               }
-            : { main: resolve(import.meta.dirname, 'index.html') },
+            : { main: resolve(import.meta.dirname, entryOf(app)) },
       },
     },
   }

@@ -45,17 +45,21 @@ export async function check(app) {
   }
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const [mode, app = 'notes'] = process.argv.slice(2)
+  const [mode, app] = process.argv.slice(2)
   if (mode === '--check') {
-    const problems = await check(app)
-    for (const problem of problems) console.error(problem)
-    if (!problems.length) console.log(`${app} carries none of: ${KEPT_OUT[app].join(', ')}`)
-    process.exit(problems.length ? 1 : 0)
-  } else if (mode === '--list') {
+    let failed = false
+    for (const one of app ? [app] : Object.keys(KEPT_OUT)) {
+      const problems = await check(one)
+      for (const problem of problems) console.error(problem)
+      if (!problems.length) console.log(`${one} carries none of: ${KEPT_OUT[one].join(', ')}`)
+      failed ||= problems.length > 0
+    }
+    process.exit(failed ? 1 : 0)
+  } else if (mode === '--list' && app) {
     const held = await modulesOf(app)
     for (const [name, bytes] of [...held].sort((a, b) => b[1] - a[1])) console.log(`${name} ${bytes}`)
   } else {
-    console.error('usage: node scripts/app-modules.mjs (--check | --list) [app]')
+    console.error('usage: node scripts/app-modules.mjs --check [app] | --list <app>')
     process.exit(2)
   }
 }

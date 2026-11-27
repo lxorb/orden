@@ -11,6 +11,9 @@ export function ordenApp(said = process.env.ORDEN_APP ?? ''): OrdenApp {
 export function distOf(app: OrdenApp): string {
   return app === 'orden' ? 'dist' : `dist-${app}`
 }
+export function entryOf(app: OrdenApp): string {
+  return app === 'orden' || app === 'notes' ? 'index.html' : `${app}.html`
+}
 export function leftOut(app: OrdenApp): readonly string[] {
   return (left as Partial<Record<OrdenApp, readonly string[]>>)[app] ?? []
 }
