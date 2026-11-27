@@ -2,8 +2,10 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defaultExclude, defineConfig } from 'vitest/config'
 import { emojiOutlines } from './emoji-outlines'
 import { dirOnWords } from './svelte-dir'
+import { ORDEN_APPS } from './app-build'
 
 const clocks = { hookTimeout: 30000, testTimeout: 30000 }
+const APPS = ORDEN_APPS.filter((app) => app !== 'orden')
 export default defineConfig({
   plugins: [svelte(), dirOnWords(), emojiOutlines()],
   define: {
@@ -25,24 +27,24 @@ export default defineConfig({
           name: 'node',
           css: true,
           include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
-          exclude: [...defaultExclude, '**/*.effect.test.ts', '**/*.notes.test.ts'],
+          exclude: [...defaultExclude, '**/*.effect.test.ts', ...APPS.map((app) => `**/*.${app}.test.ts`)],
           environment: 'node',
           setupFiles: ['test/loads.ts', 'src/lib/backend-ports.ts'],
           ...clocks,
         },
       },
-      {
-        extends: true,
-        define: { __ORDEN_APP__: JSON.stringify('notes'), __AI__: 'false' },
+      ...APPS.map((app) => ({
+        extends: true as const,
+        define: { __ORDEN_APP__: JSON.stringify(app), __AI__: 'false' },
         test: {
-          name: 'notes',
+          name: app,
           css: true,
-          include: ['src/**/*.notes.test.ts', 'test/**/*.notes.test.ts'],
-          environment: 'node',
+          include: [`src/**/*.${app}.test.ts`, `test/**/*.${app}.test.ts`],
+          environment: 'node' as const,
           setupFiles: ['test/loads.ts', 'src/lib/backend-ports.ts'],
           ...clocks,
         },
-      },
+      })),
       {
         extends: true,
         resolve: { conditions: ['browser'] },
