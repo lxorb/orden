@@ -24,7 +24,7 @@ The text comes from the official templates at https://www.harmonyagreements.org/
 | Section 2.3, outbound licence | Option Five (any licence, and always also the licence in use for Orden on the day of the contribution). Options One to Four are removed, as the template intends. |
 | Section 2.3, optional sentence on media licences | left out, because Option Five already covers media |
 | `[JURISDICTION]` in section 6.1 | Switzerland |
-| Signature block, "Us" | Emil Vinu, maintainer of Orden |
+| Signature block, "Us" | Emil Vinu, maintainer of Orden. The address is the contact email contributors@orden.so; no postal address is given, and the unused second address line is dropped. |
 
 The template has no clause naming a court, so none was added.
 
