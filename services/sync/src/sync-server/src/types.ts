@@ -45,10 +45,12 @@ export interface Env {
   VAPID_PRIVATE_KEY?: string
   VAPID_SUBJECT?: string
   FCM_SERVICE_ACCOUNT?: string
+  FCM_ORIGIN?: string
   APNS_KEY?: string
   APNS_KEY_ID?: string
   APNS_TEAM_ID?: string
   APNS_TOPIC?: string
+  APNS_TOPIC_CHAT?: string
   APNS_SANDBOX?: string
 }
 export interface EmailSender {

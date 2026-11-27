@@ -1,10 +1,13 @@
 import { pemKey, signedToken } from './keys'
 import type { Delivery } from './send'
 
+const GOOGLE_TOKENS = 'https://oauth2.googleapis.com/token'
+const FCM = 'https://fcm.googleapis.com'
 interface ServiceAccount {
   client_email: string
   private_key: string
   project_id: string
+  token_uri?: string
 }
 function account(json: string): ServiceAccount | null {
   try {
@@ -23,13 +26,13 @@ async function accessToken(service: ServiceAccount, now: number, send: typeof fe
     {
       iss: service.client_email,
       scope: 'https://www.googleapis.com/auth/firebase.messaging',
-      aud: 'https://oauth2.googleapis.com/token',
+      aud: service.token_uri ?? GOOGLE_TOKENS,
       iat,
       exp: iat + 3600,
     },
     await pemKey(service.private_key, 'rsa'),
   )
-  const answer = await send('https://oauth2.googleapis.com/token', {
+  const answer = await send(service.token_uri ?? GOOGLE_TOKENS, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -51,7 +54,7 @@ export async function sendFcm(
   token: string,
   message: Record<string, string>,
   serviceJson: string,
-  options: { now: number; fetch?: typeof fetch },
+  options: { now: number; fetch?: typeof fetch; origin?: string },
 ): Promise<Delivery> {
   const send = options.fetch ?? fetch
   const service = account(serviceJson)
@@ -59,7 +62,7 @@ export async function sendFcm(
   const access = await accessToken(service, options.now, send)
   if (!access) return 'busy'
   const answer = await send(
-    `https://fcm.googleapis.com/v1/projects/${encodeURIComponent(service.project_id)}/messages:send`,
+    `${options.origin ?? FCM}/v1/projects/${encodeURIComponent(service.project_id)}/messages:send`,
     {
       method: 'POST',
       headers: { authorization: `Bearer ${access}`, 'content-type': 'application/json' },

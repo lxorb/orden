@@ -97,8 +97,9 @@ export {
   type Shut,
   shutFor,
 } from './protected'
-export { forgetEndedTargets } from './push/live'
+export { forgetEndedTargets, liveTarget } from './push/live'
 export { forgetReminders, sendDue } from './push/reminders'
+export { push as sendPush, type Target as PushTarget } from './push/send'
 export { push } from './push/targets'
 export { describeDestination, fallbackName, privateHost, redirectAllowed, sameRedirect } from './redirects'
 export {
