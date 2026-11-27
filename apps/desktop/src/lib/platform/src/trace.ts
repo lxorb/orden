@@ -1,3 +1,4 @@
+import { method } from './mobile-bridge'
 import { invoke, isNative } from './tauri'
 
 interface Step {
@@ -17,7 +18,12 @@ export function mark(step: string): void {
   STEPS.push({ step, at: performance.mark(`orden: ${step}`).startTime })
 }
 export function markPainted(step: string): void {
-  requestAnimationFrame(() => requestAnimationFrame(() => mark(step)))
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      mark(step)
+      if (step === 'shell painted') method('drawn')?.()
+    }),
+  )
 }
 export function watchFirstInput(): void {
   const kinds = ['keydown', 'pointerdown'] as const

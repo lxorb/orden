@@ -69,6 +69,34 @@ describe('a phone budget (#2286)', () => {
     expect(judged(table, 'notes', { coldStart: 1 })[0]).toMatchObject({ passed: false })
     expect(judged(table, 'chat', { apkBytes: 1 })[0]?.said).toContain('no budget')
   })
+  test('is held for everything a drive measures, in every app that has a drive', () => {
+    const kit = readFileSync(join(ROOT, 'apps', 'desktop', 'test', 'e2e', 'phone_kit.py'), 'utf8')
+    const gates = [...new Set([...kit.matchAll(/self\.gates\["(\w+)"\]/g)].map((one) => one[1] ?? ''))]
+    expect(gates.sort()).toEqual(
+      ['coldStartP50', 'coldStartP95', 'flingsWithLongFrame', 'framesInTime', 'textScaleFollowed', 'warmP95'].sort(),
+    )
+    const TARGETS: Record<string, number> = {
+      coldStartP50: 1500,
+      coldStartP95: 2500,
+      warmP95: 600,
+      framesInTime: 90,
+      flingsWithLongFrame: 0,
+      textScaleFollowed: 1,
+    }
+    for (const app of ORDEN_APPS) {
+      if (!existsSync(join(ROOT, 'apps', 'desktop', 'test', 'e2e', `${app}-phone.py`))) continue
+      for (const gate of gates) {
+        const budget = held[app]?.[gate]
+        expect(budget?.target, `${app} ${gate}`).toBe(TARGETS[gate])
+        const floor = budget?.least !== undefined
+        const bound = floor ? budget.least : budget?.most
+        expect(bound, `${app} ${gate}`).toBeDefined()
+        if (gate !== 'flingsWithLongFrame') {
+          expect(floor ? Number(bound) >= TARGETS[gate]! : Number(bound) <= TARGETS[gate]!, `${app} ${gate}`).toBe(true)
+        }
+      }
+    }
+  })
   test('is held for the APK of every app that has an overlay, against the size the plan asks for', () => {
     for (const app of ORDEN_APPS) {
       if (app === 'orden' || !existsSync(join(ROOT, 'apps', 'desktop', 'src-tauri', `tauri.${app}.conf.json`))) continue

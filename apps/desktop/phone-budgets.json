@@ -1,5 +1,11 @@
 {
   "notes": {
-    "apkBytes": { "most": 19750000, "target": 31457280 }
+    "apkBytes": { "most": 19750000, "target": 31457280 },
+    "coldStartP50": { "most": 1200, "target": 1500 },
+    "coldStartP95": { "most": 1300, "target": 2500 },
+    "warmP95": { "most": 200, "target": 600 },
+    "framesInTime": { "least": 95, "target": 90 },
+    "flingsWithLongFrame": { "most": 1, "target": 0 },
+    "textScaleFollowed": { "least": 1, "target": 1 }
   }
 }

@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import time
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 import harness
@@ -35,9 +35,229 @@ WHERE = """((selectors) => {
     ratio: devicePixelRatio,
   })
 })"""
+PROBE = """(() => {
+  const TAPS = 'button, a[href], input:not([type=hidden]), select, textarea, summary, [role=button], [role=link],' +
+    ' [role=tab], [role=menuitem], [role=menuitemcheckbox], [role=menuitemradio], [role=option], [role=checkbox],' +
+    ' [role=radio], [role=switch], [role=treeitem], [onclick], [tabindex]:not([tabindex="-1"])'
+  const style = (el) => getComputedStyle(el)
+  const seen = (el) => {
+    const rect = el.getBoundingClientRect()
+    const drawn = style(el)
+    return rect.width > 0 && rect.height > 0 && drawn.visibility !== 'hidden' && rect.bottom > 0 &&
+      rect.top < innerHeight && rect.right > 0 && rect.left < innerWidth
+  }
+  const onTop = (el, rect = el.getBoundingClientRect()) => {
+    const x = Math.min(innerWidth - 1, Math.max(0, rect.left + rect.width / 2))
+    const y = Math.min(innerHeight - 1, Math.max(0, rect.top + rect.height / 2))
+    const hit = document.elementFromPoint(x, y)
+    return !!hit && (el === hit || el.contains(hit) || hit.contains(el))
+  }
+  const named = (el) => {
+    const kind = typeof el.className === 'string' && el.className.trim()
+      ? '.' + el.className.trim().split(/\\s+/).slice(0, 2).join('.') : ''
+    const words = (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 30)
+    return `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${kind} "${words}"`
+  }
+  const all = [...document.querySelectorAll('body *')].filter(seen)
+  const small = all
+    .filter((el) => el.matches(TAPS) && !el.matches(':disabled, [aria-disabled=true]') && onTop(el))
+    .filter((el) => !(el.tagName === 'A' && style(el).display.startsWith('inline')))
+    .map((el) => [el, el.getBoundingClientRect()])
+    .filter(([, rect]) => rect.width < 47.5 || rect.height < 47.5)
+    .map(([el, rect]) => `${named(el)} is ${Math.round(rect.width)} by ${Math.round(rect.height)}`)
+  const taps = all
+    .filter((el) => el.matches(TAPS) && !el.matches(':disabled, [aria-disabled=true]') && onTop(el))
+    .map((el) => [el, el.getBoundingClientRect()])
+  const crowded = []
+  for (let a = 0; a < taps.length; a++) {
+    for (let b = a + 1; b < taps.length; b++) {
+      const [one, first] = taps[a]
+      const [other, second] = taps[b]
+      if (one.contains(other) || other.contains(one)) continue
+      const wide = Math.min(first.right, second.right) - Math.max(first.left, second.left)
+      const tall = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top)
+      if (wide > 1 && tall > 1) crowded.push(`${named(one)} over ${named(other)}`)
+    }
+  }
+  const texts = all
+    .filter((el) => [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
+    .map((el) => {
+      const range = document.createRange()
+      range.selectNodeContents(el)
+      return [el, range.getBoundingClientRect()]
+    })
+    .filter(([el, rect]) => rect.width > 0 && rect.height > 0 && onTop(el, rect))
+  const meant = (drawn) => drawn.textOverflow === 'ellipsis' || (drawn.webkitLineClamp || 'none') !== 'none'
+  const rolls = (value) => value === 'auto' || value === 'scroll'
+  const clipped = texts.filter(([el, rect]) => {
+    if (meant(style(el))) return false
+    for (let up = el; up && up !== document.documentElement; up = up.parentElement) {
+      const drawn = style(up)
+      if (up !== el && meant(drawn)) return false
+      if (rolls(drawn.overflowX) || rolls(drawn.overflowY)) return false
+      if (drawn.overflowX === 'visible' && drawn.overflowY === 'visible') continue
+      const box = up.getBoundingClientRect()
+      if (drawn.overflowX !== 'visible' && (rect.right > box.right + 1 || rect.left < box.left - 1)) return true
+      if (drawn.overflowY !== 'visible' && (rect.bottom > box.bottom + 1 || rect.top < box.top - 1)) return true
+    }
+    return rect.right > innerWidth + 1 || rect.left < -1
+  }).map(([el]) => named(el))
+  const overlapping = []
+  for (let a = 0; a < texts.length; a++) {
+    for (let b = a + 1; b < texts.length; b++) {
+      const [one, first] = texts[a]
+      const [other, second] = texts[b]
+      if (one.contains(other) || other.contains(one)) continue
+      const wide = Math.min(first.right, second.right) - Math.max(first.left, second.left)
+      const tall = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top)
+      if (wide > 2 && tall > 2) overlapping.push(`${named(one)} over ${named(other)}`)
+    }
+  }
+  const context = Object.assign(document.createElement('canvas'), { width: 1, height: 1 })
+    .getContext('2d', { willReadFrequently: true })
+  const laid = (colors, last, alpha) => {
+    context.globalAlpha = 1
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, 1, 1)
+    for (const color of colors) {
+      context.fillStyle = color
+      context.fillRect(0, 0, 1, 1)
+    }
+    if (last) {
+      context.globalAlpha = alpha
+      context.fillStyle = last
+      context.fillRect(0, 0, 1, 1)
+    }
+    return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3)
+  }
+  const light = (rgb) => {
+    const [r, g, b] = rgb.map((one) => {
+      const part = one / 255
+      return part <= 0.03928 ? part / 12.92 : ((part + 0.055) / 1.055) ** 2.4
+    })
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+  }
+  const faint = new Map()
+  let unknown = 0
+  for (const [el] of texts) {
+    if (el.closest(':disabled, [aria-disabled=true]')) continue
+    const grounds = []
+    let alpha = 1
+    let pictured = false
+    for (let up = el; up; up = up.parentElement) {
+      const drawn = style(up)
+      if (drawn.backgroundImage !== 'none') pictured = true
+      grounds.unshift(drawn.backgroundColor)
+      alpha *= Number(drawn.opacity)
+    }
+    if (pictured) {
+      unknown++
+      continue
+    }
+    const drawn = style(el)
+    const ground = light(laid(grounds))
+    const ink = light(laid(grounds, drawn.color, alpha))
+    const ratio = (Math.max(ground, ink) + 0.05) / (Math.min(ground, ink) + 0.05)
+    const size = parseFloat(drawn.fontSize)
+    const large = size >= 24 || (size >= 18.66 && Number(drawn.fontWeight) >= 700)
+    const under = grounds.filter((one) => one !== 'rgba(0, 0, 0, 0)').at(-1)
+    if (ratio < (large ? 3 : 4.5)) faint.set(`${drawn.color} on ${under}`, `${named(el)} at ${ratio.toFixed(2)}`)
+  }
+  return JSON.stringify({
+    small,
+    crowded,
+    clipped,
+    overlapping,
+    faint: [...faint.values()],
+    unknown,
+    wide: document.documentElement.scrollWidth > innerWidth + 1,
+    dark: matchMedia('(prefers-color-scheme: dark)').matches,
+    ratio: devicePixelRatio,
+    inner: [innerWidth, innerHeight],
+    text: (() => {
+      const probe = document.body.appendChild(document.createElement('span'))
+      probe.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;font:16px/1 sans-serif'
+      probe.textContent = 'Orden'
+      const tall = probe.getBoundingClientRect().height
+      probe.remove()
+      return tall
+    })(),
+  })
+})()"""
+CONTROLS = {
+    "button",
+    "link",
+    "textbox",
+    "searchbox",
+    "checkbox",
+    "radio",
+    "switch",
+    "tab",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "combobox",
+    "slider",
+    "spinbutton",
+}
+PAINTED = """(() => {
+  const shell = performance.getEntriesByName('orden: shell painted')[0]
+  const frame = performance.getEntriesByName('orden: first frame painted')[0]
+  const at = (mark) => performance.timeOrigin + mark.startTime
+  return shell && frame ? JSON.stringify([at(shell), at(frame)]) : null
+})()"""
+FLINGS = 5
+STARTS = 20
 say = harness.say
+def ranked(values: list[float], percent: float) -> float:
+    held = sorted(values)
+    return held[min(len(held) - 1, max(0, -(-len(held) * percent // 100) - 1))] if held else float("nan")
+VSYNC = 1e9 / 60
+def frames(stats: str) -> list[tuple[float, bool]]:
+    found = []
+    names: list[str] = []
+    for line in stats.splitlines():
+        cells = [one for one in line.strip().split(",") if one]
+        if cells[:1] == ["Flags"] and "IntendedVsync" in cells and "FrameCompleted" in cells:
+            names = cells
+        elif names and len(cells) >= len(names) and cells[0].isdigit():
+            row = dict(zip(names, (int(one) for one in cells), strict=False))
+            if row["Flags"] != 0 or row["FrameCompleted"] <= 0:
+                continue
+            due = row.get("FrameDeadline") or row["IntendedVsync"] + VSYNC
+            lasted = (row["FrameCompleted"] - row["IntendedVsync"]) / 1e6
+            found.append((lasted, row["FrameCompleted"] <= due))
+        elif line.startswith("---PROFILEDATA---"):
+            names = []
+    return found
+def refresh() -> float:
+    found = re.search(r"fps=([\d.]+)", adb("shell", "dumpsys", "display", check=False))
+    return float(found.group(1)) if found else 0.0
+def fully_drawn(log: str, package: str) -> list[float]:
+    found = []
+    for line in log.splitlines():
+        said = re.search(rf"Fully drawn {re.escape(package)}/\S+: \+(?:(\d+)m)?(?:(\d+)s)?(\d+)ms", line)
+        if said:
+            minutes, seconds, millis = (int(one or 0) for one in said.groups())
+            found.append(float(minutes * 60000 + seconds * 1000 + millis))
+    return found
+def janky(stats: str) -> float | None:
+    found = re.search(r"Janky frames: \d+ \(([\d.]+)%\)", stats)
+    return float(found.group(1)) if found else None
+def launched(said: str) -> float:
+    found = re.search(r"TotalTime:\s*(\d+)", said)
+    if not found:
+        raise SystemExit(f"am start did not say how long it took:\n{said}")
+    return float(found.group(1))
 def packages() -> dict[str, str]:
     return {app: package for app, package, _, _ in ROW.findall(GRADLE.read_text(encoding="utf-8"))}
+def emulators_own(lines: list[str]) -> bool:
+    dump = [one for one in lines if " DEBUG " in one]
+    return (
+        any("pthread_mutex_lock called on a destroyed mutex" in one for one in dump)
+        and any("libEGL_emulation.so" in one for one in dump)
+        and any("libc.so (exit+" in one for one in dump)
+    )
 def crashes(log: str, package: str) -> list[str]:
     lines = log.splitlines()
     ours = re.compile(rf"\b{re.escape(package)}(?![\w.])")
@@ -47,7 +267,8 @@ def crashes(log: str, package: str) -> list[str]:
             if any(f"Process: {package}," in one for one in lines[at : at + 4]):
                 found.append(f"crash: {' / '.join(one.split(': ', 1)[-1].strip() for one in lines[at : at + 4])}")
         elif "Fatal signal" in line:
-            if line.rstrip().endswith((f"({package})", f"({package[-15:]})", f"({package[:15]})")):
+            ours_too = line.rstrip().endswith((f"({package})", f"({package[-15:]})", f"({package[:15]})"))
+            if ours_too and not emulators_own(lines[at : at + 80]):
                 found.append(f"signal: {line.split(': ', 1)[-1].strip()}")
         elif re.search(r"\bANR in ", line):
             if ours.search(line.split("ANR in ", 1)[1]):
@@ -63,6 +284,8 @@ def adb(*args: str, check: bool = True) -> str:
 def screen() -> tuple[int, int]:
     across, down = adb("shell", "wm", "size").strip().split()[-1].split("x")
     return int(across), int(down)
+def swipe(across: int, start: int, end: int) -> None:
+    adb("shell", "input", "swipe", str(across), str(start), str(across), str(end), "120")
 def keys_top() -> int | None:
     for found in SHOWN.finditer(adb("shell", "dumpsys", "window", check=False)):
         top, bottom = (int(one) for one in found.groups() if one is not None)
@@ -108,14 +331,24 @@ class Page:
                 pages = json.loads(harness.opened(urllib.request.Request("http://127.0.0.1:9222/json"), timeout=5))
             except OSError:
                 pages = []
-            target = next(
-                (one for one in pages if one.get("type") == "page" and "localhost" in one.get("url", "")), None
-            )
+            for one in pages:
+                if one.get("type") != "page" or "localhost" not in one.get("url", ""):
+                    continue
+                self.socket = websocket.create_connection(
+                    one["webSocketDebuggerUrl"], timeout=60, suppress_origin=True
+                )
+                try:
+                    seen = self.evaluate("document.visibilityState === 'visible'")
+                except RuntimeError:
+                    seen = False
+                if seen:
+                    target = one
+                    break
+                self.socket.close()
             if not target:
                 time.sleep(1)
         if not target:
             raise SystemExit("the app's page is not among the web view's targets")
-        self.socket = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=60, suppress_origin=True)
     def send(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         self.count += 1
         mine = self.count
@@ -155,15 +388,261 @@ class Page:
         if not box:
             raise SystemExit(f"nothing to tap at {selector}")
         adb("shell", "input", "tap", str(screen()[0] // 2), str(int((box[0] + box[1]) / 2 * said["ratio"])))
+FIRST = ".setup, [data-sign-in]"
+def alone(page: Page) -> None:
+    page.wait_for(f"!!document.querySelector({json.dumps(FIRST)})", "the first screen")
+    pressed = page.evaluate(
+        f"(() => {{ const first = document.querySelector({json.dumps(FIRST)});"
+        " const go = [...first.querySelectorAll('button')].find((one) =>"
+        " one.innerText.trim() === 'Use without an account'); go?.click(); return !!go })()"
+    )
+    if not pressed:
+        raise SystemExit("the first screen offers no way on without an account")
+    page.wait_for(f"!document.querySelector({json.dumps(FIRST)})", "the first screen to leave")
 class Phone:
-    def __init__(self, file: str, app: str) -> None:
+    def __init__(self, file: str, app: str, known: Mapping[str, str] | None = None) -> None:
         self.app = app
         self.package = packages()[app]
-        self.drive = harness.Drive(file, served=False)
+        self.drive = harness.Drive(file, served=False, known=known)
         self.shots = self.drive.shots
         self.say, self.wrong = self.drive.say, self.drive.wrong
         self.apk = Path(os.environ.get(f"ORDEN_{app.upper()}_APK", harness.ROOT / "out" / f"{app}.apk"))
         self.page = Page()
+        self.gates: dict[str, float] = {}
+        self.notes: dict[str, float] = {}
+        self.logs: list[str] = []
+        self.found: set[str] = set()
+        self.looks: dict[str, Any] = {}
+    def count(self, kind: str, where: str, found: list[str]) -> None:
+        for one in found:
+            what = f"{kind} at {where}: {one}"
+            if what not in self.found:
+                self.found.add(what)
+                self.wrong(what)
+    def unnamed(self) -> list[str]:
+        page = self.page
+        page.send("Accessibility.enable")
+        nodes = page.send("Accessibility.getFullAXTree").get("nodes", [])
+        found = []
+        for node in nodes:
+            role = node.get("role", {}).get("value", "")
+            if node.get("ignored") or role not in CONTROLS or node.get("name", {}).get("value", "").strip():
+                continue
+            what = role
+            if "backendDOMNodeId" in node:
+                try:
+                    held = page.send("DOM.resolveNode", {"backendNodeId": node["backendDOMNodeId"]})["object"]
+                    drawn = page.send(
+                        "Runtime.callFunctionOn",
+                        {
+                            "objectId": held["objectId"],
+                            "functionDeclaration": "function () { return this.outerHTML.slice(0, 120) }",
+                            "returnByValue": True,
+                        },
+                    )
+                    what = f"{role} {drawn.get('result', {}).get('value', '')}"
+                except (RuntimeError, KeyError):
+                    pass
+            found.append(what)
+        return found
+    def look(self, name: str, shape: str = "") -> dict[str, Any]:
+        said = json.loads(self.page.evaluate(PROBE))
+        where = f"{name}{' ' + shape if shape else ''}{' dark' if said['dark'] else ''}"
+        self.looks[where] = said
+        wide = ["the page is wider than the screen"] if said["wide"] else []
+        self.count("clipped text", where, [*said["clipped"], *wide])
+        self.count("overlapping text", where, said["overlapping"])
+        if not shape:
+            self.count("small target", where, said["small"])
+            self.count("touch targets on each other", where, said["crowded"])
+            self.count("faint text", where, said["faint"])
+            self.count("unnamed control", where, self.unnamed())
+        return said
+    def night(self, on: bool) -> None:
+        adb("shell", "cmd", "uimode", "night", "yes" if on else "no")
+        time.sleep(3)
+    def resumed(self) -> bool:
+        said = adb("shell", "dumpsys", "activity", "activities", check=False)
+        top = re.findall(r"(?:topResumedActivity|mResumedActivity|ResumedActivity)[=:].*", said)
+        return any(f"{self.package}/" in one for one in top)
+    def back(self) -> None:
+        adb("shell", "input", "keyevent", "4")
+    def again(self) -> None:
+        adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
+        time.sleep(5)
+        self.page = Page()
+        self.page.connect()
+        self.page.wait_for("!!window.ordenApp && !!window.ordenApp.workspace", "the app to come back", 120)
+    def lives(self) -> bool:
+        try:
+            return bool(self.page.evaluate("document.visibilityState === 'visible'"))
+        except (RuntimeError, OSError):
+            return False
+    def settles(self, wide: Callable[[int, int], bool], what: str) -> None:
+        until = time.monotonic() + 40
+        size = [0, 0]
+        while time.monotonic() < until:
+            if self.lives():
+                size = self.page.evaluate("[innerWidth, innerHeight]")
+                if wide(size[0], size[1]):
+                    time.sleep(2)
+                    return
+            time.sleep(1)
+        self.wrong(f"{what} ({size})")
+    def still(self, name: str, what: str, before: Any, kept: Callable[[], Any]) -> None:
+        if not self.lives():
+            self.wrong(f"{name}: {what} started the page again")
+            self.page = Page()
+            self.page.connect()
+            self.page.wait_for("!!window.ordenApp && !!window.ordenApp.workspace", "the app to come back", 120)
+            time.sleep(3)
+        after = kept()
+        if after != before:
+            self.wrong(f"{name}: {what} lost state: {before!r} became {after!r}")
+    def shaped(self, name: str, kept: Callable[[], Any], again: Callable[[], None]) -> None:
+        before = kept()
+        normal = json.loads(self.page.evaluate(PROBE))["text"]
+        try:
+            adb("shell", "settings", "put", "system", "font_scale", "2.0")
+            time.sleep(8)
+            self.still(name, "a larger system font", before, kept)
+            large = self.look(name, "large text")
+            self.shot(f"{name}-large-text")
+            self.gates["textScaleFollowed"] = float(large["text"] >= normal * 1.5)
+        finally:
+            adb("shell", "settings", "put", "system", "font_scale", "1.0")
+            time.sleep(8)
+        if not self.lives() or kept() != before:
+            self.page = Page()
+            self.page.connect()
+            again()
+            before = kept()
+        try:
+            adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
+            adb("shell", "settings", "put", "system", "user_rotation", "1")
+            self.settles(lambda across, down: across > down, f"{name}: the page did not turn with the phone")
+            self.still(name, "turning the phone", before, kept)
+            self.look(name, "turned")
+            self.shot(f"{name}-turned")
+        finally:
+            adb("shell", "settings", "put", "system", "user_rotation", "0")
+        self.settles(lambda across, down: across < down, f"{name}: the page did not turn back with the phone")
+        self.still(name, "turning the phone back", before, kept)
+        try:
+            adb("shell", "wm", "size", "1200x1920")
+            adb("shell", "wm", "density", "320")
+            self.settles(lambda across, down: across >= 600, f"{name}: at 600dp the page is narrower than the screen")
+            self.still(name, "a 600dp screen", before, kept)
+            self.look(name, "tablet")
+            self.shot(f"{name}-tablet")
+        finally:
+            adb("shell", "wm", "size", "reset")
+            adb("shell", "wm", "density", "reset")
+            time.sleep(6)
+    def flung(self, name: str) -> None:
+        across, down = screen()
+        within, longest, slow, summed = [], [], [], []
+        for turn in range(FLINGS):
+            adb("shell", "dumpsys", "gfxinfo", self.package, "reset", check=False)
+            for _ in range(3):
+                swipe(across // 2, down * 3 // 4, down // 4)
+                time.sleep(0.6)
+            stats = adb("shell", "dumpsys", "gfxinfo", self.package, "framestats", check=False)
+            (self.shots / f"frames-{turn + 1}.txt").write_text(stats, encoding="utf-8")
+            drawn = frames(stats)
+            for _ in range(3):
+                swipe(across // 2, down // 4, down * 3 // 4)
+            time.sleep(1)
+            if not drawn:
+                continue
+            within.append(100 * sum(1 for one in drawn if one[1]) / len(drawn))
+            longest.append(max(one[0] for one in drawn))
+            slow.append(ranked([one[0] for one in drawn], 90))
+            said = janky(stats)
+            if said is not None:
+                summed.append(100 - said)
+            told = f"{len(drawn)} frames, {within[-1]:.1f}% by their deadline, {longest[-1]:.0f} ms longest"
+            say(f"{name}: fling {turn + 1}: {told}; the phone's own count: {said}% janky")
+        if len(within) < 3:
+            raise SystemExit(f"{name}: the phone drew no frames to measure")
+        rate = refresh()
+        say(f"{name}: the screen draws {rate:.0f} times a second")
+        self.gates["framesInTime"] = round(ranked(within, 50), 1)
+        self.gates["flingsWithLongFrame"] = float(sum(1 for one in longest if one > 700))
+        self.notes["frameP90"] = round(ranked(slow, 50), 1)
+        self.notes["refreshRate"] = rate
+        if summed:
+            self.notes["framesInTimeByThePhone"] = round(ranked(summed, 50), 1)
+            if abs(ranked(summed, 50) - ranked(within, 50)) > 10:
+                self.wrong(
+                    f"{name}: {ranked(within, 50):.1f}% of frames met their deadline,"
+                    f" and the phone's own count says {ranked(summed, 50):.1f}%"
+                )
+    def starts(self) -> None:
+        component = f"{self.package}/{ACTIVITY}"
+        shown, shell, painted, warm = [], [], [], []
+        for turn in range(STARTS):
+            adb("shell", "am", "force-stop", self.package)
+            time.sleep(1)
+            said = adb("shell", f"date +%s%N; am start -W -n {component}")
+            began = int(said.split()[0]) / 1e6
+            shown.append(launched(said))
+            self.page = Page()
+            self.page.connect()
+            marks = json.loads(self.page.wait_for(PAINTED, "the marks of a painted shell and first frame", 120))
+            shell.append(marks[0] - began)
+            painted.append(marks[1] - began)
+            self.page.socket.close()
+            told = f"shown in {shown[-1]:.0f} ms, shell painted in {shell[-1]:.0f} ms"
+            say(f"cold start {turn + 1}: {told}, first frame in {painted[-1]:.0f} ms")
+        for _ in range(STARTS):
+            adb("shell", "input", "keyevent", "3")
+            time.sleep(1)
+            warm.append(launched(adb("shell", "am", "start", "-W", "-n", component)))
+        say(f"warm starts: {sorted(warm)}")
+        self.notes["coldShownDebugP50"] = ranked(shown, 50)
+        self.notes["coldShownDebugP95"] = ranked(shown, 95)
+        self.notes["coldShellDebugP50"] = round(ranked(shell, 50), 0)
+        self.notes["coldShellDebugP95"] = round(ranked(shell, 95), 0)
+        self.notes["coldFirstFrameP50"] = round(ranked(painted, 50), 0)
+        self.notes["coldFirstFrameP95"] = round(ranked(painted, 95), 0)
+        self.gates["warmP95"] = ranked(warm, 95)
+        self.page = Page()
+        self.page.connect()
+    def released(self) -> None:
+        at = harness.ROOT / "out" / f"{self.app}-release.apk"
+        apk = Path(os.environ.get(f"ORDEN_{self.app.upper()}_RELEASE_APK", at))
+        if not apk.is_file():
+            say(f"no release APK at {apk}: the cold start of a release build is not measured")
+            return
+        component = f"{self.package}/{ACTIVITY}"
+        self.logs.append(adb("logcat", "-d", check=False))
+        adb("logcat", "-c")
+        adb("uninstall", self.package, check=False)
+        adb("install", str(apk))
+        for _ in range(3):
+            adb("shell", "am", "start", "-W", "-n", component)
+            time.sleep(20)
+        shown, drawn = [], []
+        for turn in range(STARTS):
+            adb("shell", "am", "force-stop", self.package)
+            self.logs.append(adb("logcat", "-d", check=False))
+            adb("logcat", "-c")
+            time.sleep(1)
+            shown.append(launched(adb("shell", "am", "start", "-W", "-n", component)))
+            until = time.monotonic() + 60
+            took: list[float] = []
+            while time.monotonic() < until and not took:
+                time.sleep(1)
+                took = fully_drawn(adb("logcat", "-d", "-s", "ActivityTaskManager:I", check=False), self.package)
+            if not took:
+                raise SystemExit(f"cold start {turn + 1} of the release build never said it was fully drawn")
+            drawn.append(took[0])
+            say(f"release cold start {turn + 1}: shown in {shown[-1]:.0f} ms, usable in {drawn[-1]:.0f} ms")
+        self.gates["coldStartP50"] = ranked(drawn, 50)
+        self.gates["coldStartP95"] = ranked(drawn, 95)
+        self.notes["coldShownReleaseP50"] = ranked(shown, 50)
+        self.notes["coldShownReleaseP95"] = ranked(shown, 95)
     def shot(self, name: str) -> None:
         self.shots.mkdir(parents=True, exist_ok=True)
         taken = subprocess.run(["adb", "exec-out", "screencap", "-p"], capture_output=True, timeout=60, check=False)
@@ -236,10 +715,14 @@ class Phone:
             self.page.connect()
             steps(worker)
         finally:
-            log = adb("logcat", "-d", check=False)
+            log = "".join([*self.logs, adb("logcat", "-d", check=False)])
             (self.shots / "logcat.log").write_text(log, encoding="utf-8", errors="replace")
             (self.shots / "windows.txt").write_text(adb("shell", "dumpsys", "window", check=False), encoding="utf-8")
             for one in crashes(log, self.package):
                 self.wrong(one)
+            (self.shots / "gates.json").write_text(json.dumps(self.gates, indent=2), encoding="utf-8")
+            (self.shots / "looks.json").write_text(json.dumps(self.looks, indent=2), encoding="utf-8")
+            (self.shots / "measured.json").write_text(json.dumps(self.notes, indent=2), encoding="utf-8")
+            say(f"gates: {json.dumps(self.gates)}; also measured: {json.dumps(self.notes)}")
             worker.close()
         return self.drive.verdict(passed)
