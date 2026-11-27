@@ -22,3 +22,5 @@ export {
   stopOpenCode,
 } from './client'
 export { asksOf, Feed, partOf, turnOf, usageOf, verbOf } from './translate'
+export type { EngineStatus, Trouble } from './engine.svelte'
+export { engine, stoppedLine } from './engine.svelte'
