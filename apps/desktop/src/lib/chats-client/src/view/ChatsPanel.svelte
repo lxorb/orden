@@ -77,7 +77,12 @@
   const now = Date.now()
   let hits = $state.raw<Hit[]>([])
   const hitsHere = $derived(onlyHere(hits, here))
-  const savedHere = $derived(onlyHere(saved.list, here))
+  const savedHere = $derived(
+    onlyHere(
+      saved.list.filter((one) => !store().blocked.some((who) => who === one.author)),
+      here,
+    ),
+  )
   $effect(() => {
     const asked = chatsView.query.trim()
     if (!asked) {

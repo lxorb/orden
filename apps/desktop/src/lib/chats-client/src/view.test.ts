@@ -30,6 +30,7 @@ async function opened(account: Account, readSeq = 0, cache = new MemoryCache()) 
     receipts: () => true,
     profile: () => undefined,
     release: () => true,
+    seen: (message) => message,
   }
   const view = new View(CHAT, host)
   view.lineAt = readSeq

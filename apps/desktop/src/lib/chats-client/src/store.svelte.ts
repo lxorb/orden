@@ -14,12 +14,13 @@ import {
   type Who,
 } from '@orden/chats'
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
-import { chatPokeOf } from '@orden/chats/wire'
+import { chatPokeOf, isWho } from '@orden/chats/wire'
 import { account } from '../../accounts/src/api'
 import type { ChatPlaces } from '@orden/contracts'
-import { samePath, within, keep, storedText, isNative, joinPath } from '../../platform/src/api'
+import { samePath, within, keep, keepJson, stored, storedText, isNative, joinPath } from '../../platform/src/api'
 import type { ChatEntry, ChatMember, Chats, ChatView, Draft, HistoryAsk, Hit, Offer, Scheduled } from './shapes'
-import { type ChatCache, MemoryCache } from './cache'
+import { type ChatCache, isMain, MemoryCache } from './cache'
+import { type Seen, seenBy } from './hidden'
 import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
 import { neverShared } from './web-notes'
@@ -30,6 +31,8 @@ import { type Host, View } from './view.svelte'
 import { dayOf } from './view/when'
 
 const RECEIPTS = 'orden:chat-receipts'
+const BLOCKED = 'orden:chat-blocked'
+const HIDDEN_COUNTED = 500
 const WIKILINK = /\[\[([^\]|#^]+)/g
 const LOOK_FIRST = 2000
 const LOOK_AGAIN = 30_000
@@ -48,6 +51,10 @@ function remoteFor(id: string): Remote {
     read: (chat, seq, back) => (other() ? Promise.resolve(false) : http.postRead(chat, seq, back).catch(() => false)),
   }
 }
+function keptBlocks(id: string): Who[] {
+  const kept = stored(`${BLOCKED}:${id}`)
+  return Array.isArray(kept) ? kept.filter(isWho) : []
+}
 function newId(): string {
   return ulid(Date.now(), Math.random)
 }
@@ -58,6 +65,9 @@ function startOf(day: string): number {
 class ChatsStore implements Chats {
   list = $state.raw<ChatEntry[]>([])
   ready = $state(false)
+  blocked = $state.raw<readonly Who[]>([])
+  private hidden = new Set<Who>()
+  private readonly seen: Seen = seenBy((who) => this.hidden.has(who))
   private engine: ChatEngine | null = null
   private cache: ChatCache | null = null
   private account: string | null = null
@@ -99,6 +109,8 @@ class ChatsStore implements Chats {
     if (this.account !== id) return
     this.cache = cache
     this.engine = engine
+    this.takeBlocks(keptBlocks(id))
+    void this.loadBlocks()
     for (const one of await cache.drafts().catch(() => [])) {
       if (where?.retired(one.chat)) void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
       else this.drafts.set(one.chat, one.text)
@@ -107,7 +119,8 @@ class ChatsStore implements Chats {
       engine.listen((change) => {
         if (change.t === 'messages') {
           this.countLater(change.chat)
-          if (change.arrived.length) for (const hear of this.arrivals) hear(change.chat, change.arrived)
+          const arrived = change.arrived.filter((one) => !this.hidden.has(one.author))
+          if (arrived.length) for (const hear of this.arrivals) hear(change.chat, arrived)
         }
         if (change.t === 'list') this.drawList()
       }),
@@ -140,6 +153,8 @@ class ChatsStore implements Chats {
     this.cache = null
     this.account = null
     this.places = new Map()
+    this.blocked = []
+    this.hidden = new Set()
     forgetMoves()
     this.gone.clear()
     this.unread.clear()
@@ -153,6 +168,7 @@ class ChatsStore implements Chats {
   async reconnected(): Promise<void> {
     const engine = this.engine
     if (!engine) return
+    void this.loadBlocks()
     await engine.flushAll()
     for (let wait = HEARD_FIRST; this.engine === engine && wait <= HEARD_LAST; wait *= 2) {
       if (await engine.refresh()) return
@@ -179,7 +195,41 @@ class ChatsStore implements Chats {
   }
   async message(chat: string, id: string): Promise<Message | null> {
     const kept = await this.cache?.messages(chat, [id]).catch(() => [])
-    return kept?.[0]?.message ?? null
+    const found = kept?.[0]?.message
+    return found ? this.seen(found) : null
+  }
+  hides(who: Who | null): boolean {
+    return who !== null && this.hidden.has(who)
+  }
+  private takeBlocks(blocked: readonly Who[]): void {
+    if (blocked.length === this.blocked.length && blocked.every((who) => this.hidden.has(who))) return
+    this.blocked = [...blocked]
+    this.hidden = new Set(blocked)
+    if (this.account) keepJson(`${BLOCKED}:${this.account}`, this.blocked)
+    for (const held of this.views.values()) held.view.seenAgain()
+    this.unread.clear()
+    this.countedAt.clear()
+    this.drawList()
+  }
+  private async loadBlocks(): Promise<void> {
+    const id = this.account
+    const said = await http.listBlocks().catch(() => null)
+    if (said && this.account === id) this.takeBlocks(said)
+  }
+  async block(who: Who): Promise<boolean> {
+    if (who === this.me || this.hidden.has(who)) return this.hidden.has(who)
+    if (!(await http.putBlock(who).catch(() => false))) return false
+    this.takeBlocks([...this.blocked, who])
+    return true
+  }
+  async unblock(who: Who): Promise<boolean> {
+    if (!this.hidden.has(who)) return true
+    if (!(await http.dropBlock(who).catch(() => false))) return false
+    this.takeBlocks(this.blocked.filter((one) => one !== who))
+    return true
+  }
+  report(chat: string, about: { message?: string; who?: Who }, reason: string): Promise<boolean> {
+    return http.sendReport(chat, { ...about, reason }).catch(() => false)
   }
   async markRead(chat: string, seq: number): Promise<void> {
     const engine = this.engine
@@ -200,7 +250,7 @@ class ChatsStore implements Chats {
         root = this.where?.rootOf(row.space) ?? null
         if (root) spaces.set(row.space, root)
       }
-      const behind = row.lastSeq > row.readSeq && row.lastBy !== this.me
+      const behind = row.lastSeq > row.readSeq && row.lastBy !== this.me && !this.hides(row.lastBy)
       if (this.countedAt.get(chat.id) !== row.readSeq) this.countLater(chat.id)
       const counted = row.readSeq >= row.lastSeq ? 0 : (this.unread.get(chat.id) ?? 0)
       entries.push({
@@ -269,11 +319,18 @@ class ChatsStore implements Chats {
     const me = this.me
     const row = this.engine?.chats.get(chat)?.row
     if (!me || !row || !this.cache) return
-    const count = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
+    const all = await this.cache.unread(chat, row.readSeq, me).catch(() => 0)
+    const count = all && this.hidden.size ? Math.max(0, all - (await this.hiddenAfter(chat, row.readSeq, me))) : all
     this.countedAt.set(chat, row.readSeq)
     if (this.unread.get(chat) === count) return
     this.unread.set(chat, count)
     this.drawList()
+  }
+  private async hiddenAfter(chat: string, after: number, me: Who): Promise<number> {
+    const rows = (await this.cache?.window({ chat, after, limit: HIDDEN_COUNTED }).catch(() => [])) ?? []
+    return rows.filter(
+      ({ message }) => isMain(message) && !message.deleted && message.author !== me && this.hidden.has(message.author),
+    ).length
   }
   private async lookForPointers(): Promise<void> {
     if (!this.where) return
@@ -359,6 +416,7 @@ class ChatsStore implements Chats {
         void import('../../accounts/src/api').then(({ people }) => people.refresh(who.slice(5)))
         this.people.clear()
       },
+      seen: this.seen,
       release: (chat) => {
         const held = this.views.get(chat)
         if (held && --held.holds > 0) return false
@@ -501,7 +559,13 @@ class ChatsStore implements Chats {
     const cache = this.cache
     const me = this.me
     if (!cache || !me) return []
-    if (!isNative) return (await http.searchOnAccount(query, chat)) ?? []
+    if (!isNative) {
+      const found = (await http.searchOnAccount(query, chat)) ?? []
+      return found.flatMap((one) => {
+        const message = this.seen(one.message)
+        return message ? [{ chat: one.chat, message }] : []
+      })
+    }
     const asked = this.parse(query)
     const names = new Map(this.list.map((one) => [one.id, one.name ?? '']))
     const inChats = asked.in.length
@@ -539,8 +603,11 @@ class ChatsStore implements Chats {
           dayOf,
         }),
       )
+      .flatMap(({ chat: id, kept }) => {
+        const message = this.seen(kept.message)
+        return message ? [{ chat: id, message }] : []
+      })
       .slice(0, 100)
-      .map(({ chat: id, kept }) => ({ chat: id, message: kept.message }))
   }
   async linking(names: readonly string[]): Promise<Hit[]> {
     const cache = this.cache
@@ -554,7 +621,11 @@ class ChatsStore implements Chats {
         const linked = [...kept.message.body.matchAll(WIKILINK)].some((found) =>
           wanted.has((found[1] ?? '').trim().toLowerCase()),
         )
-        if (linked && !hits.some((one) => one.message.id === kept.message.id)) {
+        if (
+          linked &&
+          !this.hidden.has(kept.message.author) &&
+          !hits.some((one) => one.message.id === kept.message.id)
+        ) {
           hits.push({ chat, message: kept.message })
         }
       }
@@ -583,7 +654,7 @@ class ChatsStore implements Chats {
       ...(ask.after !== undefined ? { after: ask.after } : {}),
       ...(ask.before !== undefined ? { before: ask.before } : {}),
     })
-    return kept.map((one) => one.message)
+    return kept.flatMap((one) => this.seen(one.message) ?? [])
   }
   draft(chat: string): string {
     return this.drafts.get(chat) ?? ''

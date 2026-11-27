@@ -3,6 +3,7 @@ import type { Refusal } from '@orden/chats/wire'
 import type { Shown } from './shapes'
 import type { OutboxRow } from './cache'
 import { fold, type Kept } from './fold'
+import { everything, type Seen } from './hidden'
 
 export type Filter = (message: Message) => boolean
 function aboutOf(row: OutboxRow): string[] {
@@ -16,6 +17,7 @@ export async function overlay(
   outbox: readonly OutboxRow[],
   me: Who,
   filter: Filter,
+  seen: Seen = everything,
 ): Promise<{ messages: Shown[]; pending: Shown[] }> {
   const known = new Map(placed.map((one) => [one.message.id, one]))
   const posted: string[] = []
@@ -52,6 +54,7 @@ export async function overlay(
   const messages = placed
     .map((one) => known.get(one.message.id)?.message ?? one.message)
     .filter((message) => !pendingIds.has(message.id) && filter(message))
+    .flatMap((message) => seen(message) ?? [])
     .map(shown)
   const pending = posted
     .map((id) => known.get(id)?.message)

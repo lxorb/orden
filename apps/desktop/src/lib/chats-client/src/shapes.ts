@@ -99,6 +99,11 @@ export interface Chats {
   readonly list: readonly ChatEntry[]
   readonly ready: boolean
   readonly me: Who | null
+  readonly blocked: readonly Who[]
+  hides(who: Who | null): boolean
+  block(who: Who): Promise<boolean>
+  unblock(who: Who): Promise<boolean>
+  report(chat: string, about: { message?: string; who?: Who }, reason: string): Promise<boolean>
   watch(listener: () => void): () => void
   heard(listener: (chat: string, messages: readonly Message[]) => void): () => void
   entry(chat: string): ChatEntry | null

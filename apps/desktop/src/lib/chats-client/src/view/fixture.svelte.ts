@@ -64,6 +64,11 @@ export class FixtureChats implements Chats {
   list = $state.raw<ChatEntry[]>([])
   ready = true
   receipts = true
+  readonly blocked: readonly Who[] = []
+  hides = (): boolean => false
+  block = (): Promise<boolean> => Promise.resolve(false)
+  unblock = (): Promise<boolean> => Promise.resolve(true)
+  report = (): Promise<boolean> => Promise.resolve(false)
   delay = 250
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- the fixture's own books; `list` and the views are what draw
   private readonly held = new Map<string, Held>()

@@ -5,6 +5,7 @@ import { type ChatCache, isMain, type OutboxRow } from './cache'
 import type { Change, ChatEngine } from './engine'
 import type { Kept } from './fold'
 import { type Filter, overlay } from './overlay'
+import type { Seen } from './hidden'
 import { ChatSocket } from './socket'
 
 const OPENING = 100
@@ -21,6 +22,7 @@ export interface Host {
   receipts(): boolean
   profile(who: Who): void
   release(chat: string): boolean
+  seen: Seen
 }
 class Listing implements MessageList {
   messages = $state.raw<Shown[]>([])
@@ -167,7 +169,7 @@ class Listing implements MessageList {
   protected async draw(): Promise<void> {
     const turn = ++this.drawing
     const outbox: readonly OutboxRow[] = this.host.engine.pending(this.chat)
-    const { messages, pending } = await overlay(this.window, outbox, this.host.me(), this.filter)
+    const { messages, pending } = await overlay(this.window, outbox, this.host.me(), this.filter, this.host.seen)
     if (turn !== this.drawing) return
     this.messages = messages
     this.pending = pending
@@ -192,6 +194,10 @@ class Replies extends Listing implements RepliesView {
     super.heard(change)
     if (change.t === 'messages' && change.kept.some((one) => one.message.id === this.parentId)) void this.drawParent()
   }
+  seenAgain(): void {
+    void this.draw()
+    void this.drawParent()
+  }
   private async drawParent(): Promise<void> {
     const [kept] = await this.host.cache.messages(this.chat, [this.parentId])
     const { messages } = await overlay(
@@ -199,6 +205,7 @@ class Replies extends Listing implements RepliesView {
       this.host.engine.pending(this.chat),
       this.host.me(),
       () => true,
+      this.host.seen,
     )
     this.parent = messages[0] ?? null
   }
@@ -276,6 +283,10 @@ export class View extends Listing implements ChatView {
     }
     await this.around(seq)
     return true
+  }
+  seenAgain(): void {
+    void this.draw()
+    for (const one of this.replying) one.seenAgain()
   }
   replies(parent: string): RepliesView {
     const replies = new Replies(this.chat, this.host, parent, (one) => this.replying.delete(one))
