@@ -124,7 +124,7 @@ DRAWN = """
   }
   return {
     controlled: navigator.serviceWorker.controller !== null,
-    unheld: document.querySelectorAll('img[src*="/asset/"]').length,
+    unheld: document.querySelectorAll('img[src^="data:image/gif"][src*="#"]').length,
     images: seen,
     broken: document.querySelectorAll('.orden-image-frame.is-broken').length,
     loading: document.querySelectorAll('.orden-image-frame.is-loading').length,
@@ -141,6 +141,19 @@ async (path) => {
     bytes: (await answer.arrayBuffer()).byteLength,
   }
 }
+"""
+HELD = """
+(path) => new Promise((done) => {
+  const one = document.createElement('img')
+  let late = 0
+  const said = (found) => { clearInterval(late); one.remove(); done(found) }
+  one.addEventListener('error', () => said(one.src.startsWith('blob:') ? one.src : null))
+  one.addEventListener('load', () => said(one.src))
+  one.hidden = true
+  one.src = window.ordenApp.assetUrl(path)
+  document.body.append(one)
+  late = setInterval(() => { if (one.src.startsWith('blob:')) said(one.src) }, 50)
+})
 """
 FIXTURES = Path(tempfile.gettempdir())
 def started(page: Page) -> dict:
@@ -195,7 +208,7 @@ def expect_drawn(page: Page, where: str, most: int, wide: int | None = None) -> 
     if state["controlled"]:
         wrong(f"{where}: a worker is in front of the page, so this proves nothing about the page alone")
     if state["unheld"]:
-        wrong(f"{where}: {state['unheld']} pictures point at a route no one answers")
+        wrong(f"{where}: {state['unheld']} pictures are still only named, not shown")
     if len(state["images"]) != most:
         wrong(f"{where}: {len(state['images'])} pictures asked of the store, not {most}")
     if state["broken"]:
@@ -290,20 +303,21 @@ def drive(browser: Browser) -> None:
     shot(page, "05-reading-after-reload")
     expect_drawn(page, "reading after a reload", 3)
     space = root.strip("/")
-    held = page.evaluate("(path) => window.ordenApp.assetUrl(path)", f"/{space}/{relative}")
+    held = page.evaluate(HELD, f"/{space}/{relative}")
+    if not held:
+        wrong("a picture that is there was never held by the page")
+        held = "about:blank"
     hit = page.evaluate(ASKED, held)
     say(f"[held] a hit: {held} {json.dumps(hit)}")
-    if not held.startswith("blob:"):
-        wrong(f"a picture that is there has the address {held!r}, not a blob")
     if hit["status"] != 200:
         wrong(f"the blob answered {hit['status']} for a picture that is there")
     if hit["type"] != "image/png":
         wrong(f"the blob calls a PNG {hit['type']!r}")
     if hit["bytes"] < 100:
         wrong(f"the blob answered with {hit['bytes']} bytes")
-    miss = page.evaluate("(path) => window.ordenApp.assetUrl(path)", f"/{space}/assets/nowhere.png")
+    miss = page.evaluate(HELD, f"/{space}/assets/nowhere.png")
     say(f"[held] a miss: {miss}")
-    if miss.startswith("blob:"):
+    if miss:
         wrong(f"a picture that is not there was given a blob: {miss!r}")
     page.evaluate("() => window.ordenApp.workspace.toggleReading()")
     page.wait_for_timeout(500)

@@ -294,7 +294,7 @@ def drive_desktop(browser: Browser) -> None:
         wrong(f"the ticked task is not marked done: {card['ticked']} of them")
     if card["picture"] is None:
         wrong("the embedded picture drew no element at all")
-    elif "/asset/" not in card["picture"]:
+    elif not card["picture"].startswith("blob:") and "#/" not in card["picture"]:
         wrong(f"the picture is not at the space's own address: {card['picture']!r}")
     if not card["raw"]:
         wrong("the front matter is not shown as its own source")

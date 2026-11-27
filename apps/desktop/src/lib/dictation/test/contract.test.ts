@@ -56,7 +56,7 @@ describe('a transcription', () => {
     const bare = files.filter((one) =>
       readFileSync(join(root, one), 'utf8')
         .split('\n')
-        .some((line) => /(?<![.\w]|async\s|function\s)fetch\(/.test(line) && !line.includes('fetch(assetUrl(')),
+        .some((line) => /(?<![.\w]|async\s|function\s)fetch\(/.test(line)),
     )
     expect(bare).toEqual([])
   })

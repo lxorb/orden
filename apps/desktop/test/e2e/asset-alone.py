@@ -27,6 +27,19 @@ async (rows) => {
   new BroadcastChannel('orden:assets').postMessage({ written: rows.map((row) => row.path), gone: [] })
 }
 """
+HELD = """
+(path) => new Promise((done) => {
+  const one = document.createElement('img')
+  let late = 0
+  const said = (found) => { clearInterval(late); one.remove(); done(found) }
+  one.addEventListener('error', () => said(one.src.startsWith('blob:') ? one.src : null))
+  one.addEventListener('load', () => said(one.src))
+  one.hidden = true
+  one.src = window.ordenApp.assetUrl(path)
+  document.body.append(one)
+  late = setInterval(() => { if (one.src.startsWith('blob:')) said(one.src) }, 50)
+})
+"""
 def drive(browser: Browser) -> None:
     context = browser.new_context(service_workers="block")
     page = context.new_page()
@@ -37,18 +50,21 @@ def drive(browser: Browser) -> None:
         PUT,
         [{"path": path, "type": kind, "data": base64.b64encode(body.encode()).decode(), "modified": 1} for path, (kind, body) in FILES.items()],
     )
-    for path in FILES:
-        wait_for(page, f"window.ordenApp.assetUrl({json.dumps(path)}).startsWith('blob:')", f"{path} to be held")
-    shown = page.evaluate("async () => { const pic = new Image(); pic.src = window.ordenApp.assetUrl('/Shared/assets/drawing.svg'); await pic.decode(); return pic.naturalWidth > 0 }")
+    held = {path: page.evaluate(HELD, path) for path in FILES}
+    say(f"held: {json.dumps(held)}")
+    for path, url in held.items():
+        if not url:
+            wrong(f"{path} is in the store and the page never held it")
+    shown = page.evaluate("async (url) => { const pic = new Image(); pic.src = url; await pic.decode(); return pic.naturalWidth > 0 }", held["/Shared/assets/drawing.svg"])
     if not shown:
         wrong("the drawing no longer shows as a picture in the app")
     for path in FILES:
-        kind = page.evaluate("(path) => fetch(window.ordenApp.assetUrl(path)).then((answer) => answer.headers.get('content-type'))", path)
+        kind = page.evaluate("(url) => fetch(url).then((answer) => answer.headers.get('content-type'))", held[path])
         say(f"{path} is held as {kind!r}")
         if not path.endswith(".svg") and kind != "application/octet-stream":
             wrong(f"{path} is held as {kind!r}, which a browser opens as a page of the app")
         with context.expect_page() as opening:
-            page.evaluate("(path) => { window.open(window.ordenApp.assetUrl(path)) }", path)
+            page.evaluate("(url) => { window.open(url) }", held[path])
         alone = opening.value
         try:
             alone.wait_for_timeout(800)

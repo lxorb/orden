@@ -59,7 +59,7 @@ async ([src, tag, at]) => {
     const late = setTimeout(() => done('nothing in eight seconds'), 8000)
     player.addEventListener('loadedmetadata', () => { clearTimeout(late); done('read') })
     player.addEventListener('error', () => { clearTimeout(late); done(`error ${player.error?.code} ${player.error?.message ?? ''}`) })
-    player.src = src
+    player.src = window.ordenApp.assetUrl(src)
   })
   let seeked = null
   if (read === 'read') {
@@ -89,8 +89,7 @@ def drive(browser: Browser) -> None:
     page.evaluate(PUT, [{"path": path, "type": "", "data": base64.b64encode(data).decode(), "modified": 1} for path, data in files.items()])
     for path in files:
         tag = "audio" if path.endswith(".wav") else "video"
-        wait_for(page, f"window.ordenApp.assetUrl({json.dumps(path)}).startsWith('blob:')", f"{path} to be held")
-        played = page.evaluate(PLAY, [page.evaluate("(path) => window.ordenApp.assetUrl(path)", path), tag, AT])
+        played = page.evaluate(PLAY, [path, tag, AT])
         say(f"{path}: {json.dumps(played)}")
         if played["read"] != "read":
             wrong(f"{path} would not play from the space: {played['read']}")
