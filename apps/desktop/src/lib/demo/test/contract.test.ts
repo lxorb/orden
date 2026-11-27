@@ -361,3 +361,18 @@ describe('the chat picture', () => {
     expect(readFileSync(join(folder, 'CREDITS'), 'utf8')).toContain('Open Peeps by Pablo Stanley')
   })
 })
+describe('the bike and route pictures', () => {
+  test('are CC0 art from a public library, shipped with the dedication and a credit for each', () => {
+    const folder = join(import.meta.dirname, '../../../../public/demo')
+    const credits = readFileSync(join(folder, 'CREDITS'), 'utf8')
+    expect(readFileSync(join(folder, 'LICENSE'), 'utf8')).toContain('CC0 1.0 Universal')
+    for (const [name, source] of [
+      ['bike.svg', 'File:Bike-next.svg'],
+      ['route.svg', 'File:Perkiomen_Trail_Map.svg'],
+    ] as const) {
+      expect(readFileSync(join(folder, name), 'utf8')).toContain('clip-path')
+      expect(credits).toContain(name)
+      expect(credits).toContain(source)
+    }
+  })
+})
