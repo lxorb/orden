@@ -206,6 +206,12 @@ pub fn restart(launch: Launch) -> Status {
     }
     status()
 }
+pub fn move_to(binary: std::path::PathBuf) {
+    let launch = ENGINE.held().running.as_ref().map(|one| one.launch.clone());
+    if let Some(launch) = launch.filter(|one| one.binary != binary) {
+        restart(Launch { binary, ..launch });
+    }
+}
 fn when_idle() {
     loop {
         if !line().is_some_and(|line| line.busy()) {
