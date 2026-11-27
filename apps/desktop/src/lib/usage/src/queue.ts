@@ -6,8 +6,12 @@ export function pruned(queue: readonly UsageEvent[], today: string, helping: boo
   if (!helping) return []
   return queue.filter((one) => daysBetween(one.day, today) <= USAGE_DAYS_KEPT).slice(-MOST_QUEUED)
 }
-export function sendable(build: { release: boolean; held: boolean }): boolean {
-  return build.release && !build.held
+export type Release = 'stable' | 'unstable' | null
+export function release(): Release {
+  return __ORDEN_RELEASE__
+}
+export function sendable(build: { release: Release; held: boolean }): boolean {
+  return build.release !== null && !build.held
 }
 export interface Flushing {
   queue(): UsageEvent[]

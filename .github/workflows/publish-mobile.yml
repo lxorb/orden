@@ -135,7 +135,7 @@ jobs:
       - name: Build the whole Orden for every phone it runs on
         if: matrix.app == 'orden'
         env:
-          ORDEN_RELEASE: ${{ needs.version.outputs.rolling == 'false' && !contains(needs.version.outputs.version, '-') }}
+          ORDEN_RELEASE: ${{ (needs.version.outputs.rolling == 'false' && !contains(needs.version.outputs.version, '-')) && 'stable' || ((startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/unstable') && 'unstable' || '') }}
         run: |
           pnpm --filter @orden/desktop exec tauri android build --apk \
             --target aarch64 --target x86_64 \
@@ -228,7 +228,7 @@ jobs:
       - name: Build for the simulator
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
-          ORDEN_RELEASE: ${{ needs.version.outputs.rolling == 'false' && !contains(needs.version.outputs.version, '-') }}
+          ORDEN_RELEASE: ${{ (needs.version.outputs.rolling == 'false' && !contains(needs.version.outputs.version, '-')) && 'stable' || ((startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/unstable') && 'unstable' || '') }}
         run: |
           pnpm --filter @orden/desktop exec tauri ios build --target aarch64-sim \
             --config '{"version":"${{ needs.version.outputs.version }}"}'

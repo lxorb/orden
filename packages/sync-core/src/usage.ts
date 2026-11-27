@@ -251,7 +251,7 @@ export function usageBatchOf(value: unknown): UsageBatch | string {
 }
 export function releasedVersion(version: string): boolean {
   const parts = /^(\d+)\.(\d+)\.(\d+)(?:-\d+)?$/.exec(version)
-  return !!parts && version !== UNRELEASED_VERSION && parts.slice(1).every((one) => Number(one) < 99)
+  return !!parts && parts.slice(1).join('.') !== UNRELEASED_VERSION && parts.slice(1).every((one) => Number(one) < 99)
 }
 export function counted(event: UsageEvent): boolean {
   return event.system.form === 'web' || releasedVersion(event.app.version)
