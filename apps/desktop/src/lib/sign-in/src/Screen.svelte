@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
+  import { showField, viewport } from '../../ui-kit/src/api'
 
   interface Action {
     label: string
@@ -16,6 +17,15 @@
     back?: (() => void) | null
   }
   const { title = '', primary = null, quiet = null, head, children, back = null }: Props = $props()
+  let body = $state<HTMLElement>()
+  function shown() {
+    const on = document.activeElement
+    if (!body || !(on instanceof HTMLElement) || !body.contains(on)) return
+    showField(on, body, body.getBoundingClientRect().bottom)
+  }
+  $effect(() => {
+    if (viewport.keyboard >= 0) shown()
+  })
   function pressed(event: KeyboardEvent) {
     if (event.key !== 'Enter' || !primary || primary.disabled || primary.busy) return
     const on = event.target instanceof Element ? event.target : null
@@ -36,7 +46,7 @@
       </button>
     {/if}
   </div>
-  <div class="body">
+  <div class="body" bind:this={body} onfocusin={shown}>
     <div class="col">
       {@render head?.()}
       {#if title}<h1 class="rise">{title}</h1>{/if}
@@ -67,10 +77,12 @@
 <style>
   .screen {
     position: absolute;
-    inset: 0;
+    inset-block: 0 var(--keyboard, 0px);
+    inset-inline: 0;
     display: grid;
     grid-template-rows: auto 1fr auto;
-    padding-block: calc(var(--inset-top, 0px) + 20px) calc(var(--inset-bottom, 0px) + 28px);
+    padding-block: calc(var(--inset-top, 0px) + 20px)
+      calc(max(0px, var(--inset-bottom, 0px) - var(--keyboard, 0px)) + 28px);
     padding-inline: max(16px, var(--inset-left, 0px)) max(16px, var(--inset-right, 0px));
   }
   .top {
@@ -88,6 +100,8 @@
     color: var(--accent);
     font: inherit;
     font-size: 15px;
+    min-height: 48px;
+    margin-block: -6px;
     padding: 6px 8px 6px 2px;
     border-radius: 8px;
   }

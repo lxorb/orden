@@ -54,7 +54,8 @@ describe('the first screen of a phone app (#2286)', () => {
       account.step = 'code'
       account.code = () => Promise.resolve(true)
       const target = opened({ alone: false, onsignedin: () => (signed += 1) })
-      expect(target.querySelectorAll('.digits input')).toHaveLength(6)
+      expect(target.querySelectorAll('.digits input')).toHaveLength(1)
+      expect(target.querySelectorAll('.digits .box')).toHaveLength(6)
       const first = target.querySelector<HTMLInputElement>('.digits input')!
       first.value = '123456'
       first.dispatchEvent(new Event('input', { bubbles: true }))

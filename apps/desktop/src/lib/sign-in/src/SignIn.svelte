@@ -1,5 +1,6 @@
 <script lang="ts">
   import { account } from '../../accounts/src/api'
+  import CodeBoxes from './CodeBoxes.svelte'
   import LogoTile from './LogoTile.svelte'
   import Screen from './Screen.svelte'
   import { closeOnBack } from '../../ui-kit/src/api'
@@ -21,13 +22,11 @@
   } = $props()
   const WORDS = 'Log in or sign up'
   const LENGTH = 6
-  const blank = () => Array.from({ length: LENGTH }, () => '')
-  let digits = $state<string[]>(blank())
-  const boxes = $state<HTMLInputElement[]>([])
+  let entered = $state('')
+  let boxes = $state<{ focus: () => void }>()
   let field = $state<HTMLInputElement>()
   let submitted = $state('')
   let signed = $state(false)
-  const entered = $derived(digits.join(''))
   const asking = $derived(account.step === 'code' || account.step === 'second')
   const typed = $derived(/.+@.+\..+/.test(account.email.trim()))
   $effect(() => {
@@ -35,16 +34,16 @@
   })
   $effect(() => {
     if (!asking) return
-    digits = blank()
+    entered = ''
     submitted = ''
-    setTimeout(() => boxes[0]?.focus(), 60)
+    setTimeout(() => boxes?.focus(), 60)
   })
   let moving: ReturnType<typeof setTimeout> | undefined
   $effect(() => () => clearTimeout(moving))
   function again() {
-    digits = blank()
+    entered = ''
     submitted = ''
-    setTimeout(() => boxes[0]?.focus(), 0)
+    setTimeout(() => boxes?.focus(), 0)
   }
   $effect(() => {
     if (entered.length !== LENGTH || entered === submitted) return
@@ -63,28 +62,6 @@
       })
       .catch(again)
   })
-  function onDigit(index: number, event: Event) {
-    const input = event.target as HTMLInputElement
-    const value = input.value.replace(/\D/g, '')
-    if (!value) {
-      digits[index] = ''
-      return
-    }
-    for (let offset = 0; offset < value.length && index + offset < LENGTH; offset++) {
-      digits[index + offset] = value.charAt(offset)
-    }
-    input.value = digits[index] ?? ''
-    boxes[Math.min(index + value.length, LENGTH - 1)]?.focus()
-  }
-  function onDigitKey(index: number, event: KeyboardEvent) {
-    if (event.key === 'Backspace' && !digits[index] && index > 0) {
-      event.preventDefault()
-      digits[index - 1] = ''
-      boxes[index - 1]?.focus()
-    }
-    if (event.key === 'ArrowLeft' && index > 0) boxes[index - 1]?.focus()
-    if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
-  }
   function changeEmail() {
     account.step = 'email'
     account.error = null
@@ -127,20 +104,7 @@
           Code sent to <strong>{account.email}</strong>
         {/if}
       </p>
-      <div class="digits" dir="ltr">
-        {#each digits as digit, index (index)}
-          <input
-            bind:this={boxes[index]}
-            value={digit}
-            oninput={(event) => onDigit(index, event)}
-            onkeydown={(event) => onDigitKey(index, event)}
-            inputmode="numeric"
-            autocomplete={index === 0 ? 'one-time-code' : 'off'}
-            maxlength="6"
-            aria-label="Digit {index + 1}"
-          />
-        {/each}
-      </div>
+      <CodeBoxes bind:this={boxes} bind:value={entered} />
       {#if account.step === 'code'}
         <button
           class="link"
@@ -201,23 +165,6 @@
   .muted strong {
     color: var(--text);
   }
-  .digits {
-    display: flex;
-    gap: 8px;
-  }
-  .digits input {
-    width: 46px;
-    height: 56px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: 600;
-    border-radius: 12px;
-    border: 1px solid var(--line-strong);
-    background: var(--card);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-variant-numeric: tabular-nums;
-  }
   .link {
     border: 0;
     background: none;
@@ -225,6 +172,8 @@
     font: inherit;
     font-size: 14px;
     cursor: pointer;
+    min-height: 48px;
+    padding-inline: 12px;
   }
   .link:disabled {
     color: var(--muted);
@@ -238,11 +187,5 @@
     stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
-  }
-  @media (max-width: 640px) {
-    .digits input {
-      width: 40px;
-      height: 50px;
-    }
   }
 </style>
