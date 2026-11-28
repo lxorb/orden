@@ -84,6 +84,9 @@ export default {
       ignoreDependencies: ['katex', 'axe-core'],
       ignoreBinaries: ['jq'],
     },
+    'apps/desktop-electron': {
+      entry: ['src/main.ts', 'src/preload.ts'],
+    },
     'apps/cli': {
       ignoreBinaries: ['screencapture', 'osascript'],
     },

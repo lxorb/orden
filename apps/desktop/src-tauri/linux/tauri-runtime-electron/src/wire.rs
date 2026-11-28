@@ -5,6 +5,8 @@ pub const PROTOCOL: u32 = 1;
 pub const SCHEMES: [&str; 3] = ["tauri", "ipc", "asset"];
 pub const INVOKE_SCHEME: &str = "ipc";
 pub const PIPE_ENV: &str = "ORDEN_ELECTRON_PIPE";
+pub const TO_CORE: &str = "-to-core";
+pub const TO_SHELL: &str = "-to-shell";
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[serde(rename_all = "kebab-case")]

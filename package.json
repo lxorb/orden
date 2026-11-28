@@ -39,6 +39,9 @@
       "node-pty",
       "workerd"
     ],
+    "ignoredBuiltDependencies": [
+      "electron"
+    ],
     "overrides": {
       "@codemirror/lang-markdown>@codemirror/lang-html": "workspace:@orden/lang-html@*",
       "@codemirror/lang-markdown>@codemirror/autocomplete": "workspace:@orden/autocomplete@*",

@@ -1,0 +1,24 @@
+{
+  "name": "@orden/desktop-electron",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "main": "dist/main.cjs",
+  "scripts": {
+    "build": "node build.ts",
+    "electron": "node node_modules/electron/install.js",
+    "start": "electron .",
+    "pack": "node pack.ts",
+    "drive": "node test/drive.ts",
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.1",
+    "electron": "45.5.0",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}

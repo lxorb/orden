@@ -84,9 +84,10 @@ pub(crate) fn open(path: &str) -> std::io::Result<Ends> {
 
 #[cfg(windows)]
 pub(crate) fn open(path: &str) -> std::io::Result<Ends> {
-    let pipe = std::fs::OpenOptions::new().read(true).write(true).open(path)?;
-    let reader = pipe.try_clone()?;
-    Ok((Box::new(reader), Box::new(pipe)))
+    use crate::wire::{TO_CORE, TO_SHELL};
+    let reader = std::fs::OpenOptions::new().read(true).open(format!("{path}{TO_CORE}"))?;
+    let writer = std::fs::OpenOptions::new().write(true).open(format!("{path}{TO_SHELL}"))?;
+    Ok((Box::new(reader), Box::new(writer)))
 }
 
 fn size_of(bytes: [u8; 4]) -> std::io::Result<usize> {
