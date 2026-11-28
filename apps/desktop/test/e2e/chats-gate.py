@@ -13,7 +13,7 @@ async () => {
 """
 OPEN = """
 async (path) => {
-  const { openChat } = await import('/src/lib/chats-client/src/view/open.ts')
+  const { openChat } = await (await import('/src/lib/chats-client/src/api.ts')).chatOpening()
   openChat(path)
 }
 """
