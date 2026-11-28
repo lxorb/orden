@@ -251,13 +251,6 @@ def launched(said: str) -> float:
     return float(found.group(1))
 def packages() -> dict[str, str]:
     return {app: package for app, package, _, _ in ROW.findall(GRADLE.read_text(encoding="utf-8"))}
-def emulators_own(lines: list[str]) -> bool:
-    dump = [one for one in lines if " DEBUG " in one]
-    return (
-        any("pthread_mutex_lock called on a destroyed mutex" in one for one in dump)
-        and any("libEGL_emulation.so" in one for one in dump)
-        and any("libc.so (exit+" in one for one in dump)
-    )
 def crashes(log: str, package: str) -> list[str]:
     lines = log.splitlines()
     ours = re.compile(rf"\b{re.escape(package)}(?![\w.])")
@@ -267,8 +260,7 @@ def crashes(log: str, package: str) -> list[str]:
             if any(f"Process: {package}," in one for one in lines[at : at + 4]):
                 found.append(f"crash: {' / '.join(one.split(': ', 1)[-1].strip() for one in lines[at : at + 4])}")
         elif "Fatal signal" in line:
-            ours_too = line.rstrip().endswith((f"({package})", f"({package[-15:]})", f"({package[:15]})"))
-            if ours_too and not emulators_own(lines[at : at + 80]):
+            if line.rstrip().endswith((f"({package})", f"({package[-15:]})", f"({package[:15]})")):
                 found.append(f"signal: {line.split(': ', 1)[-1].strip()}")
         elif re.search(r"\bANR in ", line):
             if ours.search(line.split("ANR in ", 1)[1]):
@@ -467,6 +459,31 @@ class Phone:
         return any(f"{self.package}/" in one for one in top)
     def back(self) -> None:
         adb("shell", "input", "keyevent", "4")
+    def steps_out(self, kept: Callable[[], Any]) -> None:
+        before = kept()
+        pid = adb("shell", "pidof", self.package, check=False).strip()
+        for press in range(1, 9):
+            self.back()
+            time.sleep(2)
+            if not self.resumed():
+                say(f"with nothing left to close, Back put the app in the background on press {press}")
+                break
+        else:
+            self.wrong("Back never leaves the app")
+            return
+        if adb("shell", "pidof", self.package, check=False).strip() != pid:
+            self.wrong("Back on the first screen ended the app instead of keeping it in the background")
+        adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
+        time.sleep(3)
+        if not self.resumed():
+            self.wrong("the app did not come back to the front")
+        if not self.lives():
+            self.wrong("coming back after Back started the page again")
+            self.page = Page()
+            self.page.connect()
+            self.page.wait_for("!!window.ordenApp && !!window.ordenApp.workspace", "the app to come back", 120)
+        elif kept() != before:
+            self.wrong(f"coming back after Back lost state: {before!r} became {kept()!r}")
     def again(self) -> None:
         adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
         time.sleep(5)

@@ -59,7 +59,7 @@ describe('what a phone drive calls a crash (#2286)', () => {
   test('another app falling over, and the phone killing the app with Play services, are not', () => {
     expect(asked(OTHERS, 'so.orden.Orden').crashes).toEqual([])
   })
-  test('the graphics library of the emulator aborting as the app exits is not, and any other abort is', () => {
+  test('an abort is one whatever library it came from, that of the phone included', () => {
     const signal = `${at} F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 5680 (Thread-3), pid 4945 (so.orden.Orden)`
     const dump = '11-27 11:25:07.350  6474  6474 F DEBUG   :'
     const exiting = [
@@ -68,11 +68,15 @@ describe('what a phone drive calls a crash (#2286)', () => {
       `${dump}       #08 pc 000000000000ae4b  /vendor/lib64/egl/libEGL_emulation.so (eglDisplay::~eglDisplay()+11)`,
       `${dump}       #10 pc 00000000000c334e  /apex/com.android.runtime/lib64/bionic/libc.so (exit+14)`,
     ]
-    expect(asked(exiting.join('\n'), 'so.orden.Orden').crashes).toEqual([])
-    for (const missing of [1, 2, 3]) {
-      const other = exiting.filter((_, index) => index !== missing).join('\n')
-      expect(asked(other, 'so.orden.Orden').crashes, String(missing)).toHaveLength(1)
-    }
+    expect(asked(exiting.join('\n'), 'so.orden.Orden').crashes).toHaveLength(1)
+  })
+  test('Back on the first screen is checked to keep the app and its page, by the drive of every app', () => {
+    const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
+    const out = kit.slice(kit.indexOf('    def steps_out('), kit.indexOf('    def again('))
+    expect(out).toContain('ended the app instead of keeping it in the background')
+    expect(out).toContain('coming back after Back started the page again')
+    expect(out).toContain('coming back after Back lost state')
+    expect(kit).not.toContain('libEGL_emulation')
   })
   test('the scan runs at the end of every drive, whatever its steps did', () => {
     const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
