@@ -95,12 +95,12 @@ describe('a phone budget (#2286)', () => {
       flingsWithLongFrame: 0,
       textScaleFollowed: 1,
       memoryPss: 220,
-      memoryGrowth: 0,
+      memoryGrowth: 2,
       backgroundRequests: 0,
       backgroundCpu: 1,
       backgroundWakeLocks: 0,
     }
-    const LOOSE = ['flingsWithLongFrame', 'memoryGrowth', 'backgroundRequests']
+    const LOOSE = ['flingsWithLongFrame', 'backgroundRequests']
     const NOT_REACHED: Record<string, string[]> = { notes: ['memoryPss'] }
     for (const app of ORDEN_APPS) {
       if (!existsSync(join(ROOT, 'apps', 'desktop', 'test', 'e2e', `${app}-phone.py`))) continue

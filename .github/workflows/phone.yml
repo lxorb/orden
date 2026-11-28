@@ -133,7 +133,12 @@ jobs:
             echo "keyAlias=orden"
             echo "keyPassword=orden-measure"
           } >"$android/keystore.properties"
-          pnpm exec tauri android build --apk --target x86_64 --config "src-tauri/tauri.$APP.conf.json"
+          for attempt in 1 2 3; do
+            pnpm exec tauri android build --apk --target x86_64 --config "src-tauri/tauri.$APP.conf.json" && break
+            [ "$attempt" -lt 3 ] || exit 1
+            echo "::warning::the build failed, which a refused download from Maven Central does at times; trying again"
+            sleep 90
+          done
           mkdir -p ../../out
           cp "$android/app/build/outputs/apk/universal/release/app-universal-release.apk" "../../out/$APP-release.apk"
           rm "$android/keystore.properties" "$android/measure.jks"
@@ -143,9 +148,14 @@ jobs:
           APP: ${{ matrix.app }}
           ORG_GRADLE_PROJECT_ordenApp: ${{ matrix.app }}
         run: |
-          pnpm --filter @orden/desktop exec tauri android build --debug --apk --target x86_64 \
-            --config "src-tauri/tauri.$APP.conf.json" \
-            --config "{\"build\":{\"beforeBuildCommand\":\"ORDEN_APP=$APP VITE_ORDEN_API=http://127.0.0.1:8799 pnpm exec vite build --mode drive\"}}"
+          for attempt in 1 2 3; do
+            pnpm --filter @orden/desktop exec tauri android build --debug --apk --target x86_64 \
+              --config "src-tauri/tauri.$APP.conf.json" \
+              --config "{\"build\":{\"beforeBuildCommand\":\"ORDEN_APP=$APP VITE_ORDEN_API=http://127.0.0.1:8799 pnpm exec vite build --mode drive\"}}" && break
+            [ "$attempt" -lt 3 ] || exit 1
+            echo "::warning::the build failed, which a refused download from Maven Central does at times; trying again"
+            sleep 90
+          done
           mkdir -p out
           cp "$(find apps/desktop/src-tauri/gen/android/app/build/outputs/apk -name '*debug*.apk' | head -1)" "out/$APP.apk"
 
