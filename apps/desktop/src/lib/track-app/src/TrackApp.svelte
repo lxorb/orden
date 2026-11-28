@@ -3,14 +3,14 @@
   import { account } from '../../accounts/src/api'
   import { loadSignIn } from '../../sign-in/src/api'
   import { closeOnBack, longPress, pulls } from '../../ui-kit/src/api'
-  import { undoToast } from '../../undo-toast/src/api'
+  import { BottomSheet, SheetMenu, SheetPrompt } from '../../ui-controls/src/api'
+  import { OwnUndo } from '../../undo-toast/src/api'
   import { followLinks } from './links'
   import { type Screen, TrackNav, type TrackParts, WIDE } from './nav.svelte'
   import Settings from './Settings.svelte'
-  import Undo from './Undo.svelte'
 
   const { screens, nav = new TrackNav() }: { screens: TrackParts; nav?: TrackNav } = $props()
-  const { Activities, BottomSheet, Day, Now, Stats } = $derived(screens)
+  const { Activities, Day, Now, Stats } = $derived(screens)
   const SCREENS: readonly { id: Screen; label: string; mark: string }[] = [
     { id: 'now', label: 'Now', mark: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM10 8.6v6.8l5.4-3.4z' },
     { id: 'day', label: 'Day', mark: 'M4.5 6.5h2M9.5 6.5h10M4.5 12h2M9.5 12h10M4.5 17.5h2M9.5 17.5h10' },
@@ -49,11 +49,6 @@
   })
   $effect(() => (signed ? screens.watchTrack() : undefined))
   $effect(() => (signed ? followLinks((screen) => nav.show(screen)) : undefined))
-  function undo() {
-    const own = undoToast.own
-    undoToast.dismiss()
-    void own?.undo()
-  }
 </script>
 
 <svelte:window bind:innerWidth={wide} />
@@ -124,7 +119,7 @@
       </button>
     </nav>
     {#if tipped}<span class="tip" role="tooltip" data-track-tip>{tipped}</span>{/if}
-    <Undo onundo={undo} />
+    <OwnUndo />
   </div>
   <BottomSheet open={nav.settings} label="Settings" onclose={() => (nav.settings = false)}>
     <Settings
@@ -135,6 +130,8 @@
     />
   </BottomSheet>
   <Activities open={nav.activities} onclose={() => (nav.activities = false)} />
+  <SheetMenu />
+  <SheetPrompt />
 {/if}
 
 <style>

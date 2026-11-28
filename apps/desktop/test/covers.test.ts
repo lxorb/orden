@@ -47,13 +47,13 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',
   'lib/tab-strip/src/TabNumbers.svelte .numeral': 'on the tabs of a strip, which no page is under',
   'lib/pass-ui/src/web/PassWeb.svelte .reload': 'Pass on its own site, which holds no web tab',
+  'lib/ui-controls/src/BottomSheet.svelte .shade':
+    'the shade under a bottom sheet, whose sheet is the layer in the registry',
+  'lib/undo-toast/src/OwnUndo.svelte .undo': 'the Undo of a phone app, which holds no web tab',
   'lib/time/src/Blocks.svelte .picked': 'the bar of selected blocks, in Orden Track only, which holds no web tab',
-  'lib/time/src/track/BottomSheet.svelte .shade': 'a sheet of Orden Track, which holds no web tab',
-  'lib/time/src/track/BottomSheet.svelte .sheet': 'a sheet of Orden Track, which holds no web tab',
   'lib/chat-app/src/ChatApp.svelte .chat-app': 'the whole of Orden Chat, which holds no web tab',
   'lib/track-app/src/TrackApp.svelte .track': 'the whole of Orden Track, which holds no web tab',
   'lib/track-app/src/TrackApp.svelte .tip': 'the name of a bar icon in Orden Track, which holds no web tab',
-  'lib/track-app/src/Undo.svelte .undo': 'the Undo of Orden Track, which holds no web tab',
 }
 const MADE_BY: Record<string, string> = {
   'lib/sidebar/src/Tree.svelte .row.carried': 'lib/sidebar/src/tree-lift.ts',

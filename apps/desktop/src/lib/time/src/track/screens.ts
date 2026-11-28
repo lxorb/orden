@@ -6,7 +6,6 @@ export { readSpec } from '../spec'
 export { ticking } from '../watched.svelte'
 export { undone } from '../edit'
 export type { StatsRange } from './range'
-export { default as BottomSheet } from './BottomSheet.svelte'
 import { time } from '../time.svelte'
 export { watchTrack } from './bridge.svelte'
 export const reminders = {

@@ -1,13 +1,12 @@
 <script lang="ts">
   import { midnightOf } from '../../../platform/src/api'
-  import { tick } from '../../../ui-controls/src/api'
+  import { BottomSheet, tick } from '../../../ui-controls/src/api'
   import ActivityFind from '../ActivityFind.svelte'
   import ActivityMark from '../ActivityMark.svelte'
   import { daysAfter, piecesIn, ticking as tickingText } from '../days'
   import { clock, length, nameOf, tintOf } from '../look'
   import { rangeTotals } from '../schedule'
   import { time } from '../time.svelte'
-  import BottomSheet from './BottomSheet.svelte'
 
   const { now, onday }: { now: number; onday: (at?: number) => void } = $props()
   const MOST_RECENT = 3

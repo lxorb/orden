@@ -36,7 +36,7 @@ describe('the Orden Chat shell', () => {
         (found) => found[1],
       ),
     )
-    expect([...new Set(reached)].sort()).toEqual(['accounts', 'platform', 'ui-controls', 'ui-kit'])
+    expect([...new Set(reached)].sort()).toEqual(['accounts', 'platform', 'ui-controls', 'ui-kit', 'undo-toast'])
   })
   test('shows one space at a time, the first the account has until one is chosen, and keeps the choice', () => {
     const nav = new ChatNav()

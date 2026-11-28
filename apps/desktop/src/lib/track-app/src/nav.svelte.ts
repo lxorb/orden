@@ -1,5 +1,5 @@
 import type { TimeRange, TimeSpecSeen } from '@orden/contracts'
-import type { Component, Snippet } from 'svelte'
+import type { Component } from 'svelte'
 import { midnightOf } from '../../platform/src/api'
 
 export type Screen = 'now' | 'day' | 'stats'
@@ -21,7 +21,6 @@ export interface TrackParts {
     onpick: (activity: string | null, day: number) => void
   }>
   readonly Activities: Component<{ open: boolean; onclose: () => void }>
-  readonly BottomSheet: Component<{ open: boolean; label: string; onclose: () => void; children: Snippet }>
   readonly reminders: { readonly on: boolean; set(on: boolean): void }
   ticking(): { readonly now: number }
   readSpec(text: string): TimeSpecSeen

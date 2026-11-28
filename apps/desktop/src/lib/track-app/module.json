@@ -1,5 +1,5 @@
 {
   "name": "track-app",
   "layer": "shell",
-  "dependsOn": ["contracts", "accounts", "platform", "theme", "ui-kit", "undo-toast", "sign-in"]
+  "dependsOn": ["contracts", "accounts", "platform", "theme", "ui-kit", "undo-toast", "sign-in", "ui-controls"]
 }

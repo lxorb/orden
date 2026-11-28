@@ -1,9 +1,13 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
   import { dur, fly } from '../../platform/src/api'
-  import { undoToast } from '../../undo-toast/src/api'
+  import { undoToast } from './undo-toast.svelte'
 
-  const { onundo }: { onundo: () => void } = $props()
+  function undo() {
+    const own = undoToast.own
+    undoToast.dismiss()
+    void own?.undo()
+  }
   const WORDS = { done: 'Done', scheduled: 'Changed', moved: 'Moved', deleted: 'Deleted' }
   const said = $derived(undoToast.own?.said ?? null)
 </script>
@@ -12,13 +16,13 @@
   <div
     class="undo"
     role="status"
-    data-track-undo
+    data-own-undo
     transition:fly={{ y: 24, duration: dur(180), easing: cubicOut }}
     onpointerenter={() => undoToast.hold()}
     onpointerleave={() => undoToast.linger()}
   >
     <span>{WORDS[said]}</span>
-    <button type="button" class="orden-chip" data-track-undo-run onclick={onundo}>Undo</button>
+    <button type="button" class="orden-chip" data-undo-run onclick={undo}>Undo</button>
   </div>
 {/if}
 

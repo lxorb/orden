@@ -1,5 +1,5 @@
 {
   "name": "chat-app",
   "layer": "features",
-  "dependsOn": ["accounts", "chats", "platform", "ui-controls", "ui-kit"]
+  "dependsOn": ["accounts", "chats", "platform", "ui-controls", "ui-kit", "undo-toast"]
 }

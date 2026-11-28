@@ -39,7 +39,6 @@ describe('Orden Track, which is the time tracker and nothing else (#2286)', () =
     const screens = await import('../src/lib/time/src/track/screens')
     expect(Object.keys(screens).sort()).toEqual([
       'Activities',
-      'BottomSheet',
       'Day',
       'Now',
       'Stats',

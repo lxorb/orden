@@ -2,7 +2,7 @@
   import { midnightOf } from '../../platform/src/api'
   import { localDate } from '../../platform/src/api'
   import { closeOnBack, DIVIDER, longPress, menu, type MenuEntry } from '../../ui-kit/src/api'
-  import { tick } from '../../ui-controls/src/api'
+  import { BottomSheet, tick } from '../../ui-controls/src/api'
   import ActivityFind from './ActivityFind.svelte'
   import ActivityLayer from './ActivityLayer.svelte'
   import BlockEditor from './BlockEditor.svelte'
@@ -16,7 +16,6 @@
   import { Selection } from '../../tree/src/api'
   import { undoToast } from '../../undo-toast/src/api'
   import { time } from './time.svelte'
-  import BottomSheet from './track/BottomSheet.svelte'
 
   const {
     from,

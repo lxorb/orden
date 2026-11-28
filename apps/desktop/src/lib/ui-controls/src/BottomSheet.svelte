@@ -1,14 +1,20 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { cubicOut } from 'svelte/easing'
-  import { dur, fade, fly } from '../../../platform/src/api'
-  import { pullsAway, trap } from '../../../ui-controls/src/api'
-  import { closeOnBack, overlays } from '../../../ui-kit/src/api'
+  import { dur, fade, fly } from '../../platform/src/api'
+  import { closeOnBack, overlays } from '../../ui-kit/src/api'
+  import { pullsAway } from './sheet-pull'
+  import { trap } from './trap'
 
   const { open, label, onclose, children }: { open: boolean; label: string; onclose: () => void; children: Snippet } =
     $props()
   $effect(() => (open ? overlays.show(onclose) : undefined))
   $effect(() => closeOnBack(open, onclose))
+  function escaped(event: KeyboardEvent) {
+    if (event.key !== 'Escape') return
+    event.stopPropagation()
+    onclose()
+  }
 </script>
 
 {#if open}
@@ -26,6 +32,9 @@
     aria-modal="true"
     aria-label={label}
     data-track-sheet
+    data-covers
+    tabindex="-1"
+    onkeydown={escaped}
     use:trap
     use:pullsAway={onclose}
     transition:fly={{ y: 320, duration: dur(220), easing: cubicOut }}

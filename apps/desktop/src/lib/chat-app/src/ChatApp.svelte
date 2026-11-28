@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { Component } from 'svelte'
   import { account } from '../../accounts/src/api'
-  import { Select } from '../../ui-controls/src/api'
+  import { Select, SheetMenu, SheetPrompt } from '../../ui-controls/src/api'
   import { closeOnBack } from '../../ui-kit/src/api'
+  import { OwnUndo } from '../../undo-toast/src/api'
   import { type ChatNav, WIDE } from './nav.svelte'
 
   const {
@@ -54,7 +55,10 @@
         {/key}
       </main>
     {/if}
+    <OwnUndo />
   </div>
+  <SheetMenu />
+  <SheetPrompt />
 {/if}
 
 <style>

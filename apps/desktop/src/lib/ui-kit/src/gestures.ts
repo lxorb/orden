@@ -9,7 +9,10 @@ export function swipes(node: HTMLElement, turn: (by: -1 | 1) => void) {
   const onStart = (event: TouchEvent) => {
     const touch = event.touches.length === 1 ? event.touches[0] : undefined
     const target = event.target instanceof Element ? event.target : null
-    from = touch && !target?.closest('input, textarea, [data-no-swipe]') ? { x: touch.clientX, y: touch.clientY } : null
+    from =
+      touch && !target?.closest('input, textarea, select, [contenteditable], [data-no-swipe]')
+        ? { x: touch.clientX, y: touch.clientY }
+        : null
   }
   const onEnd = (event: TouchEvent) => {
     const touch = event.changedTouches[0]
