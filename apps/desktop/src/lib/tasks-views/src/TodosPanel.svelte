@@ -7,6 +7,7 @@
     GROUPING_NAMES,
     GROUPINGS,
     type Grouping,
+    SORTS,
     startTodos,
     todos,
     type TodoPatch,
@@ -17,7 +18,7 @@
   import Filters from './Filters.svelte'
   import ChipPick from './ChipPick.svelte'
   import { openNote } from './notes'
-  import { shellWorld, Shown } from './shown.svelte'
+  import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
   import TodoField from './TodoField.svelte'
   import { previewed, edgeScroll } from './todo-drag.svelte'
@@ -89,6 +90,14 @@
         ...GROUPINGS.map((one) => ({ value: one, label: GROUPING_NAMES[one] })),
       ]}
       onchange={(next: string) => shown.setGroup(next === NONE ? null : (next as Grouping))}
+    />
+    <ChipPick
+      name="Sort"
+      label="Sort"
+      data-todos-sort
+      value={shown.sort}
+      options={SORTS.map((sort) => ({ value: sort, label: SORT_NAMES[sort] }))}
+      onchange={(next: string) => shown.setSort(next as (typeof SORTS)[number])}
     />
   </div>
   <form

@@ -1,7 +1,7 @@
 import { dayOf } from '../../platform/src/api'
 import type { Todo } from './todo'
 
-export const SORTS = ['deadline', 'priority', 'manual'] as const
+export const SORTS = ['deadline', 'priority', 'added', 'title', 'manual'] as const
 export type Sort = (typeof SORTS)[number]
 export const isSort = (value: unknown): value is Sort =>
   typeof value === 'string' && (SORTS as readonly string[]).includes(value)
@@ -42,12 +42,14 @@ const deadlineOrder = (a: Todo, b: Todo): number => {
 }
 const priorityOrder = (a: Todo, b: Todo): number => b.priority - a.priority
 const manualOrder = (a: Todo, b: Todo): number => a.order - b.order || a.created - b.created
-const sortedBy = (sort: Sort) =>
-  sort === 'deadline'
-    ? (a: Todo, b: Todo) => deadlineOrder(a, b) || priorityOrder(a, b)
-    : sort === 'priority'
-      ? (a: Todo, b: Todo) => priorityOrder(a, b) || deadlineOrder(a, b)
-      : () => 0
+const ORDERS: Readonly<Record<Sort, (a: Todo, b: Todo) => number>> = {
+  deadline: (a, b) => deadlineOrder(a, b) || priorityOrder(a, b),
+  priority: (a, b) => priorityOrder(a, b) || deadlineOrder(a, b),
+  added: (a, b) => b.created - a.created,
+  title: (a, b) => byName(a.title, b.title),
+  manual: () => 0,
+}
+const sortedBy = (sort: Sort) => ORDERS[sort]
 export function sortedTodos(todos: readonly Todo[], sort: Sort, keep: readonly string[] = []): Todo[] {
   const finished = (one: Todo) => Number(one.done && !keep.includes(one.id))
   const order = sortedBy(sort)

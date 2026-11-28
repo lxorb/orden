@@ -22,7 +22,11 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 const VIEWS = [
-  ['panel', TodosPanel, ['data-todos-open', 'data-todos-show-done', 'data-todos-label', 'data-todos-group']],
+  [
+    'panel',
+    TodosPanel,
+    ['data-todos-open', 'data-todos-show-done', 'data-todos-label', 'data-todos-group', 'data-todos-sort'],
+  ],
   [
     'board',
     TodosBoard,
@@ -47,6 +51,7 @@ test.each(VIEWS)('every control in the %s toolbar is a chip button', (_, View, m
 })
 const PICKS = [
   ['Group in the panel', TodosPanel, 'data-todos-group', 'Group'],
+  ['Sort in the panel', TodosPanel, 'data-todos-sort', 'Sort'],
   ['Sort on the board', TodosBoard, 'data-todos-sort', 'Sort'],
 ] as const
 test.each(PICKS)('%s is a chip that names its choice and opens its list', async (_, View, mark, name) => {

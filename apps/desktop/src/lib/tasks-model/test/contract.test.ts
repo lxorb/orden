@@ -341,18 +341,20 @@ describe('tasks-model contract', () => {
     expect(shownTodos(all, { ...filter, done: true }).map((t) => t.id)).toEqual(['today', 'yesterday', 'open'])
     expect(shownTodos(all, { ...filter, anyStart: true }).map((t) => t.id)).toEqual(['open', 'later'])
   })
-  test('sorting is exactly deadline, priority and manual, done todos last unless kept where they stood', () => {
-    expect([...SORTS]).toEqual(['deadline', 'priority', 'manual'])
+  test('sorting is exactly deadline, priority, recently added, title and manual, done todos last unless kept where they stood', () => {
+    expect([...SORTS]).toEqual(['deadline', 'priority', 'added', 'title', 'manual'])
     const all = [
-      todo({ id: 'p1d2', priority: 1, deadline: '2026-12-02', order: 3 }),
-      todo({ id: 'p3dn', priority: 3, deadline: null, order: 1 }),
-      todo({ id: 'p0d1', priority: 0, deadline: '2026-12-01', order: 2 }),
-      todo({ id: 'done', priority: 3, deadline: '2026-11-01', order: 0, done: true }),
+      todo({ id: 'p1d2', title: 'buy milk', priority: 1, deadline: '2026-12-02', order: 3, created: 20 }),
+      todo({ id: 'p3dn', title: 'Call mum', priority: 3, deadline: null, order: 1, created: 30 }),
+      todo({ id: 'p0d1', title: 'answer mail', priority: 0, deadline: '2026-12-01', order: 2, created: 10 }),
+      todo({ id: 'done', title: 'Archive', priority: 3, deadline: '2026-11-01', order: 0, created: 40, done: true }),
     ]
     const ids = (sort: (typeof SORTS)[number]) => sortedTodos(all, sort).map((t) => t.id)
     expect(ids('deadline')).toEqual(['p0d1', 'p1d2', 'p3dn', 'done'])
     expect(ids('priority')).toEqual(['p3dn', 'p1d2', 'p0d1', 'done'])
     expect(ids('manual')).toEqual(['p3dn', 'p0d1', 'p1d2', 'done'])
+    expect(ids('added')).toEqual(['p3dn', 'p1d2', 'p0d1', 'done'])
+    expect(ids('title')).toEqual(['p0d1', 'p1d2', 'p3dn', 'done'])
     expect(sortedTodos(all, 'deadline', ['done']).map((t) => t.id)).toEqual(['done', 'p0d1', 'p1d2', 'p3dn'])
   })
   test('grouping by label puts a todo in every label it carries and the unlabeled last', () => {

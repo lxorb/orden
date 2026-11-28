@@ -22,6 +22,8 @@ import {
 export const SORT_NAMES: Readonly<Record<Sort, string>> = {
   deadline: 'Deadline',
   priority: 'Priority',
+  added: 'Recently added',
+  title: 'Title',
   manual: 'Manual',
 }
 export interface Space {
@@ -40,6 +42,7 @@ export interface ShownWorld {
 export type Where = 'panel' | 'board'
 interface Kept {
   sort: Sort
+  boardSort: Sort
   done: boolean
   group: Grouping | null
   folded: readonly string[]
@@ -51,6 +54,7 @@ function keptOf(value: unknown): Kept {
   const read = typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
   return {
     sort: isSort(read.sort) ? read.sort : 'deadline',
+    boardSort: isSort(read.boardSort) ? read.boardSort : isSort(read.sort) ? read.sort : 'deadline',
     done: read.done === true,
     group: isGrouping(read.group) ? read.group : null,
     folded: Array.isArray(read.folded) ? read.folded.filter((one): one is string => typeof one === 'string') : [],
@@ -70,7 +74,7 @@ export class Shown {
     readonly where: Where = 'panel',
   ) {
     const kept = keptOf(world.kept())
-    this.sort = kept.sort
+    this.sort = where === 'board' ? kept.boardSort : kept.sort
     this.panelDone = kept.done
     this.group = kept.group
     this.folded = kept.folded
@@ -120,7 +124,7 @@ export class Shown {
   }
   setSort(value: Sort): void {
     this.sort = value
-    this.remember({ sort: value })
+    this.remember(this.where === 'board' ? { boardSort: value } : { sort: value })
   }
   setGroup(value: Grouping | null): void {
     this.group = value

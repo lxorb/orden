@@ -151,10 +151,10 @@ describe('tasks-views contract', () => {
       }
     }
   })
-  test('the window offers exactly deadline, priority and manual sorting, deadline by default', () => {
+  test('the window offers exactly deadline, priority, recently added, title and manual sorting, deadline by default', () => {
     const { world: w } = world([])
     const shown = new Shown(w)
-    expect(Object.keys(SORT_NAMES)).toEqual(['deadline', 'priority', 'manual'])
+    expect(Object.keys(SORT_NAMES)).toEqual(['deadline', 'priority', 'added', 'title', 'manual'])
     expect(shown.sort).toBe('deadline')
   })
   test('the sort and the label filter are kept between openings, kept apart for the panel and the board, and an old kept "only this space" is left out (#2505)', () => {
@@ -164,12 +164,25 @@ describe('tasks-views contract', () => {
     expect(first.todos.map((t) => t.id)).toEqual(['a', 'b'])
     first.setSort('manual')
     first.setLabel('x')
-    expect(read()).toEqual({ sort: 'manual', done: false, group: null, folded: [], label: 'x', boardLabel: null })
+    expect(read()).toEqual({
+      sort: 'manual',
+      boardSort: 'deadline',
+      done: false,
+      group: null,
+      folded: [],
+      label: 'x',
+      boardLabel: null,
+    })
     const second = new Shown(w)
     expect(second.sort).toBe('manual')
     expect(second.label).toBe('x')
     expect(second.todos.map((t) => t.id)).toEqual(['a'])
-    expect(new Shown(w, 'board').label).toBeNull()
+    const board = new Shown(w, 'board')
+    expect(board.label).toBeNull()
+    expect(board.sort).toBe('deadline')
+    board.setSort('title')
+    expect(new Shown(w, 'board').sort).toBe('title')
+    expect(new Shown(w).sort).toBe('manual')
   })
   test('the label dropdown lists only labels carried by shown todos', () => {
     const { world: w } = world([
@@ -211,6 +224,34 @@ describe('tasks-views contract', () => {
     expect(shown.space).toBeNull()
     expect(shown.todos.map((t) => t.id)).toEqual(['a'])
   })
+  test('the panel sorts inside each group, and a board kept before the panel had its own sort keeps it (#2590)', () => {
+    const { world: w } = world([
+      todo({ id: 'a', title: 'apples', labels: ['x'], created: 1 }),
+      todo({ id: 'b', title: 'walk', labels: ['x'], created: 2 }),
+      todo({ id: 'c', title: 'zoo', created: 3 }),
+      todo({ id: 'd', title: 'bake', created: 4 }),
+    ])
+    w.keep({ sort: 'priority' })
+    expect(new Shown(w, 'board').sort).toBe('priority')
+    const shown = new Shown(w)
+    shown.setGroup('label')
+    const groups = () => shown.groups.map((one) => [one.key, one.todos.map((t) => t.id)])
+    shown.setSort('title')
+    expect(groups()).toEqual([
+      ['x', ['a', 'b']],
+      ['', ['d', 'c']],
+    ])
+    shown.setSort('added')
+    expect(groups()).toEqual([
+      ['x', ['b', 'a']],
+      ['', ['d', 'c']],
+    ])
+    shown.setSort('manual')
+    expect(groups()).toEqual([
+      ['x', ['a', 'b']],
+      ['', ['c', 'd']],
+    ])
+  })
   test('the panel groups by none, label, deadline or priority, and keeps its grouping and folded groups on this device', () => {
     const { world: w, read } = world([todo({ id: 'a', labels: ['x'] }), todo({ id: 'b' })])
     const first = new Shown(w)
@@ -241,7 +282,15 @@ describe('tasks-views contract', () => {
     expect(shown.todos.map((t) => t.id)).toEqual(['b'])
     shown.setShowDone(true)
     expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
-    expect(read()).toEqual({ sort: 'deadline', done: true, group: null, folded: [], label: null, boardLabel: null })
+    expect(read()).toEqual({
+      sort: 'deadline',
+      boardSort: 'deadline',
+      done: true,
+      group: null,
+      folded: [],
+      label: null,
+      boardLabel: null,
+    })
     vi.useRealTimers()
   })
   test('the board keeps its grouping, Show done, Ignore start date and column order in the synced board', () => {
