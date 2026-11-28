@@ -73,7 +73,7 @@ import {
   protectEntries,
 } from '../../sharing/src/api'
 import { archiveEntry } from '../../row-menu/src/api'
-import { updates, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../updates/src/api'
+import { updates, ISSUES_URL, SOURCE_URL } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { runEntry, shortcuts } from '../../shortcuts/src/api'
 import { internal, invoke, isDesktop, isNative, openExternal, isMarkdownPath, samePath } from '../../platform/src/api'
@@ -793,7 +793,7 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: !isDesktop,
       run: () => void updates.check(),
     },
-    { id: 'whats-new', label: 'What is new', run: () => void openExternal(RELEASES_URL) },
+    { id: 'whats-new', label: "What's new", also: ['changelog', 'release notes'], run: () => void updates.showNews() },
     { id: 'report-issue', label: 'Report an issue', run: () => void openExternal(ISSUES_URL) },
     { id: 'source-code', label: 'Source code', run: () => void openExternal(SOURCE_URL) },
     keyed('sidebar', workspace.panel ? 'Hide left sidebar' : 'Show left sidebar', 'app.sidebar'),
