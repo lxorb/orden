@@ -385,7 +385,8 @@ mod tests {
         let read =
             |path: &str| std::fs::read_to_string(crate::app_dir().join(path)).expect("a manifest");
         let linux = read("linux/Cargo.toml");
-        assert!(linux.contains("\ndefault = [\"cef\"]\ncef = []\n"));
+        assert!(linux
+            .contains("\ndefault = [\"cef\"]\ncef = [\"dep:tauri-runtime-cef\", \"dep:cef\"]\n"));
         let built = read("Cargo.toml");
         assert!(built == linux, "the desktop builds from linux/Cargo.toml");
     }

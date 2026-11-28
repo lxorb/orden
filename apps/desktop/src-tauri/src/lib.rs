@@ -2,7 +2,10 @@
 mod appearance;
 #[cfg(test)]
 mod calls;
-#[cfg(desktop)]
+#[cfg(all(desktop, not(feature = "electron")))]
+mod engine;
+#[cfg(all(desktop, feature = "electron"))]
+#[path = "engine_electron.rs"]
 mod engine;
 #[cfg(desktop)]
 mod handover;
@@ -424,7 +427,9 @@ mod entry {
         super::run();
     }
 }
-#[cfg(all(desktop, not(feature = "cef")))]
+#[cfg(all(feature = "cef", feature = "electron"))]
+compile_error!("the cef and electron features choose one engine: build with --no-default-features --features electron");
+#[cfg(all(desktop, not(any(feature = "cef", feature = "electron"))))]
 compile_error!(
     "desktop builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
 );
@@ -433,8 +438,10 @@ pub fn run() {
     orden_base::linux::prepare();
     #[cfg(mobile)]
     run_on(tauri::Builder::default());
-    #[cfg(desktop)]
+    #[cfg(all(desktop, not(feature = "electron")))]
     run_on(tauri::Builder::default().runtime(engine::cef_runtime()));
+    #[cfg(all(desktop, feature = "electron"))]
+    run_on(tauri::Builder::default().enable_macos_default_menu(false).runtime(engine::runtime()));
 }
 #[cfg(desktop)]
 #[must_use]
@@ -473,8 +480,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     trace::mark("engine chosen");
     #[cfg(desktop)]
+    #[cfg(not(feature = "electron"))]
+    let builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    #[cfg(desktop)]
     let builder = builder
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_single_instance::init(launch::second_launch_heard))
@@ -579,6 +588,10 @@ fn named(
     answer: impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static,
 ) -> impl Fn(tauri::ipc::Invoke<Engine>) -> bool + Send + Sync + 'static {
     move |invoke| {
+        #[cfg(feature = "electron")]
+        let Some(invoke) = engine::kept(invoke) else {
+            return true;
+        };
         let command = invoke.message.command();
         orden_crashes::crashes::crumb(command);
         let _doing = orden_crashes::stall::doing(command);
@@ -654,7 +667,10 @@ fn first_of_all(handle: &tauri::AppHandle) {
         permission_answer: engine::permission_answer,
         fails: engine::fails,
         zoom: engine::zoom,
+        #[cfg(not(feature = "electron"))]
         extensions_cdp: tauri_runtime_cef::extensions_cdp,
+        #[cfg(feature = "electron")]
+        extensions_cdp: engine::extensions_cdp,
         history: engine::history::history,
     });
     engine::try_browser_pipe();

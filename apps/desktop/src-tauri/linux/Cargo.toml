@@ -8,7 +8,7 @@
 [workspace]
 members = ["crates/*"]
 default-members = [".", "crates/*"]
-exclude = ["patches/global-hotkey", "patches/tao"]
+exclude = ["patches/global-hotkey", "patches/tao", "linux/tauri-runtime-electron"]
 
 [workspace.package]
 edition = "2021"
@@ -140,7 +140,8 @@ workspace = true
 
 [features]
 default = ["cef"]
-cef = []
+cef = ["dep:tauri-runtime-cef", "dep:cef"]
+electron = ["dep:tauri-runtime-electron", "tauri/devtools"]
 
 [build-dependencies]
 tauri-build = "=3.0.0-alpha.4"
@@ -155,9 +156,10 @@ orden-search = { path = "crates/search" }
 orden-store = { path = "crates/store" }
 orden-web-engine = { path = "crates/web-engine" }
 tauri = { version = "=3.0.0-alpha.5", features = ["protocol-asset", "unstable", "custom-protocol"] }
-tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["unstable"] }
+tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["unstable"], optional = true }
+tauri-runtime-electron = { path = "linux/tauri-runtime-electron", optional = true }
 tauri-runtime = "=3.0.0-alpha.4"
-cef = { version = "=154.5.0", default-features = false }
+cef = { version = "=154.5.0", default-features = false, optional = true }
 tauri-plugin-opener.workspace = true
 tauri-plugin-os.workspace = true
 tauri-plugin-deep-link.workspace = true
@@ -190,7 +192,7 @@ orden-system = { path = "crates/system" }
 orden-web = { path = "crates/web" }
 fontdb.workspace = true
 png.workspace = true
-tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["devtools"] }
+tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["devtools"], optional = true }
 tauri-plugin-dialog.workspace = true
 tauri-plugin-process = "=3.0.0-alpha.3"
 tempfile.workspace = true

@@ -3749,6 +3749,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tauri-runtime",
  "tauri-runtime-cef",
+ "tauri-runtime-electron",
  "tauri-utils",
  "tempfile",
  "tokio",
@@ -6272,6 +6273,20 @@ dependencies = [
  "url",
  "windows 0.62.2",
  "x11-dl",
+]
+
+[[package]]
+name = "tauri-runtime-electron"
+version = "0.1.0"
+dependencies = [
+ "http",
+ "raw-window-handle",
+ "serde",
+ "serde_json",
+ "tauri-runtime",
+ "tauri-utils",
+ "url",
+ "windows 0.62.2",
 ]
 
 [[package]]

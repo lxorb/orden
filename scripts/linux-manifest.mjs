@@ -39,15 +39,16 @@ function moved(line, pins, table) {
     if (table === '[dependencies]') {
       return [
         `tauri = { version = "=${pin('tauri')}", features = [${listed([...features, 'custom-protocol'])}] }`,
-        `tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["unstable"] }`,
+        `tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["unstable"], optional = true }`,
+        `tauri-runtime-electron = { path = "linux/tauri-runtime-electron", optional = true }`,
         `tauri-runtime = "=${pin('tauri-runtime')}"`,
-        `cef = { version = "=${pin('cef')}", default-features = false }`,
+        `cef = { version = "=${pin('cef')}", default-features = false, optional = true }`,
       ]
     }
     const kept = features.filter((one) => one !== 'devtools' && one !== 'protocol-asset')
     return [
       ...(features.includes('devtools')
-        ? [`tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"] }`]
+        ? [`tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"], optional = true }`]
         : []),
       ...(kept.length > 0 ? [`tauri = { version = "=${pin('tauri')}", features = [${listed(kept)}] }`] : []),
     ]
@@ -91,7 +92,11 @@ export function linuxManifest(app) {
       continue
     }
     if (table === '[features]' && line.startsWith('cef = ')) {
-      out.push('default = ["cef"]', line)
+      out.push('default = ["cef"]', 'cef = ["dep:tauri-runtime-cef", "dep:cef"]')
+      continue
+    }
+    if (table === '[features]' && line.startsWith('electron = ')) {
+      out.push('electron = ["dep:tauri-runtime-electron", "tauri/devtools"]')
       continue
     }
     if (/\[\s*$/.test(line)) {

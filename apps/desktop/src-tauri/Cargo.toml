@@ -1,7 +1,7 @@
 [workspace]
 members = ["crates/*"]
 default-members = [".", "crates/*"]
-exclude = ["patches/global-hotkey", "patches/tao"]
+exclude = ["patches/global-hotkey", "patches/tao", "linux/tauri-runtime-electron"]
 
 [workspace.package]
 edition = "2021"
@@ -134,6 +134,7 @@ workspace = true
 
 [features]
 cef = []
+electron = []
 
 [package.metadata.cef]
 tauri = "3.0.0-alpha.5"

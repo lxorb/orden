@@ -12,7 +12,10 @@ const SCHEME: &str = "color-scheme";
 pub fn follow() {
     let _ = std::thread::Builder::new().name("orden-portal-scheme".into()).spawn(|| {
         if let Ok(bus) = Connection::session() {
+            #[cfg(not(feature = "electron"))]
             let _ = hear(&bus, tauri_runtime_cef::set_system_theme);
+            #[cfg(feature = "electron")]
+            let _ = hear(&bus, |_| {});
         }
     });
 }

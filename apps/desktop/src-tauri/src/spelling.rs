@@ -20,6 +20,11 @@ fn tag(said: &str) -> bool {
         && region.is_none_or(|one| one.len() == 2 && one.chars().all(|c| c.is_ascii_uppercase()))
         && parts.next().is_none()
 }
+#[cfg(feature = "electron")]
+mod engine {
+    pub fn use_dictionaries(_platform: &tauri::webview::PlatformWebview, _languages: &[String]) {}
+}
+#[cfg(not(feature = "electron"))]
 mod engine {
     use cef::{
         CefString, ImplBrowser as _, ImplBrowserHost as _, ImplListValue as _,

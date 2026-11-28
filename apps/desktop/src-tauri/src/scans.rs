@@ -1,6 +1,6 @@
 #[test]
 fn every_window_is_built_where_the_run_sends_them() {
-    let excused = ["crates/documents/src/pdf.rs", "engine.rs"];
+    let excused = ["crates/documents/src/pdf.rs", "engine.rs", "engine_electron.rs"];
     let mut unplaced = Vec::new();
     for (name, path) in crate::sources() {
         let text = std::fs::read_to_string(&path).unwrap_or_default();
