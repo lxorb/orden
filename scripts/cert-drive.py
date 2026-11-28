@@ -50,23 +50,27 @@ for role, name in chain:
     print(f"  {role}: {name}")
 if run("!!document.querySelector('.site.orden-bubble .certificate .note')"):
     fail("the chain was read separately, not from the page's own connection")
-details = run("document.querySelector('.site.orden-bubble .details')?.innerText ?? ''") or ""
-(OUT / "certificate.txt").write_text(details)
+facts = run("""[
+  ...[...document.querySelectorAll('.site.orden-bubble .details > dt')].map((one) => [one.innerText, one.nextElementSibling?.innerText ?? '']),
+  ...[...document.querySelectorAll('.site.orden-bubble .certificate .code')].map((one) => [one.querySelector('.label')?.innerText ?? '', one.querySelector('.hex')?.textContent ?? '']),
+]""") or []
+facts = {label.strip(): value.replace("\u200b", "").strip() for label, value in facts}
+(OUT / "certificate.txt").write_text("".join(f"{label}\n{value}\n" for label, value in facts.items()))
 print("the popover's certificate:")
-print(details)
+for label, value in facts.items():
+    print(f"  {label}: {value}")
 to, by = served()
 print(f"the site serves one issued to {to!r} by {by!r}")
 for label, want in (("Issued to", to), ("Issued by", by)):
-    found = re.search(rf"{label}\s*\n([^\n]*)", details)
-    if not found or want not in found.group(1):
-        fail(f"{label} says {found.group(1) if found else None!r}, not {want!r}")
+    if want not in facts.get(label, ""):
+        fail(f"{label} says {facts.get(label)!r}, not {want!r}")
 for label in ("Valid from", "Valid until"):
-    if not re.search(rf"{label}\s*\n[^\n]*\d", details):
+    if not re.search(r"\d", facts.get(label, "")):
         fail(f"{label} gives no date")
-if not re.search(r"SHA-256 fingerprint\s*\n([0-9A-F]{2}:){31}[0-9A-F]{2}", details):
-    fail("there is no SHA-256 fingerprint")
-if not re.search(r"Serial number\s*\n([0-9A-F]{2})(:[0-9A-F]{2})*", details):
-    fail("there is no serial number")
+if not re.fullmatch(r"([0-9A-F]{2}:){31}[0-9A-F]{2}", facts.get("SHA-256 fingerprint", "")):
+    fail(f"there is no SHA-256 fingerprint: {facts.get('SHA-256 fingerprint')!r}")
+if not re.fullmatch(r"[0-9A-F]{2}(:[0-9A-F]{2})*", facts.get("Serial number", "")):
+    fail(f"there is no serial number: {facts.get('Serial number')!r}")
 roles = [role for role, _ in chain]
 if len(chain) < 2 or roles[0] != "site":
     fail(f"the chain is not the site's and its issuers: {chain!r}")
