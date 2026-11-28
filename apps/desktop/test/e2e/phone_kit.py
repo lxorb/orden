@@ -715,17 +715,25 @@ class Phone:
         self.gates["warmP95"] = ranked(warm, 95)
         self.page = Page()
         self.page.connect()
-    def processes(self) -> list[str]:
-        own = adb("shell", "pidof", self.package, check=False).split()
+    def drawing(self) -> list[str]:
         listed = adb("shell", "ps", "-A", "-o", "PID,NAME", check=False).splitlines()
-        drawing = [one.split()[0] for one in listed if "sandboxed_process" in one and one.split()[0].isdigit()]
-        return [*own, *drawing]
-    def weighs(self) -> float:
-        taken = []
+        return [one.split()[0] for one in listed if "sandboxed_process" in one and one.split()[0].isdigit()]
+    def processes(self) -> list[str]:
+        return [*adb("shell", "pidof", self.package, check=False).split(), *self.drawing()]
+    def weighs(self) -> tuple[float, float]:
         for _ in range(3):
-            taken.append(pss(adb("shell", "dumpsys", "meminfo", check=False), self.processes()))
+            try:
+                self.page.send("HeapProfiler.collectGarbage")
+            except (RuntimeError, OSError) as refused:
+                raise SystemExit(f"the page would not collect its garbage before it is weighed: {refused}") from None
+        time.sleep(2)
+        own, page = [], []
+        for _ in range(3):
+            said = adb("shell", "dumpsys", "meminfo", check=False)
+            own.append(pss(said, adb("shell", "pidof", self.package, check=False).split()))
+            page.append(pss(said, self.drawing()))
             time.sleep(2)
-        return ranked(taken, 50)
+        return ranked(own, 50), ranked(page, 50)
     def memory(self, cycle: Callable[[], None]) -> None:
         time.sleep(5)
         before = self.weighs()
@@ -733,11 +741,16 @@ class Phone:
             cycle()
         time.sleep(10)
         after = self.weighs()
-        say(f"memory: {before:.0f} MB after the main path, {after:.0f} MB after {OPENS} opens and closes")
-        if before <= 0:
-            raise SystemExit("the phone would not say how much memory the app holds")
-        self.gates["memoryPss"] = round(before, 0)
-        self.gates["memoryGrowth"] = round(max(0.0, after - before), 0)
+        told = f"the app {before[0]:.0f} then {after[0]:.0f} MB, its page {before[1]:.0f} then {after[1]:.0f} MB"
+        say(f"memory, garbage collected, after the main path and after {OPENS} opens and closes: {told}")
+        if before[0] <= 0 or before[1] <= 0:
+            raise SystemExit("the phone would not say how much memory the app and its page hold")
+        self.gates["memoryPss"] = round(sum(before), 0)
+        self.gates["memoryGrowth"] = round(max(0.0, sum(after) - sum(before)), 0)
+        self.notes["memoryAppPss"] = round(before[0], 0)
+        self.notes["memoryPagePss"] = round(before[1], 0)
+        self.notes["memoryAppGrowth"] = round(after[0] - before[0], 0)
+        self.notes["memoryPageGrowth"] = round(after[1] - before[1], 0)
     def background(self, requests: Callable[[], int]) -> None:
         uid = re.search(r"userId=(\d+)", adb("shell", "dumpsys", "package", self.package, check=False))
         adb("shell", "input", "keyevent", "3")

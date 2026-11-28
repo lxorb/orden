@@ -231,6 +231,16 @@ describe('what a phone drive measures at night (#2286)', () => {
   test('the memory an app holds is the total the phone sums up, in megabytes, of the app and its page', () => {
     expect(said.pss).toEqual([200, 150, 0])
   })
+  test('it is weighed only after its page has collected its garbage, the app and its page apart', () => {
+    const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
+    const weighs = kit.slice(kit.indexOf('    def weighs('), kit.indexOf('    def memory('))
+    expect(weighs.indexOf('self.page.send("HeapProfiler.collectGarbage")')).toBeGreaterThan(-1)
+    expect(weighs.indexOf('self.page.send("HeapProfiler.collectGarbage")')).toBeLessThan(weighs.indexOf('"dumpsys", "meminfo"'))
+    expect(weighs).toContain('would not collect its garbage before it is weighed')
+    for (const kept of ['memoryAppPss', 'memoryPagePss', 'memoryAppGrowth', 'memoryPageGrowth']) {
+      expect(kit, kept).toContain(`self.notes["${kept}"]`)
+    }
+  })
   test('the processor time it took is its user and system ticks, whatever its name holds', () => {
     expect(said.ticks).toEqual([200, 10, null])
   })
