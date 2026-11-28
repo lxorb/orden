@@ -212,14 +212,7 @@ def back_order() -> None:
     PHONE.page.evaluate("window.ordenApp.prompt.dismiss()")
     phone_kit.keys_gone(15)
     PHONE.page.evaluate(f"{WS}.closePanel()")
-    for press in range(1, 9):
-        PHONE.back()
-        time.sleep(2)
-        if not PHONE.resumed():
-            say(f"with nothing left to close, Back left the app on press {press}")
-            PHONE.again()
-            return
-    wrong("Back never leaves the app")
+    PHONE.steps_out(kept)
 def heron() -> None:
     page = PHONE.page
     page.wait_for(f"!!window.ordenApp && !!{WS}.activeSpace", "the app", 120)

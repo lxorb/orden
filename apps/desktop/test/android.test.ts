@@ -114,6 +114,16 @@ describe('when the first screen can be used', () => {
     expect(told).toContain('reportFullyDrawn()')
   })
 })
+describe('Back on the screen the app starts on', () => {
+  test('puts the app in the background and keeps it, and every other Back goes to the page first', () => {
+    const pressed = /override fun onBackPressed\(\) \{[\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    expect(pressed).toContain('if (onBackPressedDispatcher.hasEnabledCallbacks()) {')
+    expect(pressed).toContain('super.onBackPressed()')
+    expect(pressed).toContain('moveTaskToBack(true)')
+    expect(pressed).not.toContain('finish')
+    expect(activity).toContain('override val handleBackNavigation = true')
+  })
+})
 describe('the press that started the app', () => {
   test('is not read again when the activity comes back', () => {
     const created = /override fun onCreate\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''

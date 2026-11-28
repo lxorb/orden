@@ -110,6 +110,15 @@ class MainActivity : TauriActivity() {
     if (read(intent)) tell("window.__ordenHanded?.()")
   }
 
+  @Deprecated("Deprecated in Java")
+  override fun onBackPressed() {
+    if (onBackPressedDispatcher.hasEnabledCallbacks()) {
+      @Suppress("DEPRECATION") super.onBackPressed()
+    } else {
+      moveTaskToBack(true)
+    }
+  }
+
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
     page?.settings?.textZoom = TextSize.zoom(newConfig.fontScale, BuildConfig.ORDEN_TEXT_FOLLOWS)
