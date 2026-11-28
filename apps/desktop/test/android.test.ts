@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -122,6 +122,25 @@ describe('Back on the screen the app starts on', () => {
     expect(pressed).toContain('moveTaskToBack(true)')
     expect(pressed).not.toContain('finish')
     expect(activity).toContain('override val handleBackNavigation = true')
+  })
+})
+describe('the launcher icon', () => {
+  const app = join(HERE, '..', 'src-tauri', 'gen', 'android', 'app')
+  const workflow = read(HERE, '..', '..', '..', '.github', 'workflows', 'check.yml')
+  test('is that of the app where it has one, taken from the resources its build type adds', () => {
+    const gradle = read(app, 'build.gradle.kts')
+    expect(gradle).toContain('res.srcDir("src/$ordenApp/res")')
+    for (const name of ['notes', 'track', 'todo', 'chat']) {
+      expect(existsSync(join(app, 'src', name, 'res', 'mipmap-xxxhdpi', 'ic_launcher_foreground.png')), name).toBe(true)
+    }
+    expect(existsSync(join(app, 'src', 'orden', 'res'))).toBe(false)
+  })
+  test('is compared pixel for pixel with what each app was built with, on every check', () => {
+    expect(workflow).toContain(':app:processUniversalReleaseResources "-PordenApp=$app"')
+    expect(workflow).toContain('scripts/phone-icons.py "$app" "$linked" app resources.txt')
+    const script = read(HERE, '..', '..', '..', 'scripts', 'phone-icons.py')
+    expect(script).toContain('pixels(held.read(entry)) != pixels(source.read_bytes())')
+    expect(script).toContain('was built without')
   })
 })
 describe('the press that started the app', () => {

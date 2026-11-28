@@ -447,6 +447,24 @@ jobs:
           done
           exit "$wrong"
 
+      - name: Each app is built with its own launcher icon, and the whole Orden with the shared one
+        working-directory: apps/desktop/src-tauri/gen/android
+        run: |
+          python3 -m pip install --quiet --break-system-packages pillow
+          aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 | sort | tail -1)
+          wrong=0
+          for app in orden notes track todo chat; do
+            ./gradlew :app:processUniversalReleaseResources "-PordenApp=$app" --console=plain -q
+            linked=$(find app/build/intermediates/linked_resources_binary_format/universalRelease -name '*.ap_' | head -1)
+            if [ -z "$linked" ]; then
+              echo "::error::no linked resources for $app among: $(find app/build/intermediates -name '*.ap_' | tr '\n' ' ')"
+              exit 1
+            fi
+            "$aapt2" dump resources "$linked" >resources.txt
+            python3 ../../../../../scripts/phone-icons.py "$app" "$linked" app resources.txt || wrong=1
+          done
+          exit "$wrong"
+
       - name: Orden Chat's push compiles, with no Firebase project
         working-directory: apps/desktop/src-tauri/gen/android
         run: ./gradlew :app:compileUniversalReleaseKotlin -PordenApp=chat --console=plain
