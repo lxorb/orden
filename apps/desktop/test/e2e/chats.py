@@ -12,13 +12,20 @@ async () => {
   const { seeded } = await import('/src/lib/chats-client/src/view/seed.ts')
   const { useStore } = await import('/src/lib/chats-client/src/view/source.svelte.ts')
   const made = seeded()
+  const root = window.ordenApp.workspace.activeSpace?.root
+  if (root) {
+    for (const one of made.store.list) made.store.must(one.id).entry = { ...made.store.must(one.id).entry, root }
+    made.store.list = made.store.list.map((one) => ({ ...one, root }))
+  }
   useStore(made.store)
   window.__chats = made
+  const { keepChats } = await import('/src/lib/spaces/src/space-chats.svelte.ts')
+  if (root) keepChats(root, true)
 }
 """
 OPEN = """
 async (path) => {
-  const { openChat } = await import('/src/lib/chats-client/src/view/open.ts')
+  const { openChat } = await (await import('/src/lib/chats-client/src/api.ts')).chatOpening()
   openChat(path)
 }
 """
@@ -95,7 +102,7 @@ def desktop(page: Page, scheme: str) -> None:
         "the rocket on the message",
     ):
         return
-    page.click(".chat-tab .reactions .chip.mine")
+    page.locator(".chat-tab .reactions .chip.mine", has_text="🚀").click()
     wait_for(
         page,
         "![...document.querySelectorAll('.chat-tab .reactions .emoji')].some((one) => one.textContent === '🚀')",
@@ -145,11 +152,11 @@ async () => {
   const { useStore } = await import('/src/lib/chats-client/src/view/source.svelte.ts')
   const made = bigChat(100000)
   useStore(made.store)
-  const { openChat } = await import('/src/lib/chats-client/src/view/open.ts')
+  const { openChat } = await (await import('/src/lib/chats-client/src/api.ts')).chatOpening()
   const started = performance.now()
   openChat('/spaces/Team/big.chat')
   await new Promise((go) => {
-    const look = () => document.querySelectorAll('.chat-tab .message').length > 5 ? go() : requestAnimationFrame(look)
+    const look = () => document.querySelectorAll('.chat-tab .message').length > 5 || performance.now() - started > 30000 ? go() : requestAnimationFrame(look)
     look()
   })
   return performance.now() - started
