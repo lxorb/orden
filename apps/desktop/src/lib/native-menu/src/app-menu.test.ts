@@ -9,6 +9,7 @@ registerCommandRows('export', async () => (await import('../../export/src/api'))
 await commandRowsLoaded()
 const { appMenu } = await import('./app-menu')
 const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('../../updates/src/links')
+const { updates } = await import('../../updates/src/api')
 const { isSubmenu, walkableRows } = await import('../../ui-kit/src/api')
 const { appCommands } = await import('../../commands/src/api')
 const { BY_ID } = await import('../../shortcuts/src/api')
@@ -67,7 +68,7 @@ describe('File', () => {
     for (const label of [
       ...['Undo', 'Redo', 'Inline math', 'Superscript', 'Subscript', 'Paste as plain text'],
       ...['Find next', 'Find previous', 'Fullscreen'],
-      ...['What is new', 'Report an issue', 'Source code'],
+      ...["What's new", 'Report an issue', 'Source code'],
     ]) {
       expect(offered, label).toContain(label)
     }
@@ -127,11 +128,18 @@ describe('View and Help', () => {
   test('leaves Always on top to the desktop', () => {
     expect(labels('view')).not.toContain('Always on top')
   })
-  test('sends a bug and a release note to the repository the app is written in', () => {
+  test('sends a bug to the repository the app is written in', () => {
     expect(labels('help')).toContain('Report an issue')
-    expect(labels('help')).toContain('What is new')
     expect(ISSUES_URL.startsWith(SOURCE_URL)).toBe(true)
     expect(RELEASES_URL.startsWith(SOURCE_URL)).toBe(true)
+  })
+  test("opens What's new in the app, with what has come since, not on a web page", () => {
+    const news = vi.spyOn(updates, 'showNews').mockResolvedValue(undefined)
+    actions('help')
+      .find((row) => row.label === "What's new")
+      ?.run()
+    expect(news).toHaveBeenCalledOnce()
+    news.mockRestore()
   })
 })
 describe('the menu, the palette and the shortcut settings agree', () => {

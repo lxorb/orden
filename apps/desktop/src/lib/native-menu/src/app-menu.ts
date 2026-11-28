@@ -32,7 +32,7 @@ import { protection } from '../../protect/src/api'
 import { canPrint, EXPORT_EXTRAS, EXPORT_FORMATS, EXPORT_VARIANTS, printable } from '../../export-formats/src/api'
 import { modes } from '../../modes/src/api'
 import { type AppContext, runEntry, shortcuts } from '../../shortcuts/src/api'
-import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL, updates } from '../../updates/src/api'
+import { DOWNLOAD_URL, ISSUES_URL, SOURCE_URL, updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 
 interface Context {
@@ -342,7 +342,7 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         ...(isDesktop ? [{ label: 'Check for updates', asks: true, run: () => void updates.check() }] : []),
         ...(isNative ? [] : [{ label: 'Download the app', run: () => void openExternal(DOWNLOAD_URL) }]),
-        { label: 'What is new', run: () => void openExternal(RELEASES_URL) },
+        { label: "What's new", run: () => void updates.showNews() },
         { label: 'Report an issue', run: () => void openExternal(ISSUES_URL) },
         { label: 'Source code', run: () => void openExternal(SOURCE_URL) },
       ],
