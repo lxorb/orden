@@ -18,6 +18,54 @@ WS = "window.ordenApp.workspace"
 HELD = f"(name) => {WS}.files.find((one) => one.path.endsWith(name))?.path ?? null"
 def held(page, name: str) -> str | None:
     return page.evaluate(HELD, name)
+TREE = ".panels:not(.right) [role=treeitem]"
+def tapped(page, name: str) -> None:
+    page.evaluate(f"() => {WS}.showPanel('tree')")
+    row = page.locator(f'{TREE}[data-path$="/{name}.md"]')
+    row.wait_for(state="visible")
+    row.tap()
+    wait_for(page, f"{WS}.panel === null && {WS}.active?.path?.endsWith('/{name}.md')", f"{name} opened from the list")
+def gone_back(page, to: str, what: str) -> None:
+    page.go_back()
+    wait_for(page, f"{WS}.active?.path?.endsWith('/{to}.md')", what)
+DEPTH = "(history.state?.ordenDepth ?? 0)"
+def walked(browser: Browser) -> None:
+    page = DRIVE.page(
+        browser,
+        viewport={"width": 390, "height": 844},
+        user_agent=PHONE_AGENT,
+        has_touch=True,
+        is_mobile=True,
+    )
+    DRIVE.open(page)
+    DRIVE.seed(page, "# Alpha\n\nThe first.", "# Beta\n\nThe second.", "# Gamma\n\nThe third.")
+    for name in ("Alpha", "Beta", "Gamma"):
+        if not held(page, f"/{name}.md"):
+            wrong(f"no note named {name} to walk through")
+    first = page.evaluate(f"{WS}.active.id")
+    if page.evaluate(DEPTH) != 0:
+        wrong("a phone that has opened nothing yet already holds a step for Back")
+    for name in ("Alpha", "Beta", "Gamma"):
+        tapped(page, name)
+    wait_for(page, f"{DEPTH} === 1", "Back having a note to go back to")
+    gone_back(page, "Beta", "Back from the third note showing the second")
+    gone_back(page, "Alpha", "Back again showing the first")
+    page.go_back()
+    wait_for(page, f"{WS}.active?.id === {first!r}", "Back once more showing the note the phone started on")
+    wait_for(page, f"{DEPTH} === 0", "nothing left for Back but leaving the app")
+    if page.evaluate(f"{WS}.tabs.length") < 4:
+        wrong("going back closed a note")
+    for name in ("Alpha", "Beta", "Gamma"):
+        tapped(page, name)
+    beta = page.evaluate(f"{WS}.tabs.find((one) => one.path?.endsWith('/Beta.md')).id")
+    page.evaluate(f"(id) => {WS}.close(id)", beta)
+    wait_for(page, f"!{WS}.tabs.some((one) => one.id === {beta!r})", "the second note closed")
+    gone_back(page, "Alpha", "Back from the third note passing over the closed second")
+    page.evaluate(f"() => {WS}.showPanel('tree')")
+    wait_for(page, f"{WS}.panel === 'tree'", "the notes list")
+    page.go_back()
+    wait_for(page, f"{WS}.panel === null && {WS}.active?.path?.endsWith('/Alpha.md')", "Back closing the list before it leaves the note")
+    page.context.close()
 def drive(browser: Browser) -> None:
     page = DRIVE.page(
         browser,
@@ -80,6 +128,7 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(500)
     DRIVE.shot(page, "after")
     page.context.close()
+    walked(browser)
 raise SystemExit(
     DRIVE.run(drive, "Orden Notes makes, writes, renames, moves, finds and deletes a note on a phone, with no part missing")
 )

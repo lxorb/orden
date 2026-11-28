@@ -12,6 +12,7 @@
     paneCorners,
     prompt,
     reloading,
+    Screens,
     said,
     scrollerOf,
     showField,
@@ -306,6 +307,24 @@
   })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
   $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
+  const screens = new Screens()
+  const onPhone = $derived(viewport.device === 'phone')
+  $effect(() => {
+    if (!onPhone) return
+    const tab = workspace.active
+    screens.seen(tab ? { tab: tab.id, at: tab.at } : null)
+  })
+  $effect(() => {
+    if (onPhone) screens.keep(workspace.tabs.map((one) => one.id))
+  })
+  const uncovered = $derived(!covered && !coveredRight && !palette && !menu.open && !fullscreen.on)
+  function backAScreen() {
+    const to = screens.back()
+    if (!to) return
+    if (to.tab === workspace.activeTabId) void workspace.walk(to.at, to.tab)
+    else workspace.activate(to.tab)
+  }
+  $effect(() => closeOnBack(onPhone && uncovered && screens.depth > 0, backAScreen))
   $effect(() => fullscreen.follow())
   $effect(() => {
     const host = middle
