@@ -302,6 +302,11 @@ describe('the phone apps CI builds and drives (#2286)', () => {
     expect(workflow).toContain('cp "$android/app/build/outputs/apk/universal/release/app-universal-release.apk"')
     expect(workflow).not.toContain('secrets.')
   })
+  test('a build that fails is tried again twice, since Maven Central refuses a download at times', () => {
+    const workflow = readFileSync(join(ROOT, '.github', 'workflows', 'phone.yml'), 'utf8')
+    expect(workflow.match(/for attempt in 1 2 3; do/g)).toHaveLength(2)
+    expect(workflow.match(/\[ "\$attempt" -lt 3 \] \|\| exit 1/g)).toHaveLength(2)
+  })
   test('the app as it ships is built and timed only at night, in the run that builds the edge APKs', () => {
     const workflow = readFileSync(join(ROOT, '.github', 'workflows', 'phone.yml'), 'utf8')
     const built = /- name: Build the app as it ships, to time its cold start\n([\s\S]*?)(?=\n {6}- )/.exec(
