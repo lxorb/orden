@@ -16,6 +16,7 @@
   import { dropRows } from './drop'
   import { setHost } from './host'
   import Threads from './Threads.svelte'
+  import AiTrouble from './AiTrouble.svelte'
 
   const {
     ongoto,
@@ -153,53 +154,58 @@
     </aside>
   {/if}
   <div class="main">
-    {#if shown && (wide || (head?.kept && !listing && session === null))}
-      <header class="top">
-        {#if wide}
-          {@render glyph('Chats', 'Chats', toggleRail, RAIL, railed)}
-        {/if}
-        {#if !wide && head?.kept && !listing}
-          {@render glyph('Back', 'Back', () => chat.newThread(), BACK)}
-        {/if}
-        {#if head?.kept && !listing && session === null}
-          <button class="title" onclick={titleMenu} aria-haspopup="menu">
-            <span>{head.title || 'Untitled'}</span>
-            <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
-          </button>
-        {/if}
-        <span class="gap"></span>
-        {#if wide && !railed}
-          {@render glyph('ai.new', 'New chat', () => chat.newThread(), NEW)}
-        {/if}
-      </header>
-    {/if}
-    {#if !shown}
-      <button class="elsewhere" onclick={claim}>
-        <span>{tab?.name ?? 'Untitled'}</span>
-        <span class="hint">Click to continue this chat here</span>
-      </button>
-    {:else if listing}
-      <Threads quiet={chat.host !== host} />
-    {:else if session !== null}
-      {#if !wide}
+    <svelte:boundary>
+      {#if shown && (wide || (head?.kept && !listing && session === null))}
         <header class="top">
-          {@render glyph('Back', 'Back', () => chat.showThreads(), BACK)}
+          {#if wide}
+            {@render glyph('Chats', 'Chats', toggleRail, RAIL, railed)}
+          {/if}
+          {#if !wide && head?.kept && !listing}
+            {@render glyph('Back', 'Back', () => chat.newThread(), BACK)}
+          {/if}
+          {#if head?.kept && !listing && session === null}
+            <button class="title" onclick={titleMenu} aria-haspopup="menu">
+              <span>{head.title || 'Untitled'}</span>
+              <svg viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+            </button>
+          {/if}
+          <span class="gap"></span>
+          {#if wide && !railed}
+            {@render glyph('ai.new', 'New chat', () => chat.newThread(), NEW)}
+          {/if}
         </header>
       {/if}
-      {#await agentSession() then AgentSession}
-        {#key session}
-          <AgentSession agent={session} />
-        {/key}
-      {/await}
-    {:else}
-      <Conversation {ongoto} {ready} />
-      {#if ready && side.of !== null && side.of === head?.id && chat.host === host}
-        <QuickQuestion quick={side} docked />
+      {#if !shown}
+        <button class="elsewhere" onclick={claim}>
+          <span>{tab?.name ?? 'Untitled'}</span>
+          <span class="hint">Click to continue this chat here</span>
+        </button>
+      {:else if listing}
+        <Threads quiet={chat.host !== host} />
+      {:else if session !== null}
+        {#if !wide}
+          <header class="top">
+            {@render glyph('Back', 'Back', () => chat.showThreads(), BACK)}
+          </header>
+        {/if}
+        {#await agentSession() then AgentSession}
+          {#key session}
+            <AgentSession agent={session} />
+          {/key}
+        {/await}
+      {:else}
+        <Conversation {ongoto} {ready} />
+        {#if ready && side.of !== null && side.of === head?.id && chat.host === host}
+          <QuickQuestion quick={side} docked />
+        {/if}
+        {#if ready}
+          <Composer />
+        {/if}
       {/if}
-      {#if ready}
-        <Composer />
-      {/if}
-    {/if}
+      {#snippet failed(_error, reset)}
+        <AiTrouble onretry={reset} />
+      {/snippet}
+    </svelte:boundary>
   </div>
 </div>
 

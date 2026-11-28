@@ -3,6 +3,7 @@
   import { shownPath } from '@orden/markdown/shown'
   import { cubicOut } from 'svelte/easing'
   import Thinking from './Thinking.svelte'
+  import { Mascot } from '../../mascot/src/api'
   import { Copied } from '../../ui-controls/src/api'
   import { dur, fade, fly } from '../../platform/src/api'
   import type { Place } from '../../windows/src/api'
@@ -166,6 +167,12 @@
         <span class="orden-row-label">↰ {parent.title || 'Untitled'}</span>
       </button>
     {/if}
+    {#if hello && !recent.length && !parent}
+      <div class="nothing" in:fade={{ duration: dur(150) }}>
+        <Mascot mood="sleepy" size={32} />
+        <p class="empty-text">No chats yet.</p>
+      </div>
+    {/if}
     {#if hello && recent.length}
       <div class="home" in:fade={{ duration: dur(150) }}>
         <h2 class="heading">Chats</h2>
@@ -298,6 +305,15 @@
     padding-block: var(--space-2) var(--space-4);
     padding-inline: max(calc(var(--space-1) + var(--row-pad)), calc((100% - var(--column, 100%)) / 2 + var(--space-4)));
     mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-4)), transparent);
+  }
+  .nothing {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    text-align: center;
   }
   .home {
     display: flex;

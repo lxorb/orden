@@ -173,3 +173,16 @@ test('a long chat draws its last turns first and earlier ones as it is scrolled 
   void shown.close()
   panel.turns = []
 })
+test('an AI panel with no chats shows the mascot and a short line, and none once there are chats (#2591)', () => {
+  panel.turns = []
+  panel.heads = []
+  const empty = draw()
+  expect(empty.target.querySelector('.nothing .empty-text')?.textContent.trim()).toBe('No chats yet.')
+  expect(empty.target.querySelector('.nothing .mascot')).not.toBeNull()
+  void empty.close()
+  panel.heads = [listed('a', 1, { title: 'Serie 6' })]
+  const some = draw()
+  expect(some.target.querySelector('.nothing')).toBeNull()
+  void some.close()
+  panel.heads = []
+})
