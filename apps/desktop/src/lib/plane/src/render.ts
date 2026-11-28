@@ -3,7 +3,7 @@ import { pageOfSubpath } from '@orden/markdown/canvas'
 import { embedKind, isTabFile, parseWikilink, sectionOf } from '@orden/markdown/links'
 import { BASE } from '../../accounts/src/api'
 import { accountAddress } from '../../workspace/src/api'
-import { isPicturePath, assetUrl, joinPath } from '../../platform/src/api'
+import { isPicturePath, assetUrl, heldPicture, joinPath } from '../../platform/src/api'
 import { enginesArrived } from './engines.svelte'
 import { links } from '../../link-index/src/api'
 import { pointer, withPictures } from '../../reading/src/api'
@@ -39,6 +39,8 @@ export function pageOfFile(node: { subpath?: string }): number {
   return pageOfSubpath(node.subpath) ?? 1
 }
 export function fileUrl(file: string, root: string | null): string {
+  const held = heldPicture(file)
+  if (held) return held
   if (/^https?:\/\//i.test(file)) return file
   return root ? assetUrl(joinPath(root, file)) : file
 }

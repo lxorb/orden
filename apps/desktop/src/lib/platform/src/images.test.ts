@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { imagePath } from './images'
+import { heldPicture, holdPicture, imagePath, imageUrl, markPicture, onPicturesMoved, pictureNote } from './images'
 
 const NOTE = '/Notes/Work/Plan.md'
 describe('where a picture a note points at lives', () => {
@@ -31,4 +31,32 @@ test.each<[unknown, ...Parameters<typeof imagePath>]>([
   ['/Notes/Work/100%/pic.png', '100%/pic.png', NOTE],
 ])('%j from %j', (expected, ...args) => {
   expect(imagePath(...args)).toBe(expected)
+})
+describe('a picture still on its way to the account', () => {
+  const hash = 'ab'.repeat(32)
+  test('is drawn from the bytes this device holds, by every address the account gives it', () => {
+    const url = holdPicture(hash, new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }))
+    expect(url.startsWith('blob:')).toBe(true)
+    expect(imageUrl(`https://orden.so/i/${hash}.png`, NOTE)).toBe(url)
+    expect(imageUrl(`/i/${hash}.png`, NOTE)).toBe(url)
+    expect(heldPicture(`https://api.orden.so/i/${hash.toUpperCase()}.png`)).toBe(url)
+    expect(holdPicture(hash, new Blob([]))).toBe(url)
+    expect(imageUrl(`https://orden.so/i/${'cd'.repeat(32)}.png`, NOTE)).toBe(
+      `https://orden.so/i/${'cd'.repeat(32)}.png`,
+    )
+  })
+  test('carries a quiet note while it is owed and tells the editors each time that changes', () => {
+    const url = holdPicture(hash, new Blob([new Uint8Array([1])]))
+    let told = 0
+    const stop = onPicturesMoved(() => told++)
+    markPicture(hash, 'Not uploaded yet')
+    markPicture(hash, 'Not uploaded yet')
+    expect(pictureNote(url)).toBe('Not uploaded yet')
+    markPicture(hash, null)
+    expect(pictureNote(url)).toBeNull()
+    expect(told).toBe(2)
+    stop()
+    markPicture(hash, 'again')
+    expect(told).toBe(2)
+  })
 })

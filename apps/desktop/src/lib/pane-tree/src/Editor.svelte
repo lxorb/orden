@@ -25,7 +25,7 @@
   import { pickedLink } from '../../link-format/src/api'
   import { EditorStates, foldsKeyboard, type Handoff, type Parked } from './editor-states'
   import { firstScreen } from '../../first-screen/src/api'
-  import { mark } from '../../platform/src/api'
+  import { mark, onPicturesMoved, pictureNote } from '../../platform/src/api'
   import { modes } from '../../modes/src/api'
   import { carriedIntoNotes, type OverlayScrollbar, overlayScrollbar, viewport } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
@@ -87,8 +87,10 @@
   const rise = firstScreen.rise()
   const states = new EditorStates()
   let bar: OverlayScrollbar | undefined
+  const imageNotes = { note: pictureNote, heard: onPicturesMoved }
   function optionsFor(one: Tab): StateOptions {
     return {
+      imageNotes,
       shared: one.note.live,
       readOnly: modes.readOnly || !canWriteIn(one.note),
       selection: { anchor: one.cursor ?? 0 },

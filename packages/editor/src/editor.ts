@@ -20,7 +20,15 @@ import { external } from './external'
 import { blockHandles } from './block/handle'
 import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
-import { type CarriedFiles, imageHandling, imageResolver, type ImageResolver, type ImageSink } from './images'
+import {
+  type CarriedFiles,
+  imageHandling,
+  type ImageNotes,
+  imageNotes,
+  imageResolver,
+  type ImageResolver,
+  type ImageSink,
+} from './images'
 import { linkClicks, type LinkPress, linkOpener } from './links'
 import { tagClicks, tagOpener, type TagOpener } from './tag-press'
 import { coverMover, keptCoverExtension } from './live-preview/kept-cover'
@@ -63,6 +71,7 @@ export interface StateOptions {
   onImage?: ImageSink
   carriedFiles?: CarriedFiles
   resolveImage?: ImageResolver
+  imageNotes?: ImageNotes
   onSelection?: (view: EditorView) => void
   codeTheme?: string
   openLink?: (href: string, press: LinkPress) => void
@@ -142,6 +151,7 @@ export function editorState(options: StateOptions): EditorState {
       richCopy(),
       openTail(),
       ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
+      ...(options.imageNotes ? [imageNotes.of(options.imageNotes)] : []),
       linkClicks,
       ...(openLink ? [linkOpener.of(openLink)] : []),
       wikilinks(),

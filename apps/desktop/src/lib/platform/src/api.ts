@@ -134,7 +134,17 @@ export { startInsets, tintSystemBars } from './insets'
 export { identifier } from './identifier'
 export { factsOfLaunch, mark, markPainted, sendTrace, watchFirstInput } from './trace'
 export const iCloud = () => import('./icloud-placeholder')
-export { imagePath, imageUrl, isRemote } from './images'
+export {
+  heldPicture,
+  holdPicture,
+  imagePath,
+  imageUrl,
+  isRemote,
+  markPicture,
+  onPicturesMoved,
+  pictureNote,
+  picturesMoved,
+} from './images'
 export { takeKeyboard } from './take-keyboard'
 export const stallWatch = () => import('./stalls')
 export const secrets = () => import('./secrets')

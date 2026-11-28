@@ -13,6 +13,11 @@ export type ImageResolver = (src: string, wikilink?: boolean) => string
 export const imageResolver = Facet.define<ImageResolver, ImageResolver>({
   combine: (values) => values[0] ?? ((src) => src),
 })
+export interface ImageNotes {
+  note: (address: string) => string | null
+  heard: (listener: () => void) => () => void
+}
+export const imageNotes = Facet.define<ImageNotes, ImageNotes | null>({ combine: (values) => values[0] ?? null })
 const isImage = (file: File): boolean => file.type.startsWith('image/')
 const isKept = (file: File): boolean => isImage(file) || embedKind(file.name) !== null
 function markdownFor(file: File, path: string, index: NoteIndex): string {

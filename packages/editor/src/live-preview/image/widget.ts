@@ -92,6 +92,7 @@ export class ImageWidget extends OrdenWidget {
   constructor(
     readonly spec: ImageSpec,
     private readonly address: string,
+    private readonly note: string | null = null,
   ) {
     super()
   }
@@ -100,6 +101,7 @@ export class ImageWidget extends OrdenWidget {
     const b = other.spec
     return (
       this.address === other.address &&
+      this.note === other.note &&
       a.src === b.src &&
       a.alt === b.alt &&
       a.title === b.title &&
@@ -188,12 +190,27 @@ export class ImageWidget extends OrdenWidget {
       if (current) openLightbox(view, image.src, current.alt)
     })
     this.sync(frame, this.spec)
+    this.mark(box)
     image.src = src
     return frame
   }
   override updateDOM(frame: HTMLElement): boolean {
     if (frame.dataset.src !== this.address) return false
+    const parts = partsOf(frame)
+    if (parts) this.mark(parts.box)
     return this.sync(frame, this.spec)
+  }
+  private mark(box: HTMLElement) {
+    const shown = box.querySelector<HTMLElement>(':scope > .orden-image-owed')
+    box.parentElement?.classList.toggle('is-owed', this.note !== null)
+    if (this.note === null) {
+      shown?.remove()
+      return
+    }
+    const owed = shown ?? box.appendChild(document.createElement('span'))
+    owed.className = 'orden-image-owed'
+    owed.title = this.note
+    owed.setAttribute('aria-label', this.note)
   }
   private sync(frame: HTMLElement, image: ImageSpec): boolean {
     const parts = partsOf(frame)

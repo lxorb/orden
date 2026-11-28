@@ -2023,6 +2023,7 @@ class Workspace {
         ([{ moveOwnKeysSoon }]) => moveOwnKeysSoon(root, this, !!account.token),
         unfetched,
       )
+      void Promise.all([import('./pictures-owed'), account.looked]).then(([{ carryOwed }]) => carryOwed(), unfetched)
       void services().warmSearch(root).catch(unfetched)
       void services().readPapers(root, this.files, this.tree).catch(unfetched)
     }

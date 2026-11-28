@@ -35,7 +35,41 @@ export function imagePath(
   if (from && path.startsWith('/')) return foldedPath(joinPath(from, path.slice(1)))
   return foldedPath(joinPath(folderOf(notePath), path))
 }
+const HELD = new Map<string, string>()
+const NOTES = new Map<string, string>()
+const MOVED = new Set<() => void>()
+const HELD_HASH = /(?:^|\/)i\/([\da-f]{64})(?:\.\w+)?$/i
+export function holdPicture(hash: string, bytes: Blob): string {
+  const key = hash.toLowerCase()
+  const known = HELD.get(key)
+  if (known) return known
+  const url = URL.createObjectURL(bytes)
+  HELD.set(key, url)
+  return url
+}
+export function heldPicture(src: string): string | null {
+  if (!HELD.size) return null
+  const hash = HELD_HASH.exec(decodeTarget(src).replace(/[?#].*$/, ''))?.[1]
+  return hash ? (HELD.get(hash.toLowerCase()) ?? null) : null
+}
+export function markPicture(hash: string, note: string | null): void {
+  const url = HELD.get(hash.toLowerCase())
+  if (!url || (NOTES.get(url) ?? null) === note) return
+  if (note === null) NOTES.delete(url)
+  else NOTES.set(url, note)
+  picturesMoved()
+}
+export const pictureNote = (address: string): string | null => NOTES.get(address) ?? null
+export function picturesMoved(): void {
+  for (const listener of [...MOVED]) listener()
+}
+export function onPicturesMoved(listener: () => void): () => void {
+  MOVED.add(listener)
+  return () => MOVED.delete(listener)
+}
 export function imageUrl(src: string, notePath?: string | null, source = '', top: string | null = null): string {
+  const held = heldPicture(src)
+  if (held) return held
   if (isRemote(src)) return remoteUrl(src)
   const path = imagePath(src, notePath, source, top)
   return path ? assetUrl(path) : src

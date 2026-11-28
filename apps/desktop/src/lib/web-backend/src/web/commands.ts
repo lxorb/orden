@@ -855,7 +855,7 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     return old.length
   },
   async save_asset(args) {
-    const bytes = args.bytes as number[]
+    const bytes = args.bytes instanceof Uint8Array ? args.bytes : Uint8Array.from(args.bytes as number[])
     const given = (args.name || `pasted-${now()}.png`).replace(/[/\\]/g, '-')
     const name = isReserved(given) ? `_${given}` : given
     const relative = (args.folder ?? 'assets').replace(/^\/+|\/+$/g, '')
@@ -864,9 +864,7 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     if (folder !== space && !under(space, folder)) {
       throw new Error(`${relative} is not a folder inside the space`)
     }
-    let binary = ''
-    for (const byte of bytes) binary += String.fromCharCode(byte)
-    const data = btoa(binary)
+    const data = toBase64(bytes)
     const same = async (one: string) =>
       (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
     const target = await firstSpot(join(folder, name), true, async (one) => !(await taken(one)) || (await same(one)))

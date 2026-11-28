@@ -1,6 +1,6 @@
-import { api, BASE, account } from '../../accounts/src/api'
+import { BASE, account, usage } from '../../accounts/src/api'
 import { assetFolder } from '../../modes/src/api'
-import { sha256, spaceRelative } from '../../platform/src/api'
+import { holdPicture, sha256, spaceRelative } from '../../platform/src/api'
 import { saveAsset } from '../../file-writes/src/api'
 import { links } from '../../link-index/src/api'
 import { workspace } from './workspace.svelte'
@@ -11,18 +11,18 @@ function extensionFor(type: string, name: string): string {
   const fromType = type.split('/')[1]?.replace('+xml', '')
   return fromType && /^[a-z0-9]+$/.test(fromType) ? fromType : 'png'
 }
+const fits = (size: number): boolean => !usage.full && (usage.limit <= 0 || usage.used + size <= usage.limit)
 export async function storeImage(file: File, notePath: string | null): Promise<string | null> {
   const bytes = await file.arrayBuffer()
   const hash = await sha256(bytes)
   const extension = extensionFor(file.type, file.name)
-  const token = account.accountToken
-  if (token) {
-    try {
-      await api.putBlob(token, hash, file.type || 'image/png', bytes)
-      return `${BASE}/i/${hash}.${extension}`
-    } catch (error) {
-      if (error instanceof Error && /out of space/i.test(error.message)) throw error
-    }
+  const type = file.type || 'image/png'
+  const whose = account.accountToken ? account.user?.id : undefined
+  if (whose) {
+    if (!fits(bytes.byteLength)) throw new Error('That image does not fit in your storage.')
+    holdPicture(hash, new Blob([bytes], { type }))
+    void import('./pictures-owed').then(({ owe }) => owe({ hash, type, bytes, whose }))
+    return `${BASE}/i/${hash}.${extension}`
   }
   if (!notePath) return null
   return storeBeside(bytes, notePath, `${hash.slice(0, 16)}.${extension}`)

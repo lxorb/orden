@@ -4,7 +4,7 @@ import { memoryStorage } from '../../../../test/disk'
 const api = vi.hoisted(() => ({ BASE: '' }))
 const asset = vi.hoisted(() => ({ relative: null as string | null }))
 vi.mock('../../accounts/src/client', () => ({
-  api: {},
+  api: { putBlob: () => new Promise(() => undefined) },
   get BASE() {
     return api.BASE
   },
@@ -23,6 +23,8 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 vi.stubGlobal('location', { href: 'https://orden.so/s/notes' })
 vi.stubGlobal('localStorage', memoryStorage())
 const { accountAddress, storeAttachment, storeImage } = await import('./assets')
+const { account, usage } = await import('../../accounts/src/api')
+const { imageUrl } = await import('../../platform/src/api')
 const { hearWrites } = await import('../../file-writes/src/api')
 const { workspace } = await import('./workspace.svelte')
 const { links } = await import('../../link-index/src/api')
@@ -87,5 +89,38 @@ describe('a file stored beside a note', () => {
     }
     expect(made[0]).toMatch(/^\/s\/Work\/assets\/[0-9a-f]{16}\.png$/)
     expect(made[1]).toBe('/s/assets/b.pdf')
+  })
+})
+describe('a picture inserted while signed in', () => {
+  const signed = () => {
+    account.token = 't'
+    account.user = { id: 'u', email: 'u@example.com' } as typeof account.user
+  }
+  test('has its account address at once, drawn from this device, while the upload has not answered', async () => {
+    api.BASE = 'https://orden.so'
+    signed()
+    try {
+      const src = await storeImage(new File([new Uint8Array([4, 5, 6])], 'shot.png', { type: 'image/png' }), '/s/a.md')
+      expect(src).toMatch(/^https:\/\/orden\.so\/i\/[0-9a-f]{64}\.png$/)
+      expect(imageUrl(src ?? '', '/s/a.md')).toMatch(/^blob:/)
+    } finally {
+      account.user = null
+      account.token = null
+    }
+  })
+  test('is turned down at once when the storage is known to be full, so no picture is left unheld', async () => {
+    api.BASE = 'https://orden.so'
+    signed()
+    usage.used = 10
+    usage.limit = 10
+    try {
+      await expect(
+        storeImage(new File([new Uint8Array([1])], 'shot.png', { type: 'image/png' }), '/s/a.md'),
+      ).rejects.toThrow('does not fit')
+    } finally {
+      usage.reset()
+      account.user = null
+      account.token = null
+    }
   })
 })

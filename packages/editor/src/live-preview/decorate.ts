@@ -1,4 +1,4 @@
-import { imageResolver } from '../images'
+import { type ImageNotes, imageNotes, imageResolver } from '../images'
 import { syntaxTree } from '@codemirror/language'
 import { type EditorState, type Line, type Range, StateEffect, type Text } from '@codemirror/state'
 import {
@@ -455,7 +455,8 @@ class Decorator {
       this.inlineWidget(node, new WebEmbedWidget(card), false)
       return false
     }
-    this.inlineWidget(node, new ImageWidget(image, this.state.facet(imageResolver)(image.src)), false)
+    const address = this.state.facet(imageResolver)(image.src)
+    this.inlineWidget(node, new ImageWidget(image, address, this.state.facet(imageNotes)?.note(address) ?? null), false)
     return false
   }
   private underline(node: SyntaxNode): boolean {
@@ -608,6 +609,8 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
     atomic: DecorationSet
     private behind = false
     private readonly stopWaiting: () => void
+    private notes: ImageNotes | null = null
+    private stopNotes: () => void = () => undefined
     constructor(view: EditorView) {
       const built = buildDecorations(view.state, view.visibleRanges)
       this.decorations = built.decorations
@@ -619,12 +622,22 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         stopEngines()
         chipsLanded.delete(landed)
       }
+      this.hearNotes(view)
+    }
+    private hearNotes(view: EditorView) {
+      const notes = view.state.facet(imageNotes)
+      if (notes === this.notes) return
+      this.stopNotes()
+      this.notes = notes
+      this.stopNotes = notes ? notes.heard(() => view.dispatch({ effects: enginesLanded.of(null) })) : () => undefined
     }
     destroy() {
       this.behind = false
       this.stopWaiting()
+      this.stopNotes()
     }
     update(update: ViewUpdate) {
+      if (update.startState.facet(imageNotes) !== update.state.facet(imageNotes)) this.hearNotes(update.view)
       const held = update.state.field(dragging, false)
       const released = update.startState.field(dragging, false) && !held
       const settled = update.selectionSet && !held

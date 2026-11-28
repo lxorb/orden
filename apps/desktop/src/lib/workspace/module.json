@@ -10,6 +10,7 @@
     "editor",
     "file-ops",
     "files-out",
+    "held-database",
     "file-undo",
     "file-writes",
     "first-screen",
