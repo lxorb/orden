@@ -2,8 +2,9 @@
   import { providePort } from '@orden/contracts'
   import { account } from '../../accounts/src/api'
   import { loadSignIn } from '../../sign-in/src/api'
-  import { closeOnBack, longPress } from '../../ui-kit/src/api'
+  import { closeOnBack, longPress, pulls } from '../../ui-kit/src/api'
   import { undoToast } from '../../undo-toast/src/api'
+  import { followLinks } from './links'
   import { type Screen, TrackNav, type TrackParts, WIDE } from './nav.svelte'
   import Settings from './Settings.svelte'
   import Undo from './Undo.svelte'
@@ -46,6 +47,8 @@
   $effect(() => {
     if (signed && account.settling) account.settled()
   })
+  $effect(() => (signed ? screens.watchTrack() : undefined))
+  $effect(() => (signed ? followLinks((screen) => nav.show(screen)) : undefined))
   function undo() {
     const own = undoToast.own
     undoToast.dismiss()
@@ -63,7 +66,7 @@
   <div class="track" class:beside data-track={nav.screen}>
     <div class="panes">
       {#if left !== 'day'}
-        <main class="pane" data-track-pane={left}>
+        <main class="pane" data-track-pane={left} use:pulls={() => screens.refreshed()}>
           {#if left === 'now'}
             <Now {now} onday={(at) => nav.showDay(at ?? now)} />
           {:else}
@@ -77,7 +80,7 @@
         </main>
       {/if}
       {#if beside || nav.screen === 'day'}
-        <main class="pane" data-track-pane="day">
+        <main class="pane" data-track-pane="day" use:pulls={() => screens.refreshed()}>
           <Day
             {now}
             day={nav.day}
@@ -126,6 +129,7 @@
   <BottomSheet open={nav.settings} label="Settings" onclose={() => (nav.settings = false)}>
     <Settings
       reminders={screens.reminders}
+      onrefresh={() => screens.refreshed()}
       onactivities={() => (nav.activities = true)}
       onclose={() => (nav.settings = false)}
     />
@@ -159,6 +163,30 @@
     flex-direction: column;
     gap: var(--space-4);
     padding: calc(var(--inset-top, 0px) + var(--space-4)) var(--space-4) var(--space-4);
+  }
+  .pane::before {
+    content: '';
+    flex: none;
+    align-self: center;
+    width: 36px;
+    height: 4px;
+    margin-top: calc(var(--pulled, 0px) - var(--space-4) - 4px);
+    border-radius: 2px;
+    background: var(--accent);
+    opacity: min(1, calc(var(--pulled, 0) / 56));
+  }
+  .pane:global([data-refreshing])::before {
+    animation: pulse 0.9s var(--ease-out) infinite alternate;
+  }
+  @keyframes pulse {
+    to {
+      opacity: 0.3;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pane:global([data-refreshing])::before {
+      animation: none;
+    }
   }
   .beside .pane + .pane {
     box-shadow: inset 1px 0 var(--line);

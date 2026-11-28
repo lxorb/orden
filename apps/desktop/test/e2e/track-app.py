@@ -33,6 +33,23 @@ SWIPE = """([from, to]) => {
   node.dispatchEvent(new TouchEvent('touchstart', { touches: [at(from, 400)], changedTouches: [at(from, 400)], bubbles: true }))
   node.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [at(to, 406)], bubbles: true }))
 }"""
+PULL = """() => {
+  const node = document.querySelector('[data-track-pane]')
+  const at = (y) => new Touch({ identifier: 2, target: node, clientX: 180, clientY: y })
+  node.dispatchEvent(new TouchEvent('touchstart', { touches: [at(120)], changedTouches: [at(120)], bubbles: true }))
+  node.dispatchEvent(new TouchEvent('touchmove', { touches: [at(320)], changedTouches: [at(320)], bubbles: true }))
+  node.dispatchEvent(new TouchEvent('touchend', { touches: [], changedTouches: [at(320)], bubbles: true }))
+}"""
+PHONE = """
+window.ordenPhone = { states: [], asked: '[]', link: '' }
+window.__ORDEN_SYSTEM__ = {
+  askForTheFrame() { setTimeout(() => window.__ordenFrame && window.__ordenFrame('word'), 0) },
+  trackState(said, json) { if (said === 'word') window.ordenPhone.states.push(JSON.parse(json)) },
+  trackTaken(said) { const held = window.ordenPhone.asked; window.ordenPhone.asked = '[]'; return said === 'word' ? held : '[]' },
+  handed(said) { const link = window.ordenPhone.link; window.ordenPhone.link = ''; return JSON.stringify({ command: '', open: '', tick: '', link }) },
+}
+"""
+LAST = "window.ordenPhone.states[window.ordenPhone.states.length - 1]"
 class Server:
     def __init__(self) -> None:
         self.entries: dict[str, dict[str, Any]] = {}
@@ -78,12 +95,10 @@ class Server:
         )
     def held(self, kind: str) -> list[dict[str, Any]]:
         return [one for one in self.entries.values() if one["kind"] == kind and one["value"] is not None]
-def checked(page: Any, where: str, sized: bool = True) -> None:
+def checked(page: Any, where: str) -> None:
     small = page.evaluate(SMALL)
-    if small and sized:
+    if small:
         wrong(f"{where}: under 48 by 48: {small}")
-    elif small:
-        say(f"{where}: under 48 by 48, which is the sign-in module's to hold: {small}")
     nameless = page.evaluate(NAMELESS)
     if nameless:
         wrong(f"{where}: no name for TalkBack: {nameless}")
@@ -93,6 +108,17 @@ def checked(page: Any, where: str, sized: bool = True) -> None:
 def started(page: Any, name: str) -> None:
     page.locator(f'[data-track-tile="{name}"]').tap()
     wait_for(page, f"{TIME}.running[0] && {TIME}.activity({TIME}.running[0].activity)?.name === {name!r}", f"{name} running")
+def signed_in(page: Any) -> None:
+    wait_for(page, "window.ordenApp && document.querySelector('[data-sign-in] input[type=email]')", "the first screen")
+    page.locator("[data-sign-in] input[type=email]").fill(USER["email"])
+    page.keyboard.press("Enter")
+    page.locator('[data-sign-in] input[aria-label="Digit 1"]').wait_for(state="visible")
+    page.locator('[data-sign-in] input[aria-label="Digit 1"]').focus()
+    page.keyboard.type("246810")
+    wait_for(page, "document.querySelector('[data-track=now]')", "Now after signing in")
+    page.evaluate("async () => { window.ordenTime = await window.ordenApp.time() }")
+    wait_for(page, f"{TIME}.ready", "the time store")
+    wait_for(page, "window.ordenApp.account.syncable", "the account settled, with no notes of this phone to wait for")
 def drive(browser: Browser) -> None:
     server = Server()
     context = DRIVE.context(
@@ -116,17 +142,9 @@ def drive(browser: Browser) -> None:
     carried = page.evaluate("() => ['workspace', 'terminals', 'chats', 'search'].filter((one) => one in window.ordenApp)")
     if carried:
         wrong(f"this is not the Orden Track build: it carries {carried}")
-    checked(page, "first screen", sized=False)
+    checked(page, "first screen")
     DRIVE.shot(page, "1-first")
-    page.locator("[data-sign-in] input[type=email]").fill(USER["email"])
-    page.keyboard.press("Enter")
-    page.locator('[data-sign-in] input[aria-label="Digit 1"]').wait_for(state="visible")
-    page.locator('[data-sign-in] input[aria-label="Digit 1"]').focus()
-    page.keyboard.type("246810")
-    wait_for(page, "document.querySelector('[data-track=now]')", "Now after signing in")
-    page.evaluate("async () => { window.ordenTime = await window.ordenApp.time() }")
-    wait_for(page, f"{TIME}.ready", "the time store")
-    wait_for(page, "window.ordenApp.account.syncable", "the account settled, with no notes of this phone to wait for")
+    signed_in(page)
     page.locator("[data-track-add]").tap()
     sheet = page.locator("[data-track-sheet]")
     sheet.locator("input").fill("Reading")
@@ -231,6 +249,49 @@ def drive(browser: Browser) -> None:
     if page.evaluate(f"{TIME}.activity({TIME}.running[0]?.activity)?.name") != "Walk":
         wrong("turning the phone lost the running timer")
     context.close()
+    phone = DRIVE.context(
+        browser,
+        viewport={"width": 360, "height": 800},
+        user_agent=PHONE_AGENT,
+        has_touch=True,
+        is_mobile=True,
+        reduced_motion="reduce",
+    )
+    phone.add_init_script(PHONE)
+    phone.route("https://orden.so/**", server.answer)
+    page = phone.new_page()
+    page.on("pageerror", lambda error: wrong(f"page error: {error}"))
+    page.goto(f"{DRIVE.origin}/", wait_until="domcontentloaded")
+    signed_in(page)
+    wait_for(page, f"{TIME}.activities.some((one) => one.name === 'Walk')", "the second phone taking what the first one made")
+    wait_for(page, f"{LAST}?.running?.name === 'Walk' && /^#[0-9a-f]{{6}}$/.test({LAST}.running.color)", "the phone told what runs, with its colour")
+    told = page.evaluate(LAST)
+    if [one["name"] for one in told["activities"]][:1] != ["Walk"] or told["last"] != told["running"]["id"]:
+        wrong(f"the phone was told {told}")
+    reading = page.evaluate(f"{TIME}.activities.find((one) => one.name === 'Reading').id")
+    pressed = page.evaluate("Date.now() - 90000")
+    page.evaluate(
+        "([id, at]) => { window.ordenPhone.asked = JSON.stringify([{ do: 'start', id, at }]); window.__ordenTrack() }",
+        [reading, pressed],
+    )
+    wait_for(page, f"{TIME}.activity({TIME}.running[0]?.activity)?.name === 'Reading'", "a start pressed on the widget")
+    if page.evaluate(f"{TIME}.running[0].start") != pressed:
+        wrong("a start pressed on the phone began when the page heard of it, not when it was pressed")
+    wait_for(page, f"{LAST}?.running?.name === 'Reading'", "the phone told of the switch")
+    page.evaluate("() => { window.ordenPhone.asked = JSON.stringify([{ do: 'stop', at: Date.now() }]); window.__ordenTrack() }")
+    wait_for(page, f"{TIME}.running.length === 0 && {LAST}?.running === null", "Stop pressed on the notification")
+    page.evaluate("() => { window.ordenPhone.link = 'orden-track://stats'; window.__ordenHanded() }")
+    wait_for(page, "document.querySelector('[data-track=stats]')", "a link opening Stats")
+    page.evaluate("() => { window.ordenPhone.link = 'orden://stats'; window.__ordenHanded() }")
+    page.locator("[data-tab=now]").tap()
+    wait_for(page, "document.querySelector('[data-track=now]')", "Now")
+    before = len([one for one in server.asked if one == "GET /v2/time"])
+    page.evaluate(PULL)
+    wait_for(page, "!document.querySelector('[data-track-pane][data-refreshing]')", "the pull to finish")
+    if len([one for one in server.asked if one == "GET /v2/time"]) <= before:
+        wrong("pulling Now down asked the server for nothing")
+    checked(page, "Now at 360")
+    phone.close()
 raise SystemExit(
     DRIVE.run(
         drive,
