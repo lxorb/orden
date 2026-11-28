@@ -50,6 +50,20 @@ describe('the boxes a sign-in code is typed into (#2286)', () => {
       close = undefined
     }
   })
+  test('take a code pasted with a space in it, and one a password manager fills in whole', () => {
+    const pasted = opened()
+    types(pasted.field, '123 456')
+    expect(pasted.code()).toBe('123456')
+    close?.()
+    close = undefined
+    const filled = opened()
+    filled.field.value = '654321'
+    filled.field.dispatchEvent(new Event('input', { bubbles: true }))
+    filled.field.dispatchEvent(new Event('change', { bubbles: true }))
+    flushSync()
+    expect(filled.code()).toBe('654321')
+    expect(shown(filled.target)).toEqual(['6', '5', '4', '3', '2', '1'])
+  })
   test('take digits only, and no more than six', () => {
     const { target, field, code } = opened()
     types(field, '12 3-4a')

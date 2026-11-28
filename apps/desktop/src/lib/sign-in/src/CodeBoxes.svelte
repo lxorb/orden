@@ -41,7 +41,7 @@
 <style>
   .digits {
     position: relative;
-    display: flex;
+    display: inline-flex;
     gap: 8px;
   }
   input {
@@ -64,7 +64,7 @@
     font-weight: 600;
     border-radius: 12px;
     border: 1px solid var(--line-strong);
-    background: var(--card);
+    background: var(--card, var(--bg));
     color: var(--text);
     font-family: var(--font-ui);
     font-variant-numeric: tabular-nums;

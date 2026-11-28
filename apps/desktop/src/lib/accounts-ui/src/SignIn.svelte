@@ -7,14 +7,13 @@
   import { settling } from '../../sync-mirror/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
+  import { CodeBoxes } from '../../sign-in/src/api'
   import Leaving from './Leaving.svelte'
 
   const LENGTH = 6
-  const blank = () => Array.from({ length: LENGTH }, () => '')
-  let digits = $state<string[]>(blank())
-  const boxes = $state<HTMLInputElement[]>([])
+  let entered = $state('')
+  let boxes = $state<{ focus: () => void }>()
   let emailField = $state<HTMLInputElement>()
-  const entered = $derived(digits.join(''))
   let submitted = $state('')
   let recovering = $state(false)
   let recovery = $state('')
@@ -23,9 +22,9 @@
   })
   $effect(() => {
     if (account.step === 'code' || account.step === 'second') {
-      digits = blank()
+      entered = ''
       submitted = ''
-      setTimeout(() => boxes[0]?.focus(), 60)
+      setTimeout(() => boxes?.focus(), 60)
     }
   })
   $effect(() => {
@@ -38,33 +37,11 @@
           .then(() => joining.walkThrough())
         return
       }
-      digits = blank()
+      entered = ''
       submitted = ''
-      setTimeout(() => boxes[0]?.focus(), 0)
+      setTimeout(() => boxes?.focus(), 0)
     })
   })
-  function onDigit(index: number, event: Event) {
-    const input = event.target as HTMLInputElement
-    const value = input.value.replace(/\D/g, '')
-    if (!value) {
-      digits[index] = ''
-      return
-    }
-    for (let offset = 0; offset < value.length && index + offset < LENGTH; offset++) {
-      digits[index + offset] = value.charAt(offset)
-    }
-    input.value = digits[index] ?? ''
-    boxes[Math.min(index + value.length, LENGTH - 1)]?.focus()
-  }
-  function onDigitKey(index: number, event: KeyboardEvent) {
-    if (event.key === 'Backspace' && !digits[index] && index > 0) {
-      event.preventDefault()
-      digits[index - 1] = ''
-      boxes[index - 1]?.focus()
-    }
-    if (event.key === 'ArrowLeft' && index > 0) boxes[index - 1]?.focus()
-    if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
-  }
   const heading = $derived('Sign in')
   function close() {
     account.open = false
@@ -136,21 +113,7 @@
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">Now the code from your authenticator app</p>
 
-        <div class="digits" dir="ltr">
-          {#each digits as digit, index (index)}
-            <input
-              bind:this={boxes[index]}
-              value={digit}
-              oninput={(event) => onDigit(index, event)}
-              onkeydown={(event) => onDigitKey(index, event)}
-              inputmode="numeric"
-              autocomplete={index === 0 ? 'one-time-code' : 'off'}
-              maxlength="6"
-              aria-label="Digit {index + 1}"
-              style:animation-delay="{index * 32}ms"
-            />
-          {/each}
-        </div>
+        <div class="boxes"><CodeBoxes bind:this={boxes} bind:value={entered} /></div>
 
         {#if recovering}
           <form
@@ -179,21 +142,7 @@
       <div class="code" in:fly={{ x: 14, duration: dur(200), easing: cubicOut }}>
         <p class="sent">Code sent to <strong>{account.email}</strong></p>
 
-        <div class="digits" dir="ltr">
-          {#each digits as digit, index (index)}
-            <input
-              bind:this={boxes[index]}
-              value={digit}
-              oninput={(event) => onDigit(index, event)}
-              onkeydown={(event) => onDigitKey(index, event)}
-              inputmode="numeric"
-              autocomplete={index === 0 ? 'one-time-code' : 'off'}
-              maxlength="6"
-              aria-label="Digit {index + 1}"
-              style:animation-delay="{index * 32}ms"
-            />
-          {/each}
-        </div>
+        <div class="boxes"><CodeBoxes bind:this={boxes} bind:value={entered} /></div>
 
         <button
           class="link"
@@ -279,24 +228,9 @@
     color: var(--text);
     font-weight: var(--weight-strong);
   }
-  .digits {
+  .boxes {
     display: flex;
-    gap: 7px;
     justify-content: center;
-  }
-  .digits input {
-    width: 2.6rem;
-    padding: 12px 0;
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: 1.25rem;
-    animation: drop var(--dur-base) var(--ease-spring) backwards;
-  }
-  @keyframes drop {
-    from {
-      opacity: 0;
-      transform: translateY(-6px) scale(0.9);
-    }
   }
   .link {
     display: block;

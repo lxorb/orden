@@ -1,3 +1,4 @@
+export { default as CodeBoxes } from './CodeBoxes.svelte'
 export { default as Ground } from './Ground.svelte'
 export { default as LogoTile } from './LogoTile.svelte'
 export { default as Mark } from './Mark.svelte'
