@@ -8,6 +8,7 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 THESIS = "/spaces/Team/thesis.chat"
 START = """
 async (empty) => {
+  await import('/src/lib/chats-client/src/view/host-here.ts')
   const { seeded } = await import('/src/lib/chats-client/src/view/seed.ts')
   const { useStore } = await import('/src/lib/chats-client/src/view/source.svelte.ts')
   const made = seeded()
