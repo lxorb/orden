@@ -17,6 +17,9 @@
   import { setHost } from './host'
   import Threads from './Threads.svelte'
   import AiTrouble from './AiTrouble.svelte'
+  import EngineOffer from './EngineOffer.svelte'
+  import { engine } from '../../opencode-client/src/api'
+  import { opencodeOn } from '../../gates/src/api'
 
   const {
     ongoto,
@@ -49,6 +52,11 @@
   let root = $state<HTMLElement>()
   let railed = $state(railOpen())
   const ready = $derived(ai.providerFor('ask') !== null)
+  const openCode = $derived(opencodeOn())
+  const fetching = $derived(openCode && engine.status !== null && !engine.usable)
+  $effect(() => {
+    if (openCode && !engine.status) void engine.look().catch(() => undefined)
+  })
   const head = $derived(chat.head)
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
@@ -193,6 +201,8 @@
             <AgentSession agent={session} />
           {/key}
         {/await}
+      {:else if fetching}
+        <EngineOffer />
       {:else}
         <Conversation {ongoto} {ready} />
         {#if ready && side.of !== null && side.of === head?.id && chat.host === host}
