@@ -17,6 +17,7 @@
     setFind,
   } from '@orden/editor'
   import { type Component, untrack } from 'svelte'
+  import { SvelteMap } from 'svelte/reactivity'
   import {
     Door,
     dragged,
@@ -150,12 +151,12 @@
   const keptNotes = $derived(kept.filter(inEditor))
   const keptOwn = $derived(kept.filter((one) => !inEditor(one)))
   const shownKept = $derived(tab && alive.includes(tab.id) ? tab.id : null)
-  const keptViews = $state<Record<string, EditorView | undefined>>({})
+  const keptViews = new SvelteMap<string, EditorView>()
   const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
   const edged = $derived(keepsMiddle ? '' : undefined)
-  const columnViews = $state<Record<string, EditorView | undefined>>({})
+  const columnViews = new SvelteMap<string, EditorView>()
   const view = $derived(
-    stacking ? columnViews[pane.activeTabId ?? ''] : shownKept === null ? undefined : keptViews[shownKept],
+    stacking ? columnViews.get(pane.activeTabId ?? '') : shownKept === null ? undefined : keptViews.get(shownKept),
   )
   function takeColumn(id: string) {
     if (id === pane.activeTabId && workspace.panes.focusedId === pane.id) return
@@ -407,7 +408,7 @@
                 </button>
                 <div
                   class="sheet"
-                  oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
+                  oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews.get(one.id), one.path)}
                 >
                   {@render editor(one, columnViews, true, one.id === pane.activeTabId, held)}
                 </div>
@@ -432,7 +433,7 @@
         hidden={!here}
         data-kept={one.id}
         data-region={here ? 'editor' : undefined}
-        oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews[one.id], one.path)}
+        oncontextmenu={(event: MouseEvent) => showMenu(event, keptViews.get(one.id), one.path)}
       >
         <svelte:boundary failed={unreachable}>
           {@render editor(one, keptViews, here, here, [one])}
@@ -536,9 +537,11 @@
   {/if}
 {/snippet}
 
-{#snippet editor(one: Tab, into: Record<string, EditorView | undefined>, shown: boolean, front: boolean, kept: Tab[])}
+{#snippet editor(one: Tab, into: SvelteMap<string, EditorView>, shown: boolean, front: boolean, kept: Tab[])}
   <Editor
-    bind:view={into[one.id]}
+    bind:view={
+      () => into.get(one.id), (made: EditorView | undefined) => (made ? into.set(one.id, made) : into.delete(one.id))
+    }
     tab={one}
     {shown}
     focused={front && workspace.panes.focusedId === pane.id}

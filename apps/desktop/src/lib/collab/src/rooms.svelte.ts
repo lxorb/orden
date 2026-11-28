@@ -40,8 +40,8 @@ interface Engine {
 }
 const roomsCode = door(() => import('../../collab-rooms/src/api'))
 class Rooms {
-  present = $state<Record<string, number>>({})
-  seen = $state<Record<string, Seen>>({})
+  present = $state.raw<Record<string, number>>({})
+  seen = $state.raw<Record<string, Seen>>({})
   surfaces = $state.raw<ReadonlyMap<string, PlaneSurface>>(new Map())
   heard(key: string, count: number, seen?: Seen) {
     this.present = count ? { ...this.present, [key]: count } : without(this.present, key)

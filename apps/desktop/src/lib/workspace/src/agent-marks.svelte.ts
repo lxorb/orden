@@ -5,12 +5,12 @@ export interface Worn {
 }
 export type TabAct = 'stop' | 'resume'
 class AgentMarks {
-  on = $state<Record<string, Worn>>({})
+  on = $state.raw<Record<string, Worn>>({})
   heard = $state(false)
-  opened = $state<Record<string, string>>({})
+  opened = $state.raw<Record<string, string>>({})
   open = $state<string | null>(null)
   waiting = $state(0)
-  takeovers = $state<Record<string, { id: string; reason: string }>>({})
+  takeovers = $state.raw<Record<string, { id: string; reason: string }>>({})
   holding = false
   act: ((tab: string, what: TabAct) => void) | null = null
   hide: (() => Promise<boolean>) | null = null

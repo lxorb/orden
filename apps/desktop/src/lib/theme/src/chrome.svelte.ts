@@ -45,7 +45,7 @@ class Chrome {
   on = $state(false)
   app = $state<Scheme>('dark')
   frame = $state<Scheme | null>(null)
-  bars = $state<Record<string, Ground>>({})
+  bars = $state.raw<Record<string, Ground>>({})
   terminal = $state<string | null>(null)
   readonly theme = $derived<Scheme | undefined>(
     this.on && this.frame !== null && this.frame !== this.app ? this.frame : undefined,
