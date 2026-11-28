@@ -25,22 +25,52 @@ export function hideTip(over: Element): void {
   if (tip.shown?.over === over) tip.shown = null
 }
 const WAIT = 450
+const CHECK = 200
 export function follow(node: HTMLElement, label: () => string, keys: () => string | undefined, first: Event) {
   let waiting: ReturnType<typeof setTimeout> | undefined
+  let checking: ReturnType<typeof setInterval> | undefined
+  let byFocus = false
+  const still = () =>
+    node.isConnected && (byFocus ? node.matches(':focus-visible') : node.matches(':hover')) && document.hasFocus()
   const show = () => {
     const text = label()
-    if (text && !viewport.touch) showTip(node, text, keys() ?? '')
+    if (!text || viewport.touch || !still()) return
+    showTip(node, text, keys() ?? '')
+    watch(true)
   }
   const enter = () => {
+    byFocus = false
     clearTimeout(waiting)
     waiting = setTimeout(show, WAIT)
   }
   const leave = () => {
     clearTimeout(waiting)
+    watch(false)
     hideTip(node)
   }
   const focus = () => {
-    if (node.matches(':focus-visible')) show()
+    byFocus = true
+    show()
+  }
+  const outside = (event: MouseEvent) => {
+    if (!event.relatedTarget) leave()
+  }
+  const hidden = () => {
+    if (document.hidden) leave()
+  }
+  const away: [EventTarget, string, EventListener, boolean][] = [
+    [window, 'blur', leave, false],
+    [window, 'scroll', leave, true],
+    [window, 'wheel', leave, true],
+    [document, 'mouseout', outside as EventListener, false],
+    [document, 'visibilitychange', hidden, false],
+  ]
+  function watch(on: boolean) {
+    clearInterval(checking)
+    for (const [where, name, run, capture] of away) where.removeEventListener(name, run, capture)
+    if (!on) return
+    checking = setInterval(() => !still() && leave(), CHECK)
+    for (const [where, name, run, capture] of away) where.addEventListener(name, run, { capture, passive: true })
   }
   const on: [string, () => void][] = [
     ['pointerenter', enter],
