@@ -17,6 +17,7 @@ import {
 } from './lib/chats-client/src/api'
 import { hub } from './lib/hub/src/api'
 import { startup } from './lib/launch/src/api'
+import { markPainted } from './lib/platform/src/api'
 import { loadSignIn } from './lib/sign-in/src/api'
 import { theme } from './lib/theme/src/api'
 import { viewport } from './lib/ui-kit/src/api'
@@ -51,5 +52,6 @@ const app = mount(ChatApp, {
   target,
   props: { nav, parts: { ChatsPanel: panel.default, ChatTab: tab.default, SignIn: signIn.default } },
 })
+markPainted('shell painted')
 void startup.shown()
 export default app

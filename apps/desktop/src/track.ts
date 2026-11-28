@@ -6,6 +6,7 @@ import { mount } from 'svelte'
 import { account } from './lib/accounts/src/api'
 import { startup } from './lib/launch/src/api'
 import { theme } from './lib/theme/src/api'
+import { markPainted } from './lib/platform/src/api'
 import { loadTrackApp, TrackNav } from './lib/track-app/src/api'
 import { viewport } from './lib/ui-kit/src/api'
 
@@ -26,5 +27,6 @@ if (__DRIVEABLE__) {
   })
 }
 const app = mount(TrackApp, { target, props: { screens, nav } })
+markPainted('shell painted')
 void startup.shown()
 export default app

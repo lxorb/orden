@@ -162,7 +162,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: python3 apps/desktop/test/e2e/${{ matrix.app }}-phone.py
+          script: ORDEN_PHONE_NIGHT=${{ inputs.night }} python3 apps/desktop/test/e2e/${{ matrix.app }}-phone.py
 
       - name: What was measured is within the app's budgets
         env:

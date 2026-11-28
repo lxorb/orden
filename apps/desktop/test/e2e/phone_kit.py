@@ -102,6 +102,19 @@ PROBE = """(() => {
     }
     return rect.right > innerWidth + 1 || rect.left < -1
   }).map(([el]) => named(el))
+  const lines = (el) => {
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    return [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0)
+  }
+  const crossing = (one, other) =>
+    lines(one).some((first) =>
+      lines(other).some(
+        (second) =>
+          Math.min(first.right, second.right) - Math.max(first.left, second.left) > 2 &&
+          Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top) > 2,
+      ),
+    )
   const overlapping = []
   for (let a = 0; a < texts.length; a++) {
     for (let b = a + 1; b < texts.length; b++) {
@@ -110,7 +123,7 @@ PROBE = """(() => {
       if (one.contains(other) || other.contains(one)) continue
       const wide = Math.min(first.right, second.right) - Math.max(first.left, second.left)
       const tall = Math.min(first.bottom, second.bottom) - Math.max(first.top, second.top)
-      if (wide > 2 && tall > 2) overlapping.push(`${named(one)} over ${named(other)}`)
+      if (wide > 2 && tall > 2 && crossing(one, other)) overlapping.push(`${named(one)} over ${named(other)}`)
     }
   }
   const context = Object.assign(document.createElement('canvas'), { width: 1, height: 1 })
@@ -203,10 +216,14 @@ CONTROLS = {
 PAINTED = """(() => {
   const shell = performance.getEntriesByName('orden: shell painted')[0]
   const frame = performance.getEntriesByName('orden: first frame painted')[0]
-  const at = (mark) => performance.timeOrigin + mark.startTime
-  return shell && frame ? JSON.stringify([at(shell), at(frame)]) : null
+  const at = (mark) => (mark ? performance.timeOrigin + mark.startTime : null)
+  return frame ? JSON.stringify([at(shell), at(frame)]) : null
 })()"""
 FLINGS = 5
+NIGHT = os.environ.get("ORDEN_PHONE_NIGHT") == "true"
+OPENS = 50
+AWAY = 120
+WATCHED = 60
 STARTS = 20
 say = harness.say
 def ranked(values: list[float], percent: float) -> float:
@@ -240,6 +257,24 @@ def fully_drawn(log: str, package: str) -> list[float]:
         if said:
             minutes, seconds, millis = (int(one or 0) for one in said.groups())
             found.append(float(minutes * 60000 + seconds * 1000 + millis))
+    return found
+def pss(said: str, pids: list[str]) -> float:
+    by_process = said.split("Total PSS by process:", 1)[-1].split("Total PSS by OOM adjustment:", 1)[0]
+    held = re.findall(r"^\s*([\d,]+)K: \S+ \(pid (\d+)", by_process, re.MULTILINE)
+    return sum(int(size.replace(",", "")) for size, pid in held if pid in pids) / 1024
+def ticks(stat: str) -> int | None:
+    cells = stat.rsplit(")", 1)[-1].split()
+    return int(cells[11]) + int(cells[12]) if len(cells) > 12 and cells[11].isdigit() and cells[12].isdigit() else None
+def held_awake(power: str, package: str, uid: str) -> list[str]:
+    found = []
+    inside = False
+    for line in power.splitlines():
+        if line.startswith("Wake Locks:"):
+            inside = True
+        elif inside and not line.strip():
+            inside = False
+        elif inside and (package in line or (uid and re.search(rf"\buid={uid}\b", line))):
+            found.append(line.strip())
     return found
 def janky(stats: str) -> float | None:
     found = re.search(r"Janky frames: \d+ \(([\d.]+)%\)", stats)
@@ -374,6 +409,16 @@ class Page:
         raise SystemExit(f"gave up waiting for {what}; last: {last!r}")
     def where(self, selectors: list[str]) -> dict[str, Any]:
         return json.loads(self.evaluate(f"{WHERE}({json.dumps(selectors)})"))
+    def press(self, selector: str) -> None:
+        said = self.evaluate(
+            f"(() => {{ const found = document.querySelector({json.dumps(selector)}); if (!found) return null;"
+            " const rect = found.getBoundingClientRect();"
+            " return JSON.stringify([rect.left + rect.width / 2, rect.top + rect.height / 2, devicePixelRatio]) })()"
+        )
+        if not said:
+            raise SystemExit(f"nothing to press at {selector}")
+        across, down, ratio = json.loads(said)
+        adb("shell", "input", "tap", str(int(across * ratio)), str(int(down * ratio)))
     def tap(self, selector: str) -> None:
         said = self.where([selector])
         box = said["boxes"][selector]
@@ -391,9 +436,43 @@ def alone(page: Page) -> None:
     if not pressed:
         raise SystemExit("the first screen offers no way on without an account")
     page.wait_for(f"!document.querySelector({json.dumps(FIRST)})", "the first screen to leave")
+def notified(package: str, title: str, action: str = "") -> bool:
+    said = adb("shell", "dumpsys", "notification", "--noredact", check=False)
+    records = said.split("NotificationRecord(")[1:]
+    return any(
+        f"pkg={package} " in one and f"android.title=String ({title})" in one and (not action or f'"{action}"' in one)
+        for one in records
+    )
+def broadcast(package: str, receiver: str, action: str) -> bool:
+    said = adb("shell", "am", "broadcast", "-n", f"{package}/so.orden.Orden.{receiver}", "-a", action, check=False)
+    return "Broadcast completed" in said
+def shade_press(words: str, shots: Path) -> bool:
+    adb("shell", "cmd", "statusbar", "expand-notifications")
+    time.sleep(3)
+    drawn = adb("exec-out", "uiautomator", "dump", "/dev/tty", check=False)
+    if "<node" not in drawn:
+        said = adb("shell", "uiautomator", "dump", "/data/local/tmp/shade.xml", check=False)
+        say(f"the phone would not describe the notification shade: {drawn[:160]!r} {said[:160]!r}")
+        drawn = adb("shell", "cat", "/data/local/tmp/shade.xml", check=False)
+    (shots / "shade.xml").write_text(drawn, encoding="utf-8")
+    found = re.search(rf'text="{re.escape(words)}"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', drawn, re.IGNORECASE)
+    if found:
+        left, top, right, bottom = (int(one) for one in found.groups())
+        adb("shell", "input", "tap", str((left + right) // 2), str((top + bottom) // 2))
+        time.sleep(2)
+    adb("shell", "cmd", "statusbar", "collapse")
+    time.sleep(1)
+    return found is not None
 class Phone:
-    def __init__(self, file: str, app: str, known: Mapping[str, str] | None = None) -> None:
+    def __init__(
+        self,
+        file: str,
+        app: str,
+        known: Mapping[str, str] | None = None,
+        ready: str = "!!window.ordenApp && !!window.ordenApp.workspace",
+    ) -> None:
         self.app = app
+        self.ready = ready
         self.package = packages()[app]
         self.drive = harness.Drive(file, served=False, known=known)
         self.shots = self.drive.shots
@@ -403,6 +482,7 @@ class Phone:
         self.gates: dict[str, float] = {}
         self.notes: dict[str, float] = {}
         self.logs: list[str] = []
+        self.asked: Callable[[], int] = lambda: 0
         self.found: set[str] = set()
         self.looks: dict[str, Any] = {}
     def count(self, kind: str, where: str, found: list[str]) -> None:
@@ -460,7 +540,6 @@ class Phone:
     def back(self) -> None:
         adb("shell", "input", "keyevent", "4")
     def steps_out(self, kept: Callable[[], Any]) -> None:
-        before = kept()
         pid = adb("shell", "pidof", self.package, check=False).strip()
         for press in range(1, 9):
             self.back()
@@ -473,6 +552,7 @@ class Phone:
             return
         if adb("shell", "pidof", self.package, check=False).strip() != pid:
             self.wrong("Back on the first screen ended the app instead of keeping it in the background")
+        before = kept() if self.lives_hidden() else None
         adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
         time.sleep(3)
         if not self.resumed():
@@ -481,15 +561,20 @@ class Phone:
             self.wrong("coming back after Back started the page again")
             self.page = Page()
             self.page.connect()
-            self.page.wait_for("!!window.ordenApp && !!window.ordenApp.workspace", "the app to come back", 120)
-        elif kept() != before:
+            self.page.wait_for(self.ready, "the app to come back", 120)
+        elif before is not None and kept() != before:
             self.wrong(f"coming back after Back lost state: {before!r} became {kept()!r}")
     def again(self) -> None:
         adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
         time.sleep(5)
         self.page = Page()
         self.page.connect()
-        self.page.wait_for("!!window.ordenApp && !!window.ordenApp.workspace", "the app to come back", 120)
+        self.page.wait_for(self.ready, "the app to come back", 120)
+    def lives_hidden(self) -> bool:
+        try:
+            return self.page.evaluate("document.visibilityState") in ("hidden", "visible")
+        except (RuntimeError, OSError):
+            return False
     def lives(self) -> bool:
         try:
             return bool(self.page.evaluate("document.visibilityState === 'visible'"))
@@ -511,7 +596,7 @@ class Phone:
             self.wrong(f"{name}: {what} started the page again")
             self.page = Page()
             self.page.connect()
-            self.page.wait_for("!!window.ordenApp && !!window.ordenApp.workspace", "the app to come back", 120)
+            self.page.wait_for(self.ready, "the app to come back", 120)
             time.sleep(3)
         after = kept()
         if after != before:
@@ -606,11 +691,12 @@ class Phone:
             shown.append(launched(said))
             self.page = Page()
             self.page.connect()
-            marks = json.loads(self.page.wait_for(PAINTED, "the marks of a painted shell and first frame", 120))
-            shell.append(marks[0] - began)
+            marks = json.loads(self.page.wait_for(PAINTED, "the mark of a painted first frame", 120))
+            if marks[0] is not None:
+                shell.append(marks[0] - began)
             painted.append(marks[1] - began)
             self.page.socket.close()
-            told = f"shown in {shown[-1]:.0f} ms, shell painted in {shell[-1]:.0f} ms"
+            told = f"shown in {shown[-1]:.0f} ms, shell painted in {shell[-1] if shell else float('nan'):.0f} ms"
             say(f"cold start {turn + 1}: {told}, first frame in {painted[-1]:.0f} ms")
         for _ in range(STARTS):
             adb("shell", "input", "keyevent", "3")
@@ -619,13 +705,60 @@ class Phone:
         say(f"warm starts: {sorted(warm)}")
         self.notes["coldShownDebugP50"] = ranked(shown, 50)
         self.notes["coldShownDebugP95"] = ranked(shown, 95)
-        self.notes["coldShellDebugP50"] = round(ranked(shell, 50), 0)
-        self.notes["coldShellDebugP95"] = round(ranked(shell, 95), 0)
+        if shell:
+            self.notes["coldShellDebugP50"] = round(ranked(shell, 50), 0)
+            self.notes["coldShellDebugP95"] = round(ranked(shell, 95), 0)
+        else:
+            self.wrong("the app never marks its shell as painted, so a release build cannot say when it can be used")
         self.notes["coldFirstFrameP50"] = round(ranked(painted, 50), 0)
         self.notes["coldFirstFrameP95"] = round(ranked(painted, 95), 0)
         self.gates["warmP95"] = ranked(warm, 95)
         self.page = Page()
         self.page.connect()
+    def processes(self) -> list[str]:
+        own = adb("shell", "pidof", self.package, check=False).split()
+        listed = adb("shell", "ps", "-A", "-o", "PID,NAME", check=False).splitlines()
+        drawing = [one.split()[0] for one in listed if "sandboxed_process" in one and one.split()[0].isdigit()]
+        return [*own, *drawing]
+    def weighs(self) -> float:
+        taken = []
+        for _ in range(3):
+            taken.append(pss(adb("shell", "dumpsys", "meminfo", check=False), self.processes()))
+            time.sleep(2)
+        return ranked(taken, 50)
+    def memory(self, cycle: Callable[[], None]) -> None:
+        time.sleep(5)
+        before = self.weighs()
+        for _ in range(OPENS):
+            cycle()
+        time.sleep(10)
+        after = self.weighs()
+        say(f"memory: {before:.0f} MB after the main path, {after:.0f} MB after {OPENS} opens and closes")
+        if before <= 0:
+            raise SystemExit("the phone would not say how much memory the app holds")
+        self.gates["memoryPss"] = round(before, 0)
+        self.gates["memoryGrowth"] = round(max(0.0, after - before), 0)
+    def background(self, requests: Callable[[], int]) -> None:
+        uid = re.search(r"userId=(\d+)", adb("shell", "dumpsys", "package", self.package, check=False))
+        adb("shell", "input", "keyevent", "3")
+        time.sleep(AWAY)
+        watched = self.processes()
+        spent = lambda: [ticks(adb("shell", "cat", f"/proc/{one}/stat", check=False)) for one in watched]
+        asked, began = requests(), spent()
+        time.sleep(WATCHED)
+        ended = spent()
+        awake = held_awake(adb("shell", "dumpsys", "power", check=False), self.package, uid.group(1) if uid else "")
+        if any(one is None for one in [*began, *ended]):
+            raise SystemExit("the phone would not say how much processor time the app took")
+        spent_ticks = sum(last - first for first, last in zip(began, ended, strict=True) if last and first)
+        busy = 100 * spent_ticks / 100 / WATCHED
+        said = f"{requests() - asked} requests, {busy:.2f}% of a processor, {len(awake)} wake locks {awake}"
+        say(f"in the background, from {AWAY} s on, over {WATCHED} s: {said}")
+        self.gates["backgroundRequests"] = float(requests() - asked)
+        self.gates["backgroundCpu"] = round(busy, 2)
+        self.gates["backgroundWakeLocks"] = float(len(awake))
+        adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
+        time.sleep(3)
     def released(self) -> None:
         at = harness.ROOT / "out" / f"{self.app}-release.apk"
         apk = Path(os.environ.get(f"ORDEN_{self.app.upper()}_RELEASE_APK", at))
@@ -701,6 +834,7 @@ class Phone:
             self.wrong(f"{name}: the keyboard is down and the page still says {page.where([])['keyboard']}px")
     def started(self) -> None:
         adb("install", "-r", str(self.apk))
+        adb("shell", "pm", "grant", self.package, "android.permission.POST_NOTIFICATIONS", check=False)
         for round in range(4):
             adb("shell", "am", "start", "-W", "-n", f"{self.package}/{ACTIVITY}")
             time.sleep(45)
@@ -722,10 +856,14 @@ class Phone:
             return 0
         harness.worker_port = lambda: PORT
         worker = harness.Worker(self.drive)
+        self.asked = lambda: worker.log.read_text(encoding="utf-8", errors="replace").count("[wrangler:info]")
         self.shots.mkdir(parents=True, exist_ok=True)
         try:
             worker.start()
             seed(worker)
+            if "already running as root" not in adb("root", check=False):
+                time.sleep(4)
+                adb("wait-for-device", check=False)
             adb("reverse", f"tcp:{PORT}", f"tcp:{PORT}")
             adb("logcat", "-c")
             self.started()

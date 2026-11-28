@@ -216,6 +216,23 @@ jobs:
       app: all
       night: true
 
+  gates-told:
+    needs: gates
+    if: ${{ failure() && needs.gates.result == 'failure' }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: 2306
+    steps:
+      - name: Say so on the issue that collects failed nights
+        run: |
+          body=$(printf '%s\n\n%s\n' \
+            "The phone gates of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID (attempt $GITHUB_RUN_ATTEMPT) on $GITHUB_REF_NAME at $GITHUB_SHA failed." \
+            "The job of each app lists what was over its budget or failed its drive; its artifact holds the screenshots, the measures and the phone's log.")
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="$body" --jq .html_url
+
   ios:
     needs: version
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.platforms == 'all' || contains(format(' {0} ', inputs.platforms), ' ios ') }}

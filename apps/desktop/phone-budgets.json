@@ -6,12 +6,28 @@
     "warmP95": { "most": 200, "target": 600 },
     "framesInTime": { "least": 95, "target": 90 },
     "flingsWithLongFrame": { "most": 1, "target": 0 },
-    "textScaleFollowed": { "least": 1, "target": 1 }
+    "textScaleFollowed": { "least": 1, "target": 1 },
+    "memoryPss": { "most": 240, "target": 220 },
+    "memoryGrowth": { "most": 45, "target": 0 },
+    "backgroundRequests": { "most": 0, "target": 0 },
+    "backgroundCpu": { "most": 0.5, "target": 1 },
+    "backgroundWakeLocks": { "most": 0, "target": 0 }
   },
   "chat": {
     "apkBytes": { "most": 19750000, "target": 26214400 }
   },
   "track": {
-    "apkBytes": { "most": 19750000, "target": 23068672 }
+    "apkBytes": { "most": 13250000, "target": 23068672 },
+    "coldStartP50": { "most": 900, "target": 1500 },
+    "coldStartP95": { "most": 950, "target": 2500 },
+    "warmP95": { "most": 200, "target": 600 },
+    "framesInTime": { "least": 93, "target": 90 },
+    "flingsWithLongFrame": { "most": 1, "target": 0 },
+    "textScaleFollowed": { "least": 1, "target": 1 },
+    "memoryPss": { "most": 205, "target": 220 },
+    "memoryGrowth": { "most": 15, "target": 0 },
+    "backgroundRequests": { "most": 0, "target": 0 },
+    "backgroundCpu": { "most": 0.5, "target": 1 },
+    "backgroundWakeLocks": { "most": 0, "target": 0 }
   }
 }

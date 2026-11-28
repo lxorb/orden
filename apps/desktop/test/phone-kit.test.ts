@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { ORDEN_APPS } from '../app-build'
+import { entryOf, ORDEN_APPS, type OrdenApp } from '../app-build'
 
 const ROOT = join(import.meta.dirname, '..', '..', '..')
 const E2E = join(import.meta.dirname, 'e2e')
@@ -77,6 +77,11 @@ describe('what a phone drive calls a crash (#2286)', () => {
     expect(out).toContain('coming back after Back started the page again')
     expect(out).toContain('coming back after Back lost state')
     expect(kit).not.toContain('libEGL_emulation')
+  })
+  test('text that wraps is compared line by line, so a heading under its own mark is not text on text', () => {
+    const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
+    expect(kit).toContain('return [...range.getClientRects()].filter((rect) => rect.width > 0 && rect.height > 0)')
+    expect(kit).toContain('if (wide > 2 && tall > 2 && crossing(one, other)) overlapping.push(')
   })
   test('the scan runs at the end of every drive, whatever its steps did', () => {
     const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
@@ -170,7 +175,96 @@ describe('what a phone drive measures (#2286)', () => {
     expect(measured(asked).launched).toBe(812)
   })
 })
+const NIGHTLY = `
+import json, sys, types
+
+api = types.ModuleType("playwright.sync_api")
+api.Page = type("Page", (), {"on": lambda self, event, handler: None})
+sys.modules["playwright"] = types.ModuleType("playwright")
+sys.modules["playwright.sync_api"] = api
+sys.path.insert(0, sys.argv[1])
+import phone_kit
+asked = json.loads(sys.argv[2])
+print(json.dumps({
+  "pss": [phone_kit.pss(asked["memory"], one) for one in asked["pids"]],
+  "ticks": [phone_kit.ticks(one) for one in asked["stats"]],
+  "awake": phone_kit.held_awake(asked["power"], "so.orden.Orden", "10192"),
+}))
+`
+describe('what a phone drive measures at night (#2286)', () => {
+  const asked = {
+    memory: [
+      'Total RSS by process:',
+      '    999,999K: so.orden.Orden (pid 5619 / activities)',
+      '',
+      'Total PSS by process:',
+      '    153,600K: so.orden.Orden (pid 5619 / activities)',
+      '     51,200K: com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0 (pid 5700)',
+      '     20,480K: com.android.systemui (pid 900)',
+      '',
+      'Total PSS by OOM adjustment:',
+      '    204,800K: Foreground',
+      '        153,600K: so.orden.Orden (pid 5619 / activities)',
+    ].join('\n'),
+    pids: [['5619', '5700'], ['5619'], ['1']],
+    stats: [
+      '5619 (so.orden.Orden) S 345 345 0 0 -1 1077952832 1 2 3 4 150 50 0 0 20 0 60 0 100',
+      '5700 (a (odd) name) S 345 345 0 0 -1 1077952832 1 2 3 4 7 3 0 0 20 0 60 0 100',
+      '',
+    ],
+    power: [
+      'Wake Locks: size=3',
+      "  PARTIAL_WAKE_LOCK              'sync' ACQ=-2s (uid=10192 pid=5619)",
+      "  PARTIAL_WAKE_LOCK              'job' ACQ=-9s (uid=1000 pid=520)",
+      "  PARTIAL_WAKE_LOCK              'push' ACQ=-1s (uid=10050 pid=9 pkg=so.orden.Orden)",
+      '',
+      "  PARTIAL_WAKE_LOCK              'later' (uid=10192)",
+    ].join('\n'),
+  }
+  const said = JSON.parse(
+    execFileSync('python3', ['-c', NIGHTLY, E2E, JSON.stringify(asked)], { encoding: 'utf8' }),
+  ) as {
+    pss: number[]
+    ticks: (number | null)[]
+    awake: string[]
+  }
+  test('the memory an app holds is the total the phone sums up, in megabytes, of the app and its page', () => {
+    expect(said.pss).toEqual([200, 150, 0])
+  })
+  test('the processor time it took is its user and system ticks, whatever its name holds', () => {
+    expect(said.ticks).toEqual([200, 10, null])
+  })
+  test('a wake lock belongs to the app when it names the app or its user id, and only inside the list', () => {
+    expect(said.awake).toHaveLength(2)
+    expect(said.awake[0]).toContain("'sync'")
+    expect(said.awake[1]).toContain("'push'")
+  })
+  test('the nightly measures run only when the run says it is that of the night', () => {
+    const kit = readFileSync(join(E2E, 'phone_kit.py'), 'utf8')
+    expect(kit).toContain('NIGHT = os.environ.get("ORDEN_PHONE_NIGHT") == "true"')
+    const workflow = readFileSync(join(ROOT, '.github', 'workflows', 'phone.yml'), 'utf8')
+    expect(workflow).toContain('script: ORDEN_PHONE_NIGHT=${{ inputs.night }} python3')
+    for (const app of ['notes', 'track']) {
+      const drive = readFileSync(join(E2E, `${app}-phone.py`), 'utf8')
+      expect(drive, app).toMatch(
+        /if phone_kit\.NIGHT:\n(?: {8}.*\n)*? {8}PHONE\.memory\(opens_and_closes\)\n {8}PHONE\.background\(PHONE\.asked\)/,
+      )
+    }
+  })
+})
 describe('the phone apps CI builds and drives (#2286)', () => {
+  test('each say when their first screen can be used, or a release build of them cannot be timed', () => {
+    for (const one of phoneApps().filter((app) => app.built)) {
+      const page = readFileSync(join(ROOT, 'apps', 'desktop', entryOf(one.app as OrdenApp)), 'utf8')
+      const scripts = [...page.matchAll(/<script type="module" src="\/(src\/[\w-]+\.ts)">/g)].map(
+        (found) => found[1] ?? '',
+      )
+      const marking = scripts.filter((script) =>
+        readFileSync(join(ROOT, 'apps', 'desktop', script), 'utf8').includes("markPainted('shell painted')"),
+      )
+      expect(marking, `${one.app}: ${scripts.join(', ')}`).toHaveLength(1)
+    }
+  })
   test('are the rows of the one Gradle table, each with the id the drive starts', () => {
     const apps = phoneApps()
     expect(apps.map((one) => one.app).sort()).toEqual([...ORDEN_APPS].filter((app) => app !== 'orden').sort())

@@ -138,7 +138,8 @@ def syncs_up(page: Page, worker: harness.Worker, space: str) -> None:
     new_note(page, "a new note in the synced space")
     typed(page, "wren%ssings", "wren", "the second note")
     page.evaluate(f"{WS}.save({WS}.active)")
-    arrived = lambda rows: any(one["path"] != "Heron.md" and not one["deleted"] and one["size"] > 0 for one in rows)
+    seeded = {"Heron.md", "Alpha.md", "Beta.md", "Gamma.md"}
+    arrived = lambda rows: any(one["path"] not in seeded and not one["deleted"] and one["size"] > 0 for one in rows)
     until = time.monotonic() + 120
     rows: list[dict[str, Any]] = []
     while time.monotonic() < until and not arrived(rows):
@@ -212,6 +213,7 @@ def back_order() -> None:
     PHONE.page.evaluate("window.ordenApp.prompt.dismiss()")
     phone_kit.keys_gone(15)
     PHONE.page.evaluate(f"{WS}.closePanel()")
+    walks_back()
     PHONE.steps_out(kept)
 def heron() -> None:
     page = PHONE.page
@@ -229,6 +231,47 @@ def heron() -> None:
     page.evaluate(f"{WS}.openEntry({json.dumps(path)})")
     page.wait_for(f"{WS}.active?.doc?.includes('heron')", "the long note to open")
     time.sleep(2)
+def opens_and_closes() -> None:
+    page = PHONE.page
+    path = page.evaluate(
+        f"(() => {{ const walk = (e) => (e ? [e.path, ...(e.children ?? []).flatMap(walk)] : []);"
+        f" return walk({WS}.tree).find((p) => p.endsWith('Heron.md')) ?? null }})()"
+    )
+    page.evaluate(f"{WS}.openEntry({json.dumps(path)})")
+    page.wait_for(f"{WS}.active?.doc?.includes('heron')", "the long note to open")
+    page.evaluate(f"{WS}.closeActive()")
+    page.wait_for(f"!{WS}.active?.doc?.includes('heron')", "the long note to close", 20)
+DEPTH = "(history.state?.ordenDepth ?? 0)"
+def opens(name: str) -> None:
+    page = PHONE.page
+    page.evaluate(f"{WS}.showPanel('tree')")
+    page.wait_for(f"{WS}.panel === 'tree'", "the notes list")
+    item = f'.panels:not(.right) [role=treeitem][data-path$="/{name}.md"]'
+    page.wait_for(f"!!document.querySelector({json.dumps(item)})", f"{name} in the notes list", 120)
+    time.sleep(1)
+    page.press(item)
+    page.wait_for(f"{WS}.panel === null && !!{WS}.active?.path?.endsWith('/{name}.md')", f"{name} open")
+    PHONE.keys_down(f"after opening {name}")
+def back_shows(name: str, what: str) -> None:
+    PHONE.back()
+    try:
+        PHONE.page.wait_for(f"!!{WS}.active?.path?.endsWith('/{name}.md')", what, 20)
+    except SystemExit as gave:
+        wrong(str(gave))
+def walks_back() -> None:
+    page = PHONE.page
+    tabs = page.evaluate(f"{WS}.tabs.length")
+    for name in ("Alpha", "Beta", "Gamma"):
+        opens(name)
+    if page.evaluate(DEPTH) < 1:
+        wrong("three notes opened in a row and Back has no note to go back to")
+    back_shows("Beta", "Back from the third note showing the second")
+    back_shows("Alpha", "Back again showing the first")
+    if not PHONE.resumed():
+        wrong("Back through the notes left the app")
+        PHONE.again()
+    if page.evaluate(f"{WS}.tabs.length") < tabs + 3:
+        wrong("going back closed a note")
 def kept() -> str:
     return str(PHONE.page.evaluate(f"JSON.stringify([{WS}.active?.id ?? null, {WS}.active?.doc?.length ?? null])"))
 def both_lights() -> None:
@@ -267,6 +310,8 @@ def seed(worker: harness.Worker) -> None:
     token = worker.account(EMAIL)
     SEEDED["space"] = harness.request("/v1/spaces", token, {"name": SPACE})["space"]["id"]
     harness.request(f"/v1/spaces/{SEEDED['space']}/notes", token, {"path": "Heron.md", "content": HERON})
+    for name in ("Alpha", "Beta", "Gamma"):
+        harness.request(f"/v1/spaces/{SEEDED['space']}/notes", token, {"path": f"{name}.md", "content": f"# {name}"})
     long = harness.request("/v1/spaces", token, {"name": LONG})["space"]["id"]
     for at in range(ROWS + 1):
         harness.request(f"/v1/spaces/{long}/notes", token, {"path": f"Reed {at:04}.md", "content": f"Reed {at}"})
@@ -285,6 +330,9 @@ def steps(worker: harness.Worker) -> None:
     PHONE.starts()
     heron()
     PHONE.shaped("note", kept, heron)
+    if phone_kit.NIGHT:
+        PHONE.memory(opens_and_closes)
+        PHONE.background(PHONE.asked)
     PHONE.released()
 def main() -> int:
     return PHONE.run(
