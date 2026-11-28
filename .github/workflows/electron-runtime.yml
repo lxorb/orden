@@ -23,10 +23,17 @@ on:
       - apps/desktop/src-tauri/src/engine_electron.rs
       - apps/desktop/src-tauri/tests/electron_core.rs
       - scripts/linux-manifest.mjs
+  schedule:
+    - cron: '23 3 * * *'
   workflow_dispatch:
+    inputs:
+      light:
+        description: 'Only check on Linux that the core still compiles against the Electron runtime, as the nightly run does'
+        type: boolean
+        default: false
 
 concurrency:
-  group: electron-runtime-${{ github.ref }}
+  group: electron-runtime-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
@@ -34,6 +41,7 @@ permissions:
 
 jobs:
   runtime:
+    if: ${{ github.event_name != 'schedule' && !inputs.light }}
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +84,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest, macos-latest]
+        os: ${{ fromJSON((github.event_name == 'schedule' || inputs.light) && '["ubuntu-24.04"]' || '["ubuntu-24.04","windows-latest","macos-latest"]') }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     permissions:
@@ -127,9 +135,9 @@ jobs:
         run: cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --no-default-features --features electron
 
       - name: Lint
-        if: runner.os == 'Linux'
+        if: ${{ runner.os == 'Linux' && github.event_name != 'schedule' && !inputs.light }}
         run: cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --no-default-features --features electron --lib --bins --test electron_core -- -D warnings
 
       - name: Test
-        if: runner.os == 'Linux'
+        if: ${{ runner.os == 'Linux' && github.event_name != 'schedule' && !inputs.light }}
         run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --locked --no-default-features --features electron --test electron_core
