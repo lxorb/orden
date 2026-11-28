@@ -1,7 +1,7 @@
 name: orden
 title: Orden
 base: core24
-version: '0.22.5'
+version: '0.23.0'
 summary: Markdown editor with live preview
 description: |
   Orden is a small markdown editor that formats what you
@@ -62,11 +62,11 @@ parts:
     plugin: dump
     source-type: deb
     source:
-      - on amd64: https://github.com/lxorb/orden/releases/download/v0.22.5/Orden-0.22.5-linux-x64.deb
-      - on arm64: https://github.com/lxorb/orden/releases/download/v0.22.5/Orden-0.22.5-linux-arm64.deb
-    #   on amd64: sha256/763a7b9459a33dfa6dab5edc603b07753540f98552cd70f3039ff4114ff643ba
-    #   on arm64: sha256/ac400730516f10215ee06d8f2297ac25b8aab12bad8818299aaca6744b3883bf
-    source-checksum: sha256/763a7b9459a33dfa6dab5edc603b07753540f98552cd70f3039ff4114ff643ba
+      - on amd64: https://github.com/lxorb/orden/releases/download/v0.23.0/Orden-0.23.0-linux-x64.deb
+      - on arm64: https://github.com/lxorb/orden/releases/download/v0.23.0/Orden-0.23.0-linux-arm64.deb
+    #   on amd64: sha256/912d160e32e28cc02c670ed13467f6a6a20f3d5ad36625c8291f826772011f9f
+    #   on arm64: sha256/fe39057814aa8d35fe3dd20374c32e68f7ac0a323b0fe10a5ee6f44a8a9fda13
+    source-checksum: sha256/912d160e32e28cc02c670ed13467f6a6a20f3d5ad36625c8291f826772011f9f
     override-build: |
       craftctl default
 
