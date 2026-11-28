@@ -26,6 +26,8 @@ export interface TrackParts {
   ticking(): { readonly now: number }
   readSpec(text: string): TimeSpecSeen
   undone(redo: boolean): boolean
+  refreshed(): Promise<void>
+  watchTrack(): () => void
 }
 export interface Shown {
   readonly screen: Screen

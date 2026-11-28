@@ -44,9 +44,11 @@ describe('Orden Track, which is the time tracker and nothing else (#2286)', () =
       'Now',
       'Stats',
       'readSpec',
+      'refreshed',
       'reminders',
       'ticking',
       'undone',
+      'watchTrack',
     ])
     expect(typeof screens.reminders.on).toBe('boolean')
   })

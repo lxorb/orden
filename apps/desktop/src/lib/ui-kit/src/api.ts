@@ -1,6 +1,6 @@
 import { readied } from './doors.svelte'
 export { closeOnBack } from './backstack.svelte'
-export { swipes, turnOf } from './gestures'
+export { pullOf, pulls, swipes, turnOf } from './gestures'
 export { busy } from './busy.svelte'
 export { reloading } from './reloading.svelte'
 export { held, type Latched, latched } from './doors.svelte'

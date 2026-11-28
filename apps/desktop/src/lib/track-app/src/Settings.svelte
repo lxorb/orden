@@ -4,10 +4,12 @@
 
   const {
     reminders,
+    onrefresh,
     onactivities,
     onclose,
   }: {
     reminders: { readonly on: boolean; set(on: boolean): void }
+    onrefresh: () => Promise<void>
     onactivities: () => void
     onclose: () => void
   } = $props()
@@ -16,6 +18,13 @@
     { id: 'light', label: 'Light' },
     { id: 'dark', label: 'Dark' },
   ] as const
+  let syncing = $state(false)
+  function sync() {
+    syncing = true
+    void onrefresh()
+      .catch(() => undefined)
+      .then(() => (syncing = false))
+  }
   function leave() {
     onclose()
     void account.leave()
@@ -49,6 +58,9 @@
       >
     {/each}
   </div>
+  <button type="button" class="orden-row" disabled={syncing} data-track-sync onclick={sync}
+    >{syncing ? 'Syncing' : 'Sync now'}</button
+  >
   <p class="who">{account.user?.email ?? ''}</p>
   <button type="button" class="orden-row is-danger" data-track-leave onclick={leave}>Log out</button>
 </div>

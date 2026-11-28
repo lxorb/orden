@@ -34,3 +34,66 @@ export function swipes(node: HTMLElement, turn: (by: -1 | 1) => void) {
     },
   }
 }
+const PULL_SHARE = 0.5
+const PULL_MOST = 96
+const PULL_AWAY = 56
+export function pullOf(dy: number): { shown: number; away: boolean } {
+  const shown = Math.max(0, Math.min(dy * PULL_SHARE, PULL_MOST))
+  return { shown, away: shown >= PULL_AWAY }
+}
+export function pulls(node: HTMLElement, refresh: () => Promise<unknown>) {
+  let run = refresh
+  let from: number | null = null
+  let pulled = 0
+  let busy = false
+  const show = (px: number) => node.style.setProperty('--pulled', `${String(px)}px`)
+  const onStart = (event: TouchEvent) => {
+    const touch = event.touches.length === 1 ? event.touches[0] : undefined
+    from = touch && !busy && node.scrollTop <= 0 ? touch.clientY : null
+    pulled = 0
+  }
+  const onMove = (event: TouchEvent) => {
+    const touch = event.touches[0]
+    if (from === null || !touch) return
+    if (node.scrollTop > 0) {
+      from = null
+      show(0)
+      return
+    }
+    pulled = touch.clientY - from
+    show(pullOf(pulled).shown)
+  }
+  const onEnd = () => {
+    if (from === null) return
+    from = null
+    if (!pullOf(pulled).away) {
+      show(0)
+      return
+    }
+    busy = true
+    node.dataset.refreshing = ''
+    show(PULL_AWAY)
+    void run()
+      .catch(() => undefined)
+      .then(() => {
+        busy = false
+        delete node.dataset.refreshing
+        show(0)
+      })
+  }
+  node.addEventListener('touchstart', onStart, { passive: true })
+  node.addEventListener('touchmove', onMove, { passive: true })
+  node.addEventListener('touchend', onEnd)
+  node.addEventListener('touchcancel', onEnd)
+  return {
+    update(next: () => Promise<unknown>) {
+      run = next
+    },
+    destroy() {
+      node.removeEventListener('touchstart', onStart)
+      node.removeEventListener('touchmove', onMove)
+      node.removeEventListener('touchend', onEnd)
+      node.removeEventListener('touchcancel', onEnd)
+    },
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { backOf, specOf, TrackNav, WIDE } from '../src/api'
+import { backOf, linkIn, screenOf, specOf, TrackNav, WIDE } from '../src/api'
 
 const DAY = new Date(2026, 10, 19).getTime()
 describe('the Orden Track shell', () => {
@@ -8,7 +8,9 @@ describe('the Orden Track shell', () => {
       'TrackNav',
       'WIDE',
       'backOf',
+      'linkIn',
       'loadTrackApp',
+      'screenOf',
       'specOf',
     ])
     expect(WIDE).toBe(600)
@@ -27,6 +29,15 @@ describe('the Orden Track shell', () => {
     expect(seen).toEqual([{ activities: false }, { settings: false }, { only: null }, { screen: 'now' }])
     expect(nav.day).toBe(DAY)
     expect(nav.back()).toBe(false)
+  })
+  test('follows its own links to a screen, and no other app’s', () => {
+    expect(screenOf('orden-track://day')).toBe('day')
+    expect(screenOf('orden-track://stats/')).toBe('stats')
+    expect(screenOf('orden-track://settings')).toBe(null)
+    expect(screenOf('orden://day')).toBe(null)
+    expect(linkIn('{"command":"","link":"orden-track://now"}')).toBe('orden-track://now')
+    expect(linkIn('{"link":7}')).toBe('')
+    expect(linkIn('not json')).toBe('')
   })
   test('drops the activity filter when another screen is shown', () => {
     const nav = new TrackNav()
